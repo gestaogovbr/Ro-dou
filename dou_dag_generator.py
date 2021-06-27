@@ -156,7 +156,7 @@ def _send_email_task(results, subject, email_to_list, attach_csv):
 
     send_email(to=email_to_list,
                subject=full_subject,
-               files=[file],
+               files=file,
                html_content=replace_to_html_encode(content))
 
 def _select_name_list(sql, conn_id):
