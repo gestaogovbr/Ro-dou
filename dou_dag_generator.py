@@ -32,6 +32,7 @@ from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 from airflow_commons.slack_messages import send_slack
 
 CONFIG_FILEPATH = '/usr/local/airflow/dags/dou/dag_confs/'
+DEFAULT_SCHEDULE = '0 2 * * *'
 
 def _exec_dou_search(term_list,
                      dou_sections: [str],
@@ -231,7 +232,6 @@ def parse_yaml_file(file_name):
             if not error_msg:
                 error_msg = f'O campo `{field}` é obrigatório.'
             error_msg = f'Erro no arquivo {file_name}: {error_msg}'
-
             raise ValueError(error_msg)
 
     def get_terms_params(search):
@@ -250,8 +250,22 @@ def parse_yaml_file(file_name):
                 raise ValueError('O campo `terms` aceita como valores válidos '
                                  'uma lista de strings ou parâmetros do tipo '
                                  '`from_airflow_variable` ou `from_db_select`.')
-
         return terms, sql, conn_id
+
+    def hashval(str, siz):
+        hash = 0
+        # Take ordinal number of char in str, and just add
+        for x in str: hash += (ord(x))
+        return(hash % siz) # Depending on the range, do a modulo operation.
+
+    def get_safe_schedule(dag):
+        schedule = dag.get('schedule_interval', DEFAULT_SCHEDULE)
+        if schedule == DEFAULT_SCHEDULE:
+            dag_id = try_get(dag, 'id')
+            schedule_without_min = ' '.join(schedule.split(" ")[1:])
+            id_based_minute = hashval(dag_id, 60)
+            schedule = f'{id_based_minute} {schedule_without_min}'
+        return schedule
 
     with open(CONFIG_FILEPATH + file_name, 'r') as file:
         dag_config_dict = yaml.safe_load(file)
@@ -269,7 +283,7 @@ def parse_yaml_file(file_name):
     search_date = search.get('date', 'DIA')
     field = search.get('field', 'TUDO')
     is_exact_search = search.get('is_exact_search', True)
-    schedule = dag.get('schedule_interval', '0 2 * * *')
+    schedule = get_safe_schedule(dag)
     dag_tags = dag.get('tags', [])
     # add default tags
     dag_tags.append('dou')
