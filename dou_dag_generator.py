@@ -15,8 +15,8 @@ TODO:
 from datetime import date, datetime, timedelta
 import os
 import ast
+import time
 import pandas as pd
-
 import yaml
 
 from airflow import DAG
@@ -31,6 +31,7 @@ from airflow_commons.slack_messages import send_slack
 
 CONFIG_FILEPATH = '/usr/local/airflow/dags/dou/dag_confs/'
 DEFAULT_SCHEDULE = '0 2 * * *'
+SCRAPPING_INTERVAL = 2
 
 def _exec_dou_search(term_list,
                      dou_sections: [str],
@@ -50,6 +51,7 @@ def _exec_dou_search(term_list,
                                        )
         if results:
             all_results[name] = results
+        time.sleep(SCRAPPING_INTERVAL)
 
     return all_results
 
