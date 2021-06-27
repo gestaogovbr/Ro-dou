@@ -57,14 +57,13 @@ def _send_email_task(results, subject, email_to_list, attach_csv):
     """
     Envia e-mail de notificação dos aspectos mais relevantes do DOU.
     """
+    results = ast.literal_eval(results)
     if not results:
         return
 
     today_date = date.today().strftime("%d/%m/%Y")
     full_subject = f"{subject} - DOU de {today_date}"
 
-    # Transforma a variavel string em um dicionario de dados
-    results = ast.literal_eval(results)
 
     content = """
         <style>
