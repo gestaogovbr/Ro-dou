@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 import os
 import ast
 import time
+from random import random
 import pandas as pd
 import yaml
 
@@ -56,7 +57,7 @@ def _exec_dou_search(term_list,
                                        )
         if results:
             all_results[name] = results
-        time.sleep(SCRAPPING_INTERVAL)
+        time.sleep(SCRAPPING_INTERVAL * random() * 2)
 
     return all_results
 
