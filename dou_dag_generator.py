@@ -153,17 +153,17 @@ def _send_email_task(results, subject, email_to_list, attach_csv):
                                   ))
         content += "</div>"
 
-    file = None
+    att_file = None
     if attach_csv:
         df = pd.DataFrame(new_table)
         df.columns = ['Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
-        file = 'extracao_dou.csv'
-        df.to_csv(file, index=False)
+        att_file = 'extracao_dou.csv'
+        df.to_csv(att_file, index=False)
 
     send_email(to=email_to_list,
                subject=full_subject,
-               files=file,
+               files=att_file,
                html_content=replace_to_html_encode(content))
 
 def _select_name_list(sql, conn_id):
