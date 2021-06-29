@@ -32,7 +32,7 @@ from airflow_commons.slack_messages import send_slack
 
 CONFIG_FILEPATH = '/usr/local/airflow/dags/dou/dag_confs/'
 DEFAULT_SCHEDULE = '0 2 * * *'
-SCRAPPING_INTERVAL = 2
+SCRAPPING_INTERVAL = 1
 
 def _exec_dou_search(term_list,
                      dou_sections: [str],
