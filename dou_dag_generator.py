@@ -31,6 +31,7 @@ from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 from airflow_commons.slack_messages import send_slack
 
 CONFIG_FILEPATH = '/usr/local/airflow/dags/dou/dag_confs/'
+LOCAL_TMP_DIR = 'dou-dag-generator'
 DEFAULT_SCHEDULE = '0 2 * * *'
 SCRAPPING_INTERVAL = 1
 
@@ -61,7 +62,7 @@ def _exec_dou_search(term_list,
 
     return all_results
 
-def _send_email_task(results, subject, email_to_list, attach_csv):
+def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
     """
     Envia e-mail de notificação dos aspectos mais relevantes do DOU.
     """
@@ -153,17 +154,24 @@ def _send_email_task(results, subject, email_to_list, attach_csv):
                                   ))
         content += "</div>"
 
-    att_file = None
+    files = None
     if attach_csv:
         df = pd.DataFrame(new_table)
         df.columns = ['Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
-        att_file = 'extracao_dou.csv'
-        df.to_csv(att_file, index=False)
+        tmp_dir = os.path.join(
+            Variable.get("path_tmp"),
+            LOCAL_TMP_DIR,
+            dag_id
+        )
+        os.makedirs(tmp_dir, exist_ok=True)
+        file = os.path.join(tmp_dir, 'extracao_dou.csv')
+        df.to_csv(file, index=False)
+        files = [file]
 
     send_email(to=email_to_list,
                subject=full_subject,
-               files=att_file,
+               files=files,
                html_content=replace_to_html_encode(content))
 
 def _select_name_list(sql, conn_id):
@@ -239,6 +247,7 @@ def create_dag(dag_id,
                 "subject": subject,
                 "email_to_list": email_to_list,
                 "attach_csv": attach_csv,
+                "dag_id": dag_id,
                 }
         )
         exec_dou_search >> send_email_task
