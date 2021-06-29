@@ -8,8 +8,7 @@ TODO:
 [] - Escrever README no repo
 [] - Escrever tutorial no portal cginf
 [] - Tratar casos de pesquisas com muitos resultados. Talvez enviar
-     arquivo zipodo com resultados
-[] - Set proper CONFIG_FILEPATH
+     arquivo zipado com resultados
 """
 
 from datetime import date, datetime, timedelta
@@ -214,6 +213,7 @@ def create_dag(dag_id,
         )
 
     with dag:
+        queue = None
         if sql:
             select_name_list = PythonOperator(
                 task_id='select_name_list',
@@ -224,6 +224,7 @@ def create_dag(dag_id,
                     }
             )
             term_list = "{{ ti.xcom_pull(task_ids='select_name_list') }}"
+            queue = 'local'
 
         exec_dou_search = PythonOperator(
             task_id='exec_dou_search',
@@ -234,7 +235,8 @@ def create_dag(dag_id,
                 "search_date": search_date,
                 "field": search_field,
                 "is_exact_search": is_exact_search,
-                }
+                },
+            queue=queue,
         )
         if sql:
             select_name_list >> exec_dou_search
@@ -248,7 +250,8 @@ def create_dag(dag_id,
                 "email_to_list": email_to_list,
                 "attach_csv": attach_csv,
                 "dag_id": dag_id,
-                }
+                },
+            queue=queue,
         )
         exec_dou_search >> send_email_task
 
