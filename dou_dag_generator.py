@@ -42,6 +42,11 @@ def _exec_dou_search(term_list,
 
     sections = [Section[s] for s in dou_sections]
     all_results = {}
+
+    # Quando `term_list` vem de outra task pelo xcom
+    if isinstance(term_list, str):
+        term_list = ast.literal_eval(term_list)
+
     for name in term_list:
         results = dou_hook.search_text(name,
                                        sections,
