@@ -304,7 +304,7 @@ def parse_yaml_file(file_name):
             schedule = f'{id_based_minute} {schedule_without_min}'
         return schedule
 
-    with open(CONFIG_FILEPATH + file_name, 'r') as file:
+    with open(os.path.join(CONFIG_FILEPATH, file_name), 'r') as file:
         dag_config_dict = yaml.safe_load(file)
     dag = try_get(dag_config_dict, 'dag')
     dag_id = try_get(dag, 'id')
