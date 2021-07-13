@@ -171,6 +171,9 @@ def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
                html_content=replace_to_html_encode(content))
 
 def _select_name_list(sql, conn_id):
+    """Executa o `sql` e retorna a lista de resultados da primera coluna
+    retornada que será utilizada posteriormente na pesquisa no DOU
+    """
     mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
     names_df = mssql_hook.get_pandas_df(sql)
     first_column = names_df.iloc[:, 0]
@@ -191,6 +194,7 @@ def create_dag(dag_id,
                schedule,
                description,
                tags):
+    """Cria a DAG, suas tasks, a orquestração das tasks e retorna a DAG."""
     default_args = {
         'owner': 'dag-generator-by-nitai',
         'start_date': datetime(2021, 6, 18),
@@ -294,6 +298,12 @@ def parse_yaml_file(file_name):
         return _hash % size # Depending on the range, do a modulo operation.
 
     def get_safe_schedule(dag):
+        """Retorna um novo valor de `schedule_interval` randomizando o
+        minuto de execução baseado no `dag_id`, caso a dag utilize o
+        schedule_interval padrão. Aplica uma função de hash na string
+        dag_id que retorna valor entre 0 e 60 que define o minuto de
+        execução.
+        """
         schedule = dag.get('schedule_interval', DEFAULT_SCHEDULE)
         if schedule == DEFAULT_SCHEDULE:
             dag_id = try_get(dag, 'id')
