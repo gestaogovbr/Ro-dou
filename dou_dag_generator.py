@@ -196,7 +196,7 @@ def create_dag(dag_id,
                tags):
     """Cria a DAG, suas tasks, a orquestração das tasks e retorna a DAG."""
     default_args = {
-        'owner': 'dag-generator-by-nitai',
+        'owner': 'yaml-dag-generator',
         'start_date': datetime(2021, 6, 18),
         'depends_on_past': False,
         'retries': 5,
