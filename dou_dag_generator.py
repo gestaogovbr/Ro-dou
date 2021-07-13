@@ -289,8 +289,9 @@ def parse_yaml_file(file_name):
     def hashval(string, size):
         _hash = 0
         # Take ordinal number of char in string, and just add
-        for x in string: _hash += (ord(x))
-        return(_hash % size) # Depending on the range, do a modulo operation.
+        for x in string:
+            _hash += (ord(x))
+        return _hash % size # Depending on the range, do a modulo operation.
 
     def get_safe_schedule(dag):
         schedule = dag.get('schedule_interval', DEFAULT_SCHEDULE)
