@@ -12,9 +12,11 @@ from datetime import date, datetime, timedelta
 import os
 import ast
 import time
+import re
 from random import random
 import pandas as pd
 import yaml
+from unidecode import unidecode
 
 from airflow import DAG
 from airflow.models import Variable
@@ -31,16 +33,32 @@ LOCAL_TMP_DIR = 'dou-dag-generator'
 DEFAULT_SCHEDULE = '0 2 * * *'
 SCRAPPING_INTERVAL = 1
 
+
+def clean_html(raw_html):
+    clean_re = re.compile('<.*?>')
+    clean_text = re.sub(clean_re, '', raw_html)
+    return clean_text
+
+def is_signature(result, search_term):
+    clean_abstract = clean_html(result.get('abstract'))
+    norm_abstract = unidecode(clean_abstract).lower()
+    norm_term = unidecode(search_term).lower()
+
+    return norm_abstract.startswith(norm_term)
+
 def _exec_dou_search(term_list,
                      dou_sections: [str],
                      search_date,
                      field,
-                     is_exact_search):
+                     is_exact_search: bool,
+                     ignore_signature_match: bool):
     dou_hook = DOUHook()
 
-    # Quando `term_list` vem de outra task pelo xcom
+    # Quando `term_list` vem do xcom é necessário recriar a lista a
+    # partir da string
     if isinstance(term_list, str):
         term_list = ast.literal_eval(term_list)
+
     # Ordena o resultado
     term_list.sort()
 
@@ -52,6 +70,8 @@ def _exec_dou_search(term_list,
                                        Field[field],
                                        is_exact_search
                                        )
+        if ignore_signature_match:
+            results = [r for r in results if not is_signature(r, name)]
         if results:
             all_results[name] = results
         time.sleep(SCRAPPING_INTERVAL * random() * 2)
@@ -185,6 +205,7 @@ def create_dag(dag_id,
                search_date,
                search_field,
                is_exact_search,
+               ignore_signature_match,
                term_list,
                sql,
                conn_id,
@@ -236,6 +257,7 @@ def create_dag(dag_id,
                 "search_date": search_date,
                 "field": search_field,
                 "is_exact_search": is_exact_search,
+                "ignore_signature_match": ignore_signature_match,
                 },
             queue=queue,
         )
@@ -297,7 +319,7 @@ def parse_yaml_file(file_name):
             _hash += (ord(x))
         return _hash % size # Depending on the range, do a modulo operation.
 
-    def get_safe_schedule(dag):
+    def get_safe_schedule(dag: DAG):
         """Retorna um novo valor de `schedule_interval` randomizando o
         minuto de execução baseado no `dag_id`, caso a dag utilize o
         schedule_interval padrão. Aplica uma função de hash na string
@@ -327,6 +349,7 @@ def parse_yaml_file(file_name):
     search_date = search.get('date', 'DIA')
     field = search.get('field', 'TUDO')
     is_exact_search = search.get('is_exact_search', True)
+    ignore_signature_match = search.get('ignore_signature_match', False)
     schedule = get_safe_schedule(dag)
     dag_tags = dag.get('tags', [])
     # add default tags
@@ -340,6 +363,7 @@ def parse_yaml_file(file_name):
         search_date,
         field,
         is_exact_search,
+        ignore_signature_match,
         terms,
         sql,
         conn_id,
