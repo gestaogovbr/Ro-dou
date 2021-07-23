@@ -190,13 +190,16 @@ def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
                files=files,
                html_content=replace_to_html_encode(content))
 
-def _select_name_list(sql, conn_id):
-    """Executa o `sql` e retorna a lista de resultados da primera coluna
-    retornada que será utilizada posteriormente na pesquisa no DOU
+def _select_terms_from_db(sql, conn_id):
+    """Executa o `sql` e retorna a lista de termos que serão utilizados
+    posteriormente na pesquisa no DOU. A primeira coluna do select deve
+    conter os termos a serem pesquisados. A segunda coluna, que é
+    opicional, é um classificador que será utilizado para agrupar e
+    ordenar o relatório por email e o CSV gerado.
     """
     mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
-    names_df = mssql_hook.get_pandas_df(sql)
-    first_column = names_df.iloc[:, 0]
+    terms_df = mssql_hook.get_pandas_df(sql)
+    first_column = terms_df.iloc[:, 0]
 
     return first_column.tolist()
 
@@ -237,15 +240,15 @@ def create_dag(dag_id,
     with dag:
         queue = None
         if sql:
-            select_name_list = PythonOperator(
-                task_id='select_name_list',
-                python_callable=_select_name_list,
+            select_terms_from_db = PythonOperator(
+                task_id='select_terms_from_db',
+                python_callable=_select_terms_from_db,
                 op_kwargs={
                     "sql": sql,
                     "conn_id": conn_id,
                     }
             )
-            term_list = "{{ ti.xcom_pull(task_ids='select_name_list') }}"
+            term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
             queue = 'local'
 
         exec_dou_search = PythonOperator(
@@ -262,7 +265,7 @@ def create_dag(dag_id,
             queue=queue,
         )
         if sql:
-            select_name_list >> exec_dou_search
+            select_terms_from_db >> exec_dou_search
 
         send_email_task = PythonOperator(
             task_id='send_email_task',
