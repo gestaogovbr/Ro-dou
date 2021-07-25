@@ -85,23 +85,40 @@ def _exec_dou_search(term_list,
 
     return search_results, term_group_map
 
-def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
+def _send_email_task(search_report, subject, email_to_list,
+                     attach_csv, dag_id):
     """
     Envia e-mail de notificação dos aspectos mais relevantes do DOU.
     """
-    results = ast.literal_eval(results)
-    if not results:
+    search_report = ast.literal_eval(search_report)
+    search_results = search_report[0]
+    term_group_map = search_report[1]
+
+    if not search_results:
         return
+
+    if term_group_map:
+        groups = sorted(list(set(term_group_map.values())))
+        grouped_result = {
+            g1:{
+                t: search_results[t]
+                for (t, g2) in sorted(term_group_map.items())
+                if t in search_results and g1 == g2}
+            for g1 in groups}
+    else:
+        grouped_result = {'single_group': search_results}
 
     today_date = date.today().strftime("%d/%m/%Y")
     full_subject = f"{subject} - DOU de {today_date}"
-
-
     content = """
         <style>
+            .grupo {
+                border-top: 2px solid #707070;
+                padding: 20px 0;
+            }
             .resultado {
                 border-bottom: 1px solid #707070;
-                padding: 20px 0;
+                padding: 20px 20px;
             }
             .search-total-label {
                 font-size: 15px; margin: 0;
@@ -150,32 +167,46 @@ def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
         </style>
     """
 
-    new_table = []
-    for term, items in results.items():
-        content += f"""<div class='resultado'>
-            <p class='search-total-label'>{len(items)} resultado"""
-        content += (' ' if len(items) == 1 else 's ')
-        content += f"""para <b>{term}</b></p>"""
-
-        if len(items) > 0:
-            for item in items:
-                sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
-                content += f"""<br>
-                    <p class="secao-marker">{sec_desc}</p>
-                    <h5 class='title-marker'>
-                    <a href='{item['href']}'>{item['title']}</a>
-                    </h5>
-                    <p class='abstract-marker'>{item['abstract']}</p>
-                    <p class='date-marker'>{item['date']}</p>
+    for group, results in grouped_result.items():
+        if results:
+            if group is not 'single_group':
+                content += f"""<div class='grupo'>
+                    <p class='search-total-label'>
+                    Grupo: <b>{group}</b></p>
                 """
-                new_table.append((term,
-                                  sec_desc,
-                                  item['href'],
-                                  item['title'],
-                                  item['abstract'],
-                                  item['date'],
-                                  ))
-        content += "</div>"
+            else:
+                content += '<div style="margin: 0 -20px;">'
+
+            new_table = []
+            for term, items in results.items():
+                if items:
+                    content += f"""<div class='resultado'>
+                            <p class='search-total-label'>
+                            Resultados para: <b>{term}</b></p>"""
+
+                    for item in items:
+                        sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
+                        content += f"""<br>
+                            <p class="secao-marker">{sec_desc}</p>
+                            <h5 class='title-marker'>
+                            <a href='{item['href']}'>{item['title']}</a>
+                            </h5>
+                            <p class='abstract-marker'>{item['abstract']}</p>
+                            <p class='date-marker'>{item['date']}</p>
+                        """
+                        new_table.append((term,
+                                        sec_desc,
+                                        item['href'],
+                                        item['title'],
+                                        item['abstract'],
+                                        item['date'],
+                                        ))
+                    content += "</div>"
+            content += "</div>"
+
+
+    import ipdb
+    ipdb.set_trace()
 
     files = None
     if attach_csv:
@@ -280,7 +311,7 @@ def create_dag(dag_id,
             task_id='send_email_task',
             python_callable=_send_email_task,
             op_kwargs={
-                "results": "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                "search_report": "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
                 "subject": subject,
                 "email_to_list": email_to_list,
                 "attach_csv": attach_csv,
