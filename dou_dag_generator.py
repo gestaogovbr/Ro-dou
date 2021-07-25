@@ -206,10 +206,12 @@ def _select_terms_from_db(sql, conn_id):
     ordenar o relatório por email e o CSV gerado.
     """
     mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
-    terms_df = mssql_hook.get_pandas_df(sql)
-    first_column = terms_df.iloc[:, 0]
+    df = mssql_hook.get_pandas_df(sql)
+    # Remove espaços desnecessários e troca null por ''
+    df= df.applymap(lambda x: str.strip(x) if pd.notnull(x) else '')
 
-    return first_column.tolist()
+    return df.to_json(orient="columns")
+
 
 def create_dag(dag_id,
                dou_sections,
