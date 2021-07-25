@@ -54,29 +54,37 @@ def _exec_dou_search(term_list,
                      ignore_signature_match: bool):
     dou_hook = DOUHook()
 
-    # Quando `term_list` vem do xcom é necessário recriar a lista a
-    # partir da string
+    term_group_map = None
     if isinstance(term_list, str):
-        term_list = ast.literal_eval(term_list)
+        # Quando `term_list` vem do xcom (tipo str) é necessário recriar
+        # o dataframe a partir da string
+        terms_df = pd.read_json(term_list)
+        first_column = terms_df.iloc[:, 0]
+        term_list = first_column.tolist()
 
-    # Ordena o resultado
-    term_list.sort()
+        # Se existir a segunda coluna usada para agrupar é pq existem grupos
+        if len(terms_df.columns) > 1:
+            second_column = terms_df.iloc[:, 1]
+            term_group_map = dict(zip(first_column, second_column))
 
-    all_results = {}
-    for name in term_list:
-        results = dou_hook.search_text(name,
+    search_results = {}
+    # TODO REMOVER O LIMITE DE 10 DA LISTA DO FOR
+    for search_term in term_list[:1]:
+    # for search_term in term_list:
+        results = dou_hook.search_text(search_term,
                                        [Section[s] for s in dou_sections],
                                        SearchDate[search_date],
                                        Field[field],
                                        is_exact_search
                                        )
         if ignore_signature_match:
-            results = [r for r in results if not is_signature(r, name)]
+            results = [r for r in results if not is_signature(r, search_term)]
         if results:
-            all_results[name] = results
+            search_results[search_term] = results
+
         time.sleep(SCRAPPING_INTERVAL * random() * 2)
 
-    return all_results
+    return search_results, term_group_map
 
 def _send_email_task(results, subject, email_to_list, attach_csv, dag_id):
     """
