@@ -68,8 +68,7 @@ def _exec_dou_search(term_list,
             term_group_map = dict(zip(first_column, second_column))
 
     search_results = {}
-    # TODO REMOVER O LIMITE DE 10 DA LISTA DO FOR
-    for search_term in term_list[:1]:
+    for search_term in term_list:
     # for search_term in term_list:
         results = dou_hook.search_text(search_term,
                                        [Section[s] for s in dou_sections],
