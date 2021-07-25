@@ -204,10 +204,6 @@ def _send_email_task(search_report, subject, email_to_list,
                     content += "</div>"
             content += "</div>"
 
-
-    import ipdb
-    ipdb.set_trace()
-
     files = None
     if attach_csv:
         df = pd.DataFrame(new_table)
