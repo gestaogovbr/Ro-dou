@@ -193,26 +193,30 @@ def _send_email_task(search_report, subject, email_to_list,
                             <p class='abstract-marker'>{item['abstract']}</p>
                             <p class='date-marker'>{item['date']}</p>
                         """
-                        new_table.append((term,
-                                        sec_desc,
-                                        item['href'],
-                                        item['title'],
-                                        item['abstract'],
-                                        item['date'],
-                                        ))
+                        new_table.append((
+                            group,
+                            term,
+                            sec_desc,
+                            item['href'],
+                            item['title'],
+                            item['abstract'],
+                            item['date'],
+                            ))
                     content += "</div>"
             content += "</div>"
 
     files = None
     if attach_csv:
         df = pd.DataFrame(new_table)
-        df.columns = ['Termo de pesquisa', 'Seção', 'URL',
+        df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
+        if 'single_group' in grouped_result:
+            del df['Grupo']
+
         tmp_dir = os.path.join(
             Variable.get("path_tmp"),
             LOCAL_TMP_DIR,
-            dag_id
-        )
+            dag_id)
         os.makedirs(tmp_dir, exist_ok=True)
         file = os.path.join(tmp_dir, 'extracao_dou.csv')
         df.to_csv(file, index=False)
