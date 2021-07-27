@@ -167,17 +167,16 @@ def _send_email_task(search_report, subject, email_to_list,
         </style>
     """
 
+    new_table = []
     for group, results in grouped_result.items():
         if results:
-            if group is not 'single_group':
+            if group is 'single_group':
+                content += '<div style="margin: 0 -20px;">'
+            else:
                 content += f"""<div class='grupo'>
                     <p class='search-total-label'>
                     Grupo: <b>{group}</b></p>
                 """
-            else:
-                content += '<div style="margin: 0 -20px;">'
-
-            new_table = []
             for term, items in results.items():
                 if items:
                     content += f"""<div class='resultado'>
