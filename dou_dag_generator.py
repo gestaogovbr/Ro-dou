@@ -205,7 +205,6 @@ def _send_email_task(search_report, subject, email_to_list,
                     content += "</div>"
             content += "</div>"
 
-    files = None
     if attach_csv:
         df = pd.DataFrame(new_table)
         df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
@@ -221,6 +220,8 @@ def _send_email_task(search_report, subject, email_to_list,
         file = os.path.join(tmp_dir, 'extracao_dou.csv')
         df.to_csv(file, index=False)
         files = [file]
+    else:
+        files = None
 
     send_email(to=email_to_list,
                subject=full_subject,
