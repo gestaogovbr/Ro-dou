@@ -83,20 +83,6 @@ def _exec_dou_search(term_list,
 
         time.sleep(SCRAPPING_INTERVAL * random() * 2)
 
-    return search_results, term_group_map
-
-def _send_email_task(search_report, subject, email_to_list,
-                     attach_csv, dag_id):
-    """
-    Envia e-mail de notificação dos aspectos mais relevantes do DOU.
-    """
-    search_report = ast.literal_eval(search_report)
-    search_results = search_report[0]
-    term_group_map = search_report[1]
-
-    if not search_results:
-        return
-
     if term_group_map:
         groups = sorted(list(set(term_group_map.values())))
         grouped_result = {
@@ -107,6 +93,15 @@ def _send_email_task(search_report, subject, email_to_list,
             for g1 in groups}
     else:
         grouped_result = {'single_group': search_results}
+
+    return grouped_result
+
+def _send_email_task(search_report, subject, email_to_list,
+                     attach_csv, dag_id):
+    """
+    Envia e-mail de notificação dos aspectos mais relevantes do DOU.
+    """
+    search_report = ast.literal_eval(search_report)
 
     today_date = date.today().strftime("%d/%m/%Y")
     full_subject = f"{subject} - DOU de {today_date}"
@@ -168,7 +163,7 @@ def _send_email_task(search_report, subject, email_to_list,
     """
 
     new_table = []
-    for group, results in grouped_result.items():
+    for group, results in search_report.items():
         if results:
             if group is 'single_group':
                 content += '<div style="margin: 0 -20px;">'
@@ -209,7 +204,7 @@ def _send_email_task(search_report, subject, email_to_list,
         df = pd.DataFrame(new_table)
         df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
-        if 'single_group' in grouped_result:
+        if 'single_group' in search_report:
             del df['Grupo']
 
         tmp_dir = os.path.join(
