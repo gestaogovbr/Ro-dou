@@ -46,14 +46,36 @@ def is_signature(result, search_term):
 
     return norm_abstract.startswith(norm_term)
 
+def search_all_terms(term_list,
+                     dou_sections,
+                     search_date,
+                     field,
+                     is_exact_search,
+                     ignore_signature_match):
+    search_results = {}
+    dou_hook = DOUHook()
+    for search_term in term_list:
+        results = dou_hook.search_text(search_term,
+                                       [Section[s] for s in dou_sections],
+                                       SearchDate[search_date],
+                                       Field[field],
+                                       is_exact_search
+                                       )
+        if ignore_signature_match:
+            results = [r for r in results if not is_signature(r, search_term)]
+        if results:
+            search_results[search_term] = results
+
+        time.sleep(SCRAPPING_INTERVAL * random() * 2)
+
+    return search_results
+
 def _exec_dou_search(term_list,
                      dou_sections: [str],
                      search_date,
                      field,
                      is_exact_search: bool,
                      ignore_signature_match: bool):
-    dou_hook = DOUHook()
-
     term_group_map = None
     if isinstance(term_list, str):
         # Quando `term_list` vem do xcom (tipo str) é necessário recriar
@@ -67,21 +89,12 @@ def _exec_dou_search(term_list,
             second_column = terms_df.iloc[:, 1]
             term_group_map = dict(zip(first_column, second_column))
 
-    search_results = {}
-    for search_term in term_list:
-    # for search_term in term_list:
-        results = dou_hook.search_text(search_term,
-                                       [Section[s] for s in dou_sections],
-                                       SearchDate[search_date],
-                                       Field[field],
-                                       is_exact_search
-                                       )
-        if ignore_signature_match:
-            results = [r for r in results if not is_signature(r, search_term)]
-        if results:
-            search_results[search_term] = results
-
-        time.sleep(SCRAPPING_INTERVAL * random() * 2)
+    search_results = search_all_terms(term_list,
+                                      dou_sections,
+                                      search_date,
+                                      field,
+                                      is_exact_search,
+                                      ignore_signature_match)
 
     if term_group_map:
         groups = sorted(list(set(term_group_map.values())))
