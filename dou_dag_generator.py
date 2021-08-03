@@ -234,7 +234,8 @@ def _send_email_task(search_report, subject, email_to_list,
     send_email(to=email_to_list,
                subject=full_subject,
                files=files,
-               html_content=replace_to_html_encode(content))
+               html_content=content,
+               mime_charset='utf-8')
 
 def _select_terms_from_db(sql, conn_id):
     """Executa o `sql` e retorna a lista de termos que serão utilizados
