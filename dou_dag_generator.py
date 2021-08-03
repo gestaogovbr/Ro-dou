@@ -24,7 +24,6 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.mssql_hook import MsSqlHook
 from airflow.utils.email import send_email
 
-from FastETL.custom_functions.utils.encode_html import replace_to_html_encode
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 from airflow_commons.slack_messages import send_slack
 
