@@ -286,7 +286,6 @@ def create_dag(dag_id,
         )
 
     with dag:
-        queue = None
         if sql:
             select_terms_from_db = PythonOperator(
                 task_id='select_terms_from_db',
@@ -297,7 +296,6 @@ def create_dag(dag_id,
                     }
             )
             term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
-            queue = 'local'
 
         exec_dou_search = PythonOperator(
             task_id='exec_dou_search',
@@ -310,7 +308,6 @@ def create_dag(dag_id,
                 "is_exact_search": is_exact_search,
                 "ignore_signature_match": ignore_signature_match,
                 },
-            queue=queue,
         )
         if sql:
             select_terms_from_db >> exec_dou_search
@@ -325,7 +322,6 @@ def create_dag(dag_id,
                 "attach_csv": attach_csv,
                 "dag_id": dag_id,
                 },
-            queue=queue,
         )
         exec_dou_search >> send_email_task
 
