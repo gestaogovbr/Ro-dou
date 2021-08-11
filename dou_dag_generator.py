@@ -53,13 +53,13 @@ def is_signature(result, search_term):
     em que o nome da pessoa é parte de nome maior. Por exemplo o nome
     'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ ANTONIO DE OLIVEIRA MATOS'
     """
-    norm_term = unidecode(search_term).lower()
     abstract = result.get('abstract')
     clean_abstract = clean_html(abstract)
     start_name, match_name = parse_regex(abstract)
 
     norm_abstract = unidecode(clean_abstract).lower()
     norm_abstract_withou_start_name = norm_abstract[len(start_name):]
+    norm_term = unidecode(search_term).lower()
 
     return (
         # As assinaturas são sempre uppercase
@@ -69,6 +69,28 @@ def is_signature(result, search_term):
             # Resolve os casos 'José Antonio de Oliveira' e ' José Antonio de Oliveira Matos'
              norm_abstract_withou_start_name.startswith(norm_term))
     )
+
+def parse_regex2(raw_html):
+    clean_re = re.compile(r'.*?<.*?>(.*?<\/span>.*?<\/span>)')
+    groups = clean_re.match(raw_html).groups()
+    return groups[0]
+
+def really_matched(result, search_term):
+    """Verifica se o termo encontrado pela API realmente é igual ao
+    termo de busca. Esta função é útil para filtrar resultados
+    retornardos pela API mas que são resultados aproximados e não exatos.
+    """
+    abstract = result.get('abstract')
+    if len(abstract.split('</span>')) > 2:
+        matched_string = clean_html(parse_regex2(abstract))
+        matched_string = matched_string.replace('... ', '')
+    else:
+        _, matched_string = parse_regex(abstract)
+
+    norm_matched = unidecode(matched_string).lower()
+    norm_term = unidecode(search_term).lower()
+
+    return norm_term == norm_matched
 
 def search_all_terms(term_list,
                      dou_sections,
@@ -88,6 +110,9 @@ def search_all_terms(term_list,
                                        )
         if ignore_signature_match:
             results = [r for r in results if not is_signature(r, search_term)]
+        if force_rematch:
+            results = [r for r in results if really_matched(r, search_term)]
+
         if results:
             search_results[search_term] = results
 
