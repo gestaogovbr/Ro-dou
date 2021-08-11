@@ -131,7 +131,10 @@ def _exec_dou_search(term_list,
     else:
         grouped_result = {'single_group': search_results}
 
-    return grouped_result
+    # Clear empty groups
+    trimmed_result = {k: v for k, v in grouped_result.items() if v}
+
+    return trimmed_result
 
 def _send_email_task(search_report, subject, email_to_list,
                      attach_csv, dag_id):
@@ -139,6 +142,10 @@ def _send_email_task(search_report, subject, email_to_list,
     Envia e-mail de notificação dos aspectos mais relevantes do DOU.
     """
     search_report = ast.literal_eval(search_report)
+
+    # Don't send empty email
+    if not search_report:
+        return
 
     today_date = date.today().strftime("%d/%m/%Y")
     full_subject = f"{subject} - DOU de {today_date}"
