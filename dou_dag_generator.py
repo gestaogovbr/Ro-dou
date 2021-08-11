@@ -79,18 +79,23 @@ def really_matched(result, search_term):
     """Verifica se o termo encontrado pela API realmente é igual ao
     termo de busca. Esta função é útil para filtrar resultados
     retornardos pela API mas que são resultados aproximados e não exatos.
+    Considera 2 casos: 1) quando o resultado retorna apenas um match no
+    `abstract`; e 2) quando o resultado retorna o match fragmentado ou
+    repetido dentro do `abstract`. A checagem é feita de acordo com a
+    quantidade de tags '</span>'
     """
     abstract = result.get('abstract')
-    if len(abstract.split('</span>')) > 2:
-        matched_string = clean_html(parse_regex2(abstract))
-        matched_string = matched_string.replace('... ', '')
-    else:
-        _, matched_string = parse_regex(abstract)
+    _, first_match = parse_regex(abstract)
+    matches = [unidecode(first_match).lower()]
 
-    norm_matched = unidecode(matched_string).lower()
+    if len(abstract.split('</span>')) > 2:
+        whole_match = clean_html(parse_regex2(abstract))
+        whole_match = whole_match.replace('... ', '')
+        matches.append(unidecode(whole_match).lower())
+
     norm_term = unidecode(search_term).lower()
 
-    return norm_term == norm_matched
+    return (norm_term in matches)
 
 def search_all_terms(term_list,
                      dou_sections,
