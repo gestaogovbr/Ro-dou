@@ -32,18 +32,43 @@ LOCAL_TMP_DIR = 'dou-dag-generator'
 DEFAULT_SCHEDULE = '0 2 * * *'
 SCRAPPING_INTERVAL = 1
 
-
 def clean_html(raw_html):
     clean_re = re.compile('<.*?>')
     clean_text = re.sub(clean_re, '', raw_html)
     return clean_text
 
-def is_signature(result, search_term):
-    clean_abstract = clean_html(result.get('abstract'))
-    norm_abstract = unidecode(clean_abstract).lower()
-    norm_term = unidecode(search_term).lower()
+def parse_regex(raw_html):
+    clean_re = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
+    groups = clean_re.match(raw_html).groups()
+    return groups[0], groups[1]
 
-    return norm_abstract.startswith(norm_term)
+def is_signature(result, search_term):
+    """Verifica se o `search_term` (geralmente usado para busca por nome
+    de pessoas) está presente na assinatura. Para isso se utiliza de um
+    "bug" da API que, para estes casos, retorna o `abstract` iniciando
+    com a assinatura do documento, o que não ocorre quando o match
+    acontece em outras partes do documento. Dessa forma esta função
+    checa se isso ocorreu (str.startswith()) e é utilizada para filtrar
+    os resultados presentes no relatório final. Também resolve os casos
+    em que o nome da pessoa é parte de nome maior. Por exemplo o nome
+    'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ ANTONIO DE OLIVEIRA MATOS'
+    """
+    norm_term = unidecode(search_term).lower()
+    abstract = result.get('abstract')
+    clean_abstract = clean_html(abstract)
+    start_name, match_name = parse_regex(abstract)
+
+    norm_abstract = unidecode(clean_abstract).lower()
+    norm_abstract_withou_start_name = norm_abstract[len(start_name):]
+
+    return (
+        # As assinaturas são sempre uppercase
+        (start_name + match_name).isupper() and
+            # Resolve os casos 'Antonio de Oliveira' e 'Antonio de Oliveira Matos'
+            (norm_abstract.startswith(norm_term) or
+            # Resolve os casos 'José Antonio de Oliveira' e ' José Antonio de Oliveira Matos'
+             norm_abstract_withou_start_name.startswith(norm_term))
+    )
 
 def search_all_terms(term_list,
                      dou_sections,
