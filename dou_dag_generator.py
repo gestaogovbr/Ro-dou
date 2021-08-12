@@ -79,11 +79,6 @@ def is_signature(result, search_term):
              norm_abstract_withou_start_name.startswith(norm_term))
     )
 
-def parse_regex2(raw_html):
-    clean_re = re.compile(r'.*?<.*?>(.*?<\/span>.*?<\/span>)')
-    groups = clean_re.match(raw_html).groups()
-    return groups[0]
-
 def really_matched(result, search_term):
     """Verifica se o termo encontrado pela API realmente é igual ao
     termo de busca. Esta função é útil para filtrar resultados
