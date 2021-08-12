@@ -42,6 +42,14 @@ def parse_regex(raw_html):
     groups = clean_re.match(raw_html).groups()
     return groups[0], groups[1]
 
+def normalize(raw_str: str):
+    """Remove characters (accents and other not alphanumeric) and lower
+    case it"""
+    text = unidecode(raw_str).lower()
+    text = ''.join(c if c.isalnum() else ' ' for c in text)
+    text = ' '.join(text.split())
+    return text
+
 def is_signature(result, search_term):
     """Verifica se o `search_term` (geralmente usado para busca por nome
     de pessoas) está presente na assinatura. Para isso se utiliza de um
