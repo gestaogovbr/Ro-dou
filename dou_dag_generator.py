@@ -236,7 +236,7 @@ def _send_email_task(search_report, subject, email_to_list,
     new_table = []
     for group, results in search_report.items():
         if results:
-            if group is 'single_group':
+            if group == 'single_group':
                 content += '<div style="margin: 0 -20px;">'
             else:
                 content += f"""<div class='grupo'>
