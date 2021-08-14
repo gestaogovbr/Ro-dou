@@ -389,7 +389,7 @@ def create_dag(dag_id,
     return dag
 
 
-def parse_yaml_file(file_name):
+def process_yaml_file(file_name):
     """Process the config file in order to instantiate the DAG in Airflow."""
     def try_get(variable: dict, field, error_msg=None):
         """Try to retrieve the property named as `field` from
@@ -485,9 +485,9 @@ def parse_yaml_file(file_name):
         dag_tags,
         )
 
-yaml_files = [
+files_list = [
     f for f in os.listdir(YAMLS_DIR)
     if f.split('.')[-1] in ['yaml', 'yml']
 ]
-for filename in yaml_files:
-    parse_yaml_file(filename)
+for file in files_list:
+    process_yaml_file(file)
