@@ -110,12 +110,14 @@ class DouDigestDagGenerator():
         search_results = {}
         dou_hook = DOUHook()
         for search_term in term_list:
-            results = dou_hook.search_text(search_term,
-                                           [Section[s] for s in dou_sections],
-                                           SearchDate[search_date],
-                                           Field[field],
-                                           is_exact_search
-                                           )
+            results = dou_hook.search_text(
+                search_term=search_term,
+                sections=[Section[s] for s in dou_sections],
+                # reference_date=trigger_date,
+                search_date=SearchDate[search_date],
+                field=Field[field],
+                is_exact_search=is_exact_search
+                )
             if ignore_signature_match:
                 results = [r for r in results
                            if not self.is_signature(r, search_term)]
