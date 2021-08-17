@@ -183,6 +183,37 @@ class DouDigestDagGenerator():
 
         return trimmed_result
 
+    def extract_csv(self, search_report: dict, dag_id: str):
+        new_table = []
+        for group, results in search_report.items():
+            for term, items in results.items():
+                for item in items:
+                    new_table.append((
+                        group,
+                        term,
+                        DOUHook.SEC_DESCRIPTION[item['section']],
+                        item['href'],
+                        item['title'],
+                        item['abstract'],
+                        item['date'],
+                        ))
+        df = pd.DataFrame(new_table)
+        df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
+                      'Título', 'Resumo', 'Data']
+        if 'single_group' in search_report:
+            del df['Grupo']
+
+        tmp_dir = os.path.join(
+            Variable.get("path_tmp"),
+            self.LOCAL_TMP_DIR,
+            dag_id)
+        os.makedirs(tmp_dir, exist_ok=True)
+        file_name = os.path.join(tmp_dir, 'extracao_dou.csv')
+        df.to_csv(file_name, index=False)
+
+        return file_name
+
+
     def _send_email_task(self, search_report, subject, email_to_list,
                          attach_csv, dag_id):
         """
@@ -253,7 +284,6 @@ class DouDigestDagGenerator():
             </style>
         """
 
-        new_table = []
         for group, results in search_report.items():
             if results:
                 # if group in 'single_group':
@@ -284,41 +314,16 @@ class DouDigestDagGenerator():
                                 <p class='abstract-marker'>{item['abstract']}</p>
                                 <p class='date-marker'>{item['date']}</p>
                             """
-                            new_table.append((
-                                group,
-                                term,
-                                sec_desc,
-                                item['href'],
-                                item['title'],
-                                item['abstract'],
-                                item['date'],
-                                ))
                         content += "</div>"
                 content += "</div>"
 
-        if attach_csv:
-            df = pd.DataFrame(new_table)
-            df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
-                          'Título', 'Resumo', 'Data']
-            if 'single_group' in search_report:
-                del df['Grupo']
-
-            tmp_dir = os.path.join(
-                Variable.get("path_tmp"),
-                self.LOCAL_TMP_DIR,
-                dag_id)
-            os.makedirs(tmp_dir, exist_ok=True)
-            file = os.path.join(tmp_dir, 'extracao_dou.csv')
-            df.to_csv(file, index=False)
-            files = [file]
-        else:
-            files = None
-
-        send_email(to=email_to_list,
-                   subject=full_subject,
-                   files=files,
-                   html_content=content,
-                   mime_charset='utf-8')
+        send_email(
+            to=email_to_list,
+            subject=full_subject,
+            files=[self.extract_csv(search_report, dag_id)]
+                  if attach_csv else None,
+            html_content=content,
+            mime_charset='utf-8')
 
     def _select_terms_from_db(self, sql, conn_id):
         """Executa o `sql` e retorna a lista de termos que serão utilizados
