@@ -27,6 +27,8 @@ from airflow.utils.email import send_email
 from unidecode import unidecode
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
+# from FastETL.dag_generators.dou_dag_generator import DouDigestDagGenerator
+
 from airflow_commons.slack_messages import send_slack
 from airflow_commons.utils.date import get_trigger_date
 
@@ -213,20 +215,7 @@ class DouDigestDagGenerator():
 
         return file_name
 
-
-    def _send_email_task(self, search_report, subject, email_to_list,
-                         attach_csv, dag_id):
-        """
-        Envia e-mail de notificação dos aspectos mais relevantes do DOU.
-        """
-        search_report = ast.literal_eval(search_report)
-
-        # Don't send empty email
-        if not search_report:
-            return
-
-        today_date = date.today().strftime("%d/%m/%Y")
-        full_subject = f"{subject} - DOU de {today_date}"
+    def generate_email_content(self, search_report: dict):
         content = """
             <style>
                 .grupo {
@@ -285,37 +274,52 @@ class DouDigestDagGenerator():
         """
 
         for group, results in search_report.items():
-            if results:
-                # if group in 'single_group':
-                #     content += '<div style="margin: 0 -20px;">'
-                # else:
-                #     content += f"""<div class='grupo'>
-                #         <p class='search-total-label'>
-                #         Grupo: <b>{group}</b></p>
-                #     """
-                content += f"""<div class='grupo'>
-                    <p class='search-total-label'>
-                    Grupo: <b>{group}</b></p>
-                """
+            # if group == 'single_group':
+            #     content += '<div style="margin: 0 -20px;">'
+            # else:
+            #     content += f"""<div class='grupo'>
+            #         <p class='search-total-label'>
+            #         Grupo: <b>{group}</b></p>
+            #     """
+            content += f"""<div class='grupo'>
+                <p class='search-total-label'>
+                Grupo: <b>{group}</b></p>
+            """
 
-                for term, items in results.items():
-                    if items:
-                        content += f"""<div class='resultado'>
-                                <p class='search-total-label'>
-                                Resultados para: <b>{term}</b></p>"""
+            for term, items in results.items():
+                content += f"""<div class='resultado'>
+                        <p class='search-total-label'>
+                        Resultados para: <b>{term}</b></p>"""
 
-                        for item in items:
-                            sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
-                            content += f"""<br>
-                                <p class="secao-marker">{sec_desc}</p>
-                                <h5 class='title-marker'>
-                                <a href='{item['href']}'>{item['title']}</a>
-                                </h5>
-                                <p class='abstract-marker'>{item['abstract']}</p>
-                                <p class='date-marker'>{item['date']}</p>
-                            """
-                        content += "</div>"
+                for item in items:
+                    sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
+                    content += f"""<br>
+                        <p class="secao-marker">{sec_desc}</p>
+                        <h5 class='title-marker'>
+                        <a href='{item['href']}'>{item['title']}</a>
+                        </h5>
+                        <p class='abstract-marker'>{item['abstract']}</p>
+                        <p class='date-marker'>{item['date']}</p>
+                    """
                 content += "</div>"
+            content += "</div>"
+
+        return content
+
+    def _send_email_task(self, search_report, subject, email_to_list,
+                         attach_csv, dag_id):
+        """
+        Envia e-mail de notificação dos aspectos mais relevantes do DOU.
+        """
+        search_report = ast.literal_eval(search_report)
+
+        # Don't send empty email
+        if not search_report:
+            return
+
+        today_date = date.today().strftime("%d/%m/%Y")
+        full_subject = f"{subject} - DOU de {today_date}"
+        content = self.generate_email_content(search_report)
 
         send_email(
             to=email_to_list,
