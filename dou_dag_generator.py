@@ -17,6 +17,8 @@ import re
 from random import random
 import pandas as pd
 import yaml
+import markdown
+import textwrap
 
 from airflow import DAG
 from airflow.models import Variable
@@ -39,7 +41,8 @@ class DouDigestDagGenerator():
     keywords. It's also possible to fetch keywords from the database.
     """
 
-    YAMLS_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/dou/dag_confs/')
+    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/dou/')
+    YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
     LOCAL_TMP_DIR = 'dou-dag-generator'
     DEFAULT_SCHEDULE = '0 2 * * *'
     SCRAPPING_INTERVAL = 1
@@ -216,95 +219,37 @@ class DouDigestDagGenerator():
         return file_name
 
     def generate_email_content(self, search_report: dict):
-        content = """
-            <style>
-                .grupo {
-                    border-top: 2px solid #707070;
-                    padding: 20px 0;
-                }
-                .resultado {
-                    border-bottom: 1px solid #707070;
-                    padding: 20px 20px;
-                }
-                .search-total-label {
-                    font-size: 15px; margin: 0;
-                    padding: 0;
-                }
-                .secao-marker {
-                    color: #06acff;
-                    font-family: 'rawline',sans-serif;
-                    font-size: 18px;
-                    font-weight: bold;
-                    margin-bottom: 8px;
-                }
-                .title-marker {
-                    font-family: 'rawline',sans-serif;
-                    font-size: 20px;
-                    font-weight: bold;
-                    line-height: 26px;
-                    margin-bottom: 8px;
-                    margin-top: 0;
-                }
-                .title-marker a {
-                    color: #222;
-                    margin: 0;
-                    text-decoration: none;
-                    text-transform: uppercase;
-                }
-                .title-marker a:hover {
-                    text-decoration: underline;
-                }
-                .abstract-marker {
-                    font-size: 18px;
-                    font-weight: 500;
-                    line-height: 22px;
-                    max-height: 44px;
-                    margin-bottom: 5px;
-                    margin-top: 0;
-                    overflow: hidden;
-                }
-                .date-marker {
-                    color: #b1b1b1;
-                    font-family: 'rawline', sans-serif;
-                    font-size: 14px;
-                    font-weight: 500;
-                    margin-top: 0;
-                }
-            </style>
+        """Generate HTML content to be sent by email based on
+        search_report dictionary
         """
+        with open(os.path.join(self.SOURCE_DIR, 'report_style.css'), 'r') as f:
+            blocks = [f'<style>\n{f.read()}</style>']
 
         for group, results in search_report.items():
-            # if group == 'single_group':
-            #     content += '<div style="margin: 0 -20px;">'
-            # else:
-            #     content += f"""<div class='grupo'>
-            #         <p class='search-total-label'>
-            #         Grupo: <b>{group}</b></p>
-            #     """
-            content += f"""<div class='grupo'>
-                <p class='search-total-label'>
-                Grupo: <b>{group}</b></p>
-            """
+            if group != 'single_group':
+                blocks.append('\n')
+                blocks.append(f'**Grupo: {group}**')
+                blocks.append('\n\n')
 
             for term, items in results.items():
-                content += f"""<div class='resultado'>
-                        <p class='search-total-label'>
-                        Resultados para: <b>{term}</b></p>"""
+                blocks.append('\n')
+                blocks.append(f'* # Resultados para: {term}')
 
                 for item in items:
                     sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
-                    content += f"""<br>
+                    item_html = f"""
                         <p class="secao-marker">{sec_desc}</p>
-                        <h5 class='title-marker'>
-                        <a href='{item['href']}'>{item['title']}</a>
-                        </h5>
+                        ### [{item['title']}]({item['href']})
                         <p class='abstract-marker'>{item['abstract']}</p>
-                        <p class='date-marker'>{item['date']}</p>
-                    """
-                content += "</div>"
-            content += "</div>"
+                        <p class='date-marker'>{item['date']}</p>"""
+                    blocks.append(textwrap.indent(
+                        textwrap.dedent(item_html),
+                        ' ' * 4
+                    ))
+                blocks.append('---')
+            blocks.append('---')
 
-        return content
+        return markdown.markdown('\n'.join(blocks))
 
     def _send_email_task(self, search_report, subject, email_to_list,
                          attach_csv, dag_id):
