@@ -1,0 +1,22 @@
+dag:
+  id: test_dou_dag_generator
+  description: DAG de teste
+  tags:
+    - test
+    - dou
+  search:
+    terms:
+    - dados abertos
+    - governo aberto
+    - lei de acesso à informação
+    - engenharia de dados
+    - software livre
+    - software publico
+    - lei geral de proteção de dados
+    - LGPD
+    - algoritmo
+  report:
+    emails:
+      - endereco@exemplo.me
+    attach_csv: On
+    subject: "Teste do Ro-dou"
