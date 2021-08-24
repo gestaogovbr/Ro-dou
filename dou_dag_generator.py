@@ -41,7 +41,7 @@ class DouDigestDagGenerator():
     keywords. It's also possible to fetch keywords from the database.
     """
 
-    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/dou/')
+    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro-dou/')
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
     LOCAL_TMP_DIR = 'dou-dag-generator'
     DEFAULT_SCHEDULE = '0 2 * * *'
