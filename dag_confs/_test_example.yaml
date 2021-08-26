@@ -16,6 +16,6 @@ dag:
     - algoritmo
   report:
     emails:
-      - endereco@exemplo.me
+      - nitai.silva@economia.gov.br
     attach_csv: On
     subject: "Teste do Ro-dou"
