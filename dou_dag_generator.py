@@ -464,7 +464,7 @@ class DouDigestDagGenerator():
             attach_csv,
             schedule,
             description,
-            dag_tags,
+            set(dag_tags),
             )
 
     def generate_dags(self):

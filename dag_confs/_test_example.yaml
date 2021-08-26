@@ -3,7 +3,6 @@ dag:
   description: DAG de teste
   tags:
     - test
-    - dou
   search:
     terms:
     - dados abertos
