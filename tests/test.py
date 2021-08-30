@@ -23,7 +23,15 @@ from dou_dag_generator import DouDigestDagGenerator
                             ('Any text', 'Any text'),
                             ])
 def test_clean_html(input, output):
-    dou_gen = DouDigestDagGenerator()
-    cleaned_html = dou_gen.clean_html(input)
+    assert DouDigestDagGenerator().clean_html(input) == output
 
-    assert cleaned_html == output
+@pytest.mark.parametrize('input, output',
+                          [
+                            ('Nitái Bêzêrrá', 'nitai bezerra'),
+                            ('Nitái-Bêzêrrá', 'nitai bezerra'),
+                            ('Normaliza çedilha', 'normaliza cedilha'),
+                            ('ìÌÒòùÙúÚáÁÀeççÇÇ~ A', 'iioouuuuaaaecccc a'),
+                            ('a  \|%&* /  aáá  3d_U', 'a aaa 3d u'),
+                            ])
+def test_normalize(input, output):
+    assert DouDigestDagGenerator().normalize(input) == output
