@@ -1,0 +1,34 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Ro-dou
+      uses: actions/checkout@v2
+      with:
+        path: Ro-dou
+
+    - name: Checkout FastETL
+      uses: actions/checkout@v2
+      with:
+        repository: economiagovbr/FastETL
+        path: FastETL
+
+    - name: Checkout airflow_commons
+      run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.planejamento.gov.br/seges-cginf/airflow_commons.git airflow_commons
+
+    - name: Run docker-compose
+      run: cd Ro-dou/tests && docker-compose up -d
+
+    - name: run tests
+      run: docker exec tests_airflow-webserver_1 /bin/bash -c "pytest /opt/airflow/dags/Ro-dou/tests/"
