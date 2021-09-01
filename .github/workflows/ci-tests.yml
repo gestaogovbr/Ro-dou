@@ -34,4 +34,4 @@ jobs:
       run: docker exec tests_airflow-webserver_1 /bin/bash -c "pip install pytest"
 
     - name: run tests
-      run: docker exec tests_airflow-webserver_1 /bin/bash -c "pytest /opt/airflow/dags/Ro-dou/tests/"
+      run: docker exec tests_airflow-webserver_1 /bin/bash -c "pytest /opt/airflow/dags/ro-dou/tests/"
