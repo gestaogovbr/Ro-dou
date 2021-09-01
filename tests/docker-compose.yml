@@ -56,9 +56,9 @@
         AIRFLOW__WEBSERVER__SECRET_KEY: '42'
         AIRFLOW__WEBSERVER__WORKERS: 1
       volumes:
-        - ../Ro-dou:/opt/airflow/dags/ro-dou
-        - ../FastETL:/opt/airflow/plugins/FastETL
-        - ../airflow_commons:/opt/airflow/plugins/airflow_commons
+        - ..:/opt/airflow/dags/ro-dou
+        - ../../FastETL:/opt/airflow/plugins/FastETL
+        - ../../airflow_commons:/opt/airflow/plugins/airflow_commons
 
       user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
       depends_on:
