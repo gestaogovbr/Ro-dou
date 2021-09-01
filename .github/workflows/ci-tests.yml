@@ -30,5 +30,8 @@ jobs:
     - name: Run docker-compose
       run: cd Ro-dou/tests && docker-compose up -d
 
+    - name: install pip dependency
+      run: docker exec tests_airflow-webserver_1 /bin/bash -c "pip install pytest"
+
     - name: run tests
       run: docker exec tests_airflow-webserver_1 /bin/bash -c "pytest /opt/airflow/dags/Ro-dou/tests/"
