@@ -25,7 +25,7 @@ jobs:
         path: FastETL
 
     - name: Checkout airflow_commons
-      run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.planejamento.gov.br/seges-cginf/airflow_commons.git airflow_commons
+      run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.economia.gov.br/seges-cginf/airflow_commons.git airflow_commons
 
     - name: Run docker-compose
       run: cd Ro-dou/tests && docker-compose up -d
