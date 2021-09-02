@@ -46,20 +46,21 @@ class DouDigestDagGenerator():
     LOCAL_TMP_DIR = 'dou-dag-generator'
     DEFAULT_SCHEDULE = '0 2 * * *'
     SCRAPPING_INTERVAL = 1
+    CLEAN_HTML_RE = re.compile('<.*?>')
+    SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
+
 
     def clean_html(self, raw_html):
-        clean_re = re.compile('<.*?>')
-        clean_text = re.sub(clean_re, '', raw_html)
+        clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
         return clean_text
 
-    def parse_regex(self, raw_html):
-        clean_re = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
-        groups = clean_re.match(raw_html).groups()
+    def get_prior_and_matched_name(self, raw_html):
+        groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
 
     def normalize(self, raw_str: str):
-        """Remove characters (accents and other not alphanumeric) and lower
-        case it"""
+        """Remove characters (accents and other not alphanumeric) lower
+        it and keep only one space between words"""
         text = unidecode(raw_str).lower()
         text = ''.join(c if c.isalnum() else ' ' for c in text)
         text = ' '.join(text.split())
@@ -78,7 +79,7 @@ class DouDigestDagGenerator():
         """
         abstract = result.get('abstract')
         clean_abstract = self.clean_html(abstract)
-        start_name, match_name = self.parse_regex(abstract)
+        start_name, match_name = self.get_prior_and_matched_name(abstract)
 
         norm_abstract = self.normalize(clean_abstract)
         norm_abstract_withou_start_name = norm_abstract[len(start_name):]
@@ -87,9 +88,9 @@ class DouDigestDagGenerator():
         return (
             # As assinaturas são sempre uppercase
             (start_name + match_name).isupper() and
-                # Resolve os casos 'Antonio de Oliveira' e 'Antonio de Oliveira Matos'
+                # Resolve os casos 'ANTONIO DE OLIVEIRA' e 'ANTONIO DE OLIVEIRA Matos'
                 (norm_abstract.startswith(norm_term) or
-                # Resolve os casos 'José Antonio de Oliveira' e ' José Antonio de Oliveira Matos'
+                # Resolve os casos 'José ANTONIO DE OLIVEIRA' e ' José ANTONIO DE OLIVEIRA Matos'
                 norm_abstract_withou_start_name.startswith(norm_term))
         )
 
