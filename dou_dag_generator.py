@@ -29,7 +29,6 @@ from airflow.utils.email import send_email
 from unidecode import unidecode
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
-# from FastETL.dag_generators.dou_dag_generator import DouDigestDagGenerator
 
 from airflow_commons.slack_messages import send_slack
 from airflow_commons.utils.date import get_trigger_date
@@ -66,18 +65,18 @@ class DouDigestDagGenerator():
         text = ' '.join(text.split())
         return text
 
-    def is_signature(self, result, search_term):
-        """Verifica se o `search_term` (geralmente usado para busca por nome
-        de pessoas) está presente na assinatura. Para isso se utiliza de um
-        "bug" da API que, para estes casos, retorna o `abstract` iniciando
-        com a assinatura do documento, o que não ocorre quando o match
-        acontece em outras partes do documento. Dessa forma esta função
-        checa se isso ocorreu (str.startswith()) e é utilizada para filtrar
-        os resultados presentes no relatório final. Também resolve os casos
-        em que o nome da pessoa é parte de nome maior. Por exemplo o nome
-        'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ ANTONIO DE OLIVEIRA MATOS'
+    def is_signature(self, search_term, abstract):
+        """Verifica se o `search_term` (geralmente usado para busca por
+        nome de pessoas) está presente na assinatura. Para isso se
+        utiliza de um "bug" da API que, para estes casos, retorna o
+        `abstract` iniciando com a assinatura do documento, o que não
+        ocorre quando o match acontece em outras partes do documento.
+        Dessa forma esta função checa se isso ocorreu e é utilizada para
+        filtrar os resultados presentes no relatório final. Também
+        resolve os casos em que o nome da pessoa é parte de nome maior.
+        Por exemplo o nome 'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ
+        ANTONIO DE OLIVEIRA MATOS'
         """
-        abstract = result.get('abstract')
         clean_abstract = self.clean_html(abstract)
         start_name, match_name = self.get_prior_and_matched_name(abstract)
 
@@ -86,20 +85,22 @@ class DouDigestDagGenerator():
         norm_term = self.normalize(search_term)
 
         return (
-            # As assinaturas são sempre uppercase
+            # Considera assinatura apenas se aparecem com uppercase
             (start_name + match_name).isupper() and
-                # Resolve os casos 'ANTONIO DE OLIVEIRA' e 'ANTONIO DE OLIVEIRA Matos'
+                # Resolve os casos '`ANTONIO DE OLIVEIRA`' e
+                # '`ANTONIO DE OLIVEIRA` MATOS'
                 (norm_abstract.startswith(norm_term) or
-                # Resolve os casos 'José ANTONIO DE OLIVEIRA' e ' José ANTONIO DE OLIVEIRA Matos'
+                # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
+                # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
                 norm_abstract_withou_start_name.startswith(norm_term))
         )
 
-    def really_matched(self, result, search_term):
+    def really_matched(self, search_term, abstract):
         """Verifica se o termo encontrado pela API realmente é igual ao
         termo de busca. Esta função é útil para filtrar resultados
-        retornardos pela API mas que são resultados aproximados e não exatos.
+        retornardos pela API mas que são resultados aproximados e não
+        exatos.
         """
-        abstract = result.get('abstract')
         whole_match = self.clean_html(abstract).replace('... ', '')
         norm_whole_match = self.normalize(whole_match)
 
@@ -129,10 +130,12 @@ class DouDigestDagGenerator():
                 )
             if ignore_signature_match:
                 results = [r for r in results
-                           if not self.is_signature(r, search_term)]
+                           if not self.is_signature(search_term,
+                                                    r.get('abstract'))]
             if force_rematch:
                 results = [r for r in results
-                           if self.really_matched(r, search_term)]
+                           if self.really_matched(search_term,
+                                                  r.get('abstract'))]
 
             if results:
                 search_results[search_term] = results
