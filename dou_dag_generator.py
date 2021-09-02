@@ -15,10 +15,12 @@ import ast
 import time
 import re
 from random import random
-import pandas as pd
-import yaml
-import markdown
+from tempfile import NamedTemporaryFile
 import textwrap
+import markdown
+import yaml
+
+import pandas as pd
 
 from airflow import DAG
 from airflow.models import Variable
@@ -192,7 +194,7 @@ class DouDigestDagGenerator():
 
         return trimmed_result
 
-    def extract_csv(self, search_report: dict, dag_id: str):
+    def get_csv_tempfile(self, search_report: dict):
         new_table = []
         for group, results in search_report.items():
             for term, items in results.items():
@@ -212,15 +214,10 @@ class DouDigestDagGenerator():
         if 'single_group' in search_report:
             del df['Grupo']
 
-        tmp_dir = os.path.join(
-            Variable.get("path_tmp"),
-            self.LOCAL_TMP_DIR,
-            dag_id)
-        os.makedirs(tmp_dir, exist_ok=True)
-        file_name = os.path.join(tmp_dir, 'extracao_dou.csv')
-        df.to_csv(file_name, index=False)
+        temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
+        df.to_csv(temp_file, index=False)
 
-        return file_name
+        return temp_file
 
     def generate_email_content(self, search_report: dict):
         """Generate HTML content to be sent by email based on
@@ -270,13 +267,20 @@ class DouDigestDagGenerator():
         full_subject = f"{subject} - DOU de {today_date}"
         content = self.generate_email_content(search_report)
 
-        send_email(
-            to=email_to_list,
-            subject=full_subject,
-            files=[self.extract_csv(search_report, dag_id)]
-                  if attach_csv else None,
-            html_content=content,
-            mime_charset='utf-8')
+        if attach_csv:
+            with self.get_csv_tempfile(search_report) as csv_file:
+                send_email(
+                    to=email_to_list,
+                    subject=full_subject,
+                    files=[csv_file.name],
+                    html_content=content,
+                    mime_charset='utf-8')
+        else:
+            send_email(
+                to=email_to_list,
+                subject=full_subject,
+                html_content=content,
+                mime_charset='utf-8')
 
     def _select_terms_from_db(self, sql, conn_id):
         """Executa o `sql` e retorna a lista de termos que serão utilizados
