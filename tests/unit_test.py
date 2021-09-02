@@ -1,4 +1,4 @@
-""" Ro-dou tests
+""" Ro-dou unit tests
 """
 
 import os
@@ -14,18 +14,33 @@ sys.path.insert(0, parentdir)
 
 from dou_dag_generator import DouDigestDagGenerator
 
-# Unit tests
-@pytest.mark.parametrize('input, output',
+@pytest.mark.parametrize('raw_html, clean_text',
                           [
                             ('<div><a>Any text</a></div>', 'Any text'),
                             ('<div><div><p>Any text</a></div>', 'Any text'),
                             ('Any text</a></div>', 'Any text'),
                             ('Any text', 'Any text'),
                             ])
-def test_clean_html(input, output):
-    assert DouDigestDagGenerator().clean_html(input) == output
+def test_clean_html(raw_html, clean_text):
+    assert DouDigestDagGenerator().clean_html(raw_html) == clean_text
 
-@pytest.mark.parametrize('input, output',
+@pytest.mark.parametrize('raw_html, start_name, match_name',
+    [
+    ("PRIOR<>MATCHED NAME<>EVENTUALLY END NAME",
+     "PRIOR",
+     "MATCHED NAME"),
+    ("JOSE<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span>CAMARGO",
+     "JOSE",
+     "ANTONIO DE OLIVEIRA"),
+    ("<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span>CAMARGO",
+     "",
+     "ANTONIO DE OLIVEIRA"),
+    ])
+def test_get_prior_and_matched_name(raw_html, start_name, match_name):
+    assert DouDigestDagGenerator()\
+        .get_prior_and_matched_name(raw_html) == (start_name, match_name)
+
+@pytest.mark.parametrize('raw_text, normalized_text',
                           [
                             ('Nitái Bêzêrrá', 'nitai bezerra'),
                             ('Nitái-Bêzêrrá', 'nitai bezerra'),
@@ -33,5 +48,5 @@ def test_clean_html(input, output):
                             ('ìÌÒòùÙúÚáÁÀeççÇÇ~ A', 'iioouuuuaaaecccc a'),
                             ('a  \|%&* /  aáá  3d_U', 'a aaa 3d u'),
                             ])
-def test_normalize(input, output):
-    assert DouDigestDagGenerator().normalize(input) == output
+def test_normalize(raw_text, normalized_text):
+    assert DouDigestDagGenerator().normalize(raw_text) == normalized_text
