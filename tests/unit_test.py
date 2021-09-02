@@ -36,7 +36,8 @@ def test_clean_html(raw_html, clean_text):
     ,
     ("<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span>CAMARGO",
      "",
-     "ANTONIO DE OLIVEIRA"),
+     "ANTONIO DE OLIVEIRA")
+    ,
     ])
 def test_get_prior_and_matched_name(raw_html, start_name, match_name):
     assert DouDigestDagGenerator()\
@@ -62,7 +63,32 @@ def test_normalize(raw_text, normalized_text):
      "JOSÉ <span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span> FREITAS - Diretor Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: Termo de Compromisso que entre si celebram a União, por intermédio do Ministério da Saúde,...")
     ,
     ("MATCHED NAME",
-     "PRIOR<>MATCHED NAME<>EVENTUALLY END NAME"),
+     "PRIOR<>MATCHED NAME<>EVENTUALLY END NAME")
+    ,
     ])
 def test_is_signature(search_term, abstract):
     assert DouDigestDagGenerator().is_signature(search_term, abstract)
+
+@pytest.mark.parametrize('search_term, abstract',
+    [
+    ("ANTONIO DE OLIVEIRA",
+     "<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span> FREITAS - Diretor Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: Termo de Compromisso que entre si celebram a União, por intermédio do Ministério da Saúde,...")
+    ,
+    ("MATCHED NAME",
+     "PRIOR<>MATCHED NAME<>EVENTUALLY END NAME")
+    ,
+    ("MATCHED NAME",
+     "PRIOR MATCHED<> NAME<>EVENTUALLY END NAME")
+    ,
+    ("MATCHED NAME",
+     "PRIOR MATCHED<>   NAME   <>EVENTUALLY END NAME")
+    ,
+    ("MATCHED NAME",
+     "PRIOR MATCHED<> ... NAME<>EVENTUALLY END NAME")
+    ,
+    ("ANTONIO DE OLIVEIRA",
+     "Secretário-Executivo Adjunto do Ministério da Saúde; <span>ANTONIO</span> ... DE <span>OLIVEIRA</span> FREITAS JUNIOR - Diretor Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: Termo de ,...")
+    ,
+    ])
+def test_really_matched(search_term, abstract):
+    assert DouDigestDagGenerator().really_matched(search_term, abstract)
