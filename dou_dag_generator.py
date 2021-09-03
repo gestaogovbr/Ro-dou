@@ -24,8 +24,8 @@ import pandas as pd
 
 from airflow import DAG
 from airflow.models import Variable
-from airflow.operators.python_operator import PythonOperator
-from airflow.hooks.mssql_hook import MsSqlHook
+from airflow.operators.python import PythonOperator
+from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.utils.email import send_email
 
 from unidecode import unidecode
@@ -357,7 +357,6 @@ class DouDigestDagGenerator():
                     "ignore_signature_match": ignore_signature_match,
                     "force_rematch": force_rematch,
                     },
-                provide_context=True,
             )
             if sql:
                 select_terms_from_db >> exec_dou_search
