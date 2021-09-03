@@ -111,6 +111,20 @@ def test_is_signature(search_term, abstract):
 def test_really_matched(search_term, abstract):
     assert DouDigestDagGenerator().really_matched(search_term, abstract)
 
+def test_repack_match(report_example):
+    match_dict = report_example['single_group']['antonio de oliveira'][0]
+    repacked_match = DouDigestDagGenerator()\
+                        .repack_match('single_group',
+                                      'antonio de oliveira',
+                                      match_dict)
+    assert repacked_match == ('single_group',
+                              'antonio de oliveira',
+                              'Seção 3',
+                              match_dict['href'],
+                              match_dict['title'],
+                              match_dict['abstract'],
+                              match_dict['date'])
+
 def test_get_csv_tempfile_returns_valid_file(report_example):
     with DouDigestDagGenerator().get_csv_tempfile(report_example) as csv_file:
         assert pd.read_csv(csv_file.name) is not None
