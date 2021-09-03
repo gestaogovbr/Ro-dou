@@ -34,7 +34,7 @@ def pytest_unconfigure(config):
             os.environ[key] = value
 
 @pytest.fixture()
-def search_report() -> dict:
+def report_example() -> dict:
     report = {
         "single_group": {
             "antonio de oliveira": [
