@@ -194,21 +194,30 @@ class DouDigestDagGenerator():
 
         return trimmed_result
 
-    def convert_report_to_dataframe(self, search_report: dict):
-        new_table = []
+    def repack_match(self,
+                     group,
+                     search_term,
+                     match: dict) -> tuple:
+        return (group,
+                search_term,
+                DOUHook.SEC_DESCRIPTION[match['section']],
+                match['href'],
+                match['title'],
+                match['abstract'],
+                match['date'],
+                )
+
+    def convert_report_dict_to_tuple_list(self, search_report: dict) -> list:
+        tuple_list = []
         for group, results in search_report.items():
-            for term, items in results.items():
-                for item in items:
-                    new_table.append((
-                        group,
-                        term,
-                        DOUHook.SEC_DESCRIPTION[item['section']],
-                        item['href'],
-                        item['title'],
-                        item['abstract'],
-                        item['date'],
-                        ))
-        df = pd.DataFrame(new_table)
+            for term, matchs in results.items():
+                for match in matchs:
+                    tuple_list.append(
+                        self.repack_match(group, term, match))
+        return tuple_list
+
+    def convert_report_to_dataframe(self, search_report: dict):
+        df = pd.DataFrame(self.convert_report_dict_to_tuple_list(search_report))
         df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
         if 'single_group' in search_report:
