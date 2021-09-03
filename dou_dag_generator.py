@@ -194,7 +194,7 @@ class DouDigestDagGenerator():
 
         return trimmed_result
 
-    def get_csv_tempfile(self, search_report: dict):
+    def convert_report_to_dataframe(self, search_report: dict):
         new_table = []
         for group, results in search_report.items():
             for term, items in results.items():
@@ -214,6 +214,10 @@ class DouDigestDagGenerator():
         if 'single_group' in search_report:
             del df['Grupo']
 
+        return df
+
+    def get_csv_tempfile(self, search_report: dict):
+        df = self.convert_report_to_dataframe(search_report)
         temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
         df.to_csv(temp_file, index=False)
 
