@@ -1,20 +1,9 @@
 """ Ro-dou unit tests
 """
 
-import os
-import sys
-import inspect
-
 import pytest
 
 import pandas as pd
-
-currentdir = os.path.dirname(
-    os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
-
-from dou_dag_generator import DouDigestDagGenerator
 
 @pytest.mark.parametrize(
     'raw_html, clean_text',
@@ -24,8 +13,8 @@ from dou_dag_generator import DouDigestDagGenerator
         ('Any text</a></div>', 'Any text'),
         ('Any text', 'Any text'),
     ])
-def test_clean_html(raw_html, clean_text):
-    assert DouDigestDagGenerator().clean_html(raw_html) == clean_text
+def test_clean_html(dag_gen, raw_html, clean_text):
+    assert dag_gen.clean_html(raw_html) == clean_text
 
 @pytest.mark.parametrize(
     'raw_html, start_name, match_name',
@@ -34,18 +23,19 @@ def test_clean_html(raw_html, clean_text):
          "PRIOR",
          "MATCHED NAME")
         ,
-        ("JOSE<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span>CAMARGO",
+        ("JOSE<span class='highlight' style='background:#FFA;'>"
+            "ANTONIO DE OLIVEIRA</span>CAMARGO",
          "JOSE",
          "ANTONIO DE OLIVEIRA")
         ,
-        ("<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA</span>CAMARGO",
+        ("<span class='highlight' style='background:#FFA;'>"
+            "ANTONIO DE OLIVEIRA</span>CAMARGO",
          "",
          "ANTONIO DE OLIVEIRA")
         ,
     ])
-def test_get_prior_and_matched_name(raw_html, start_name, match_name):
-    assert DouDigestDagGenerator()\
-        .get_prior_and_matched_name(raw_html) == (start_name, match_name)
+def test_get_prior_and_matched_name(dag_gen, raw_html, start_name, match_name):
+    assert dag_gen.get_prior_and_matched_name(raw_html) == (start_name, match_name)
 
 @pytest.mark.parametrize(
     'raw_text, normalized_text',
@@ -56,8 +46,8 @@ def test_get_prior_and_matched_name(raw_html, start_name, match_name):
         ('ìÌÒòùÙúÚáÁÀeççÇÇ~ A', 'iioouuuuaaaecccc a'),
         ('a  %&* /  aáá  3d_U', 'a aaa 3d u'),
     ])
-def test_normalize(raw_text, normalized_text):
-    assert DouDigestDagGenerator().normalize(raw_text) == normalized_text
+def test_normalize(dag_gen, raw_text, normalized_text):
+    assert dag_gen.normalize(raw_text) == normalized_text
 
 @pytest.mark.parametrize(
     'search_term, abstract',
@@ -78,8 +68,8 @@ def test_normalize(raw_text, normalized_text):
          "PRIOR<>MATCHED NAME<>EVENTUALLY END NAME")
         ,
     ])
-def test_is_signature(search_term, abstract):
-    assert DouDigestDagGenerator().is_signature(search_term, abstract)
+def test_is_signature(dag_gen, search_term, abstract):
+    assert dag_gen.is_signature(search_term, abstract)
 
 @pytest.mark.parametrize(
     'search_term, abstract',
@@ -108,15 +98,14 @@ def test_is_signature(search_term, abstract):
          "Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: Termo de ,...")
         ,
     ])
-def test_really_matched(search_term, abstract):
-    assert DouDigestDagGenerator().really_matched(search_term, abstract)
+def test_really_matched(dag_gen, search_term, abstract):
+    assert dag_gen.really_matched(search_term, abstract)
 
-def test_repack_match(report_example):
+def test_repack_match(dag_gen, report_example):
     match_dict = report_example['single_group']['antonio de oliveira'][0]
-    repacked_match = DouDigestDagGenerator()\
-                        .repack_match('single_group',
-                                      'antonio de oliveira',
-                                      match_dict)
+    repacked_match = dag_gen.repack_match('single_group',
+                                          'antonio de oliveira',
+                                          match_dict)
     assert repacked_match == ('single_group',
                               'antonio de oliveira',
                               'Seção 3',
@@ -125,28 +114,25 @@ def test_repack_match(report_example):
                               match_dict['abstract'],
                               match_dict['date'])
 
-def test_convert_report_dict__returns_list(report_example):
-    tuple_list = DouDigestDagGenerator()\
-        .convert_report_dict_to_tuple_list(report_example)
+def test_convert_report_dict__returns_list(dag_gen, report_example):
+    tuple_list = dag_gen.convert_report_dict_to_tuple_list(report_example)
     assert isinstance(tuple_list, list)
 
-def test_convert_report_dict__returns_tuples(report_example):
-    tuple_list = DouDigestDagGenerator()\
-        .convert_report_dict_to_tuple_list(report_example)
+def test_convert_report_dict__returns_tuples(dag_gen, report_example):
+    tuple_list = dag_gen.convert_report_dict_to_tuple_list(report_example)
     for tpl in tuple_list:
         assert isinstance(tpl, tuple)
 
-def test_convert_report_dict__returns_tuples_of_seven(report_example):
-    tuple_list = DouDigestDagGenerator()\
-        .convert_report_dict_to_tuple_list(report_example)
+def test_convert_report_dict__returns_tuples_of_seven(dag_gen, report_example):
+    tuple_list = dag_gen.convert_report_dict_to_tuple_list(report_example)
     for tpl in tuple_list:
         assert len(tpl) == 7
 
-def test_convert_report_to_dataframe(report_example):
-    df = DouDigestDagGenerator().convert_report_to_dataframe(report_example)
-    df_rows_count = df.shape[0]
-    assert df_rows_count == 15
+def test_convert_report_to_dataframe(dag_gen, report_example):
+    df = dag_gen.convert_report_to_dataframe(report_example)
+    num_rows = df.shape[0]
+    assert num_rows == 15
 
-def test_get_csv_tempfile_returns_valid_file(report_example):
-    with DouDigestDagGenerator().get_csv_tempfile(report_example) as csv_file:
+def test_get_csv_tempfile_returns_valid_file(dag_gen, report_example):
+    with dag_gen.get_csv_tempfile(report_example) as csv_file:
         assert pd.read_csv(csv_file.name) is not None
