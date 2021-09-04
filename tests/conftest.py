@@ -1,9 +1,20 @@
+"""All unit tests
+"""
+
 import os
+import sys
+import inspect
 
 import pytest
 
 from airflow import models
 from airflow.utils import db
+
+currentdir = os.path.dirname(
+    os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+from dou_dag_generator import DouDigestDagGenerator
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
@@ -32,6 +43,10 @@ def pytest_unconfigure(config):
             del os.environ[key]
         else:
             os.environ[key] = value
+
+@pytest.fixture(scope='module')
+def dag_gen() -> DouDigestDagGenerator:
+    return DouDigestDagGenerator()
 
 @pytest.fixture()
 def report_example() -> dict:
