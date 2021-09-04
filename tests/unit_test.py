@@ -125,6 +125,28 @@ def test_repack_match(report_example):
                               match_dict['abstract'],
                               match_dict['date'])
 
+def test_convert_report_dict__returns_list(report_example):
+    tuple_list = DouDigestDagGenerator()\
+        .convert_report_dict_to_tuple_list(report_example)
+    assert isinstance(tuple_list, list)
+
+def test_convert_report_dict__returns_tuples(report_example):
+    tuple_list = DouDigestDagGenerator()\
+        .convert_report_dict_to_tuple_list(report_example)
+    for tpl in tuple_list:
+        assert isinstance(tpl, tuple)
+
+def test_convert_report_dict__returns_tuples_of_seven(report_example):
+    tuple_list = DouDigestDagGenerator()\
+        .convert_report_dict_to_tuple_list(report_example)
+    for tpl in tuple_list:
+        assert len(tpl) == 7
+
+def test_convert_report_to_dataframe(report_example):
+    df = DouDigestDagGenerator().convert_report_to_dataframe(report_example)
+    df_rows_count = df.shape[0]
+    assert df_rows_count == 15
+
 def test_get_csv_tempfile_returns_valid_file(report_example):
     with DouDigestDagGenerator().get_csv_tempfile(report_example) as csv_file:
         assert pd.read_csv(csv_file.name) is not None
