@@ -133,19 +133,19 @@ def test_convert_report_to_dataframe__rows_count(dag_gen, report_example):
     # num_rows
     assert df.shape[0] == 15
 
-def test_convert_report_to_dataframe__cols_count_single_group(
+def test_convert_report_to_dataframe__cols_single_group(
         dag_gen, report_example):
     df = dag_gen.convert_report_to_dataframe(report_example)
-    # columns
-    assert df.shape[1] == 6
+    assert tuple(df.columns) == ('Termo de pesquisa', 'Seção', 'URL',
+                                 'Título', 'Resumo', 'Data')
 
-def test_convert_report_to_dataframe__cols_count_grouped_report(
+def test_convert_report_to_dataframe__cols_grouped_report(
         dag_gen, report_example):
     report_example['group_name_different_of_single_group'] = \
         report_example.pop('single_group')
     df = dag_gen.convert_report_to_dataframe(report_example)
-    # columns
-    assert df.shape[1] == 7
+    assert tuple(df.columns) == ('Grupo', 'Termo de pesquisa', 'Seção', 'URL',
+                                 'Título', 'Resumo', 'Data')
 
 def test_get_csv_tempfile_returns_valid_file(dag_gen, report_example):
     with dag_gen.get_csv_tempfile(report_example) as csv_file:
