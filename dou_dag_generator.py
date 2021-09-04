@@ -195,8 +195,8 @@ class DouDigestDagGenerator():
         return trimmed_result
 
     def repack_match(self,
-                     group,
-                     search_term,
+                     group: str,
+                     search_term: str,
                      match: dict) -> tuple:
         return (group,
                 search_term,
@@ -216,23 +216,21 @@ class DouDigestDagGenerator():
                         self.repack_match(group, term, match))
         return tuple_list
 
-    def convert_report_to_dataframe(self, search_report: dict):
+    def convert_report_to_dataframe(self, search_report: dict) -> pd.DataFrame:
         df = pd.DataFrame(self.convert_report_dict_to_tuple_list(search_report))
         df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                       'Título', 'Resumo', 'Data']
         if 'single_group' in search_report:
             del df['Grupo']
-
         return df
 
-    def get_csv_tempfile(self, search_report: dict):
+    def get_csv_tempfile(self, search_report: dict) -> NamedTemporaryFile:
         df = self.convert_report_to_dataframe(search_report)
         temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
         df.to_csv(temp_file, index=False)
-
         return temp_file
 
-    def generate_email_content(self, search_report: dict):
+    def generate_email_content(self, search_report: dict) -> str:
         """Generate HTML content to be sent by email based on
         search_report dictionary
         """
