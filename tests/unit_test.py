@@ -101,6 +101,46 @@ def test_is_signature(dag_gen, search_term, abstract):
 def test_really_matched(dag_gen, search_term, abstract):
     assert dag_gen.really_matched(search_term, abstract)
 
+@pytest.mark.parametrize(
+    'pre_term_list, casted_term_list',
+    [
+        ('''{
+            "servidor":{
+                "0":"ANTONIO",
+                "1":"JOSE",
+                "2":"SILVA"
+                },
+            "carreira":{
+                "0":"EPPGG",
+                "1":"ATI",
+                "2":"OIA"
+                }
+            }
+         ''',
+         ['ANTONIO', 'JOSE', 'SILVA']),
+        ('''{
+            "tanto_faz":{
+                "0":"NITAI",
+                "1":"BEZERRA DA",
+                "2":"SILVA"
+                },
+            "o_nome_das_colunas":{
+                "0":"ESSE",
+                "1":"VALOR",
+                "2":"E IGNORADO"
+                }
+            }
+         ''',
+         ['NITAI', 'BEZERRA DA', 'SILVA']),
+    ]
+)
+def test_cast_term_list__str_param(dag_gen, pre_term_list, casted_term_list):
+    assert tuple(dag_gen.cast_term_list(pre_term_list)) == tuple(casted_term_list)
+
+def test_cast_term_list__list_param(dag_gen):
+    pre_term_list = ['a', 'b', 'c']
+    assert tuple(dag_gen.cast_term_list(pre_term_list)) == tuple(pre_term_list)
+
 def test_repack_match(dag_gen, report_example):
     match_dict = report_example['single_group']['antonio de oliveira'][0]
     repacked_match = dag_gen.repack_match('single_group',
