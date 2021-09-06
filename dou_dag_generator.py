@@ -146,6 +146,51 @@ class DouDigestDagGenerator():
 
         return search_results
 
+    def cast_term_list(self, pre_term_list: [list, str]) -> list:
+        """If `pre_term_list` is a str (in the case it came from xcom)
+        then its necessary to convert it back to dataframe and return
+        the first column. Otherwise the `pre_term_list` is returned.
+        """
+        return pre_term_list if isinstance(pre_term_list, list) else \
+            pd.read_json(pre_term_list).iloc[:, 0].tolist()
+
+    def group_by_term_group(self,
+                            search_results: dict,
+                            term_n_group: str) -> dict:
+        """Rebuild the dict grouping the results based on term_n_group
+        mapping
+        """
+        dict_struct = ast.literal_eval(term_n_group)
+        terms, groups = dict_struct.values()
+        term_group_map = dict(zip(terms.values(), groups.values()))
+        groups = sorted(list(set(term_group_map.values())))
+
+        grouped_result = {
+            g1:{
+                t: search_results[t]
+                for (t, g2) in sorted(term_group_map.items())
+                if t in search_results and g1 == g2}
+            for g1 in groups}
+
+        # Clear empty groups
+        trimmed_result = {k: v for k, v in grouped_result.items() if v}
+        return trimmed_result
+
+    def group_results(self,
+                      search_results: dict,
+                      term_list: [list, str]) -> dict:
+        """Produces a grouped result based on if `term_list` is already
+        the list of terms or it is a string received through xcom
+        from `select_terms_from_db` task and the sql_query returned a
+        second column (used as the group name)
+        """
+        if isinstance(term_list, str) and len(ast.literal_eval(term_list).values()) > 1:
+            grouped_result = self.group_by_term_group(search_results, term_list)
+        else:
+            grouped_result = {'single_group': search_results}
+
+        return grouped_result
+
     def _exec_dou_search(self,
                          term_list,
                          dou_sections: [str],
@@ -155,44 +200,16 @@ class DouDigestDagGenerator():
                          ignore_signature_match: bool,
                          force_rematch: bool,
                          **context):
-        term_group_map = None
-        if isinstance(term_list, str):
-            # Quando `term_list` vem do xcom (tipo str) é necessário recriar
-            # o dataframe a partir da string
-            terms_df = pd.read_json(term_list)
-            first_column = terms_df.iloc[:, 0]
-            term_list = first_column.tolist()
-
-            # Se existir a segunda coluna usada para agrupar é pq existem grupos
-            if len(terms_df.columns) > 1:
-                second_column = terms_df.iloc[:, 1]
-                term_group_map = dict(zip(first_column, second_column))
-
-        trigger_date = get_trigger_date(context)
-        search_results = self.search_all_terms(term_list,
+        search_results = self.search_all_terms(self.cast_term_list(term_list),
                                                dou_sections,
                                                search_date,
-                                               trigger_date,
+                                               get_trigger_date(context),
                                                field,
                                                is_exact_search,
                                                ignore_signature_match,
                                                force_rematch)
 
-        if term_group_map:
-            groups = sorted(list(set(term_group_map.values())))
-            grouped_result = {
-                g1:{
-                    t: search_results[t]
-                    for (t, g2) in sorted(term_group_map.items())
-                    if t in search_results and g1 == g2}
-                for g1 in groups}
-        else:
-            grouped_result = {'single_group': search_results}
-
-        # Clear empty groups
-        trimmed_result = {k: v for k, v in grouped_result.items() if v}
-
-        return trimmed_result
+        return self.group_results(search_results, term_list)
 
     def repack_match(self,
                      group: str,
@@ -225,9 +242,9 @@ class DouDigestDagGenerator():
         return df
 
     def get_csv_tempfile(self, search_report: dict) -> NamedTemporaryFile:
-        df = self.convert_report_to_dataframe(search_report)
         temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
-        df.to_csv(temp_file, index=False)
+        self.convert_report_to_dataframe(search_report)\
+            .to_csv(temp_file, index=False)
         return temp_file
 
     def generate_email_content(self, search_report: dict) -> str:
@@ -254,17 +271,15 @@ class DouDigestDagGenerator():
                         ### [{item['title']}]({item['href']})
                         <p class='abstract-marker'>{item['abstract']}</p>
                         <p class='date-marker'>{item['date']}</p>"""
-                    blocks.append(textwrap.indent(
-                        textwrap.dedent(item_html),
-                        ' ' * 4
-                    ))
+                    blocks.append(
+                        textwrap.indent(textwrap.dedent(item_html), ' ' * 4))
                 blocks.append('---')
             blocks.append('---')
 
         return markdown.markdown('\n'.join(blocks))
 
     def _send_email_task(self, search_report, subject, email_to_list,
-                         attach_csv, dag_id):
+                         attach_csv):
         """
         Envia e-mail de notificação dos aspectos mais relevantes do DOU.
         """
@@ -302,7 +317,7 @@ class DouDigestDagGenerator():
         """
         mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
         df = mssql_hook.get_pandas_df(sql)
-        # Remove espaços desnecessários e troca null por ''
+        # Remove unnecessary spaces and change null by ''
         df = df.applymap(lambda x: str.strip(x) if pd.notnull(x) else '')
 
         return df.to_json(orient="columns")
@@ -380,7 +395,6 @@ class DouDigestDagGenerator():
                     "subject": subject,
                     "email_to_list": email_to_list,
                     "attach_csv": attach_csv,
-                    "dag_id": dag_id,
                     },
             )
             exec_dou_search >> send_email_task
