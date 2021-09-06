@@ -147,6 +147,14 @@ def test_convert_report_to_dataframe__cols_grouped_report(
     assert tuple(df.columns) == ('Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                                  'Título', 'Resumo', 'Data')
 
-def test_get_csv_tempfile_returns_valid_file(dag_gen, report_example):
+def test_get_csv_tempfile__valid_file_name_preffix(dag_gen, report_example):
+    with dag_gen.get_csv_tempfile(report_example) as csv_file:
+        assert csv_file.name.split('/')[-1].startswith('extracao_dou_')
+
+def test_get_csv_tempfile__valid_file_name_suffix(dag_gen, report_example):
+    with dag_gen.get_csv_tempfile(report_example) as csv_file:
+        assert csv_file.name.endswith('.csv')
+
+def test_get_csv_tempfile__valid_csv(dag_gen, report_example):
     with dag_gen.get_csv_tempfile(report_example) as csv_file:
         assert pd.read_csv(csv_file.name) is not None
