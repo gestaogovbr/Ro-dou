@@ -284,3 +284,63 @@ def report_example() -> dict:
         }
     }
     return report
+
+@pytest.fixture()
+def search_results() -> dict:
+    result = {
+        "ANTONIO DE OLIVEIRA": [
+            {
+                "section": "do3",
+                "title": "EXTRATO DE COMPROMISSO",
+                "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+                "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto do Ministério da Saúde; REGINALDO <span class='highlight' style='background:#FFA;'>ANTONIO</span> ... DE <span class='highlight' style='background:#FFA;'>OLIVEIRA</span> FREITAS JUNIOR - Diretor Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: Termo de Compromisso que entre si celebram a União, por intermédio do Ministério da Saúde,...",
+                "date": "02/09/2021",
+            },
+            {
+                "section": "do3",
+                "title": "EXTRATO DE INEXIGIBILIDADE DE LICITAÇÃO Nº 4/2021 - UASG 160454",
+                "href": "https://www.in.gov.br/web/dou/-/extrato-de-inexigibilidade-de-licitacao-n-4/2021-uasg-160454-342420638",
+                "abstract": "CPF CONTRATADA : 013.872.545-45 MARCOS <span class='highlight' style='background:#FFA;'>ANTONIO</span> DE <span class='highlight' style='background:#FFA;'>OLIVEIRA</span> CARDOSO. Valor: R$ 160.000,00.000,00. CPF CONTRATADA : 000.009.405-69 LEANDRO MACEDO DE FRANCA. Valor: R$ 160.000,00. CPF CONTRATADA : 000.071.195-00 GILMAR DE OLIVEIRA DANTAS. Valor: R$ 160.000,00. CPF CONTRATADA : 000.241.585-2...",
+                "date": "02/09/2021",
+            },
+            {
+                "section": "do3",
+                "title": "EXTRATO DE INEXIGIBILIDADE DE LICITAÇÃO Nº 16/2021 - UASG 160173",
+                "href": "https://www.in.gov.br/web/dou/-/extrato-de-inexigibilidade-de-licitacao-n-16/2021-uasg-160173-342420560",
+                "abstract": "CPF CONTRATADA : 066.751.274-89 LUIS <span class='highlight' style='background:#FFA;'>ANTONIO</span> DE <span class='highlight' style='background:#FFA;'>OLIVEIRA</span>. Valor: R$ 80.000,00.EXTRATO DE INEXIGIBILIDADE DE LICITAÇÃO Nº 16/2021 - UASG 160173 Nº Processo: 64097007173202061 . Objeto: Contratação de prestadores de serviço de coleta, transporte e distribuição de água potável no contexto d...",
+                "date": "02/09/2021",
+            },
+        ],
+        "SILVA": [
+            {
+                "section": "do3",
+                "title": "EXTRATO DE CONTRATO",
+                "href": "https://www.in.gov.br/web/dou/-/extrato-de-contrato-342647923",
+                "abstract": "<span class='highlight' style='background:#FFA;'>Silva</span> Construções e Serviços Eireli.EXTRATO DE CONTRATO Tomada de Preços nº 01/2021. Contrato: 34/2021. Contratante: O Município de Itaporanga D'Ajuda, Estado de Sergipe. Contratada: R.S. Silva Construções e Serviços Eireli. Objeto: Contratação De Empresa Especializada Em Obras E Serviços De Engenharia Para Remanescente De Pavimentação E Dren...",
+                "date": "02/09/2021",
+            },
+            {
+                "section": "do3",
+                "title": "AVISO PREGÃO ELETRÔNICO Nº 264/2021- SEC SAÚDE",
+                "href": "https://www.in.gov.br/web/dou/-/aviso-pregao-eletronico-n-264/2021-sec-saude-342647763",
+                "abstract": "ANDREA ISABEL DA <span class='highlight' style='background:#FFA;'>SILVA</span> THOMÉ Secretária Municipal da AdministraçãoAVISO PREGÃO ELETRÔNICO Nº 264/2021- SEC SAÚDE PROCESSO Nº 438/2021 OBJETO: Aquisição de mobiliários em geral para a estruturação da Secretária Municipal da Saúde. DATA DA REALIZAÇÃO: 17/09/2021. RECEBIMENTO DAS PROPOSTAS ELETRÔNICAS: a partir do dia 02/09/2021 ao dia 17/09/202...",
+                "date": "02/09/2021",
+            },
+            {
+                "section": "do3",
+                "title": "AVISO DE REVOGAÇÃO",
+                "href": "https://www.in.gov.br/web/dou/-/aviso-de-revogacao-342647681",
+                "abstract": "ALVES DA <span class='highlight' style='background:#FFA;'>SILVA</span> PregoeiraAVISO DE REVOGAÇÃO Revogação do PREGÃO ELETRÔNICO BEC Nº 032/2021 - PROCESSO Nº 4646/2021 - OFERTA DE COMPRA Nº 874700801002021OC00035- Objeto - REGISTRO DE PREÇOS PARA AQUISIÇÃO DE MÁSCARAS DE PROTEÇÃO REUTILIZÁVEL. A Prefeitura Municipal de Holambra TORNA PÚBLICO a quem possa interessar, que a Comissão Permanente de ...",
+                "date": "02/09/2021",
+            },
+            {
+                "section": "do3",
+                "title": "AVISO DE ADJUDICAÇÃO E HOMOLOGAÇÃOTOMADA DE PREÇOS nº 3/2021",
+                "href": "https://www.in.gov.br/web/dou/-/aviso-de-adjudicacao-e-homologacaotomada-de-precos-n-3/2021-342646709",
+                "abstract": "HOMOLOGAÇÃOTOMADA DE PREÇOS nº 3/2021 Processo nº 108/2021 O Senhor Prefeito Municipal, LEANDRO PEREIRA DA <span class='highlight' style='background:#FFA;'>SILVA</span> ... LEANDRO PEREIRA DA <span class='highlight' style='background:#FFA;'>SILVA</span>VISO DE ADJUDICAÇÃO E HOMOLOGAÇÃOTOMADA DE PREÇOS nº 3/2021 Processo nº 108/2021 O Senhor Prefeito Municipal, LEANDRO PEREIRA DA SILVA, no uso de s...",
+                "date": "02/09/2021",
+            },
+        ],
+    }
+
+    return result
