@@ -141,6 +141,26 @@ def test_cast_term_list__list_param(dag_gen):
     pre_term_list = ['a', 'b', 'c']
     assert tuple(dag_gen.cast_term_list(pre_term_list)) == tuple(pre_term_list)
 
+def test_group_by_term_group(dag_gen, search_results):
+    term_n_group = """{
+        "servidor_nome_contato":{
+            "0":"ANTONIO DE OLIVEIRA",
+            "1":"SILVA"
+        },
+        "carreira":{
+            "0":"EPPGG",
+            "1":"ATI"
+        }
+    }"""
+    grouped_result = dag_gen.group_by_term_group(search_results, term_n_group)
+
+    assert 'ATI' in grouped_result
+    assert 'SILVA' in grouped_result['ATI']
+    assert len(grouped_result['ATI']['SILVA']) == 4
+    assert 'EPPGG' in grouped_result
+    assert 'ANTONIO DE OLIVEIRA' in grouped_result['EPPGG']
+    assert len(grouped_result['EPPGG']['ANTONIO DE OLIVEIRA']) == 3
+
 def test_repack_match(dag_gen, report_example):
     match_dict = report_example['single_group']['antonio de oliveira'][0]
     repacked_match = dag_gen.repack_match('single_group',
