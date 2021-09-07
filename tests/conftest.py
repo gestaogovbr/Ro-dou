@@ -344,3 +344,16 @@ def search_results() -> dict:
     }
 
     return result
+
+@pytest.fixture()
+def term_n_group():
+    return """{
+        "servidor_nome_contato":{
+            "0":"ANTONIO DE OLIVEIRA",
+            "1":"SILVA"
+        },
+        "carreira":{
+            "0":"EPPGG",
+            "1":"ATI"
+        }
+    }"""
