@@ -1,9 +1,18 @@
 """ Ro-dou unit tests
 """
+import os
+import sys
+import inspect
 
 import pytest
 
 import pandas as pd
+
+currentdir = os.path.dirname(
+    os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+from dou_dag_generator import hash_dag_id, get_safe_schedule
 
 @pytest.mark.parametrize(
     'dag_id, size, hashed',
@@ -14,8 +23,8 @@ import pandas as pd
         ('', 10, 0),
         ('', 100, 0),
     ])
-def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
-    assert yaml_parser.hash_dag_id(dag_id, size) == hashed
+def test_hash_dag_id(dag_id, size, hashed):
+    assert hash_dag_id(dag_id, size) == hashed
 
 @pytest.mark.parametrize(
     'raw_html, clean_text',

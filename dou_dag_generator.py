@@ -34,6 +34,31 @@ from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 from airflow_commons.slack_messages import send_slack
 from airflow_commons.utils.date import get_trigger_date
 
+def hash_dag_id(dag_id: str, size: int) -> int:
+    """Hashes the `dag_id` into a integer between 0 and `size`"""
+    buffer = 0
+    for _char in dag_id:
+        buffer += (ord(_char))
+    try:
+        _hash = buffer % size
+    except ZeroDivisionError:
+        raise ValueError('`size` deve ser maior que 0.')
+    return _hash
+
+def get_safe_schedule(dag: dict, default_schedule: str) -> str:
+    """Retorna um novo valor de `schedule_interval` randomizando o
+    minuto de execução baseado no `dag_id`, caso a dag utilize o
+    schedule_interval padrão. Aplica uma função de hash na string
+    dag_id que retorna valor entre 0 e 60 que define o minuto de
+    execução.
+    """
+    schedule = dag.get('schedule_interval', default_schedule)
+    if schedule == default_schedule:
+        id_based_minute = hash_dag_id(dag['id'], 60)
+        schedule_without_min = ' '.join(schedule.split(" ")[1:])
+        new_schedule = f'{id_based_minute} {schedule_without_min}'
+    return new_schedule
+
 class YAMLParser():
     """Parses YAML file and get the DAG parameters.
 
@@ -45,76 +70,52 @@ class YAMLParser():
     def __init__(self, filepath: str):
         self.filepath = filepath
 
-    def hash_dag_id(self, dag_id: str, size: int) -> int:
-        """Hashes the `dag_id` into a integer between 0 and `size`"""
-        buffer = 0
-        for _char in dag_id:
-            buffer += (ord(_char))
+
+    def try_get(self, variable: dict, field, error_msg=None):
+        """Try to retrieve the property named as `field` from
+        `variable` dict and raise apropriate message"""
         try:
-            _hash = buffer % size
-        except ZeroDivisionError:
-            raise ValueError('`size` deve ser maior que 0.')
-        return _hash
+            return variable[field]
+        except KeyError:
+            if not error_msg:
+                error_msg = f'O campo `{field}` é obrigatório.'
+            file_name = self.filepath.split('/')[-1]
+            error_msg = f'Erro no arquivo {file_name}: {error_msg}'
+            raise ValueError(error_msg)
+
+    def get_terms_params(self, search):
+        terms = self.try_get(search, 'terms')
+        sql = None
+        conn_id = None
+        if isinstance(terms, dict):
+            if 'from_airflow_variable' in terms:
+                var_name = terms.get('from_airflow_variable')
+                terms = ast.literal_eval(Variable.get(var_name))
+            elif 'from_db_select' in terms:
+                from_db_select = terms.get('from_db_select')
+                sql = self.try_get(from_db_select, 'sql')
+                conn_id = self.try_get(from_db_select, 'conn_id')
+            else:
+                raise ValueError(
+                    'O campo `terms` aceita como valores válidos '
+                    'uma lista de strings ou parâmetros do tipo '
+                    '`from_airflow_variable` ou `from_db_select`.')
+        return terms, sql, conn_id
 
     def parse_yaml(self):
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
-        def try_get(variable: dict, field, error_msg=None):
-            """Try to retrieve the property named as `field` from
-            `variable` dict and raise apropriate message"""
-            try:
-                return variable[field]
-            except KeyError:
-                if not error_msg:
-                    error_msg = f'O campo `{field}` é obrigatório.'
-                file_name = self.filepath.split('/')[-1]
-                error_msg = f'Erro no arquivo {file_name}: {error_msg}'
-                raise ValueError(error_msg)
-
-        def get_terms_params(search):
-            terms = try_get(search, 'terms')
-            sql = None
-            conn_id = None
-            if isinstance(terms, dict):
-                if 'from_airflow_variable' in terms:
-                    var_name = terms.get('from_airflow_variable')
-                    terms = ast.literal_eval(Variable.get(var_name))
-                elif 'from_db_select' in terms:
-                    from_db_select = terms.get('from_db_select')
-                    sql = try_get(from_db_select, 'sql')
-                    conn_id = try_get(from_db_select, 'conn_id')
-                else:
-                    raise ValueError(
-                        'O campo `terms` aceita como valores válidos '
-                        'uma lista de strings ou parâmetros do tipo '
-                        '`from_airflow_variable` ou `from_db_select`.')
-            return terms, sql, conn_id
-
-        def get_safe_schedule(dag: dict) -> str:
-            """Retorna um novo valor de `schedule_interval` randomizando o
-            minuto de execução baseado no `dag_id`, caso a dag utilize o
-            schedule_interval padrão. Aplica uma função de hash na string
-            dag_id que retorna valor entre 0 e 60 que define o minuto de
-            execução.
-            """
-            schedule = dag.get('schedule_interval', self.DEFAULT_SCHEDULE)
-            if schedule == self.DEFAULT_SCHEDULE:
-                dag_id = try_get(dag, 'id')
-                id_based_minute = self.hash_dag_id(dag_id, 60)
-                schedule_without_min = ' '.join(schedule.split(" ")[1:])
-                schedule = f'{id_based_minute} {schedule_without_min}'
-            return schedule
-
         with open(self.filepath, 'r') as file:
             dag_config_dict = yaml.safe_load(file)
-        dag = try_get(dag_config_dict, 'dag')
-        dag_id = try_get(dag, 'id')
-        description = try_get(dag, 'description')
-        report = try_get(dag, 'report')
-        emails = try_get(report, 'emails')
-        search = try_get(dag, 'search')
-        terms, sql, conn_id = get_terms_params(search)
+
+        dag = self.try_get(dag_config_dict, 'dag')
+        dag_id = self.try_get(dag, 'id')
+        description = self.try_get(dag, 'description')
+        report = self.try_get(dag, 'report')
+        emails = self.try_get(report, 'emails')
+        search = self.try_get(dag, 'search')
+        terms, sql, conn_id = self.get_terms_params(search)
 
         # Optional fields
         dou_sections = search.get('dou_sections', ['TODOS'])
@@ -123,7 +124,7 @@ class YAMLParser():
         is_exact_search = search.get('is_exact_search', True)
         ignore_signature_match = search.get('ignore_signature_match', False)
         force_rematch = search.get('force_rematch', False)
-        schedule = get_safe_schedule(dag)
+        schedule = get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
         dag_tags = dag.get('tags', [])
         # add default tags
         dag_tags.append('dou')
