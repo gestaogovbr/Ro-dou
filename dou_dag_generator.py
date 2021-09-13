@@ -472,8 +472,8 @@ class DouDigestDagGenerator():
                     task_id='select_terms_from_db',
                     python_callable=self._select_terms_from_db,
                     op_kwargs={
-                        "sql": sql,
-                        "conn_id": conn_id,
+                        'sql': sql,
+                        'conn_id': conn_id,
                         }
                 )
                 term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
@@ -482,13 +482,13 @@ class DouDigestDagGenerator():
                 task_id='exec_dou_search',
                 python_callable=self._exec_dou_search,
                 op_kwargs={
-                    "term_list": term_list,
-                    "dou_sections": dou_sections,
-                    "search_date": search_date,
-                    "field": search_field,
-                    "is_exact_search": is_exact_search,
-                    "ignore_signature_match": ignore_signature_match,
-                    "force_rematch": force_rematch,
+                    'term_list': term_list,
+                    'dou_sections': dou_sections,
+                    'search_date': search_date,
+                    'field': search_field,
+                    'is_exact_search': is_exact_search,
+                    'ignore_signature_match': ignore_signature_match,
+                    'force_rematch': force_rematch,
                     },
             )
             if sql:
@@ -498,10 +498,10 @@ class DouDigestDagGenerator():
                 task_id='send_email_task',
                 python_callable=self._send_email_task,
                 op_kwargs={
-                    "search_report": "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    "subject": subject,
-                    "email_to_list": email_to_list,
-                    "attach_csv": attach_csv,
+                    'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'subject': subject,
+                    'email_to_list': email_to_list,
+                    'attach_csv': attach_csv,
                     },
             )
             exec_dou_search >> send_email_task
