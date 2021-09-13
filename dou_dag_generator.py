@@ -42,6 +42,9 @@ class YAMLParser():
     """
     DEFAULT_SCHEDULE = '0 2 * * *'
 
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+
     def hash_dag_id(self, dag_id: str, size: int) -> int:
         """Hashes the `dag_id` into a integer between 0 and `size`"""
         buffer = 0
@@ -53,7 +56,7 @@ class YAMLParser():
             raise ValueError('`size` deve ser maior que 0.')
         return _hash
 
-    def parse_yaml(self, filepath):
+    def parse_yaml(self):
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
@@ -65,7 +68,7 @@ class YAMLParser():
             except KeyError:
                 if not error_msg:
                     error_msg = f'O campo `{field}` é obrigatório.'
-                file_name = filepath.split('/')[-1]
+                file_name = self.filepath.split('/')[-1]
                 error_msg = f'Erro no arquivo {file_name}: {error_msg}'
                 raise ValueError(error_msg)
 
@@ -88,7 +91,7 @@ class YAMLParser():
                         '`from_airflow_variable` ou `from_db_select`.')
             return terms, sql, conn_id
 
-        def get_safe_schedule(dag: DAG):
+        def get_safe_schedule(dag: dict) -> str:
             """Retorna um novo valor de `schedule_interval` randomizando o
             minuto de execução baseado no `dag_id`, caso a dag utilize o
             schedule_interval padrão. Aplica uma função de hash na string
@@ -103,7 +106,7 @@ class YAMLParser():
                 schedule = f'{id_based_minute} {schedule_without_min}'
             return schedule
 
-        with open(filepath, 'r') as file:
+        with open(self.filepath, 'r') as file:
             dag_config_dict = yaml.safe_load(file)
         dag = try_get(dag_config_dict, 'dag')
         dag_id = try_get(dag, 'id')
@@ -520,8 +523,8 @@ class DouDigestDagGenerator():
         ]
 
         for file in files_list:
-            dag_specs = YAMLParser().parse_yaml(
-                filepath=os.path.join(self.YAMLS_DIR, file))
+            dag_specs = YAMLParser(
+                filepath=os.path.join(self.YAMLS_DIR, file)).parse_yaml()
             dag_id = dag_specs[0]
             globals()[dag_id] = self.create_dag(*dag_specs)
 
