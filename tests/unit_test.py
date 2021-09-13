@@ -154,12 +154,31 @@ def test_group_by_term_group(dag_gen, search_results, term_n_group):
     grouped_result = dag_gen.group_by_term_group(search_results, term_n_group)
     assert_grouped_result(grouped_result)
 
-def test_group_results__term_list_with_group(dag_gen,
+def test_group_results__sql_term_list_with_group(dag_gen,
                                              search_results,
                                              term_n_group):
     grouped_result = dag_gen.group_results(search_results, term_n_group)
     assert_grouped_result(grouped_result)
 
+def test_group_results__sql_term_list_without_group(dag_gen,
+                                                    search_results):
+    terms_str = """{
+        "nomes":{
+            "0":"ANTONIO DE OLIVEIRA",
+            "1":"SILVA"}
+        }"""
+    grouped_result = dag_gen.group_results(search_results, terms_str)
+
+    assert 'ANTONIO DE OLIVEIRA' in grouped_result['single_group']
+    assert 'SILVA' in grouped_result['single_group']
+
+def test_group_results__list_term_list(dag_gen,
+                                       search_results):
+    any_list_object = []
+    grouped_result = dag_gen.group_results(search_results, any_list_object)
+
+    assert 'ANTONIO DE OLIVEIRA' in grouped_result['single_group']
+    assert 'SILVA' in grouped_result['single_group']
 
 def test_repack_match(dag_gen, report_example):
     match_dict = report_example['single_group']['antonio de oliveira'][0]

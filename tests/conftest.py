@@ -348,11 +348,11 @@ def search_results() -> dict:
 @pytest.fixture()
 def term_n_group():
     return """{
-        "servidor_nome_contato":{
+        "nome":{
             "0":"ANTONIO DE OLIVEIRA",
             "1":"SILVA"
         },
-        "carreira":{
+        "cargo":{
             "0":"EPPGG",
             "1":"ATI"
         }
