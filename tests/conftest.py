@@ -14,7 +14,7 @@ currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-from dou_dag_generator import DouDigestDagGenerator
+from dou_dag_generator import DouDigestDagGenerator, YAMLParser
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
@@ -47,6 +47,10 @@ def pytest_unconfigure(config):
 @pytest.fixture(scope='module')
 def dag_gen() -> DouDigestDagGenerator:
     return DouDigestDagGenerator()
+
+@pytest.fixture()
+def yaml_parser()-> YAMLParser:
+    return YAMLParser()
 
 @pytest.fixture()
 def report_example() -> dict:
