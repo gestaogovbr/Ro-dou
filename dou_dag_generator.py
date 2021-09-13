@@ -421,18 +421,19 @@ class DouDigestDagGenerator():
                 mime_charset='utf-8')
 
     def _select_terms_from_db(self, sql: str, conn_id: str):
-        """Executa o `sql` e retorna a lista de termos que serão utilizados
-        posteriormente na pesquisa no DOU. A primeira coluna do select deve
-        conter os termos a serem pesquisados. A segunda coluna, que é
-        opicional, é um classificador que será utilizado para agrupar e
-        ordenar o relatório por email e o CSV gerado.
+        """Queries the `sql` and return the list of terms that will be
+        used later in the DOU search. The first column of the select
+        must contain the terms to be searched. The second column, which
+        is optional, is a classifier that will be used to group and sort
+        the email report and the generated CSV.
         """
         mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
-        df = mssql_hook.get_pandas_df(sql)
+        terms_df = mssql_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
-        df = df.applymap(lambda x: str.strip(x) if pd.notnull(x) else '')
+        terms_df = terms_df.applymap(
+            lambda x: str.strip(x) if pd.notnull(x) else '')
 
-        return df.to_json(orient="columns")
+        return terms_df.to_json(orient="columns")
 
     def create_dag(self,
                    dag_id,
@@ -496,7 +497,7 @@ class DouDigestDagGenerator():
                     },
             )
             if sql:
-                select_terms_from_db >> exec_dou_search
+                select_terms_from_db >> exec_dou_search # pylint: disable=pointless-statement
 
             send_email_task = PythonOperator(
                 task_id='send_email_task',
@@ -508,7 +509,7 @@ class DouDigestDagGenerator():
                     'attach_csv': attach_csv,
                     },
             )
-            exec_dou_search >> send_email_task
+            exec_dou_search >> send_email_task  # pylint: disable=pointless-statement
 
         return dag
 
