@@ -37,9 +37,10 @@ from airflow_commons.utils.date import get_trigger_date
 
 class DouDigestDagGenerator():
     """
-    YAML based Generator of DAGs that digest the DOU (gazette) daily
-    publication and notify through email documents matching pré-defined
-    keywords. It's also possible to fetch keywords from the database.
+    YAML based Generator of DAGs that digests the DOU (gazette) daily
+    publication and send email report listing all documents matching
+    pré-defined keywords. It's also possible to fetch keywords from the
+    database.
     """
 
     SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro-dou/')
@@ -51,15 +52,15 @@ class DouDigestDagGenerator():
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
 
 
-    def clean_html(self, raw_html):
+    def clean_html(self, raw_html: str) -> str:
         clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
         return clean_text
 
-    def get_prior_and_matched_name(self, raw_html):
+    def get_prior_and_matched_name(self, raw_html: str) -> (str, str):
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
 
-    def normalize(self, raw_str: str):
+    def normalize(self, raw_str: str) -> str:
         """Remove characters (accents and other not alphanumeric) lower
         it and keep only one space between words"""
         text = unidecode(raw_str).lower()
@@ -67,7 +68,7 @@ class DouDigestDagGenerator():
         text = ' '.join(text.split())
         return text
 
-    def is_signature(self, search_term, abstract):
+    def is_signature(self, search_term: str, abstract: str) -> bool:
         """Verifica se o `search_term` (geralmente usado para busca por
         nome de pessoas) está presente na assinatura. Para isso se
         utiliza de um "bug" da API que, para estes casos, retorna o
@@ -97,7 +98,7 @@ class DouDigestDagGenerator():
                 norm_abstract_withou_start_name.startswith(norm_term))
         )
 
-    def really_matched(self, search_term, abstract):
+    def really_matched(self, search_term: str, abstract: str) -> bool:
         """Verifica se o termo encontrado pela API realmente é igual ao
         termo de busca. Esta função é útil para filtrar resultados
         retornardos pela API mas que são resultados aproximados e não
@@ -118,7 +119,7 @@ class DouDigestDagGenerator():
                          field,
                          is_exact_search,
                          ignore_signature_match,
-                         force_rematch):
+                         force_rematch) -> dict:
         search_results = {}
         dou_hook = DOUHook()
         for search_term in term_list:
@@ -184,7 +185,8 @@ class DouDigestDagGenerator():
         from `select_terms_from_db` task and the sql_query returned a
         second column (used as the group name)
         """
-        if isinstance(term_list, str) and len(ast.literal_eval(term_list).values()) > 1:
+        if isinstance(term_list, str) \
+            and len(ast.literal_eval(term_list).values()) > 1:
             grouped_result = self.group_by_term_group(search_results, term_list)
         else:
             grouped_result = {'single_group': search_results}
@@ -208,7 +210,7 @@ class DouDigestDagGenerator():
                                                is_exact_search,
                                                ignore_signature_match,
                                                force_rematch)
-
+        print(search_results)
         return self.group_results(search_results, term_list)
 
     def repack_match(self,
@@ -308,7 +310,7 @@ class DouDigestDagGenerator():
                 html_content=content,
                 mime_charset='utf-8')
 
-    def _select_terms_from_db(self, sql, conn_id):
+    def _select_terms_from_db(self, sql: str, conn_id: str):
         """Executa o `sql` e retorna a lista de termos que serão utilizados
         posteriormente na pesquisa no DOU. A primeira coluna do select deve
         conter os termos a serem pesquisados. A segunda coluna, que é
@@ -317,7 +319,7 @@ class DouDigestDagGenerator():
         """
         mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
         df = mssql_hook.get_pandas_df(sql)
-        # Remove unnecessary spaces and change null by ''
+        # Remove unnecessary spaces and change null for ''
         df = df.applymap(lambda x: str.strip(x) if pd.notnull(x) else '')
 
         return df.to_json(orient="columns")
@@ -402,9 +404,9 @@ class DouDigestDagGenerator():
         return dag
 
 
-    def hashval(self, string, size):
+    def hash_string(self, string, size):
+        # Convert the `string` into int between 0 and `size`
         _hash = 0
-        # Take ordinal number of char in string, and just add
         for c in string:
             _hash += (ord(c))
         return _hash % size # Depending on the range, do a modulo operation.
@@ -451,7 +453,7 @@ class DouDigestDagGenerator():
             schedule = dag.get('schedule_interval', self.DEFAULT_SCHEDULE)
             if schedule == self.DEFAULT_SCHEDULE:
                 dag_id = try_get(dag, 'id')
-                id_based_minute = self.hashval(dag_id, 60)
+                id_based_minute = self.hash_string(dag_id, 60)
                 schedule_without_min = ' '.join(schedule.split(" ")[1:])
                 schedule = f'{id_based_minute} {schedule_without_min}'
             return schedule
@@ -480,6 +482,7 @@ class DouDigestDagGenerator():
         dag_tags.append('generated_dag')
         subject = report.get('subject', 'Extraçao do DOU')
         attach_csv = report.get('attach_csv', False)
+
         globals()[dag_id] = self.create_dag(
             dag_id,
             dou_sections,
