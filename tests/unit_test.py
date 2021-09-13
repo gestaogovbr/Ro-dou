@@ -6,12 +6,27 @@ import pytest
 import pandas as pd
 
 @pytest.mark.parametrize(
+    'dag_id, size, hashed',
+    [
+        ('unique_id_for_each_dag', 60, 56),
+        ('generates_sparses_hashed_results', 120, 59),
+        ('unique_id_for_each_dag', 10, 6),
+        ('', 10, 0),
+        ('', 100, 0),
+    ])
+def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
+    assert yaml_parser.hash_dag_id(dag_id, size) == hashed
+
+@pytest.mark.parametrize(
     'raw_html, clean_text',
     [
         ('<div><a>Any text</a></div>', 'Any text'),
         ('<div><div><p>Any text</a></div>', 'Any text'),
         ('Any text</a></div>', 'Any text'),
         ('Any text', 'Any text'),
+        ('<a></a>', ''),
+        ('<></>', ''),
+        ('', ''),
     ])
 def test_clean_html(dag_gen, raw_html, clean_text):
     assert dag_gen.clean_html(raw_html) == clean_text
