@@ -37,17 +37,21 @@ from airflow_commons.utils.date import get_trigger_date
 class YAMLParser():
     """Parses YAML file and get the DAG parameters.
 
-    It assures mandatory fields are in place and are properly defined
-    providing clear error messagens.
+    It guarantees that mandatory fields are in place and are properly
+    defined providing clear error messages.
     """
     DEFAULT_SCHEDULE = '0 2 * * *'
 
-    def hash_string(self, string, size):
-        """Converts the `string` into a integer between 0 and `size`"""
-        _hash = 0
-        for c in string:
-            _hash += (ord(c))
-        return _hash % size
+    def hash_dag_id(self, dag_id: str, size: int) -> int:
+        """Hashes the `dag_id` into a integer between 0 and `size`"""
+        buffer = 0
+        for _char in dag_id:
+            buffer += (ord(_char))
+        try:
+            _hash = buffer % size
+        except ZeroDivisionError:
+            raise ValueError('`size` deve ser maior que 0.')
+        return _hash
 
     def parse_yaml(self, filepath):
         """Processes the config file in order to instantiate the DAG in
@@ -94,7 +98,7 @@ class YAMLParser():
             schedule = dag.get('schedule_interval', self.DEFAULT_SCHEDULE)
             if schedule == self.DEFAULT_SCHEDULE:
                 dag_id = try_get(dag, 'id')
-                id_based_minute = self.hash_string(dag_id, 60)
+                id_based_minute = self.hash_dag_id(dag_id, 60)
                 schedule_without_min = ' '.join(schedule.split(" ")[1:])
                 schedule = f'{id_based_minute} {schedule_without_min}'
             return schedule
