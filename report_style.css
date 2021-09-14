@@ -14,9 +14,6 @@ a:visited {
 a:hover {
     text-decoration: underline;
 }
-h1 {
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-}
 h3 {
     margin-bottom: -5px;
     margin-top: 0;
