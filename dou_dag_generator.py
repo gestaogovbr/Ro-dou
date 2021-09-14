@@ -70,38 +70,6 @@ class YAMLParser():
     def __init__(self, filepath: str):
         self.filepath = filepath
 
-
-    def try_get(self, variable: dict, field, error_msg=None):
-        """Try to retrieve the property named as `field` from
-        `variable` dict and raise apropriate message"""
-        try:
-            return variable[field]
-        except KeyError:
-            if not error_msg:
-                error_msg = f'O campo `{field}` é obrigatório.'
-            file_name = self.filepath.split('/')[-1]
-            error_msg = f'Erro no arquivo {file_name}: {error_msg}'
-            raise ValueError(error_msg)
-
-    def get_terms_params(self, search):
-        terms = self.try_get(search, 'terms')
-        sql = None
-        conn_id = None
-        if isinstance(terms, dict):
-            if 'from_airflow_variable' in terms:
-                var_name = terms.get('from_airflow_variable')
-                terms = ast.literal_eval(Variable.get(var_name))
-            elif 'from_db_select' in terms:
-                from_db_select = terms.get('from_db_select')
-                sql = self.try_get(from_db_select, 'sql')
-                conn_id = self.try_get(from_db_select, 'conn_id')
-            else:
-                raise ValueError(
-                    'O campo `terms` aceita como valores válidos '
-                    'uma lista de strings ou parâmetros do tipo '
-                    '`from_airflow_variable` ou `from_db_select`.')
-        return terms, sql, conn_id
-
     def parse_yaml(self):
         """Processes the config file in order to instantiate the DAG in
         Airflow.
@@ -150,6 +118,38 @@ class YAMLParser():
             description,
             set(dag_tags),
             )
+
+    def get_terms_params(self, search):
+        terms = self.try_get(search, 'terms')
+        sql = None
+        conn_id = None
+        if isinstance(terms, dict):
+            if 'from_airflow_variable' in terms:
+                var_name = terms.get('from_airflow_variable')
+                terms = ast.literal_eval(Variable.get(var_name))
+            elif 'from_db_select' in terms:
+                from_db_select = terms.get('from_db_select')
+                sql = self.try_get(from_db_select, 'sql')
+                conn_id = self.try_get(from_db_select, 'conn_id')
+            else:
+                raise ValueError(
+                    'O campo `terms` aceita como valores válidos '
+                    'uma lista de strings ou parâmetros do tipo '
+                    '`from_airflow_variable` ou `from_db_select`.')
+        return terms, sql, conn_id
+
+    def try_get(self, variable: dict, field, error_msg=None):
+        """Try to retrieve the property named as `field` from
+        `variable` dict and raise apropriate message"""
+        try:
+            return variable[field]
+        except KeyError:
+            if not error_msg:
+                error_msg = f'O campo `{field}` é obrigatório.'
+            file_name = self.filepath.split('/')[-1]
+            error_msg = f'Erro no arquivo {file_name}: {error_msg}'
+            raise ValueError(error_msg)
+
 class DouDigestDagGenerator():
     """
     YAML based Generator of DAGs that digests the DOU (gazette) daily
@@ -160,70 +160,285 @@ class DouDigestDagGenerator():
 
     SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro-dou/')
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
-    LOCAL_TMP_DIR = 'dou-dag-generator'
     SCRAPPING_INTERVAL = 2
     CLEAN_HTML_RE = re.compile('<.*?>')
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
 
-
-    def clean_html(self, raw_html: str) -> str:
-        clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
-        return clean_text
-
-    def get_prior_and_matched_name(self, raw_html: str) -> (str, str):
-        groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
-        return groups[0], groups[1]
-
-    def normalize(self, raw_str: str) -> str:
-        """Remove characters (accents and other not alphanumeric) lower
-        it and keep only one space between words"""
-        text = unidecode(raw_str).lower()
-        text = ''.join(c if c.isalnum() else ' ' for c in text)
-        text = ' '.join(text.split())
-        return text
-
-    def is_signature(self, search_term: str, abstract: str) -> bool:
-        """Verifica se o `search_term` (geralmente usado para busca por
-        nome de pessoas) está presente na assinatura. Para isso se
-        utiliza de um "bug" da API que, para estes casos, retorna o
-        `abstract` iniciando com a assinatura do documento, o que não
-        ocorre quando o match acontece em outras partes do documento.
-        Dessa forma esta função checa se isso ocorreu e é utilizada para
-        filtrar os resultados presentes no relatório final. Também
-        resolve os casos em que o nome da pessoa é parte de nome maior.
-        Por exemplo o nome 'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ
-        ANTONIO DE OLIVEIRA MATOS'
+    def generate_dags(self):
+        """Iterates over the YAML files and creates all dags
         """
-        clean_abstract = self.clean_html(abstract)
-        start_name, match_name = self.get_prior_and_matched_name(abstract)
+        files_list = [
+            f for f in os.listdir(self.YAMLS_DIR)
+            if f.split('.')[-1] in ['yaml', 'yml']
+        ]
 
-        norm_abstract = self.normalize(clean_abstract)
-        norm_abstract_withou_start_name = norm_abstract[len(start_name):]
-        norm_term = self.normalize(search_term)
+        for file in files_list:
+            dag_specs = YAMLParser(
+                filepath=os.path.join(self.YAMLS_DIR, file)).parse_yaml()
+            dag_id = dag_specs[0]
+            globals()[dag_id] = self.create_dag(*dag_specs)
 
-        return (
-            # Considera assinatura apenas se aparecem com uppercase
-            (start_name + match_name).isupper() and
-                # Resolve os casos '`ANTONIO DE OLIVEIRA`' e
-                # '`ANTONIO DE OLIVEIRA` MATOS'
-                (norm_abstract.startswith(norm_term) or
-                # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
-                # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
-                norm_abstract_withou_start_name.startswith(norm_term))
-        )
+    def create_dag(self,
+                   dag_id,
+                   dou_sections,
+                   search_date,
+                   search_field,
+                   is_exact_search,
+                   ignore_signature_match,
+                   force_rematch,
+                   term_list,
+                   sql,
+                   conn_id,
+                   email_to_list,
+                   subject,
+                   attach_csv,
+                   schedule,
+                   description,
+                   tags):
+        """Creates the DAG object and tasks
 
-    def really_matched(self, search_term: str, abstract: str) -> bool:
-        """Verifica se o termo encontrado pela API realmente é igual ao
-        termo de busca. Esta função é útil para filtrar resultados
-        retornardos pela API mas que são resultados aproximados e não
-        exatos.
+        Depending on configuration it adds an extra prior task to query
+        the term_list from a database
         """
-        whole_match = self.clean_html(abstract).replace('... ', '')
-        norm_whole_match = self.normalize(whole_match)
+        default_args = {
+            'owner': 'yaml-dag-generator',
+            'start_date': datetime(2021, 6, 18),
+            'depends_on_past': False,
+            'retries': 10,
+            'retry_delay': timedelta(minutes=20),
+            'on_retry_callback': send_slack,
+            'on_failure_callback': send_slack,
+        }
+        dag = DAG(
+            dag_id,
+            default_args=default_args,
+            schedule_interval=schedule,
+            description=description,
+            catchup=False,
+            tags=tags
+            )
 
-        norm_term = self.normalize(search_term)
+        with dag:
+            if sql:
+                select_terms_from_db_task = PythonOperator(
+                    task_id='select_terms_from_db_task',
+                    python_callable=self.select_terms_from_db,
+                    op_kwargs={
+                        'sql': sql,
+                        'conn_id': conn_id,
+                        }
+                )
+                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
 
-        return norm_term in norm_whole_match
+            exec_dou_search_task = PythonOperator(
+                task_id='exec_dou_search',
+                python_callable=self.exec_dou_search,
+                op_kwargs={
+                    'term_list': term_list,
+                    'dou_sections': dou_sections,
+                    'search_date': search_date,
+                    'field': search_field,
+                    'is_exact_search': is_exact_search,
+                    'ignore_signature_match': ignore_signature_match,
+                    'force_rematch': force_rematch,
+                    },
+            )
+            if sql:
+                select_terms_from_db_task >> exec_dou_search_task # pylint: disable=pointless-statement
+
+            send_report_task = PythonOperator(
+                task_id='send_report_task',
+                python_callable=self.send_report,
+                op_kwargs={
+                    'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'subject': subject,
+                    'email_to_list': email_to_list,
+                    'attach_csv': attach_csv,
+                    },
+            )
+            exec_dou_search_task >> send_report_task  # pylint: disable=pointless-statement
+
+        return dag
+
+    def select_terms_from_db(self, sql: str, conn_id: str):
+        """Queries the `sql` and return the list of terms that will be
+        used later in the DOU search. The first column of the select
+        must contain the terms to be searched. The second column, which
+        is optional, is a classifier that will be used to group and sort
+        the email report and the generated CSV.
+        """
+        mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
+        terms_df = mssql_hook.get_pandas_df(sql)
+        # Remove unnecessary spaces and change null for ''
+        terms_df = terms_df.applymap(
+            lambda x: str.strip(x) if pd.notnull(x) else '')
+
+        return terms_df.to_json(orient="columns")
+
+    def send_report(self, search_report, subject, email_to_list,
+                         attach_csv):
+        """Builds the email content, the CSV if applies, and send it
+        """
+        search_report = ast.literal_eval(search_report)
+
+        # Don't send empty email
+        if not search_report:
+            return
+
+        today_date = date.today().strftime("%d/%m/%Y")
+        full_subject = f"{subject} - DOU de {today_date}"
+        content = self.generate_email_content(search_report)
+
+        with open(os.path.join(self.SOURCE_DIR, '../email_report.html'), 'w') as arquivo_saida:
+            arquivo_saida.write(content)
+
+        if attach_csv:
+            with self.get_csv_tempfile(search_report) as csv_file:
+                send_email(
+                    to=email_to_list,
+                    subject=full_subject,
+                    files=[csv_file.name],
+                    html_content=content,
+                    mime_charset='utf-8')
+        else:
+            send_email(
+                to=email_to_list,
+                subject=full_subject,
+                html_content=content,
+                mime_charset='utf-8')
+
+    def generate_email_content(self, search_report: dict) -> str:
+        """Generate HTML content to be sent by email based on
+        search_report dictionary
+        """
+        with open(os.path.join(self.SOURCE_DIR, 'report_style.css'), 'r') as f:
+            blocks = [f'<style>\n{f.read()}</style>']
+
+        for group, results in search_report.items():
+            if group != 'single_group':
+                blocks.append('\n')
+                blocks.append(f'**Grupo: {group}**')
+                blocks.append('\n\n')
+
+            for term, items in results.items():
+                blocks.append('\n')
+                blocks.append(f'* # Resultados para: {term}')
+
+                for item in items:
+                    sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
+                    item_html = f"""
+                        <p class="secao-marker">{sec_desc}</p>
+                        ### [{item['title']}]({item['href']})
+                        <p class='abstract-marker'>{item['abstract']}</p>
+                        <p class='date-marker'>{item['date']}</p>"""
+                    blocks.append(
+                        textwrap.indent(textwrap.dedent(item_html), ' ' * 4))
+                blocks.append('---')
+            blocks.append('---')
+
+        return markdown.markdown('\n'.join(blocks))
+
+    def get_csv_tempfile(self, search_report: dict) -> NamedTemporaryFile:
+        temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
+        self.convert_report_to_dataframe(search_report)\
+            .to_csv(temp_file, index=False)
+        return temp_file
+
+    def convert_report_to_dataframe(self, search_report: dict) -> pd.DataFrame:
+        df = pd.DataFrame(self.convert_report_dict_to_tuple_list(search_report))
+        df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
+                      'Título', 'Resumo', 'Data']
+        if 'single_group' in search_report:
+            del df['Grupo']
+        return df
+
+    def convert_report_dict_to_tuple_list(self, search_report: dict) -> list:
+        tuple_list = []
+        for group, results in search_report.items():
+            for term, matchs in results.items():
+                for match in matchs:
+                    tuple_list.append(
+                        self.repack_match(group, term, match))
+        return tuple_list
+
+    def repack_match(self,
+                     group: str,
+                     search_term: str,
+                     match: dict) -> tuple:
+        return (group,
+                search_term,
+                DOUHook.SEC_DESCRIPTION[match['section']],
+                match['href'],
+                match['title'],
+                match['abstract'],
+                match['date'],
+                )
+
+    def exec_dou_search(self,
+                         term_list,
+                         dou_sections: [str],
+                         search_date,
+                         field,
+                         is_exact_search: bool,
+                         ignore_signature_match: bool,
+                         force_rematch: bool,
+                         **context):
+        search_results = self.search_all_terms(self.cast_term_list(term_list),
+                                               dou_sections,
+                                               search_date,
+                                               get_trigger_date(context),
+                                               field,
+                                               is_exact_search,
+                                               ignore_signature_match,
+                                               force_rematch)
+        print(search_results)
+        return self.group_results(search_results, term_list)
+
+    def group_results(self,
+                      search_results: dict,
+                      term_list: [list, str]) -> dict:
+        """Produces a grouped result based on if `term_list` is already
+        the list of terms or it is a string received through xcom
+        from `select_terms_from_db` task and the sql_query returned a
+        second column (used as the group name)
+        """
+        if isinstance(term_list, str) \
+            and len(ast.literal_eval(term_list).values()) > 1:
+            grouped_result = self.group_by_term_group(search_results, term_list)
+        else:
+            grouped_result = {'single_group': search_results}
+
+        return grouped_result
+
+    def group_by_term_group(self,
+                            search_results: dict,
+                            term_n_group: str) -> dict:
+        """Rebuild the dict grouping the results based on term_n_group
+        mapping
+        """
+        dict_struct = ast.literal_eval(term_n_group)
+        terms, groups = dict_struct.values()
+        term_group_map = dict(zip(terms.values(), groups.values()))
+        groups = sorted(list(set(term_group_map.values())))
+
+        grouped_result = {
+            g1:{
+                t: search_results[t]
+                for (t, g2) in sorted(term_group_map.items())
+                if t in search_results and g1 == g2}
+            for g1 in groups}
+
+        # Clear empty groups
+        trimmed_result = {k: v for k, v in grouped_result.items() if v}
+        return trimmed_result
+
+    def cast_term_list(self, pre_term_list: [list, str]) -> list:
+        """If `pre_term_list` is a str (in the case it came from xcom)
+        then its necessary to convert it back to dataframe and return
+        the first column. Otherwise the `pre_term_list` is returned.
+        """
+        return pre_term_list if isinstance(pre_term_list, list) else \
+            pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
     def search_all_terms(self,
                          term_list,
@@ -261,273 +476,64 @@ class DouDigestDagGenerator():
 
         return search_results
 
-    def cast_term_list(self, pre_term_list: [list, str]) -> list:
-        """If `pre_term_list` is a str (in the case it came from xcom)
-        then its necessary to convert it back to dataframe and return
-        the first column. Otherwise the `pre_term_list` is returned.
+    def really_matched(self, search_term: str, abstract: str) -> bool:
+        """Verifica se o termo encontrado pela API realmente é igual ao
+        termo de busca. Esta função é útil para filtrar resultados
+        retornardos pela API mas que são resultados aproximados e não
+        exatos.
         """
-        return pre_term_list if isinstance(pre_term_list, list) else \
-            pd.read_json(pre_term_list).iloc[:, 0].tolist()
+        whole_match = self.clean_html(abstract).replace('... ', '')
+        norm_whole_match = self.normalize(whole_match)
 
-    def group_by_term_group(self,
-                            search_results: dict,
-                            term_n_group: str) -> dict:
-        """Rebuild the dict grouping the results based on term_n_group
-        mapping
+        norm_term = self.normalize(search_term)
+
+        return norm_term in norm_whole_match
+
+    def is_signature(self, search_term: str, abstract: str) -> bool:
+        """Verifica se o `search_term` (geralmente usado para busca por
+        nome de pessoas) está presente na assinatura. Para isso se
+        utiliza de um "bug" da API que, para estes casos, retorna o
+        `abstract` iniciando com a assinatura do documento, o que não
+        ocorre quando o match acontece em outras partes do documento.
+        Dessa forma esta função checa se isso ocorreu e é utilizada para
+        filtrar os resultados presentes no relatório final. Também
+        resolve os casos em que o nome da pessoa é parte de nome maior.
+        Por exemplo o nome 'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ
+        ANTONIO DE OLIVEIRA MATOS'
         """
-        dict_struct = ast.literal_eval(term_n_group)
-        terms, groups = dict_struct.values()
-        term_group_map = dict(zip(terms.values(), groups.values()))
-        groups = sorted(list(set(term_group_map.values())))
+        clean_abstract = self.clean_html(abstract)
+        start_name, match_name = self.get_prior_and_matched_name(abstract)
 
-        grouped_result = {
-            g1:{
-                t: search_results[t]
-                for (t, g2) in sorted(term_group_map.items())
-                if t in search_results and g1 == g2}
-            for g1 in groups}
+        norm_abstract = self.normalize(clean_abstract)
+        norm_abstract_withou_start_name = norm_abstract[len(start_name):]
+        norm_term = self.normalize(search_term)
 
-        # Clear empty groups
-        trimmed_result = {k: v for k, v in grouped_result.items() if v}
-        return trimmed_result
+        return (
+            # Considera assinatura apenas se aparecem com uppercase
+            (start_name + match_name).isupper() and
+                # Resolve os casos '`ANTONIO DE OLIVEIRA`' e
+                # '`ANTONIO DE OLIVEIRA` MATOS'
+                (norm_abstract.startswith(norm_term) or
+                # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
+                # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
+                norm_abstract_withou_start_name.startswith(norm_term))
+        )
 
-    def group_results(self,
-                      search_results: dict,
-                      term_list: [list, str]) -> dict:
-        """Produces a grouped result based on if `term_list` is already
-        the list of terms or it is a string received through xcom
-        from `select_terms_from_db` task and the sql_query returned a
-        second column (used as the group name)
-        """
-        if isinstance(term_list, str) \
-            and len(ast.literal_eval(term_list).values()) > 1:
-            grouped_result = self.group_by_term_group(search_results, term_list)
-        else:
-            grouped_result = {'single_group': search_results}
+    def normalize(self, raw_str: str) -> str:
+        """Remove characters (accents and other not alphanumeric) lower
+        it and keep only one space between words"""
+        text = unidecode(raw_str).lower()
+        text = ''.join(c if c.isalnum() else ' ' for c in text)
+        text = ' '.join(text.split())
+        return text
 
-        return grouped_result
+    def get_prior_and_matched_name(self, raw_html: str) -> (str, str):
+        groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
+        return groups[0], groups[1]
 
-    def _exec_dou_search(self,
-                         term_list,
-                         dou_sections: [str],
-                         search_date,
-                         field,
-                         is_exact_search: bool,
-                         ignore_signature_match: bool,
-                         force_rematch: bool,
-                         **context):
-        search_results = self.search_all_terms(self.cast_term_list(term_list),
-                                               dou_sections,
-                                               search_date,
-                                               get_trigger_date(context),
-                                               field,
-                                               is_exact_search,
-                                               ignore_signature_match,
-                                               force_rematch)
-        print(search_results)
-        return self.group_results(search_results, term_list)
-
-    def repack_match(self,
-                     group: str,
-                     search_term: str,
-                     match: dict) -> tuple:
-        return (group,
-                search_term,
-                DOUHook.SEC_DESCRIPTION[match['section']],
-                match['href'],
-                match['title'],
-                match['abstract'],
-                match['date'],
-                )
-
-    def convert_report_dict_to_tuple_list(self, search_report: dict) -> list:
-        tuple_list = []
-        for group, results in search_report.items():
-            for term, matchs in results.items():
-                for match in matchs:
-                    tuple_list.append(
-                        self.repack_match(group, term, match))
-        return tuple_list
-
-    def convert_report_to_dataframe(self, search_report: dict) -> pd.DataFrame:
-        df = pd.DataFrame(self.convert_report_dict_to_tuple_list(search_report))
-        df.columns = ['Grupo', 'Termo de pesquisa', 'Seção', 'URL',
-                      'Título', 'Resumo', 'Data']
-        if 'single_group' in search_report:
-            del df['Grupo']
-        return df
-
-    def get_csv_tempfile(self, search_report: dict) -> NamedTemporaryFile:
-        temp_file = NamedTemporaryFile(prefix='extracao_dou_', suffix='.csv')
-        self.convert_report_to_dataframe(search_report)\
-            .to_csv(temp_file, index=False)
-        return temp_file
-
-    def generate_email_content(self, search_report: dict) -> str:
-        """Generate HTML content to be sent by email based on
-        search_report dictionary
-        """
-        with open(os.path.join(self.SOURCE_DIR, 'report_style.css'), 'r') as f:
-            blocks = [f'<style>\n{f.read()}</style>']
-
-        for group, results in search_report.items():
-            if group != 'single_group':
-                blocks.append('\n')
-                blocks.append(f'**Grupo: {group}**')
-                blocks.append('\n\n')
-
-            for term, items in results.items():
-                blocks.append('\n')
-                blocks.append(f'* # Resultados para: {term}')
-
-                for item in items:
-                    sec_desc = DOUHook.SEC_DESCRIPTION[item['section']]
-                    item_html = f"""
-                        <p class="secao-marker">{sec_desc}</p>
-                        ### [{item['title']}]({item['href']})
-                        <p class='abstract-marker'>{item['abstract']}</p>
-                        <p class='date-marker'>{item['date']}</p>"""
-                    blocks.append(
-                        textwrap.indent(textwrap.dedent(item_html), ' ' * 4))
-                blocks.append('---')
-            blocks.append('---')
-
-        return markdown.markdown('\n'.join(blocks))
-
-    def _send_email_task(self, search_report, subject, email_to_list,
-                         attach_csv):
-        """
-        Envia e-mail de notificação dos aspectos mais relevantes do DOU.
-        """
-        search_report = ast.literal_eval(search_report)
-
-        # Don't send empty email
-        if not search_report:
-            return
-
-        today_date = date.today().strftime("%d/%m/%Y")
-        full_subject = f"{subject} - DOU de {today_date}"
-        content = self.generate_email_content(search_report)
-
-        if attach_csv:
-            with self.get_csv_tempfile(search_report) as csv_file:
-                send_email(
-                    to=email_to_list,
-                    subject=full_subject,
-                    files=[csv_file.name],
-                    html_content=content,
-                    mime_charset='utf-8')
-        else:
-            send_email(
-                to=email_to_list,
-                subject=full_subject,
-                html_content=content,
-                mime_charset='utf-8')
-
-    def _select_terms_from_db(self, sql: str, conn_id: str):
-        """Queries the `sql` and return the list of terms that will be
-        used later in the DOU search. The first column of the select
-        must contain the terms to be searched. The second column, which
-        is optional, is a classifier that will be used to group and sort
-        the email report and the generated CSV.
-        """
-        mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
-        terms_df = mssql_hook.get_pandas_df(sql)
-        # Remove unnecessary spaces and change null for ''
-        terms_df = terms_df.applymap(
-            lambda x: str.strip(x) if pd.notnull(x) else '')
-
-        return terms_df.to_json(orient="columns")
-
-    def create_dag(self,
-                   dag_id,
-                   dou_sections,
-                   search_date,
-                   search_field,
-                   is_exact_search,
-                   ignore_signature_match,
-                   force_rematch,
-                   term_list,
-                   sql,
-                   conn_id,
-                   email_to_list,
-                   subject,
-                   attach_csv,
-                   schedule,
-                   description,
-                   tags):
-        """Cria a DAG, suas tasks, a orquestração das tasks e retorna a DAG."""
-        default_args = {
-            'owner': 'yaml-dag-generator',
-            'start_date': datetime(2021, 6, 18),
-            'depends_on_past': False,
-            'retries': 10,
-            'retry_delay': timedelta(minutes=20),
-            'on_retry_callback': send_slack,
-            'on_failure_callback': send_slack,
-        }
-        dag = DAG(
-            dag_id,
-            default_args=default_args,
-            schedule_interval=schedule,
-            description=description,
-            catchup=False,
-            tags=tags
-            )
-
-        with dag:
-            if sql:
-                select_terms_from_db = PythonOperator(
-                    task_id='select_terms_from_db',
-                    python_callable=self._select_terms_from_db,
-                    op_kwargs={
-                        'sql': sql,
-                        'conn_id': conn_id,
-                        }
-                )
-                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
-
-            exec_dou_search = PythonOperator(
-                task_id='exec_dou_search',
-                python_callable=self._exec_dou_search,
-                op_kwargs={
-                    'term_list': term_list,
-                    'dou_sections': dou_sections,
-                    'search_date': search_date,
-                    'field': search_field,
-                    'is_exact_search': is_exact_search,
-                    'ignore_signature_match': ignore_signature_match,
-                    'force_rematch': force_rematch,
-                    },
-            )
-            if sql:
-                select_terms_from_db >> exec_dou_search # pylint: disable=pointless-statement
-
-            send_email_task = PythonOperator(
-                task_id='send_email_task',
-                python_callable=self._send_email_task,
-                op_kwargs={
-                    'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    'subject': subject,
-                    'email_to_list': email_to_list,
-                    'attach_csv': attach_csv,
-                    },
-            )
-            exec_dou_search >> send_email_task  # pylint: disable=pointless-statement
-
-        return dag
-
-    def generate_dags(self):
-        files_list = [
-            f for f in os.listdir(self.YAMLS_DIR)
-            if f.split('.')[-1] in ['yaml', 'yml']
-        ]
-
-        for file in files_list:
-            dag_specs = YAMLParser(
-                filepath=os.path.join(self.YAMLS_DIR, file)).parse_yaml()
-            dag_id = dag_specs[0]
-            globals()[dag_id] = self.create_dag(*dag_specs)
+    def clean_html(self, raw_html: str) -> str:
+        clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
+        return clean_text
 
 # Run dag generation
 DouDigestDagGenerator().generate_dags()
