@@ -226,7 +226,7 @@ class DouDigestDagGenerator():
             default_args=default_args,
             schedule_interval=schedule,
             description=description,
-            catchup=False,
+            catchup=True,
             tags=tags
             )
 
@@ -446,6 +446,8 @@ class DouDigestDagGenerator():
         then its necessary to convert it back to dataframe and return
         the first column. Otherwise the `pre_term_list` is returned.
         """
+        import ipdb
+        ipdb.set_trace()
         return pre_term_list if isinstance(pre_term_list, list) else \
             pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
