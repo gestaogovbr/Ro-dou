@@ -174,6 +174,7 @@ def assert_grouped_result(grouped_result):
     assert len(grouped_result['EPPGG']['ANTONIO DE OLIVEIRA']) == 3
 
 
+# TODO incluir teste com search_results vazio
 def test_group_by_term_group(dag_gen, search_results, term_n_group):
     grouped_result = dag_gen.group_by_term_group(search_results, term_n_group)
     assert_grouped_result(grouped_result)

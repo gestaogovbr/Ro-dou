@@ -56,8 +56,8 @@ def get_safe_schedule(dag: dict, default_schedule: str) -> str:
     if schedule == default_schedule:
         id_based_minute = hash_dag_id(dag['id'], 60)
         schedule_without_min = ' '.join(schedule.split(" ")[1:])
-        new_schedule = f'{id_based_minute} {schedule_without_min}'
-    return new_schedule
+        schedule = f'{id_based_minute} {schedule_without_min}'
+    return schedule
 
 
 class Parser():
@@ -300,9 +300,6 @@ class DouDigestDagGenerator():
         today_date = date.today().strftime("%d/%m/%Y")
         full_subject = f"{subject} - DOU de {today_date}"
         content = self.generate_email_content(search_report)
-
-        with open(os.path.join(self.SOURCE_DIR, '../email_report.html'), 'w') as arquivo_saida:
-            arquivo_saida.write(content)
 
         if attach_csv:
             with self.get_csv_tempfile(search_report) as csv_file:
