@@ -59,7 +59,14 @@ def get_safe_schedule(dag: dict, default_schedule: str) -> str:
         new_schedule = f'{id_based_minute} {schedule_without_min}'
     return new_schedule
 
-class YAMLParser():
+
+class Parser():
+
+    # @abstract
+    def parse():
+        pass
+
+class YAMLParser(Parser):
     """Parses YAML file and get the DAG parameters.
 
     It guarantees that mandatory fields are in place and are properly
@@ -69,6 +76,9 @@ class YAMLParser():
 
     def __init__(self, filepath: str):
         self.filepath = filepath
+
+    def parse(self):
+        return self.parse_yaml()
 
     def parse_yaml(self):
         """Processes the config file in order to instantiate the DAG in
@@ -164,6 +174,8 @@ class DouDigestDagGenerator():
     CLEAN_HTML_RE = re.compile('<.*?>')
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
 
+    parser = YAMLParser
+
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags
         """
@@ -173,8 +185,8 @@ class DouDigestDagGenerator():
         ]
 
         for file in files_list:
-            dag_specs = YAMLParser(
-                filepath=os.path.join(self.YAMLS_DIR, file)).parse_yaml()
+            dag_specs = self.parser(
+                filepath=os.path.join(self.YAMLS_DIR, file)).parse()
             dag_id = dag_specs[0]
             globals()[dag_id] = self.create_dag(*dag_specs)
 
