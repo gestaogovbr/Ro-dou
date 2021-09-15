@@ -240,7 +240,7 @@ class DouDigestDagGenerator():
                         'conn_id': conn_id,
                         }
                 )
-                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
+                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db_task') }}"
 
             exec_dou_search_task = PythonOperator(
                 task_id='exec_dou_search',
