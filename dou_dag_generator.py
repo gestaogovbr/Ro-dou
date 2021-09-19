@@ -29,7 +29,6 @@ from airflow.utils.email import send_email
 from unidecode import unidecode
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
-
 from airflow_commons.slack_messages import send_slack
 from airflow_commons.utils.date import get_trigger_date
 
