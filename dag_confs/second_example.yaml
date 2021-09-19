@@ -1,0 +1,20 @@
+dag:
+  id: dag_id_deve_ser_unico_em_todo_airflow
+  description: DAG exemplo de monitoramento no DOU.
+  schedule_interval: 0 8 * * MON-FRI
+  search:
+    terms:
+      - alocação
+      - realoca
+      - permuta
+      - estrutura regimental
+      - organização básica
+    dou_sections:
+      - SECAO_1
+      - EDICAO_SUPLEMENTAR
+  report:
+    emails:
+      - dest1@economia.gov.br
+      - dest2@economia.gov.br
+    attach_csv: True
+    subject: Assunto do Email
