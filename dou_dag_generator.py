@@ -24,7 +24,9 @@ import pandas as pd
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
+from airflow.operators.python_operator import BranchPythonOperator
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
 
 from unidecode import unidecode
@@ -213,7 +215,7 @@ class DouDigestDagGenerator():
         the term_list from a database
         """
         default_args = {
-            'owner': 'yaml-dag-generator',
+            'owner': 'nitai',
             'start_date': datetime(2021, 6, 18),
             'depends_on_past': False,
             'retries': 10,
@@ -233,14 +235,14 @@ class DouDigestDagGenerator():
         with dag:
             if sql:
                 select_terms_from_db_task = PythonOperator(
-                    task_id='select_terms_from_db_task',
+                    task_id='select_terms_from_db',
                     python_callable=self.select_terms_from_db,
                     op_kwargs={
                         'sql': sql,
                         'conn_id': conn_id,
                         }
                 )
-                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db_task') }}"
+                term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
 
             exec_dou_search_task = PythonOperator(
                 task_id='exec_dou_search',
@@ -258,8 +260,18 @@ class DouDigestDagGenerator():
             if sql:
                 select_terms_from_db_task >> exec_dou_search_task # pylint: disable=pointless-statement
 
+            has_matches_task = BranchPythonOperator(
+                task_id='has_matches',
+                python_callable=self.has_matches,
+                op_kwargs={
+                    'search_result': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                },
+            )
+
+            skip_report_task = DummyOperator(task_id='skip_report')
+
             send_report_task = PythonOperator(
-                task_id='send_report_task',
+                task_id='send_report',
                 python_callable=self.send_report,
                 op_kwargs={
                     'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
@@ -268,9 +280,16 @@ class DouDigestDagGenerator():
                     'attach_csv': attach_csv,
                     },
             )
-            exec_dou_search_task >> send_report_task  # pylint: disable=pointless-statement
+            exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
+            has_matches_task >> [send_report_task, skip_report_task]
 
         return dag
+
+    def has_matches(self, search_result: str) -> str:
+        search_result = ast.literal_eval(search_result)
+        items = ['contains' for k, v in search_result.items() if v]
+
+        return 'send_report' if items else 'skip_report'
 
     def select_terms_from_db(self, sql: str, conn_id: str):
         """Queries the `sql` and return the list of terms that will be
@@ -291,14 +310,10 @@ class DouDigestDagGenerator():
                          attach_csv):
         """Builds the email content, the CSV if applies, and send it
         """
-        search_report = ast.literal_eval(search_report)
-
-        # Don't send empty email
-        if not search_report:
-            return
-
         today_date = date.today().strftime("%d/%m/%Y")
         full_subject = f"{subject} - DOU de {today_date}"
+
+        search_report = ast.literal_eval(search_report)
         content = self.generate_email_content(search_report)
 
         if attach_csv:
