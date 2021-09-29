@@ -47,7 +47,7 @@ class YAMLParser(FileParser):
     It guarantees that mandatory fields are in place and are properly
     defined providing clear error messages.
     """
-    DEFAULT_SCHEDULE = '0 2 * * *'
+    DEFAULT_SCHEDULE = '0 5 * * *'
 
     def __init__(self, filepath: str):
         self.filepath = filepath
