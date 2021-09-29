@@ -1,8 +1,6 @@
 """DouDagGenerator unit tests
 """
 
-import pytest
-
 import pandas as pd
 
 def test_repack_match(dag_gen, report_example):
