@@ -47,7 +47,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              ['nitai.silva@economia.gov.br'],
              'Teste do Ro-dou',
              True,
-             '37 2 * * *',
+             '37 5 * * *',
              'DAG de teste',
              {'dou', 'generated_dag'}
              )
@@ -92,7 +92,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              ['email-destino@economia.gov.br'],
              '[String] com caracteres especiais deve estar entre aspas',
              False,
-             '4 2 * * *',
+             '4 5 * * *',
              'A pesquisa depende do select SQL.',
              {'dou', 'generated_dag', 'projeto_a' ,'departamento_x'}
              )
