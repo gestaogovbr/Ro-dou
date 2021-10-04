@@ -146,6 +146,7 @@ class DouDigestDagGenerator():
                 op_kwargs={
                     'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
                     'subject': subject,
+                    'report_date': '{{ next_ds }}',
                     'email_to_list': email_to_list,
                     'attach_csv': attach_csv,
                     },
@@ -176,12 +177,11 @@ class DouDigestDagGenerator():
 
         return terms_df.to_json(orient="columns")
 
-    def send_report(self, search_report, subject, email_to_list,
-                         attach_csv):
+    def send_report(self, search_report, subject, report_date,
+                    email_to_list, attach_csv):
         """Builds the email content, the CSV if applies, and send it
         """
-        today_date = date.today().strftime("%d/%m/%Y")
-        full_subject = f"{subject} - DOU de {today_date}"
+        full_subject = f"{subject} - DOU de {report_date}"
 
         search_report = ast.literal_eval(search_report)
         content = self.generate_email_content(search_report)
