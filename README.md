@@ -37,7 +37,7 @@ dag:
 ```
 
 ### Exemplo 2
-Já esta configuração realiza a pesquisa diária de **segunda a sexta-feira** às 11AM (**8AM UTC**), apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em **formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval` aceita valores CRON.
+Já esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM UTC**, apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em **formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval` aceita valores CRON.
 
 ```yaml {4,13-14,19}
 dag:
@@ -101,7 +101,7 @@ dag:
 ```
 
 ### Exemplo 5
-Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia 1 às 11AM (8AM UTC), como pode ser visto no `schedule_interval`. Ao passo que a pesquisa no DOU é realizada nos diários oficiais do **último mês** inteiro, através do uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search` com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado "paralelepip**i**do" conter um erro de ortográfico, a busca retorna os resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__text__21040__texto_pt_BR-paralelepipido&s=todos&exactDate=ano&sortType=0)
+Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia 1 às 8AM, como pode ser visto no `schedule_interval`. Ao passo que a pesquisa no DOU é realizada nos diários oficiais do **último mês** inteiro, através do uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search` com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado "paralelepip**i**do" conter um erro de ortográfico, a busca retorna os resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__text__21040__texto_pt_BR-paralelepipido&s=todos&exactDate=ano&sortType=0)
 
 ```yaml {4,8,9}
 dag:
@@ -120,7 +120,7 @@ dag:
 
 ## Compreendendo um pouco mais a engenhoca
 
-Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da Imprensa Nacional que por sua vez é utilizada pelo buscador oficial do DOU em https://www.in.gov.br/consulta/. Ou seja, o Rô-DOU consegue automatizar todo, ou quase todo, tipo de pesquisa que pode ser feita no site do DOU. A imagem abaixo é o painel de pesquisa avançada do site:
+Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da Imprensa Nacional que por sua vez é utilizada pelo buscador oficial do DOU em https://www.in.gov.br/consulta/. Ou seja, o Ro-dou consegue automatizar todo, ou quase todo, tipo de pesquisa que pode ser feita no site do DOU. A imagem abaixo é o painel de pesquisa avançada do site:
 
 ![Captura de tela do painel de pesquisa avançada no site do DOU.](docs/img/parametros-pesquisa-avancada-dou.png)
 # Parâmetros de pesquisa disponíveis
