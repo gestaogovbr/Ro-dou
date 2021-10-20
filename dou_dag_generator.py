@@ -86,7 +86,7 @@ class DouDigestDagGenerator():
         """
         default_args = {
             'owner': 'nitai',
-            'start_date': datetime(2021, 6, 18),
+            'start_date': datetime(2021, 10, 18),
             'depends_on_past': False,
             'retries': 10,
             'retry_delay': timedelta(minutes=20),
