@@ -56,11 +56,12 @@
         AIRFLOW__WEBSERVER__SECRET_KEY: '42'
         AIRFLOW__WEBSERVER__WORKERS: 1
       volumes:
-        - ..:/opt/airflow/dags/ro-dou
-        - ../../FastETL:/opt/airflow/plugins/FastETL
-        - ../../airflow_commons:/opt/airflow/plugins/airflow_commons
+        - ./src:/opt/airflow/dags/ro_dou
+        - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
+        - ./tests:/opt/airflow/tests
+        - ../FastETL:/opt/airflow/plugins/FastETL
+        - ../airflow_commons:/opt/airflow/plugins/airflow_commons
 
-      user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
       depends_on:
         postgres:
           condition: service_healthy
@@ -72,6 +73,8 @@
           POSTGRES_USER: airflow
           POSTGRES_PASSWORD: airflow
           POSTGRES_DB: airflow
+        volumes:
+          - ./mnt/pgdata:/var/lib/postgresql/data
         healthcheck:
           test: ["CMD", "pg_isready", "-U", "airflow"]
           interval: 5s
@@ -80,6 +83,7 @@
 
       airflow-webserver:
         <<: *airflow-common
+        container_name: airflow-webserver
         command: webserver
         ports:
           - 8080:8080
@@ -92,6 +96,7 @@
 
       airflow-scheduler:
         <<: *airflow-common
+        container_name: airflow-scheduler
         command: scheduler
         restart: always
 
