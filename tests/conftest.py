@@ -2,29 +2,18 @@
 """
 
 import os
-import sys
-import inspect
 
 import pytest
 
 from airflow import models
 from airflow.utils import db
 
-currentdir = os.path.dirname(
-    os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
-
-from dou_dag_generator import DouDigestDagGenerator
-from parsers import YAMLParser
-from searchers import DOUSearcher
+from dags.ro_dou.dou_dag_generator import DouDigestDagGenerator
+from dags.ro_dou.parsers import YAMLParser
+from dags.ro_dou.searchers import DOUSearcher
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
-# TEST_AIRFLOW_HOME = os.path.join(
-#     os.path.dirname(__file__),
-#     'test_airflow_home',
-# )
 TEST_ENV_VARS = {
     'AIRFLOW_HOME': TEST_AIRFLOW_HOME
 }
