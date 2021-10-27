@@ -94,7 +94,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              False,
              '4 5 * * *',
              'A pesquisa depende do select SQL.',
-             {'dou', 'generated_dag', 'projeto_a' ,'departamento_x'}
+             {'dou', 'generated_dag', 'projeto_a', 'departamento_x'}
              )
         ),
     ])
