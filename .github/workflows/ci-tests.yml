@@ -28,7 +28,7 @@ jobs:
       run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.economia.gov.br/seges-cginf/airflow_commons.git airflow_commons
 
     - name: Run docker-compose
-      run: cd Ro-dou/tests && docker-compose up -d
+      run: make setup
 
     - name: run tests
-      run: docker exec tests_airflow-webserver_1 /bin/bash -c "cd /opt/airflow/dags/ro-dou/tests/ && pytest --ignore=mnt ."
+      run: make tests
