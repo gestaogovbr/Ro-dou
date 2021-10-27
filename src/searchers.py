@@ -15,7 +15,7 @@ from unidecode import unidecode
 
 class DOUSearcher():
 
-    SCRAPPING_INTERVAL = 2
+    SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile('<.*?>')
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
 

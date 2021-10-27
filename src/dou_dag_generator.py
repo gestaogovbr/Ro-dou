@@ -39,7 +39,7 @@ class DouDigestDagGenerator():
     database.
     """
 
-    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro-dou/')
+    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro_dou/')
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
 
     parser = YAMLParser
@@ -98,7 +98,8 @@ class DouDigestDagGenerator():
             default_args=default_args,
             schedule_interval=schedule,
             description=description,
-            catchup=True,
+            catchup=False,
+            # catchup=True,
             tags=tags
             )
 
