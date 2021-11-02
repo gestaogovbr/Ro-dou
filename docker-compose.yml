@@ -55,6 +55,10 @@
         AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
         AIRFLOW__WEBSERVER__SECRET_KEY: '42'
         AIRFLOW__WEBSERVER__WORKERS: 1
+        _AIRFLOW_DB_UPGRADE: 'true'
+        _AIRFLOW_WWW_USER_CREATE: 'true'
+        _AIRFLOW_WWW_USER_USERNAME: airflow
+        _AIRFLOW_WWW_USER_PASSWORD: airflow
       volumes:
         - ./src:/opt/airflow/dags/ro_dou
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
@@ -99,13 +103,3 @@
         container_name: airflow-scheduler
         command: scheduler
         restart: always
-
-      airflow-init:
-        <<: *airflow-common
-        command: version
-        environment:
-          <<: *airflow-common-env
-          _AIRFLOW_DB_UPGRADE: 'true'
-          _AIRFLOW_WWW_USER_CREATE: 'true'
-          _AIRFLOW_WWW_USER_USERNAME: airflow
-          _AIRFLOW_WWW_USER_PASSWORD: airflow
