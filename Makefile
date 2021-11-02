@@ -1,3 +1,7 @@
+.PHONY: install-deps
+install-deps:
+	git clone git@github.com:economiagovbr/FastETL.git
+
 .PHONY: setup
 setup:
 	docker-compose up -d --force-recreate --remove-orphans
