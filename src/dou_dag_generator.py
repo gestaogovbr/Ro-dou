@@ -23,8 +23,6 @@ from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
 
-from airflow_commons.slack_messages import send_slack
-
 import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -45,8 +43,12 @@ class DouDigestDagGenerator():
     parser = YAMLParser
     searcher = DOUSearcher
 
-    def __init__(self):
+    def __init__(self, on_retry_callback=None, on_failure_callback=None):
         self.searcher = DOUSearcher()
+        self.on_retry_callback = on_retry_callback
+        self.on_failure_callback = on_failure_callback
+
+
 
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags
@@ -90,8 +92,8 @@ class DouDigestDagGenerator():
             'depends_on_past': False,
             'retries': 10,
             'retry_delay': timedelta(minutes=20),
-            'on_retry_callback': send_slack,
-            'on_failure_callback': send_slack,
+            'on_retry_callback': self.on_retry_callback,
+            'on_failure_callback': self.on_failure_callback,
         }
         dag = DAG(
             dag_id,

@@ -63,8 +63,9 @@
         - ./src:/opt/airflow/dags/ro_dou
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
         - ./tests:/opt/airflow/tests
+
         - ./FastETL/hooks/dou_hook.py:/opt/airflow/plugins/FastETL/hooks/dou_hook.py
-        - ../airflow_commons:/opt/airflow/plugins/airflow_commons
+        - ./FastETL/custom_functions:/opt/airflow/plugins/FastETL/custom_functions
       depends_on:
         postgres:
           condition: service_healthy

@@ -9,7 +9,7 @@ from random import random
 import pandas as pd
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
-from airflow_commons.utils.date import get_trigger_date
+from FastETL.custom_functions.utils.date import get_trigger_date
 
 from unidecode import unidecode
 
