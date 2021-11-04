@@ -55,10 +55,16 @@
         AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
         AIRFLOW__WEBSERVER__SECRET_KEY: '42'
         AIRFLOW__WEBSERVER__WORKERS: 1
+
         _AIRFLOW_DB_UPGRADE: 'true'
         _AIRFLOW_WWW_USER_CREATE: 'true'
         _AIRFLOW_WWW_USER_USERNAME: airflow
         _AIRFLOW_WWW_USER_PASSWORD: airflow
+
+        AIRFLOW__SMTP__SMTP_HOST: smtp4dev
+        AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
+        AIRFLOW__SMTP__SMTP_PORT: 25
+        AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@economia.gov.br
       volumes:
         - ./src:/opt/airflow/dags/ro_dou
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
@@ -103,3 +109,18 @@
         container_name: airflow-scheduler
         command: scheduler
         restart: always
+
+      smtp4dev:
+        image: rnwood/smtp4dev:v3
+        restart: always
+        ports:
+          - '5000:80'
+          - '25:25' # Change the number before : to the port the SMTP server should be accessible on
+          - '143:143' # Change the number before : to the port the IMAP server should be accessible on
+        volumes:
+            - smtp4dev-data:/smtp4dev
+        environment:
+          - ServerOptions__HostName=smtp4dev
+
+    volumes:
+      smtp4dev-data:
