@@ -86,7 +86,7 @@
           POSTGRES_PASSWORD: airflow
           POSTGRES_DB: airflow
         volumes:
-          - ./mnt2/pgdata:/var/lib/postgresql/data
+          - ./mnt/pgdata:/var/lib/postgresql/data
         healthcheck:
           test: ["CMD", "pg_isready", "-U", "airflow"]
           interval: 5s
