@@ -13,8 +13,44 @@ arquivos **YAML**. Receba no email todas as publicações que contenham as
 - Busca dinâmica das palavras chaves no **DB** ou de uma **Variável**
 - Pesquisa em **Seção** específica
 
+# Ambiente de Exemplo
 
-# Exemplos de Uso
+Neste repositório está disponível uma configuração de exemplo para você
+executar o **Ro-dou** no seu computador. Para isso é necessário ter o
+**Docker** na versão maior que 1.29 instalado. Após clonar o repositório no seu
+computador, acesse o diretório pela linha de comando e execute os comandos a
+seguir:
+
+```bash
+make install-deps
+```
+Este comando vai baixar algumas dependências necessárias.
+
+```bash
+make setup
+```
+Este comando vai baixar as imagens docker e subir os contêineres de acordo com
+as configurações definidas na receita em `docker-compose.yml`.
+
+O Airflow pode demorar alguns minutos para se configurar a primeira vez. Após
+isso ele estará disponível em http://localhost:8080/. Para se autenticar
+utilize o login `airflow` e a senha `airflow`. Na tela inicial estão listadas
+as DAGs referentes aos arquivos YAML do diretório `dag_confs/`.
+
+Para executar qualquer DAG é necessário ligá-la. Inicialmente todas estão
+pausadas. Utilize o botão _togle_ para ligá-la. Após ligá-la o Airflow
+executará a DAG uma única vez. Clique no nome da DAG para visualizar o detalhe
+da execução. Tanto na visualização em árvore (**Tree**) como na visualização em
+Grafo (**Graph**) é possível constatar se houve algum resultado encontrado na
+API da Imprensa Nacional para os termos e demais parâmetros desta DAG. Se a
+tarefa chamada **"send_report"** estiver na cor verde significa que houve
+resultado e que o email foi enviado.
+
+Para visualizar o email enviado acesse o endereço http://localhost:5000/. Este
+é um serviço que simula uma caixa de email (servidor de email SMTP) para fins
+de experimentação. **_Voilà!_**
+
+# Exemplos de Configuração
 
 ### Exemplo 1
 A configuração a seguir cria uma DAG que realiza a pesquisa **diária** dos
