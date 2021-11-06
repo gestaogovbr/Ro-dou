@@ -1,0 +1,26 @@
+dag:
+  id: all_params_example
+  description: DAG exemplo utilizando todos os demais parâmetros.
+  tags:
+    - projeto_a
+    - departamento_x
+  schedule_interval: 0 8 * * MON-FRI
+  search:
+    terms:
+    - dados abertos
+    - governo aberto
+    - lei de acesso à informação
+    field: TUDO
+    is_exact_search: On
+    ignore_signature_match: On
+    force_rematch: On
+    date: MES
+    dou_sections:
+      - SECAO_1
+      - EDICAO_SUPLEMENTAR
+  report:
+    emails:
+      - dest1@economia.gov.br
+      - dest2@economia.gov.br
+    attach_csv: True
+    subject: Assunto do Email
