@@ -20,6 +20,8 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.python_operator import BranchPythonOperator
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+from airflow.hooks.postgres_hook import PostgresHook
+from airflow.hooks.base_hook import BaseHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
 
@@ -101,7 +103,6 @@ class DouDigestDagGenerator():
             schedule_interval=schedule,
             description=description,
             catchup=False,
-            # catchup=True,
             tags=tags
             )
 
@@ -172,8 +173,15 @@ class DouDigestDagGenerator():
         is optional, is a classifier that will be used to group and sort
         the email report and the generated CSV.
         """
-        mssql_hook = MsSqlHook(mssql_conn_id=conn_id)
-        terms_df = mssql_hook.get_pandas_df(sql)
+        conn_type = BaseHook.get_connection(conn_id).conn_type
+        if conn_type == 'mssql':
+            db_hook = MsSqlHook(conn_id)
+        elif conn_type in ('postgresql', 'postgres'):
+            db_hook = PostgresHook(conn_id)
+        else:
+            raise Exception('Tipo de banco de dados não suportado: ', conn_type)
+
+        terms_df = db_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
         terms_df = terms_df.applymap(
             lambda x: str.strip(x) if pd.notnull(x) else '')
