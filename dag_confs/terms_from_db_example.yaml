@@ -1,0 +1,15 @@
+dag:
+  id: terms_from_db_example
+  description: DAG de teste
+  search:
+    terms:
+      from_db_select:
+        sql: "SELECT 'ANTONIO DE OLIVEIRA' as termo, 'grupo_1' as grupo UNION SELECT 'SILVA' as termo, 'grupo_2' as grupo"
+        conn_id: example_database_conn
+    dou_sections:
+      - SECAO_2
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: On
+    subject: "[String] com caracteres especiais deve estar entre aspas"

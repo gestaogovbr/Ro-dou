@@ -8,7 +8,7 @@ dag:
     - lei de acesso à informação
   report:
     emails:
-      - nitai.silva@economia.gov.br
+      - destination@economia.gov.br
     attach_csv: On
     subject: "Teste do Ro-dou"
 
