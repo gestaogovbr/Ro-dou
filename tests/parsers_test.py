@@ -78,15 +78,16 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ('terms_from_db_example.yaml',
          (
              'terms_from_db_example',
-             ['SECAO_2'],
-             'DIA',
+             ['TODOS'],
+             'MES',
              'TUDO',
              True,
              False,
              False,
              [],
-             ("SELECT 'ANTONIO DE OLIVEIRA' as termo, 'grupo_1' as grupo "
-              "UNION SELECT 'SILVA' as termo, 'grupo_2' as grupo"),
+             ("SELECT 'cloroquina' as termo, 'remédio falso' as grupo "
+              "UNION SELECT 'ivermectina' as termo, 'remédio falso' as grupo "
+              "UNION SELECT 'vacina' as termo, 'remédio verdadeiro' as grupo\n"),
              'example_database_conn',
              ['destination@economia.gov.br'],
              '[String] com caracteres especiais deve estar entre aspas',

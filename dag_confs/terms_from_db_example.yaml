@@ -4,10 +4,12 @@ dag:
   search:
     terms:
       from_db_select:
-        sql: "SELECT 'ANTONIO DE OLIVEIRA' as termo, 'grupo_1' as grupo UNION SELECT 'SILVA' as termo, 'grupo_2' as grupo"
+        sql: >
+          SELECT 'cloroquina' as termo, 'remédio falso' as grupo
+          UNION SELECT 'ivermectina' as termo, 'remédio falso' as grupo
+          UNION SELECT 'vacina' as termo, 'remédio verdadeiro' as grupo
         conn_id: example_database_conn
-    dou_sections:
-      - SECAO_2
+    date: MES
   report:
     emails:
       - destination@economia.gov.br
