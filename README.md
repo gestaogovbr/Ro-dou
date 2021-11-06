@@ -17,7 +17,8 @@ arquivos **YAML**. Receba no email todas as publicações que contenham as
 # Exemplos de Uso
 
 ### Exemplo 1
-A configuração a seguir cria uma DAG que realiza a pesquisa **diária** dos **6 termos** e envia o relatório para o **email** fornecido.
+A configuração a seguir cria uma DAG que realiza a pesquisa **diária** dos
+**6 termos** e envia o relatório para o **email** fornecido.
 
 ```yaml {6-10,13}
 dag:
@@ -37,7 +38,10 @@ dag:
 ```
 
 ### Exemplo 2
-Já esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM UTC**, apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em **formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval` aceita valores CRON.
+Esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM UTC**,
+apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em
+**formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval`
+aceita valores CRON.
 
 ```yaml {4,13-14,19}
 dag:
@@ -61,10 +65,13 @@ dag:
     attach_csv: True
     subject: Assunto do Email
 ```
-Note que aqui são utilizados os parâmetros opcionais `schedule_interval`, `dou_section` e `attach_csv`.
+Note que aqui são utilizados os parâmetros opcionais `schedule_interval`,
+`dou_section` e `attach_csv`.
 
 ### Exemplo 3
-Neste caso é utilizado o parâmetro `from_db_select` em `terms` que torna dinâmica a parametrização dos termos para pesquisa. Note também a inclusão de `tags` que ajudam na organização e busca das DAGs no Airflow.
+Neste caso é utilizado o parâmetro `from_db_select` em `terms` que torna
+dinâmica a parametrização dos termos para pesquisa. Note também a inclusão de
+`tags` que ajudam na organização e busca das DAGs no Airflow.
 
 ```yaml {4-6,9-11}
 dag:
@@ -85,7 +92,10 @@ dag:
 ```
 
 ### Exemplo 4
-Nesta configuração é utilizado o parâmetro `from_airflow_variable` em `terms` que também carrega dinamicamente a lista de termos, neste caso recuperando de uma **variável do Airflow**. Aqui também é utilizado o campo `field` para limitar as pesquisas ao campo título das publicações no DOU.
+Nesta configuração é utilizado o parâmetro `from_airflow_variable` em `terms`
+que também carrega dinamicamente a lista de termos, neste caso recuperando de
+uma **variável do Airflow**. Aqui também é utilizado o campo `field` para
+limitar as pesquisas ao campo título das publicações no DOU.
 
 ```yaml {6,7}
 dag:
@@ -101,7 +111,13 @@ dag:
 ```
 
 ### Exemplo 5
-Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia 1 às 8AM, como pode ser visto no `schedule_interval`. Ao passo que a pesquisa no DOU é realizada nos diários oficiais do **último mês** inteiro, através do uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search` com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado "paralelepip**i**do" conter um erro de ortográfico, a busca retorna os resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__text__21040__texto_pt_BR-paralelepipido&s=todos&exactDate=ano&sortType=0)
+Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia
+1 às 8AM, como pode ser visto no `schedule_interval`. Ao passo que a pesquisa
+no DOU é realizada nos diários oficiais do **último mês** inteiro, através do
+uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search`
+com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado
+"paralelepip**i**do" conter um erro de ortográfico, a busca retorna os
+resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__text__21040__texto_pt_BR-paralelepipido&s=todos&exactDate=ano&sortType=0)
 
 ```yaml {4,8,9}
 dag:
@@ -120,12 +136,18 @@ dag:
 
 ## Compreendendo um pouco mais a engenhoca
 
-Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da Imprensa Nacional que por sua vez é utilizada pelo buscador oficial do DOU em https://www.in.gov.br/consulta/. Ou seja, o Ro-dou consegue automatizar todo, ou quase todo, tipo de pesquisa que pode ser feita no site do DOU. A imagem abaixo é o painel de pesquisa avançada do site:
+Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da
+Imprensa Nacional que por sua vez é utilizada pelo buscador oficial do DOU em
+https://www.in.gov.br/consulta/. Ou seja, o Ro-dou consegue automatizar todo,
+ou quase todo, tipo de pesquisa que pode ser feita no site do DOU. A imagem
+abaixo é o painel de pesquisa avançada do site:
 
 ![Captura de tela do painel de pesquisa avançada no site do DOU.](docs/img/parametros-pesquisa-avancada-dou.png)
 # Parâmetros de pesquisa disponíveis
 
-Por padrão, caso omitido, o valor  do parâmetro `dou_section` é **TODOS**. Ou seja, a pesquisa é feita em todas as seções do DOU. Este campo aceita mais de uma opção.
+Por padrão, caso omitido, o valor  do parâmetro `dou_section` é **TODOS**. Ou
+seja, a pesquisa é feita em todas as seções do DOU. Este campo aceita mais de
+uma opção.
 * `dou_sections`:
   * SECAO_1
   * SECAO_2
