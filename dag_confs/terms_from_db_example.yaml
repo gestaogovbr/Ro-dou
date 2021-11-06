@@ -5,9 +5,12 @@ dag:
     terms:
       from_db_select:
         sql: >
-          SELECT 'cloroquina' as termo, 'remédio falso' as grupo
-          UNION SELECT 'ivermectina' as termo, 'remédio falso' as grupo
-          UNION SELECT 'vacina' as termo, 'remédio verdadeiro' as grupo
+          SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO
+          UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO
+          UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO
         conn_id: example_database_conn
     date: MES
   report:

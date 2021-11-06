@@ -85,9 +85,12 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              False,
              False,
              [],
-             ("SELECT 'cloroquina' as termo, 'remédio falso' as grupo "
-              "UNION SELECT 'ivermectina' as termo, 'remédio falso' as grupo "
-              "UNION SELECT 'vacina' as termo, 'remédio verdadeiro' as grupo\n"),
+             ("SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
+              "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
+              "UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO "
+              "UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO "
+              "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
+              "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"),
              'example_database_conn',
              ['destination@economia.gov.br'],
              '[String] com caracteres especiais deve estar entre aspas',
