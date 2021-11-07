@@ -9,6 +9,5 @@ dag:
   report:
     emails:
       - destination@economia.gov.br
-    attach_csv: On
     subject: "Teste do Ro-dou"
 
