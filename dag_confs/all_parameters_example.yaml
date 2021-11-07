@@ -1,5 +1,5 @@
 dag:
-  id: all_params_example
+  id: all_parameters_example
   description: DAG exemplo utilizando todos os demais parâmetros.
   tags:
     - projeto_a
