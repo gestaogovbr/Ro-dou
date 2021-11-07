@@ -62,6 +62,8 @@
         _AIRFLOW_WWW_USER_PASSWORD: airflow
 
         AIRFLOW__SMTP__SMTP_HOST: smtp4dev
+        # AIRFLOW__SMTP__SMTP_USER:
+        # AIRFLOW__SMTP__SMTP_PASSWORD:
         AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
         AIRFLOW__SMTP__SMTP_PORT: 25
         AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@economia.gov.br
