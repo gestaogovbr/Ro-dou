@@ -9,7 +9,8 @@ setup-containers:
 	docker-compose up -d --force-recreate --remove-orphans
 
 create-example-variable:
-	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do echo 'Waiting for Airflow API to start...'; sleep 15; done;"
+	@echo 'Waiting for Airflow API to start ...'
+	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
 	@echo "Creating 'termos_exemplo_variavel' Airflow variable"
 	@docker exec airflow-webserver sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/termos_exemplo_variavel' --user \"airflow:airflow\" > /dev/null; \
