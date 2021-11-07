@@ -46,15 +46,15 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              None,
              ['destination@economia.gov.br'],
              'Teste do Ro-dou',
-             True,
+             False,
              '37 5 * * *',
              'DAG de teste',
              {'dou', 'generated_dag'}
              )
         ),
-        ('all_params_example.yaml',
+        ('all_parameters_example.yaml',
          (
-             'all_params_example',
+             'all_parameters_example',
              ['SECAO_1', 'EDICAO_SUPLEMENTAR'],
              'MES',
              'TUDO',
