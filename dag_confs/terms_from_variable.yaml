@@ -1,0 +1,13 @@
+dag:
+  id: terms_from_variable
+  description: DAG de exemplo com termos na Variável
+  search:
+    date: SEMANA
+    terms:
+      from_airflow_variable: termos_exemplo_variavel
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: On
+    subject: "Exemplo de termos na Variável"
+
