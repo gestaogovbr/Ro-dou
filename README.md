@@ -24,33 +24,51 @@ seguir:
 ```bash
 make install-deps
 ```
-Este comando vai baixar algumas dependências necessárias.
+Este comando vai baixar as dependências necessárias.
 
 ```bash
-make setup
+make up
 ```
-Este comando vai baixar as imagens docker e subir os contêineres de acordo com
-as configurações definidas na receita em `docker-compose.yml`.
+Este comando vai baixar as imagens docker e subir todos os contêineres do Ro-dou.
 
 O Airflow pode demorar alguns minutos para se configurar a primeira vez. Após
 isso ele estará disponível em http://localhost:8080/. Para se autenticar
-utilize o login `airflow` e a senha `airflow`. Na tela inicial estão listadas
-as DAGs referentes aos arquivos YAML do diretório `dag_confs/`.
+utilize o login `airflow` e a senha `airflow`. Na tela inicial estão listados
+os clippings de exemplo referentes aos arquivos YAML do diretório `dag_confs/`.
+No airflow eles são chamados de [DAGs](http://airflow.apache.org/docs/apache-airflow/2.2.1/concepts/dags.html).
 
 Para executar qualquer DAG é necessário ligá-la. Inicialmente todas estão
-pausadas. Utilize o botão _togle_ para ligá-la. Após ligá-la o Airflow
-executará a DAG uma única vez. Clique no nome da DAG para visualizar o detalhe
-da execução. Tanto na visualização em árvore (**Tree**) como na visualização em
-Grafo (**Graph**) é possível constatar se houve algum resultado encontrado na
-API da Imprensa Nacional para os termos e demais parâmetros desta DAG. Se a
-tarefa chamada **"send_report"** estiver na cor verde significa que houve
-resultado e que o email foi enviado.
+pausadas. Comece testando o Clipping **all_parameters_example**. Utilize o
+botão _togle_ para ligá-lo. Após ligá-lo o Airflow o executará uma única vez.
+Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
+para visualizar o detalhe da execução. Tanto na visualização em árvore
+(**Tree**) como na visualização em Grafo (**Graph**) é possível constatar se
+houve algum resultado encontrado na API da Imprensa Nacional para os termos e
+demais parâmetros deste clipping. Se a tarefa chamada **"send_report"** estiver
+na cor verde significa que houve resultado e que o email foi enviado.
 
-Para visualizar o email enviado acesse o endereço http://localhost:5000/. Este
-é um serviço que simula uma caixa de email (servidor de email SMTP) para fins
-de experimentação. **_Voilà!_**
+Para visualizar o email acesse o endereço http://localhost:5000/. Este é um
+serviço que simula uma caixa de email (servidor SMTP) para fins de
+experimentação. **_Voilà!_**. O arquivo de configuração deste Clipping está na
+pasta `dag_confs/`. Confira [aqui](https://github.com/economiagovbr/Ro-dou/blob/main/dag_confs/all_parameters_example.yaml) no Github.
 
-# Exemplos de Configuração
+Agora teste o Clipping **terms_from_variable** seguindo os mesmo passos. Neste
+caso os termos pesquisados estão listados em uma Variável do Airflow e podem
+ser modificados pela interface gráfica. Acesse no menu **Admin >> Variables**
+ou pela URL http://localhost:8080/variable/list/.
+
+Leia a seção **Configurando em Produção** para instalar o Ro-dou utilizando um
+provedor SMTP real que enviará os emails para os destinatários verdadeiros.
+
+Para desligar o Ro-dou execute o comando:
+
+```bash
+make down
+```
+
+# Configurando em Produção
+
+# Exemplos de Configuração YAML
 
 ### Exemplo 1
 A configuração a seguir cria uma DAG que realiza a pesquisa **diária** dos
