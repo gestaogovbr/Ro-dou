@@ -112,8 +112,11 @@ class YAMLParser(FileParser):
         conn_id = None
         if isinstance(terms, dict):
             if 'from_airflow_variable' in terms:
-                var_name = terms.get('from_airflow_variable')
-                terms = ast.literal_eval(Variable.get(var_name))
+                var_value = Variable.get(terms.get('from_airflow_variable'))
+                try:
+                    terms = ast.literal_eval(var_value)
+                except (ValueError, SyntaxError):
+                    terms = var_value.splitlines()
             elif 'from_db_select' in terms:
                 from_db_select = terms.get('from_db_select')
                 terms = []
