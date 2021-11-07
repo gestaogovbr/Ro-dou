@@ -15,11 +15,11 @@ arquivos **YAML**. Receba no email todas as publicações que contenham as
 
 # Ambiente de Exemplo
 
-Neste repositório está disponível uma configuração de exemplo para você
-executar o **Ro-dou** no seu computador. Para isso é necessário ter o
-**Docker** na versão maior que 1.29 instalado. Após clonar o repositório no seu
-computador, acesse o diretório pela linha de comando e execute os comandos a
-seguir:
+Além do código fonte disponibilizamos também neste repositório uma configuração
+de exemplo para que você possa executar o **Ro-dou** no seu computador. Para
+isso é necessário ter o **Docker** na versão maior que 1.29 instalado. Após
+clonar o repositório no seu computador, acesse o diretório pela linha de
+comando e execute os comandos a seguir:
 
 ```bash
 make install-deps
@@ -67,6 +67,23 @@ make down
 ```
 
 # Configurando em Produção
+
+Para utilizar o Ro-dou em produção é necessário que o servidor tenha disponível
+um serviço SMTP que será utilizado pelo Airflow para envio dos emails pela
+Internet. Siga os seguintes passos:
+
+1. Utilize as credenciais do serviço SMTP (host, usuário, senha, porta, etc)
+para editar o arquivo `docker-compose.yml` substituindo as variáveis referentes
+ao SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
+
+2. Ao final do arquivo `docker-compose.yml` remove as linhas que declaram o
+serviço **smtp4dev** uma vez que ele não será mais necessário.
+
+É isso! Agora basta subir o Ro-dou executando o comando:
+
+```bash
+make up
+```
 
 # Exemplos de Configuração YAML
 
