@@ -18,15 +18,6 @@ jobs:
       with:
         path: Ro-dou
 
-    - name: Checkout FastETL
-      uses: actions/checkout@v2
-      with:
-        repository: economiagovbr/FastETL
-        path: FastETL
-
-    - name: Checkout airflow_commons
-      run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.economia.gov.br/seges-cginf/airflow_commons.git airflow_commons
-
     - name: Install dependencies
       run: make install-deps
 
