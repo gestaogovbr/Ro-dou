@@ -19,10 +19,10 @@ jobs:
         path: Ro-dou
 
     - name: Install dependencies
-      run: make install-deps
+      run: cd Ro-dou && make install-deps
 
     - name: Run docker-compose
-      run: make up
+      run: cd Ro-dou && make up
 
     - name: run tests
-      run: make tests
+      run: cd Ro-dou && make tests
