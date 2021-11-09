@@ -27,8 +27,11 @@ jobs:
     - name: Checkout airflow_commons
       run: git clone https://${{secrets.GITLAB_USER}}:${{secrets.GITLAB_PASSWORD}}@git.economia.gov.br/seges-cginf/airflow_commons.git airflow_commons
 
+    - name: Install dependencies
+      run: make install-deps
+
     - name: Run docker-compose
-      run: make setup
+      run: make up
 
     - name: run tests
       run: make tests
