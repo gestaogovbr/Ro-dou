@@ -39,7 +39,7 @@ No airflow eles são chamados de [DAGs](http://airflow.apache.org/docs/apache-ai
 
 Para executar qualquer DAG é necessário ligá-la. Inicialmente todas estão
 pausadas. Comece testando o Clipping **all_parameters_example**. Utilize o
-botão _togle_ para ligá-lo. Após ligá-lo o Airflow o executará uma única vez.
+botão _toggle_ para ligá-lo. Após ligá-lo o Airflow o executará uma única vez.
 Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
 para visualizar o detalhe da execução. Tanto na visualização em árvore
 (**Tree**) como na visualização em Grafo (**Graph**) é possível constatar se
@@ -76,7 +76,7 @@ Internet. Siga os seguintes passos:
 para editar o arquivo `docker-compose.yml` substituindo as variáveis referentes
 ao SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
 
-2. Ao final do arquivo `docker-compose.yml` remove as linhas que declaram o
+2. Ao final do arquivo `docker-compose.yml` remova as linhas que declaram o
 serviço **smtp4dev** uma vez que ele não será mais necessário.
 
 É isso! Agora basta subir o Ro-dou executando o comando:
