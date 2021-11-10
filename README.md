@@ -1,5 +1,7 @@
 # Ro-dou
 
+[![CI Tests](https://github.com/economiagovbr/Ro-dou/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/economiagovbr/Ro-dou/actions/workflows/ci-tests.yml)
+
 O Ro-dou é uma ferramenta para gerar dinamicamente DAGs no
 [Apache Airflow](https://airflow.apache.org/) que fazem *clipping* do Diário
 Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) a partir de
