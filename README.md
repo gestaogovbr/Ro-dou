@@ -187,7 +187,7 @@ Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no d
 no DOU é realizada nos diários oficiais do **último mês** inteiro, através do
 uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search`
 com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado
-"paralelepip**i**do" conter um erro de ortográfico, a busca retorna os
+"paralelpip**i**do" conter um erro de ortográfico, a busca retorna os
 resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__text__21040__texto_pt_BR-paralelepipido&s=todos&exactDate=ano&sortType=0)
 
 ```yaml {4,8,9}
