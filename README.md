@@ -2,7 +2,7 @@
 
 O Ro-dou é uma ferramenta para gerar dinamicamente DAGs no
 [Apache Airflow](https://airflow.apache.org/) que fazem *clipping* do Diário
-Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) à partir de
+Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) a partir de
 arquivos **YAML**. Receba no email todas as publicações que contenham as
 **palavras chaves** que você definir.
 
