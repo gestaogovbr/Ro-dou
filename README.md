@@ -230,7 +230,7 @@ uma opção.
 
 * `date`:
   * DIA
-  * SEMAN
+  * SEMANA
   * MES
   * ANO
 
