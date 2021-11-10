@@ -19,7 +19,8 @@ arquivos **YAML**. Receba no email todas as publicações que contenham as
 
 Além do código fonte disponibilizamos também neste repositório uma configuração
 de exemplo para que você possa executar o **Ro-dou** no seu computador. Para
-isso é necessário ter o **Docker** na versão maior que 1.29 instalado. Após
+isso é necessário ter o **Docker Compose** na versão maior que 1.29
+[instalado](https://docs.docker.com/compose/install/). Após
 clonar o repositório no seu computador, acesse o diretório pela linha de
 comando e execute os comandos a seguir:
 
