@@ -12,7 +12,7 @@ arquivos **YAML**. Receba no email todas as publicações que contenham as
 
 - Frequência **diária**, **semanal** ou **mensal**
 - Relatório em `.CSV`
-- Busca dinâmica das palavras chaves no **DB** ou de uma **Variável**
+- Busca dinâmica das palavras chaves de um **BD** ou de uma **Variável**
 - Pesquisa em **Seção** específica
 
 # Ambiente de Exemplo
@@ -27,12 +27,12 @@ comando e execute os comandos a seguir:
 ```bash
 make install-deps
 ```
-Este comando vai baixar as dependências necessárias.
+Este comando baixa as dependências necessárias.
 
 ```bash
 make up
 ```
-Este comando vai baixar as imagens docker e subir todos os contêineres do Ro-dou.
+Este comando baixa as imagens docker e sube todos os contêineres do Ro-dou.
 
 O Airflow pode demorar alguns minutos para se configurar a primeira vez. Após
 isso ele estará disponível em http://localhost:8080/. Para se autenticar
