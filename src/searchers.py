@@ -3,6 +3,7 @@
 
 import ast
 
+import logging
 import time
 import re
 from random import random
@@ -18,6 +19,7 @@ class DOUSearcher():
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile('<.*?>')
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
+    dou_hook = DOUHook()
 
     def exec_dou_search(self,
                         term_list,
@@ -50,9 +52,8 @@ class DOUSearcher():
                           ignore_signature_match,
                           force_rematch) -> dict:
         search_results = {}
-        dou_hook = DOUHook()
         for search_term in term_list:
-            results = dou_hook.search_text(
+            results = self._search_text_with_retry(
                 search_term=search_term,
                 sections=[Section[s] for s in dou_sections],
                 reference_date=trigger_date,
@@ -77,6 +78,36 @@ class DOUSearcher():
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
         return search_results
+
+    def _search_text_with_retry(
+        self,
+        search_term,
+        sections,
+        reference_date,
+        search_date,
+        field,
+        is_exact_search,
+    ) -> list:
+        try:
+            return self.dou_hook.search_text(
+                search_term=search_term,
+                sections=sections,
+                reference_date=reference_date,
+                search_date=search_date,
+                field=field,
+                is_exact_search=is_exact_search,
+                )
+        except:
+            logging.info('Sleeping for 30 seconds before retry dou_hook.search_text().')
+            time.sleep(30)
+            return self.dou_hook.search_text(
+                search_term=search_term,
+                sections=sections,
+                reference_date=reference_date,
+                search_date=search_date,
+                field=field,
+                is_exact_search=is_exact_search,
+                )
 
     def _group_results(self,
                        search_results: dict,
