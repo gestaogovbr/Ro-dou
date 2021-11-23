@@ -32,7 +32,7 @@ Este comando baixa as dependências necessárias.
 ```bash
 make up
 ```
-Este comando baixa as imagens docker e sube todos os contêineres do Ro-dou.
+Este comando baixa as imagens docker e sobe todos os contêineres do Ro-dou.
 
 O Airflow pode demorar alguns minutos para se configurar a primeira vez. Após
 isso ele estará disponível em http://localhost:8080/. Para se autenticar
