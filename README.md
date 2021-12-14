@@ -8,6 +8,9 @@ Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) a partir de
 arquivos **YAML**. Receba no email todas as publicações que contenham as
 **palavras chaves** que você definir.
 
+Veja uma apresentação completa no canal da ENAP no [YouTube](https://www.youtube.com/watch?v=phCa8GJOHY0),
+feita na Semana de Inovação de 2021.
+
 # Recursos
 
 - Frequência **diária**, **semanal** ou **mensal**
