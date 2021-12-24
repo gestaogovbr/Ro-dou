@@ -29,7 +29,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from parsers import YAMLParser
-from searchers import DOUSearcher
+from searchers import BaseSearcher, DOUSearcher, QDSearcher
 
 class DouDigestDagGenerator():
     """
@@ -43,10 +43,11 @@ class DouDigestDagGenerator():
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
 
     parser = YAMLParser
-    searcher = DOUSearcher
+    searcher = BaseSearcher
 
     def __init__(self, on_retry_callback=None, on_failure_callback=None):
-        self.searcher = DOUSearcher()
+        self.searcher = QDSearcher()
+        # self.searcher = DOUSearcher()
         self.on_retry_callback = on_retry_callback
         self.on_failure_callback = on_failure_callback
 
