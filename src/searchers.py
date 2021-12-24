@@ -3,21 +3,103 @@
 
 import ast
 
+from abc import ABC
 import logging
 import time
 import re
 from random import random
 import pandas as pd
+import requests
+from unidecode import unidecode
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 from FastETL.custom_functions.utils.date import get_trigger_date
 
-from unidecode import unidecode
 
-class DOUSearcher():
 
+class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile('<.*?>')
+
+
+    def _cast_term_list(self, pre_term_list: [list, str]) -> list:
+        """If `pre_term_list` is a str (in the case it came from xcom)
+        then its necessary to convert it back to dataframe and return
+        the first column. Otherwise the `pre_term_list` is returned.
+        """
+        return pre_term_list if isinstance(pre_term_list, list) else \
+            pd.read_json(pre_term_list).iloc[:, 0].tolist()
+
+
+    def _group_results(self,
+                       search_results: dict,
+                       term_list: [list, str]) -> dict:
+        """Produces a grouped result based on if `term_list` is already
+        the list of terms or it is a string received through xcom
+        from `select_terms_from_db` task and the sql_query returned a
+        second column (used as the group name)
+        """
+        if isinstance(term_list, str) \
+            and len(ast.literal_eval(term_list).values()) > 1:
+            grouped_result = self._group_by_term_group(search_results, term_list)
+        else:
+            grouped_result = {'single_group': search_results}
+
+        return grouped_result
+
+
+    def _group_by_term_group(self,
+                            search_results: dict,
+                            term_n_group: str) -> dict:
+        """Rebuild the dict grouping the results based on term_n_group
+        mapping
+        """
+        dict_struct = ast.literal_eval(term_n_group)
+        terms, groups = dict_struct.values()
+        term_group_map = dict(zip(terms.values(), groups.values()))
+        groups = sorted(list(set(term_group_map.values())))
+
+        grouped_result = {
+            g1:{
+                t: search_results[t]
+                for (t, g2) in sorted(term_group_map.items())
+                if t in search_results and g1 == g2}
+            for g1 in groups}
+
+        # Clear empty groups
+        trimmed_result = {k: v for k, v in grouped_result.items() if v}
+        return trimmed_result
+
+
+    def _really_matched(self, search_term: str, abstract: str) -> bool:
+        """Verifica se o termo encontrado pela API realmente é igual ao
+        termo de busca. Esta função é útil para filtrar resultados
+        retornardos pela API mas que são resultados aproximados e não
+        exatos.
+        """
+        whole_match = self._clean_html(abstract).replace('... ', '')
+        norm_whole_match = self._normalize(whole_match)
+
+        norm_term = self._normalize(search_term)
+
+        return norm_term in norm_whole_match
+
+
+    def _clean_html(self, raw_html: str) -> str:
+        clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
+        return clean_text
+
+
+    def _normalize(self, raw_str: str) -> str:
+        """Remove characters (accents and other not alphanumeric) lower
+        it and keep only one space between words"""
+        text = unidecode(raw_str).lower()
+        text = ''.join(c if c.isalnum() else ' ' for c in text)
+        text = ' '.join(text.split())
+        return text
+
+
+class DOUSearcher(BaseSearcher):
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
     dou_hook = DOUHook()
 
@@ -109,65 +191,6 @@ class DOUSearcher():
                 is_exact_search=is_exact_search,
                 )
 
-    def _group_results(self,
-                       search_results: dict,
-                       term_list: [list, str]) -> dict:
-        """Produces a grouped result based on if `term_list` is already
-        the list of terms or it is a string received through xcom
-        from `select_terms_from_db` task and the sql_query returned a
-        second column (used as the group name)
-        """
-        if isinstance(term_list, str) \
-            and len(ast.literal_eval(term_list).values()) > 1:
-            grouped_result = self._group_by_term_group(search_results, term_list)
-        else:
-            grouped_result = {'single_group': search_results}
-
-        return grouped_result
-
-    def _group_by_term_group(self,
-                            search_results: dict,
-                            term_n_group: str) -> dict:
-        """Rebuild the dict grouping the results based on term_n_group
-        mapping
-        """
-        dict_struct = ast.literal_eval(term_n_group)
-        terms, groups = dict_struct.values()
-        term_group_map = dict(zip(terms.values(), groups.values()))
-        groups = sorted(list(set(term_group_map.values())))
-
-        grouped_result = {
-            g1:{
-                t: search_results[t]
-                for (t, g2) in sorted(term_group_map.items())
-                if t in search_results and g1 == g2}
-            for g1 in groups}
-
-        # Clear empty groups
-        trimmed_result = {k: v for k, v in grouped_result.items() if v}
-        return trimmed_result
-
-    def _cast_term_list(self, pre_term_list: [list, str]) -> list:
-        """If `pre_term_list` is a str (in the case it came from xcom)
-        then its necessary to convert it back to dataframe and return
-        the first column. Otherwise the `pre_term_list` is returned.
-        """
-        return pre_term_list if isinstance(pre_term_list, list) else \
-            pd.read_json(pre_term_list).iloc[:, 0].tolist()
-
-    def _really_matched(self, search_term: str, abstract: str) -> bool:
-        """Verifica se o termo encontrado pela API realmente é igual ao
-        termo de busca. Esta função é útil para filtrar resultados
-        retornardos pela API mas que são resultados aproximados e não
-        exatos.
-        """
-        whole_match = self._clean_html(abstract).replace('... ', '')
-        norm_whole_match = self._normalize(whole_match)
-
-        norm_term = self._normalize(search_term)
-
-        return norm_term in norm_whole_match
-
     def _is_signature(self, search_term: str, abstract: str) -> bool:
         """Verifica se o `search_term` (geralmente usado para busca por
         nome de pessoas) está presente na assinatura. Para isso se
@@ -198,21 +221,9 @@ class DOUSearcher():
                 norm_abstract_withou_start_name.startswith(norm_term))
         )
 
-    def _normalize(self, raw_str: str) -> str:
-        """Remove characters (accents and other not alphanumeric) lower
-        it and keep only one space between words"""
-        text = unidecode(raw_str).lower()
-        text = ''.join(c if c.isalnum() else ' ' for c in text)
-        text = ' '.join(text.split())
-        return text
-
     def _get_prior_and_matched_name(self, raw_html: str) -> (str, str):
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
-
-    def _clean_html(self, raw_html: str) -> str:
-        clean_text = re.sub(self.CLEAN_HTML_RE, '', raw_html)
-        return clean_text
 
     def _render_section_descriptions(self, results: list) -> list:
         return [self._render_section(r) for r in results]
