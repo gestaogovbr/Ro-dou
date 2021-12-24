@@ -120,7 +120,7 @@ class DouDigestDagGenerator():
 
             exec_dou_search_task = PythonOperator(
                 task_id='exec_dou_search',
-                python_callable=self.searcher.exec_dou_search,
+                python_callable=self.searcher.exec_search,
                 op_kwargs={
                     'term_list': term_list,
                     'dou_sections': dou_sections,
