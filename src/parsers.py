@@ -76,7 +76,7 @@ class YAMLParser(FileParser):
         field = search.get('field', 'TUDO')
         is_exact_search = search.get('is_exact_search', True)
         ignore_signature_match = search.get('ignore_signature_match', False)
-        force_rematch = search.get('force_rematch', False)
+        force_rematch = search.get('force_rematch', None)
         schedule = self._get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
         dag_tags = dag.get('tags', [])
         # add default tags

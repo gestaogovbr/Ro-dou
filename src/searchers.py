@@ -8,6 +8,7 @@ import logging
 import time
 import re
 from random import random
+import json
 import pandas as pd
 import requests
 from unidecode import unidecode
@@ -231,3 +232,78 @@ class DOUSearcher(BaseSearcher):
     def _render_section(self, result: dict) -> dict:
         result['section'] = DOUHook.SEC_DESCRIPTION[result['section']]
         return result
+
+
+class QDSearcher(BaseSearcher):
+
+    API_BASE_URL = 'https://queridodiario.ok.org.br/api/gazettes/'
+    def exec_search(self,
+                    term_list,
+                    dou_sections: [str],
+                    search_date,
+                    field,
+                    is_exact_search: bool,
+                    ignore_signature_match: bool,
+                    force_rematch: bool,
+                    **context):
+        force_rematch = True if force_rematch is None else force_rematch
+        term_list = self._cast_term_list(term_list)
+        search_results = {}
+        for search_term in term_list:
+            results = self._search_term(
+                search_term=search_term,
+                reference_date=get_trigger_date(context),
+                force_rematch=force_rematch,
+                )
+            if results:
+                search_results[search_term] = results
+            time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
+
+        return self._group_results(search_results, term_list)
+
+
+    def _search_term(self,
+                     search_term,
+                     reference_date,
+                     force_rematch: bool,
+                     ) -> list:
+        payload = [
+            ('size', 100),
+            ('fragment_size', 250),
+            ('sort_by', 'descending_date'),
+            ('pre_tags', ('<span style="font-family: \'rawline\','
+                          'sans-serif; background: #FFA;">')),
+            ('post_tags', '</span>'),
+            ('number_of_fragments', 3),
+            ('since', reference_date.strftime('%Y-%m-%d')),
+            ('until', reference_date.strftime('%Y-%m-%d')),
+            ('keywords', search_term)]
+
+        req_result = requests.get(self.API_BASE_URL, params=payload)
+        search_results = json.loads(req_result.content)['gazettes']
+        all_results = []
+        if search_results:
+            for result in search_results:
+                all_results.append(self.parse_result(result))
+
+        if force_rematch:
+            all_results = [r for r in all_results
+                if self._really_matched(search_term, r.get('abstract'))]
+
+        return all_results
+
+
+    def parse_result(self, result: dict) -> dict:
+        parsed = {}
+        parsed['section'] = ("Edição "
+            f"{'extraordinária' if result['is_extra_edition'] else 'ordinária'} ")
+        parsed['title'] = ("Município de "
+            f"{result['territory_name']} - {result['state_code']}")
+        parsed['href'] = result['url']
+        parsed['abstract'] = (
+            '<p>'
+            + '</p><p>'.join(result['highlight_texts']).replace('\n', '')
+            + '</p>')
+        parsed['date'] = result['date']
+
+        return parsed
