@@ -28,7 +28,7 @@ h3 {
     font-size: 18px;
     font-weight: 500;
     line-height: 22px;
-    max-height: 44px;
+    /* max-height: 44px; */
     margin-bottom: 0;
     margin-top: 0;
     overflow: hidden;
