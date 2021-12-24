@@ -21,15 +21,15 @@ class DOUSearcher():
     SPLIT_MATCH_RE = re.compile(r'(.*?)<.*?>(.*?)<.*?>')
     dou_hook = DOUHook()
 
-    def exec_dou_search(self,
-                        term_list,
-                        dou_sections: [str],
-                        search_date,
-                        field,
-                        is_exact_search: bool,
-                        ignore_signature_match: bool,
-                        force_rematch: bool,
-                        **context):
+    def exec_search(self,
+                    term_list,
+                    dou_sections: [str],
+                    search_date,
+                    field,
+                    is_exact_search: bool,
+                    ignore_signature_match: bool,
+                    force_rematch: bool,
+                    **context):
         search_results = self._search_all_terms(
             self._cast_term_list(term_list),
             dou_sections,
