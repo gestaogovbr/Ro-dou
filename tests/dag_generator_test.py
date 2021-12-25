@@ -2,6 +2,8 @@
 """
 
 import pandas as pd
+from dags.ro_dou.dou_dag_generator import merge_results
+
 
 def test_repack_match(dag_gen, report_example):
     match_dict = report_example['single_group']['antonio de oliveira'][0]
@@ -60,3 +62,10 @@ def test_get_csv_tempfile__valid_file_name_suffix(dag_gen, report_example):
 def test_get_csv_tempfile__valid_csv(dag_gen, report_example):
     with dag_gen.get_csv_tempfile(report_example) as csv_file:
         assert pd.read_csv(csv_file.name) is not None
+
+def test_merge_results(merge_results_samples):
+    merged_result = merge_results(
+        merge_results_samples[0],
+        merge_results_samples[1],
+    )
+    assert merged_result == merge_results_samples[2]

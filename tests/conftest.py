@@ -4,11 +4,13 @@
 import os
 
 import pytest
+from typing import Tuple
 
 from airflow import models
 from airflow.utils import db
 
-from dags.ro_dou.dou_dag_generator import DouDigestDagGenerator
+from dags.ro_dou.dou_dag_generator import (DouDigestDagGenerator,
+                                           SearchResult)
 from dags.ro_dou.parsers import YAMLParser
 from dags.ro_dou.searchers import DOUSearcher
 
@@ -359,3 +361,48 @@ def term_n_group():
             "1":"ATI"
         }
     }"""
+
+
+@pytest.fixture()
+def merge_results_samples() -> Tuple[SearchResult, SearchResult, SearchResult]:
+    results_dou = {
+        'grupo_1': {
+            'term_1': ['result1', 'result2', 'resultn'],
+            'term_2': ['result1', 'result2', 'resultn'],
+            'term_3': ['result1', 'result2', 'resultn'],
+        },
+        'grupo_2': {
+            'term_4': ['result1', 'result2', 'resultn'],
+            'term_5': ['result1', 'result2', 'resultn'],
+            'term_6': ['result1', 'result2', 'resultn'],
+        }
+    }
+    results_qd = {
+        'grupo_1': {
+            'term_2': ['result1', 'result2', 'resultn'],
+            'term_3': ['result1', 'result2', 'resultn'],
+            'term_10': ['result1', 'result2', 'resultn'],
+        },
+        'grupo_3': {
+            'term_7': ['result1', 'result2', 'resultn'],
+            'term_8': ['result1', 'result2', 'resultn'],
+            'term_9': ['result1', 'result2', 'resultn'],
+        }
+    }
+    merged_results = {
+        'grupo_2': {
+            'term_4': ['result1', 'result2', 'resultn'],
+            'term_5': ['result1', 'result2', 'resultn'],
+            'term_6': ['result1', 'result2', 'resultn']},
+        'grupo_3': {
+            'term_7': ['result1', 'result2', 'resultn'],
+            'term_8': ['result1', 'result2', 'resultn'],
+            'term_9': ['result1', 'result2', 'resultn']},
+        'grupo_1': {
+            'term_1': ['result1', 'result2', 'resultn'],
+            'term_2': ['result1', 'result2', 'resultn', 'result1', 'result2', 'resultn'],
+            'term_3': ['result1', 'result2', 'resultn', 'result1', 'result2', 'resultn'],
+            'term_10': ['result1', 'result2', 'resultn']}
+    }
+
+    return (results_dou, results_qd, merged_results)
