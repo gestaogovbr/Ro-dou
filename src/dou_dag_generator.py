@@ -13,6 +13,8 @@ import os
 import ast
 from tempfile import NamedTemporaryFile
 import textwrap
+from typing import Dict, List
+
 import markdown
 import pandas as pd
 
@@ -279,6 +281,27 @@ class DouDigestDagGenerator():
                 match['abstract'],
                 match['date'],
                 )
+
+
+def _merge_dict(dict1, dict2):
+    """Merge dictionaries and sum values of common keys"""
+    dict3 = {**dict1, **dict2}
+    for key, value in dict3.items():
+        if key in dict1 and key in dict2:
+                dict3[key] = value + dict1[key]
+    return dict3
+
+
+SearchResult = Dict[str, Dict[str, List[dict]]]
+
+def merge_results(result_1: SearchResult,
+                  result_2: SearchResult) -> SearchResult:
+    """Merge search results by group and term as keys"""
+    return {
+        group: _merge_dict(result_1.get(group, {}),
+                           result_2.get(group, {}))
+        for group in set((*result_1, *result_2))}
+
 
 # Run dag generation
 DouDigestDagGenerator().generate_dags()
