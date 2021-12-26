@@ -286,16 +286,16 @@ class QDSearcher(BaseSearcher):
 
         req_result = requests.get(req_url, params=payload)
         search_results = json.loads(req_result.content)['gazettes']
-        all_results = []
+        parsed_results = []
         if search_results:
             for result in search_results:
-                all_results.append(self.parse_result(result))
+                parsed_results.append(self.parse_result(result))
 
         if force_rematch:
-            all_results = [r for r in all_results
+            clean_results = [r for r in parsed_results
                 if self._really_matched(search_term, r.get('abstract'))]
 
-        return all_results
+        return clean_results
 
 
     def parse_result(self, result: dict) -> dict:
