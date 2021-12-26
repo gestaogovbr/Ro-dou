@@ -3,6 +3,7 @@
 
 import ast
 
+from datetime import datetime
 from abc import ABC
 import logging
 import time
@@ -14,8 +15,6 @@ import requests
 from unidecode import unidecode
 
 from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
-from FastETL.custom_functions.utils.date import get_trigger_date
-
 
 
 class BaseSearcher(ABC):
@@ -112,12 +111,12 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    **context):
+                    reference_date: datetime):
         search_results = self._search_all_terms(
             self._cast_term_list(term_list),
             dou_sections,
             search_date,
-            get_trigger_date(context),
+            reference_date,
             field,
             is_exact_search,
             ignore_signature_match,
@@ -230,7 +229,7 @@ class DOUSearcher(BaseSearcher):
         return [self._render_section(r) for r in results]
 
     def _render_section(self, result: dict) -> dict:
-        result['section'] = DOUHook.SEC_DESCRIPTION[result['section']]
+        result['section'] = f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}"
         return result
 
 
@@ -245,14 +244,14 @@ class QDSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    **context):
+                    reference_date: datetime):
         force_rematch = True if force_rematch is None else force_rematch
         term_list = self._cast_term_list(term_list)
         search_results = {}
         for search_term in term_list:
             results = self._search_term(
                 search_term=search_term,
-                reference_date=get_trigger_date(context),
+                reference_date=reference_date,
                 force_rematch=force_rematch,
                 )
             if results:
@@ -295,7 +294,7 @@ class QDSearcher(BaseSearcher):
 
     def parse_result(self, result: dict) -> dict:
         parsed = {}
-        parsed['section'] = ("Edição "
+        parsed['section'] = ("QD - Edição "
             f"{'extraordinária' if result['is_extra_edition'] else 'ordinária'} ")
         parsed['title'] = ("Município de "
             f"{result['territory_name']} - {result['state_code']}")

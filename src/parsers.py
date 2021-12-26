@@ -71,6 +71,7 @@ class YAMLParser(FileParser):
         terms, sql, conn_id = self._get_terms_params(search)
 
         # Optional fields
+        sources = search.get('sources', ['DOU'])
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
         field = search.get('field', 'TUDO')
@@ -87,6 +88,7 @@ class YAMLParser(FileParser):
 
         return (
             dag_id,
+            sources,
             dou_sections,
             search_date,
             field,
