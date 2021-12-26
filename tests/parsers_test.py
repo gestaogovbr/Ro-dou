@@ -33,12 +33,13 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ('basic_example.yaml',
          (
              'basic_example',
+             ['DOU'],
              ['TODOS'],
              'DIA',
              'TUDO',
              True,
              False,
-             False,
+             None,
              ['dados abertos',
              'governo aberto',
              'lei de acesso à informação'],
@@ -55,6 +56,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ('all_parameters_example.yaml',
          (
              'all_parameters_example',
+             ['DOU'],
              ['SECAO_1', 'EDICAO_SUPLEMENTAR'],
              'MES',
              'TUDO',
@@ -78,12 +80,13 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ('terms_from_db_example.yaml',
          (
              'terms_from_db_example',
+             ['DOU'],
              ['TODOS'],
              'MES',
              'TUDO',
              True,
              False,
-             False,
+             None,
              [],
              ("SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
               "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
