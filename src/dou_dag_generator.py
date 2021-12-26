@@ -75,6 +75,7 @@ class DouDigestDagGenerator():
     def create_dag(self,
                    dag_id,
                    sources,
+                   territory_id,
                    dou_sections,
                    search_date,
                    search_field,
@@ -130,6 +131,7 @@ class DouDigestDagGenerator():
                 python_callable=self.perform_searchs,
                 op_kwargs={
                     'sources': sources,
+                    'territory_id': territory_id,
                     'term_list': term_list,
                     'dou_sections': dou_sections,
                     'search_date': search_date,
@@ -172,6 +174,7 @@ class DouDigestDagGenerator():
     def perform_searchs(
         self,
         sources,
+        territory_id,
         term_list,
         dou_sections: [str],
         search_date,
@@ -195,6 +198,7 @@ class DouDigestDagGenerator():
 
         if 'QD' in sources:
             qd_result = self.searchers['QD'].exec_search(
+                territory_id,
                 term_list,
                 dou_sections,
                 search_date,
