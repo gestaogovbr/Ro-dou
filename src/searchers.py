@@ -2,6 +2,7 @@
 """
 
 import ast
+from urllib.parse import urljoin
 
 from datetime import datetime
 from abc import ABC
@@ -237,6 +238,7 @@ class QDSearcher(BaseSearcher):
 
     API_BASE_URL = 'https://queridodiario.ok.org.br/api/gazettes/'
     def exec_search(self,
+                    territory_id,
                     term_list,
                     dou_sections: [str],
                     search_date,
@@ -250,6 +252,7 @@ class QDSearcher(BaseSearcher):
         search_results = {}
         for search_term in term_list:
             results = self._search_term(
+                territory_id=territory_id,
                 search_term=search_term,
                 reference_date=reference_date,
                 force_rematch=force_rematch,
@@ -262,6 +265,7 @@ class QDSearcher(BaseSearcher):
 
 
     def _search_term(self,
+                     territory_id,
                      search_term,
                      reference_date,
                      force_rematch: bool,
@@ -277,8 +281,10 @@ class QDSearcher(BaseSearcher):
             ('since', reference_date.strftime('%Y-%m-%d')),
             ('until', reference_date.strftime('%Y-%m-%d')),
             ('keywords', search_term)]
+        req_url = (self.API_BASE_URL if not territory_id
+                   else urljoin(self.API_BASE_URL, str(territory_id)))
 
-        req_result = requests.get(self.API_BASE_URL, params=payload)
+        req_result = requests.get(req_url, params=payload)
         search_results = json.loads(req_result.content)['gazettes']
         all_results = []
         if search_results:

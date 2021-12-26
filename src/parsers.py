@@ -72,6 +72,7 @@ class YAMLParser(FileParser):
 
         # Optional fields
         sources = search.get('sources', ['DOU'])
+        territory_id = search.get('territory_id', None)
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
         field = search.get('field', 'TUDO')
@@ -89,6 +90,7 @@ class YAMLParser(FileParser):
         return (
             dag_id,
             sources,
+            territory_id,
             dou_sections,
             search_date,
             field,
