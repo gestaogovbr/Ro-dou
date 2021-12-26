@@ -27,6 +27,8 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
 
+from FastETL.custom_functions.utils.date import get_trigger_date
+
 import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -45,14 +47,15 @@ class DouDigestDagGenerator():
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
 
     parser = YAMLParser
-    searcher = BaseSearcher
+    searchers = Dict[str, BaseSearcher]
 
     def __init__(self, on_retry_callback=None, on_failure_callback=None):
-        self.searcher = QDSearcher()
-        # self.searcher = DOUSearcher()
+        self.searchers = {
+            'DOU': DOUSearcher(),
+            'QD': QDSearcher(),
+        }
         self.on_retry_callback = on_retry_callback
         self.on_failure_callback = on_failure_callback
-
 
 
     def generate_dags(self):
@@ -71,6 +74,7 @@ class DouDigestDagGenerator():
 
     def create_dag(self,
                    dag_id,
+                   sources,
                    dou_sections,
                    search_date,
                    search_field,
@@ -123,8 +127,9 @@ class DouDigestDagGenerator():
 
             exec_dou_search_task = PythonOperator(
                 task_id='exec_dou_search',
-                python_callable=self.searcher.exec_search,
+                python_callable=self.perform_searchs,
                 op_kwargs={
+                    'sources': sources,
                     'term_list': term_list,
                     'dou_sections': dou_sections,
                     'search_date': search_date,
@@ -162,6 +167,50 @@ class DouDigestDagGenerator():
             has_matches_task >> [send_report_task, skip_report_task]
 
         return dag
+
+
+    def perform_searchs(
+        self,
+        sources,
+        term_list,
+        dou_sections: [str],
+        search_date,
+        field,
+        is_exact_search: bool,
+        ignore_signature_match: bool,
+        force_rematch: bool,
+        **context) -> dict:
+        """Performs the search in each source and merge the results
+        """
+        if 'DOU' in sources:
+            dou_result = self.searchers['DOU'].exec_search(
+                term_list,
+                dou_sections,
+                search_date,
+                field,
+                is_exact_search,
+                ignore_signature_match,
+                force_rematch,
+                get_trigger_date(context))
+
+        if 'QD' in sources:
+            qd_result = self.searchers['QD'].exec_search(
+                term_list,
+                dou_sections,
+                search_date,
+                field,
+                is_exact_search,
+                ignore_signature_match,
+                force_rematch,
+                get_trigger_date(context))
+
+        if 'DOU' in sources and 'QD' in sources:
+            return merge_results(qd_result, dou_result)
+        elif 'DOU' in sources:
+            return dou_result
+        else:
+            return qd_result
+
 
     def has_matches(self, search_result: str) -> str:
         search_result = ast.literal_eval(search_result)
