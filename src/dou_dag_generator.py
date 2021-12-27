@@ -248,7 +248,7 @@ class DouDigestDagGenerator():
                     email_to_list, attach_csv):
         """Builds the email content, the CSV if applies, and send it
         """
-        full_subject = f"{subject} - DOU de {report_date}"
+        full_subject = f"{subject} - DOs de {report_date}"
 
         search_report = ast.literal_eval(search_report)
         content = self.generate_email_content(search_report)
