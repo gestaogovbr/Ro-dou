@@ -4,7 +4,7 @@
 import ast
 from urllib.parse import urljoin
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from abc import ABC
 import logging
 import time
@@ -249,12 +249,13 @@ class QDSearcher(BaseSearcher):
                     reference_date: datetime):
         force_rematch = True if force_rematch is None else force_rematch
         term_list = self._cast_term_list(term_list)
+        tailored_date = reference_date - timedelta(days=2)
         search_results = {}
         for search_term in term_list:
             results = self._search_term(
                 territory_id=territory_id,
                 search_term=search_term,
-                reference_date=reference_date,
+                reference_date=tailored_date,
                 force_rematch=force_rematch,
                 )
             if results:
