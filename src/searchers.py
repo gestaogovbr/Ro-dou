@@ -302,7 +302,7 @@ class QDSearcher(BaseSearcher):
     def parse_result(self, result: dict) -> dict:
         parsed = {}
         parsed['section'] = ("QD - Edição "
-            f"{'ordinária' if result.get('is_extra_edition') and not result['is_extra_edition'] else 'extraordinária'} ")
+            f"{'extraordinária' if result.get('is_extra_edition') and result['is_extra_edition'] else 'ordinária'} ")
         parsed['title'] = ("Município de "
             f"{result['territory_name']} - {result['state_code']}")
         parsed['href'] = result['url']
