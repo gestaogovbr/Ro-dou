@@ -2,20 +2,20 @@
 """
 
 import ast
+import json
+import logging
+import re
+import time
+from abc import ABC
+from datetime import datetime, timedelta
+from random import random
+from typing import Dict, List, Tuple
 from urllib.parse import urljoin
 
-from datetime import datetime, timedelta
-from abc import ABC
-import logging
-import time
-import re
-from random import random
-import json
 import pandas as pd
 import requests
+from FastETL.hooks.dou_hook import DOUHook, Field, SearchDate, Section
 from unidecode import unidecode
-
-from FastETL.hooks.dou_hook import DOUHook, Section, SearchDate, Field
 
 
 class BaseSearcher(ABC):
