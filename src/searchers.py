@@ -282,23 +282,18 @@ class QDSearcher(BaseSearcher):
             ('number_of_excerpts', 3),
             ('published_since', reference_date.strftime('%Y-%m-%d')),
             ('published_until', reference_date.strftime('%Y-%m-%d')),
-            ('querystring', search_term)]
+            ('querystring', f'"{search_term}"')]
 
         req_url = (self.API_BASE_URL if not territory_id
                    else urljoin(self.API_BASE_URL, str(territory_id)))
 
         req_result = requests.get(req_url, params=payload)
-        search_results = json.loads(req_result.content)['gazettes']
-        parsed_results = []
-        if search_results:
-            for result in search_results:
-                parsed_results.append(self.parse_result(result))
 
-        if force_rematch:
-            clean_results = [r for r in parsed_results
-                if self._really_matched(search_term, r.get('abstract'))]
+        parsed_results = [
+            self.parse_result(result)
+            for result in json.loads(req_result.content)['gazettes']]
 
-        return clean_results
+        return parsed_results
 
 
     def parse_result(self, result: dict) -> dict:
