@@ -2,8 +2,8 @@
 install-deps:
 	git clone https://github.com/economiagovbr/FastETL.git
 
-.PHONY: up
-up: setup-containers create-example-variable
+.PHONY: run
+run: setup-containers create-example-variable
 
 setup-containers:
 	docker-compose up -d --force-recreate --remove-orphans
