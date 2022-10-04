@@ -33,7 +33,7 @@ make install-deps
 Este comando baixa as dependências necessárias.
 
 ```bash
-make up
+make run
 ```
 Este comando baixa as imagens docker e sobe todos os contêineres do Ro-dou.
 
@@ -88,7 +88,7 @@ serviço **smtp4dev** uma vez que ele não será mais necessário.
 É isso! Agora basta subir o Ro-dou executando o comando:
 
 ```bash
-make up
+make run
 ```
 
 # Exemplos de Configuração YAML
