@@ -284,10 +284,10 @@ class QDSearcher(BaseSearcher):
             ('published_until', reference_date.strftime('%Y-%m-%d')),
             ('querystring', f'"{search_term}"')]
 
-        req_url = (self.API_BASE_URL if not territory_id
-                   else urljoin(self.API_BASE_URL, str(territory_id)))
+        if territory_id:
+            payload.append(('territory_ids', territory_id))
 
-        req_result = requests.get(req_url, params=payload)
+        req_result = requests.get(self.API_BASE_URL, params=payload)
 
         parsed_results = [
             self.parse_result(result)
