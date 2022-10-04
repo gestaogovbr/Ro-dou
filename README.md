@@ -4,8 +4,7 @@
 
 O Ro-dou é uma ferramenta para gerar dinamicamente DAGs no
 [Apache Airflow](https://airflow.apache.org/) que fazem *clipping* do Diário
-Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) a partir de
-arquivos **YAML**. Receba no email todas as publicações que contenham as
+Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) e do Querido Diário ([QD](https://queridodiario.ok.org.br/)). Receba no email todas as publicações que contenham as
 **palavras chaves** que você definir.
 
 Veja uma apresentação completa no canal da ENAP no [YouTube](https://www.youtube.com/watch?v=phCa8GJOHY0),
@@ -211,7 +210,32 @@ dag:
       - email-destino@economia.gov.br
 ```
 
-## Compreendendo um pouco mais a engenhoca
+### Exemplo 6
+Esta configuração produz uma DAG que pesquisa no Querido Diário pelos termos
+pandemia, dados pessoais e prefeitura buscando apenas os resultados do Diário
+Oficial de Belo Horizonte. Para conhecer o Querido Diário acesse
+[https://queridodiario.ok.org.br/](https://queridodiario.ok.org.br/).
+
+```yaml {5,6,7}
+dag:
+  id: dou_qd_example
+  description: DAG de teste
+  search:
+    sources:
+    - QD
+    territory_id: 3106200 # Belo Horizonte
+    terms:
+    - pandemia
+    - dados pessoais
+    - prefeitura
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+```
+
+## Compreendendo um pouco mais a pesquisa no DOU
 
 Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da
 Imprensa Nacional que por sua vez é utilizada pelo buscador oficial do DOU em
