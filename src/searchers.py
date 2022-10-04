@@ -237,7 +237,7 @@ class DOUSearcher(BaseSearcher):
 
 class QDSearcher(BaseSearcher):
 
-    API_BASE_URL = 'https://queridodiario.ok.org.br/api/gazettes/'
+    API_BASE_URL = 'https://queridodiario.ok.org.br/api/gazettes'
     def exec_search(self,
                     territory_id,
                     term_list,
@@ -279,10 +279,11 @@ class QDSearcher(BaseSearcher):
             ('pre_tags', ('<span style="font-family: \'rawline\','
                           'sans-serif; background: #FFA;">')),
             ('post_tags', '</span>'),
-            ('number_of_fragments', 3),
-            ('since', reference_date.strftime('%Y-%m-%d')),
-            ('until', reference_date.strftime('%Y-%m-%d')),
-            ('keywords', search_term)]
+            ('number_of_excerpts', 3),
+            ('published_since', reference_date.strftime('%Y-%m-%d')),
+            ('published_until', reference_date.strftime('%Y-%m-%d')),
+            ('querystring', search_term)]
+
         req_url = (self.API_BASE_URL if not territory_id
                    else urljoin(self.API_BASE_URL, str(territory_id)))
 
@@ -309,7 +310,7 @@ class QDSearcher(BaseSearcher):
         parsed['href'] = result['url']
         parsed['abstract'] = (
             '<p>'
-            + '</p><p>'.join(result['highlight_texts']).replace('\n', '')
+            + '</p><p>'.join(result['excerpts']).replace('\n', '')
             + '</p>')
         parsed['date'] = result['date']
 
