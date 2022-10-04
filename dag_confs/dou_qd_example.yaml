@@ -1,0 +1,17 @@
+dag:
+  id: dou_qd_example
+  description: DAG de teste
+  search:
+    sources:
+    - QD
+    territory_id: 3106200
+    terms:
+    - pandemia
+    - dados pessoais
+    - prefeitura
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+
