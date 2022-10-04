@@ -136,6 +136,7 @@ class DOUSearcher(BaseSearcher):
                           force_rematch) -> dict:
         search_results = {}
         for search_term in term_list:
+            logging.info('Starting search for term: %s', search_term)
             results = self._search_text_with_retry(
                 search_term=search_term,
                 sections=[Section[s] for s in dou_sections],
