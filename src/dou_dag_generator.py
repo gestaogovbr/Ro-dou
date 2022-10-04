@@ -14,7 +14,7 @@ import ast
 from tempfile import NamedTemporaryFile
 import textwrap
 from typing import Dict, List
-
+import logging
 import markdown
 import pandas as pd
 
@@ -188,6 +188,7 @@ class DouDigestDagGenerator():
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
+        logging.info('Searching for the following terms: %s', ','.join(term_list))
         if 'DOU' in sources:
             dou_result = self.searchers['DOU'].exec_search(
                 term_list,
