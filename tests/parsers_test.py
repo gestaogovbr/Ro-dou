@@ -34,6 +34,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
          (
              'basic_example',
              ['DOU'],
+             None,
              ['TODOS'],
              'DIA',
              'TUDO',
@@ -57,6 +58,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
          (
              'all_parameters_example',
              ['DOU'],
+             None,
              ['SECAO_1', 'EDICAO_SUPLEMENTAR'],
              'MES',
              'TUDO',
@@ -81,6 +83,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
          (
              'terms_from_db_example',
              ['DOU'],
+             None,
              ['TODOS'],
              'MES',
              'TUDO',
@@ -105,6 +108,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ),
     ])
 def test_parse(filepath, result_tuple):
-    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
-                            filepath)
-    assert YAMLParser(filepath=filepath).parse() == result_tuple
+    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR, filepath)
+    parsed = YAMLParser(filepath=filepath).parse()
+
+    assert parsed == result_tuple
