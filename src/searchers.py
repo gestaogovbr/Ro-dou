@@ -23,7 +23,7 @@ class BaseSearcher(ABC):
     CLEAN_HTML_RE = re.compile('<.*?>')
 
 
-    def _cast_term_list(self, pre_term_list: [list, str]) -> list:
+    def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
         """If `pre_term_list` is a str (in the case it came from xcom)
         then its necessary to convert it back to dataframe and return
         the first column. Otherwise the `pre_term_list` is returned.
@@ -34,7 +34,7 @@ class BaseSearcher(ABC):
 
     def _group_results(self,
                        search_results: dict,
-                       term_list: [list, str]) -> dict:
+                       term_list: Dict[list, str]) -> dict:
         """Produces a grouped result based on if `term_list` is already
         the list of terms or it is a string received through xcom
         from `select_terms_from_db` task and the sql_query returned a
@@ -106,7 +106,7 @@ class DOUSearcher(BaseSearcher):
 
     def exec_search(self,
                     term_list,
-                    dou_sections: [str],
+                    dou_sections: List[str],
                     search_date,
                     field,
                     is_exact_search: bool,
@@ -222,7 +222,7 @@ class DOUSearcher(BaseSearcher):
                 norm_abstract_withou_start_name.startswith(norm_term))
         )
 
-    def _get_prior_and_matched_name(self, raw_html: str) -> (str, str):
+    def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
 
@@ -240,7 +240,7 @@ class QDSearcher(BaseSearcher):
     def exec_search(self,
                     territory_id,
                     term_list,
-                    dou_sections: [str],
+                    dou_sections: List[str],
                     search_date,
                     field,
                     is_exact_search: bool,
