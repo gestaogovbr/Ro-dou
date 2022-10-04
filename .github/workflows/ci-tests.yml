@@ -22,7 +22,7 @@ jobs:
       run: cd Ro-dou && make install-deps
 
     - name: Run docker-compose
-      run: cd Ro-dou && make up
+      run: cd Ro-dou && make run
 
     - name: run tests
       run: cd Ro-dou && make tests
