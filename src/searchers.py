@@ -297,16 +297,16 @@ class QDSearcher(BaseSearcher):
 
 
     def parse_result(self, result: dict) -> dict:
-        parsed = {}
-        parsed['section'] = ("QD - Edição "
-            f"{'extraordinária' if result.get('is_extra_edition') and result['is_extra_edition'] else 'ordinária'} ")
-        parsed['title'] = ("Município de "
-            f"{result['territory_name']} - {result['state_code']}")
-        parsed['href'] = result['url']
-        parsed['abstract'] = (
-            '<p>'
-            + '</p><p>'.join(result['excerpts']).replace('\n', '')
-            + '</p>')
-        parsed['date'] = result['date']
-
-        return parsed
+        section = ('extraordinária'
+            if result.get('is_extra_edition', False) else 'ordinária')
+        return {
+            'section': f"QD - Edição {section} ",
+            'title': ("Município de "
+                f"{result['territory_name']} - {result['state_code']}"),
+            'href': result['url'],
+            'abstract': (
+                '<p>'
+                + '</p><p>'.join(result['excerpts']).replace('\n', '')
+                + '</p>'),
+            'date': result['date'],
+        }
