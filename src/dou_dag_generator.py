@@ -47,7 +47,7 @@ class DouDigestDagGenerator():
     YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
 
     parser = YAMLParser
-    searchers = Dict[str, BaseSearcher]
+    searchers: Dict[str, BaseSearcher]
 
     def __init__(self, on_retry_callback=None, on_failure_callback=None):
         self.searchers = {
