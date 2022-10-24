@@ -4,7 +4,7 @@
 
 O Ro-dou é uma ferramenta para gerar dinamicamente DAGs no
 [Apache Airflow](https://airflow.apache.org/) que fazem *clipping* do Diário
-Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) e do Querido Diário ([QD](https://queridodiario.ok.org.br/)). Receba no email todas as publicações que contenham as
+Oficial da União ([DOU](https://www.gov.br/imprensanacional/pt-br)) e dos Diários Oficiais de municípios por meio do Querido Diário ([QD](https://queridodiario.ok.org.br/)). Receba no email todas as publicações que contenham as
 **palavras chaves** que você definir.
 
 Veja uma apresentação completa no canal da ENAP no [YouTube](https://www.youtube.com/watch?v=phCa8GJOHY0),
