@@ -131,7 +131,7 @@ class DouDigestDagGenerator():
 
             exec_dou_search_task = PythonOperator(
                 task_id='exec_dou_search',
-                python_callable=self.perform_searchs,
+                python_callable=self.perform_searches,
                 op_kwargs={
                     'sources': sources,
                     'territory_id': territory_id,
