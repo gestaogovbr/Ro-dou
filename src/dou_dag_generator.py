@@ -174,7 +174,7 @@ class DouDigestDagGenerator():
         return dag
 
 
-    def perform_searchs(
+    def perform_searches(
         self,
         sources,
         territory_id,
