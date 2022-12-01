@@ -189,6 +189,7 @@ class DouDigestDagGenerator():
         """Performs the search in each source and merge the results
         """
         logging.info('Searching for the following terms: %s', ','.join(term_list))
+        logging.info('Trigger date: ' + str(get_trigger_date(context, local_time = True)))
         if 'DOU' in sources:
             dou_result = self.searchers['DOU'].exec_search(
                 term_list,
@@ -198,7 +199,7 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context))
+                get_trigger_date(context, local_time = True))
 
         if 'QD' in sources:
             qd_result = self.searchers['QD'].exec_search(
@@ -210,7 +211,7 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context))
+                get_trigger_date(context), local_time = True)
 
         if 'DOU' in sources and 'QD' in sources:
             return merge_results(qd_result, dou_result)
