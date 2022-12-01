@@ -211,7 +211,7 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context), local_time = True)
+                get_trigger_date(context, local_time = True))
 
         if 'DOU' in sources and 'QD' in sources:
             return merge_results(qd_result, dou_result)
