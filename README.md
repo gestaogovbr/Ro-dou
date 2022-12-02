@@ -114,7 +114,7 @@ dag:
 ```
 
 ### Exemplo 2
-Esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM UTC**,
+Esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM**,
 apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em
 **formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval`
 aceita valores CRON.
