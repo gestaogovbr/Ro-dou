@@ -26,6 +26,7 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.hooks.base_hook import BaseHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
+from FastETL.custom_functions.utils.date import template_ano_mes_dia_trigger_local_time
 
 from FastETL.custom_functions.utils.date import get_trigger_date
 
@@ -163,7 +164,7 @@ class DouDigestDagGenerator():
                 op_kwargs={
                     'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
                     'subject': subject,
-                    'report_date': '{{ next_ds }}',
+                    'report_date': template_ano_mes_dia_trigger_local_time,
                     'email_to_list': email_to_list,
                     'attach_csv': attach_csv,
                     },
