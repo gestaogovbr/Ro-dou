@@ -27,7 +27,6 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.email import send_email
 from FastETL.custom_functions.utils.date import template_ano_mes_dia_trigger_local_time
-
 from FastETL.custom_functions.utils.date import get_trigger_date
 
 import sys
