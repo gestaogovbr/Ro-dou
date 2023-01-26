@@ -8,7 +8,7 @@ TODO:
 [] - Definir sufixo do título do email a partir de configuração
 """
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import os
 import ast
 from tempfile import NamedTemporaryFile
@@ -19,12 +19,11 @@ import markdown
 import pandas as pd
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.python_operator import BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-from airflow.hooks.postgres_hook import PostgresHook
-from airflow.hooks.base_hook import BaseHook
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.hooks.base import BaseHook
+from airflow.operators.empty import EmptyOperator
 from airflow.utils.email import send_email
 from FastETL.custom_functions.utils.date import template_ano_mes_dia_trigger_local_time
 from FastETL.custom_functions.utils.date import get_trigger_date
@@ -155,7 +154,7 @@ class DouDigestDagGenerator():
                 },
             )
 
-            skip_report_task = DummyOperator(task_id='skip_report')
+            skip_report_task = EmptyOperator(task_id='skip_report')
 
             send_report_task = PythonOperator(
                 task_id='send_report',
