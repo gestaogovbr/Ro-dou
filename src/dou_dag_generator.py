@@ -108,7 +108,7 @@ class DouDigestDagGenerator():
         dag = DAG(
             dag_id,
             default_args=default_args,
-            schedule_interval=schedule,
+            schedule=schedule,
             description=description,
             catchup=False,
             params={
