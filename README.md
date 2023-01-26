@@ -116,14 +116,14 @@ dag:
 ### Exemplo 2
 Esta configuração realiza a pesquisa diária de **segunda a sexta-feira 8AM**,
 apenas na **Seção 1 e na Edição Suplementar** e envia o resultado em
-**formato CSV** anexado juntamente ao email. O parâmetro `schedule_interval`
+**formato CSV** anexado juntamente ao email. O parâmetro `schedule`
 aceita valores CRON.
 
 ```yaml {4,13-14,19}
 dag:
   id: dag_id_deve_ser_unico_em_todo_airflow
   description: DAG exemplo de monitoramento no DOU.
-  schedule_interval: 0 8 * * MON-FRI
+  schedule: 0 8 * * MON-FRI
   search:
     terms:
       - alocação
@@ -141,7 +141,7 @@ dag:
     attach_csv: True
     subject: Assunto do Email
 ```
-Note que aqui são utilizados os parâmetros opcionais `schedule_interval`,
+Note que aqui são utilizados os parâmetros opcionais `schedule`,
 `dou_section` e `attach_csv`.
 
 ### Exemplo 3
@@ -188,7 +188,7 @@ dag:
 
 ### Exemplo 5
 Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia
-1 às 8AM, como pode ser visto no `schedule_interval`. Ao passo que a pesquisa
+1 às 8AM, como pode ser visto no `schedule`. Ao passo que a pesquisa
 no DOU é realizada nos diários oficiais do **último mês** inteiro, através do
 uso do parâmetro `date`. Aqui também é utilizado o parâmetro `is_exact_search`
 com valor `False` para utilizar pesquisa aproximada. Apesar de o termo buscado
@@ -199,7 +199,7 @@ resultados corretos. [Veja!](https://www.in.gov.br/consulta/-/buscar/dou?q=ddm__
 dag:
   id: relatorio_mensal_do_dou
   description: Envia um numero menor de emails.
-  schedule_interval: 0 8 1 * *
+  schedule: 0 8 1 * *
   search:
     terms:
       - paralelpipido

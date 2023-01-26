@@ -28,13 +28,13 @@ class FileParser(ABC):
         return _hash
 
     def _get_safe_schedule(self, dag: dict, default_schedule: str) -> str:
-        """Retorna um novo valor de `schedule_interval` randomizando o
+        """Retorna um novo valor de `schedule` randomizando o
         minuto de execução baseado no `dag_id`, caso a dag utilize o
-        schedule_interval padrão. Aplica uma função de hash na string
+        schedule padrão. Aplica uma função de hash na string
         dag_id que retorna valor entre 0 e 60 que define o minuto de
         execução.
         """
-        schedule = dag.get('schedule_interval', default_schedule)
+        schedule = dag.get('schedule', default_schedule)
         if schedule == default_schedule:
             id_based_minute = self._hash_dag_id(dag['id'], 60)
             schedule_without_min = ' '.join(schedule.split(" ")[1:])
