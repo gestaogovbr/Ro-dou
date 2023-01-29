@@ -71,6 +71,17 @@ Para desligar o Ro-dou execute o comando:
 make down
 ```
 
+# Restrições da Arquitetura
+
+Em janeiro de 2023 a Imprensa Nacional realizou uma mudança no portal de
+pesquisa do diário oficial para [bloquear](https://developers.cloudflare.com/fundamentals/get-started/reference/cloudflare-cookies/#__cf_bm-cookie-for-cloudflare-bot-products)
+o acesso automatizado realizado por robôs similares ao Ro-dou. Dessa
+forma, para superar essa barreira foi necessário recorrer ao uso do
+**Selenium**, uma solução robusta porém que ocasiona um grande consumo de
+recursos de memória RAM. Nós defendemos os princípios dos dados abertos
+e enxergamos a mudança no portal do diário oficial como um retrocesso na
+democratização do acesso aos dados abertos.
+
 # Configurando em Produção
 
 Para utilizar o Ro-dou em produção é necessário que o servidor tenha disponível
