@@ -12,6 +12,20 @@ class DiscordSender:
         self.send_discord_data({ "content" : content })
 
 
+    def send_embeds_to_discord(self, items):
+        self.send_discord_data(
+            {
+                "embeds" :  [
+                    {
+                        'title': item['title'],
+                        'description':item['abstract'],
+                        'url': item['href'],
+                    }
+                    for item in items
+                ]
+            })
+
+
     def send_discord_data(self, data):
         data['username'] = 'Querido Prisma (rodou)'
         result = requests.post(self.webhook_url, json=data)
