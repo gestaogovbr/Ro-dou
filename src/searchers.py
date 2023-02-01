@@ -171,27 +171,29 @@ class DOUSearcher(BaseSearcher):
         search_date,
         field,
         is_exact_search,
+        max_retries=5
     ) -> list:
-        try:
-            return self.dou_hook.search_text(
-                search_term=search_term,
-                sections=sections,
-                reference_date=reference_date,
-                search_date=search_date,
-                field=field,
-                is_exact_search=is_exact_search,
-                )
-        except:
-            logging.info('Sleeping for 30 seconds before retry dou_hook.search_text().')
-            time.sleep(30)
-            return self.dou_hook.search_text(
-                search_term=search_term,
-                sections=sections,
-                reference_date=reference_date,
-                search_date=search_date,
-                field=field,
-                is_exact_search=is_exact_search,
-                )
+
+        retry=1
+
+        while True:
+            try:
+                return self.dou_hook.search_text(
+                    search_term=search_term,
+                    sections=sections,
+                    reference_date=reference_date,
+                    search_date=search_date,
+                    field=field,
+                    is_exact_search=is_exact_search,
+                    )
+            except:
+                if retry > max_retries:
+                    logging.error('Error - Max retries reached')
+                    raise Exception
+                logging.info('Attemp %s of %s: ', retry, max_retries)
+                logging.info('Sleeping for 30 seconds before retry dou_hook.search_text().')
+                time.sleep(30)
+                retry += 1
 
     def _is_signature(self, search_term: str, abstract: str) -> bool:
         """Verifica se o `search_term` (geralmente usado para busca por
