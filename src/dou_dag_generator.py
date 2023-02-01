@@ -8,32 +8,34 @@ TODO:
 [] - Definir sufixo do título do email a partir de configuração
 """
 
-from datetime import datetime, timedelta
-import os
 import ast
-from dataclasses import asdict
-from tempfile import NamedTemporaryFile
-import textwrap
-from typing import Dict, List
 import logging
+import os
+import sys
+import textwrap
+from dataclasses import asdict
+from datetime import datetime, timedelta
+from tempfile import NamedTemporaryFile
+from typing import Dict, List
+
 import markdown
 import pandas as pd
-
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils.email import send_email
-from FastETL.custom_functions.utils.date import template_ano_mes_dia_trigger_local_time
-from FastETL.custom_functions.utils.date import get_trigger_date
 
-import sys
+from FastETL.custom_functions.utils.date import (
+    get_trigger_date, template_ano_mes_dia_trigger_local_time)
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from parsers import YAMLParser, DAGConfig
+from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
+
 
 class DouDigestDagGenerator():
     """
@@ -283,7 +285,7 @@ class DouDigestDagGenerator():
                     email_to_list, attach_csv, skip_null):
         """Builds the email content, the CSV if applies, and send it
         """
-        full_subject = f"{subject} - DOs de {report_date}" 
+        full_subject = f"{subject} - DOs de {report_date}"
         search_report = ast.literal_eval(search_report_str)
         items = ['contains' for k, v in search_report.items() if v]
         if items:
