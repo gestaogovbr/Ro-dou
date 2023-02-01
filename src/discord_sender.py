@@ -8,6 +8,17 @@ class DiscordSender:
 
 
 
+    def _send_discord(self, search_report: list):
+        """Parse the content, and send message to Discord"""
+        for group, results in search_report.items():
+            if group != 'single_group':
+                self.send_text_to_discord(f'**Grupo: {group}**')
+            for term, items in results.items():
+                if items:
+                    self.send_text_to_discord(f'**Resultados para: {term}**')
+                self.send_embeds_to_discord(items)
+
+
     def send_text_to_discord(self, content):
         self.send_discord_data({ "content" : content })
 
