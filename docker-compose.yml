@@ -126,5 +126,9 @@
         environment:
           - ServerOptions__HostName=smtp4dev
 
+      selenium:
+          image: ghcr.io/economiagovbr/selenium:ro-dou
+          volumes:
+            - /dev/shm:/dev/shm
     volumes:
       smtp4dev-data:
