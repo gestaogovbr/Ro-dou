@@ -195,7 +195,11 @@ dag:
   report:
     emails:
       - email-destino@economia.gov.br
+    skip_null: False
 ```
+Caso não encontre nenhum resultado, será enviado email informando que 
+nenhum termo foi encontrado.
+
 
 ### Exemplo 5
 Esta configuração produz uma DAG que executa apenas **uma vez por mês**, no dia
@@ -280,3 +284,4 @@ uma opção.
   * TUDO
   * TITULO
   * CONTEUDO
+
