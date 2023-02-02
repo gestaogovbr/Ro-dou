@@ -276,7 +276,7 @@ class QDSearcher(BaseSearcher):
                      ) -> list:
         payload = [
             ('size', 100),
-            ('fragment_size', 250),
+            ('excerpt_size', 250),
             ('sort_by', 'descending_date'),
             ('pre_tags', ('<span style="font-family: \'rawline\','
                           'sans-serif; background: #FFA;">')),
