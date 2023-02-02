@@ -27,6 +27,7 @@ class DAGConfig:
     emails: List[str]
     subject: str
     attach_csv: bool
+    discord_webhook: str
     schedule: str
     description: str
     skip_null: bool
@@ -96,6 +97,8 @@ class YAMLParser(FileParser):
 
         # Optional fields
         sources = search.get('sources', ['DOU'])
+        discord_webhook = (dag['discord']['webhook']
+                            if dag.get('discord') else None)
         territory_id = search.get('territory_id', None)
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
@@ -114,7 +117,6 @@ class YAMLParser(FileParser):
         subject = report.get('subject', 'Extração do DOU')
         skip_null = report.get('skip_null', True)
         attach_csv = report.get('attach_csv', False)
-        
 
         return DAGConfig(
             dag_id=dag_id,
@@ -132,6 +134,7 @@ class YAMLParser(FileParser):
             emails=emails,
             subject=subject,
             attach_csv=attach_csv,
+            discord_webhook=discord_webhook,
             schedule=schedule,
             description=description,
             skip_null=skip_null,
