@@ -89,6 +89,7 @@ class DouDigestDagGenerator():
                    attach_csv,
                    schedule,
                    description,
+                   skip_null,
                    tags):
         """Creates the DAG object and tasks
 
@@ -151,6 +152,7 @@ class DouDigestDagGenerator():
                 python_callable=self.has_matches,
                 op_kwargs={
                     'search_result': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'skip_null': skip_null,
                 },
             )
 
@@ -160,11 +162,12 @@ class DouDigestDagGenerator():
                 task_id='send_report',
                 python_callable=self.send_report,
                 op_kwargs={
-                    'search_report': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'search_report_str': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
                     'subject': subject,
                     'report_date': template_ano_mes_dia_trigger_local_time,
                     'email_to_list': email_to_list,
                     'attach_csv': attach_csv,
+                    'skip_null': skip_null,
                     },
             )
             exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
@@ -220,11 +223,13 @@ class DouDigestDagGenerator():
             return qd_result
 
 
-    def has_matches(self, search_result: str) -> str:
-        search_result = ast.literal_eval(search_result)
-        items = ['contains' for k, v in search_result.items() if v]
-
-        return 'send_report' if items else 'skip_report'
+    def has_matches(self, search_result: str, skip_null: bool) -> str:
+        if skip_null:
+            search_result = ast.literal_eval(search_result)
+            items = ['contains' for k, v in search_result.items() if v]
+            return 'send_report' if items else 'skip_report'
+        else:
+            return 'send_report'
 
     def select_terms_from_db(self, sql: str, conn_id: str):
         """Queries the `sql` and return the list of terms that will be
@@ -248,16 +253,21 @@ class DouDigestDagGenerator():
 
         return terms_df.to_json(orient="columns")
 
-    def send_report(self, search_report, subject, report_date,
-                    email_to_list, attach_csv):
+    def send_report(self, search_report_str: str, subject, report_date,
+                    email_to_list, attach_csv, skip_null):
         """Builds the email content, the CSV if applies, and send it
         """
-        full_subject = f"{subject} - DOs de {report_date}"
+        full_subject = f"{subject} - DOs de {report_date}" 
+        search_report = ast.literal_eval(search_report_str)
+        items = ['contains' for k, v in search_report.items() if v]
+        if items:
+            content = self.generate_email_content(search_report)
+        else:
+            if skip_null:
+                return 'skip_report'
+            content = "Nenhum dos termos pesquisados foi encontrado."
 
-        search_report = ast.literal_eval(search_report)
-        content = self.generate_email_content(search_report)
-
-        if attach_csv:
+        if attach_csv and items:
             with self.get_csv_tempfile(search_report) as csv_file:
                 send_email(
                     to=email_to_list,
