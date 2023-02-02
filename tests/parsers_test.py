@@ -51,6 +51,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              False,
              '37 5 * * *',
              'DAG de teste',
+             True,
              {'dou', 'generated_dag'}
              )
         ),
@@ -76,6 +77,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              True,
              '0 8 * * MON-FRI',
              'DAG exemplo utilizando todos os demais parâmetros.',
+             True,
              {'dou', 'generated_dag', 'projeto_a', 'departamento_x'}
              )
         ),
@@ -103,6 +105,30 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
              True,
              '2 5 * * *',
              'DAG de teste',
+             True,
+             {'dou', 'generated_dag'}
+             )
+        ),
+        ('basic_example_skip_null.yaml',
+         (
+             'basic_example',
+             ['DOU'],
+             None,
+             ['TODOS'],
+             'DIA',
+             'TUDO',
+             True,
+             False,
+             None,
+             ['cimentodaaroeira'],
+             None,
+             None,
+             ['destination@economia.gov.br'],
+             'Teste do Ro-dou',
+             False,
+             '37 5 * * *',
+             'DAG de teste',
+             False,
              {'dou', 'generated_dag'}
              )
         ),
