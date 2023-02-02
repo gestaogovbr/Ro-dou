@@ -85,7 +85,9 @@ class YAMLParser(FileParser):
         dag_tags.append('dou')
         dag_tags.append('generated_dag')
         subject = report.get('subject', 'Extraçao do DOU')
+        skip_null = report.get('skip_null', True)
         attach_csv = report.get('attach_csv', False)
+        
 
         return (
             dag_id,
@@ -105,6 +107,7 @@ class YAMLParser(FileParser):
             attach_csv,
             schedule,
             description,
+            skip_null,
             set(dag_tags),
             )
 
