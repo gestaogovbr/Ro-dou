@@ -32,4 +32,4 @@ down:
 
 .PHONY: tests
 tests:
-	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv"
+	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
