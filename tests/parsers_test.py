@@ -111,7 +111,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ),
         ('basic_example_skip_null.yaml',
          (
-             'basic_example',
+             'basic_example_skip_null',
              ['DOU'],
              None,
              ['TODOS'],
