@@ -2,12 +2,36 @@
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import List, Tuple, Set
 import ast
 import yaml
+import textwrap
 
 from airflow.models import Variable
 
-
+@dataclass
+class DAGConfig:
+    dag_id: str
+    sources: List[str]
+    territory_id: int
+    dou_sections: List[str]
+    search_date: str
+    field: str
+    is_exact_search: bool
+    ignore_signature_match: bool
+    force_rematch: bool
+    terms: List[str]
+    sql: str
+    conn_id: str
+    emails: List[str]
+    subject: str
+    attach_csv: bool
+    schedule: str
+    description: str
+    skip_null: bool
+    doc_md: str
+    dag_tags: Set[str]
 
 class FileParser(ABC):
     """Abstract class to build file parsers with DAG configuration.
@@ -52,10 +76,10 @@ class YAMLParser(FileParser):
     def __init__(self, filepath: str):
         self.filepath = filepath
 
-    def parse(self):
+    def parse(self) -> DAGConfig:
         return self._parse_yaml()
 
-    def _parse_yaml(self):
+    def _parse_yaml(self) -> DAGConfig:
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
@@ -80,6 +104,9 @@ class YAMLParser(FileParser):
         ignore_signature_match = search.get('ignore_signature_match', False)
         force_rematch = search.get('force_rematch', None)
         schedule = self._get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
+        doc_md = dag.get('doc_md', None)
+        if doc_md:
+            doc_md = textwrap.dedent(doc_md)
         dag_tags = dag.get('tags', [])
         # add default tags
         dag_tags.append('dou')
@@ -89,29 +116,30 @@ class YAMLParser(FileParser):
         attach_csv = report.get('attach_csv', False)
         
 
-        return (
-            dag_id,
-            sources,
-            territory_id,
-            dou_sections,
-            search_date,
-            field,
-            is_exact_search,
-            ignore_signature_match,
-            force_rematch,
-            terms,
-            sql,
-            conn_id,
-            emails,
-            subject,
-            attach_csv,
-            schedule,
-            description,
-            skip_null,
-            set(dag_tags),
+        return DAGConfig(
+            dag_id=dag_id,
+            sources=sources,
+            territory_id=territory_id,
+            dou_sections=dou_sections,
+            search_date=search_date,
+            field=field,
+            is_exact_search=is_exact_search,
+            ignore_signature_match=ignore_signature_match,
+            force_rematch=force_rematch,
+            terms=terms,
+            sql=sql,
+            conn_id=conn_id,
+            emails=emails,
+            subject=subject,
+            attach_csv=attach_csv,
+            schedule=schedule,
+            description=description,
+            skip_null=skip_null,
+            doc_md=doc_md,
+            dag_tags=set(dag_tags),
             )
 
-    def _get_terms_params(self, search):
+    def _get_terms_params(self, search) -> Tuple[List[str], str, str]:
         """Parses the `terms` config property handling different options.
         """
         terms = self._try_get(search, 'terms')
