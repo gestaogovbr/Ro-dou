@@ -1,5 +1,5 @@
 dag:
-  id: basic_example
+  id: basic_example_skip_null
   description: DAG de teste
   search:
     terms:
