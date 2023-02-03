@@ -11,6 +11,7 @@ TODO:
 from datetime import datetime, timedelta
 import os
 import ast
+from dataclasses import asdict
 from tempfile import NamedTemporaryFile
 import textwrap
 from typing import Dict, List
@@ -31,7 +32,7 @@ from FastETL.custom_functions.utils.date import get_trigger_date
 import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from parsers import YAMLParser
+from parsers import YAMLParser, DAGConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
 
 class DouDigestDagGenerator():
@@ -56,6 +57,45 @@ class DouDigestDagGenerator():
         self.on_retry_callback = on_retry_callback
         self.on_failure_callback = on_failure_callback
 
+    @staticmethod
+    def prepare_doc_md(specs: DAGConfig, config_file: str) -> str:
+        """Prepares the markdown documentation for a dag.
+
+        Args:
+            specs (DAGConfig): A DAG configuration object.
+            config_file (str): The name of a DAG config file.
+
+        Returns:
+            str: The DAG documentation in markdown format.
+        """
+        config = asdict(specs)
+        # options that won't show in the "DAG Docs"
+        del config["description"]
+        del config["doc_md"]
+        doc_md = (
+            specs.doc_md +
+            textwrap.dedent(f"""
+
+            **Configuração da dag definida no arquivo `{config_file}`**:
+
+            <dl>
+            """
+            )
+        )
+        for key, value in config.items():
+            doc_md = doc_md + f"<dt>{key}</dt>"
+            if isinstance(value, list) or isinstance(value, set):
+                doc_md = doc_md + (
+                    "<dd>\n\n" +
+                    " * " +
+                    "\n * ".join(str(item) for item in value) +
+                    "\n</dd>"
+                )
+            else:
+                doc_md = doc_md + f"<dd>{str(value)}</dd>"
+            doc_md = doc_md + "\n"
+        doc_md = doc_md + "</dl>\n"
+        return doc_md
 
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags
@@ -68,34 +108,19 @@ class DouDigestDagGenerator():
         for file in files_list:
             dag_specs = self.parser(
                 filepath=os.path.join(self.YAMLS_DIR, file)).parse()
-            dag_id = dag_specs[0]
-            globals()[dag_id] = self.create_dag(*dag_specs)
+            dag_id = dag_specs.dag_id
+            globals()[dag_id] = self.create_dag(dag_specs, file)
 
-    def create_dag(self,
-                   dag_id,
-                   sources,
-                   territory_id,
-                   dou_sections,
-                   search_date,
-                   search_field,
-                   is_exact_search,
-                   ignore_signature_match,
-                   force_rematch,
-                   term_list,
-                   sql,
-                   conn_id,
-                   email_to_list,
-                   subject,
-                   attach_csv,
-                   schedule,
-                   description,
-                   skip_null,
-                   tags):
+    def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
 
         Depending on configuration it adds an extra prior task to query
         the term_list from a database
         """
+        # Prepare the markdown documentation
+        doc_md = self.prepare_doc_md(
+            specs, config_file) if specs.doc_md else specs.doc_md
+        # DAG parameters
         default_args = {
             'owner': 'nitai',
             'start_date': datetime(2021, 10, 18),
@@ -106,25 +131,26 @@ class DouDigestDagGenerator():
             'on_failure_callback': self.on_failure_callback,
         }
         dag = DAG(
-            dag_id,
+            specs.dag_id,
             default_args=default_args,
-            schedule=schedule,
-            description=description,
+            schedule=specs.schedule,
+            description=specs.description,
+            doc_md=doc_md,
             catchup=False,
             params={
                 "trigger_date": "2022-01-02T12:00"
             },
-            tags=tags
+            tags=specs.dag_tags
             )
 
         with dag:
-            if sql:
+            if specs.sql:
                 select_terms_from_db_task = PythonOperator(
                     task_id='select_terms_from_db',
                     python_callable=self.select_terms_from_db,
                     op_kwargs={
-                        'sql': sql,
-                        'conn_id': conn_id,
+                        'sql': specs.sql,
+                        'conn_id': specs.conn_id,
                         }
                 )
                 term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
@@ -133,18 +159,18 @@ class DouDigestDagGenerator():
                 task_id='exec_dou_search',
                 python_callable=self.perform_searches,
                 op_kwargs={
-                    'sources': sources,
-                    'territory_id': territory_id,
-                    'term_list': term_list,
-                    'dou_sections': dou_sections,
-                    'search_date': search_date,
-                    'field': search_field,
-                    'is_exact_search': is_exact_search,
-                    'ignore_signature_match': ignore_signature_match,
-                    'force_rematch': force_rematch,
+                    'sources': specs.sources,
+                    'territory_id': specs.territory_id,
+                    'term_list': specs.terms,
+                    'dou_sections': specs.dou_sections,
+                    'search_date': specs.search_date,
+                    'field': specs.field,
+                    'is_exact_search': specs.is_exact_search,
+                    'ignore_signature_match': specs.ignore_signature_match,
+                    'force_rematch': specs.force_rematch,
                     },
             )
-            if sql:
+            if specs.sql:
                 select_terms_from_db_task >> exec_dou_search_task # pylint: disable=pointless-statement
 
             has_matches_task = BranchPythonOperator(
@@ -152,7 +178,7 @@ class DouDigestDagGenerator():
                 python_callable=self.has_matches,
                 op_kwargs={
                     'search_result': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    'skip_null': skip_null,
+                    'skip_null': specs.skip_null,
                 },
             )
 
@@ -163,11 +189,11 @@ class DouDigestDagGenerator():
                 python_callable=self.send_report,
                 op_kwargs={
                     'search_report_str': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    'subject': subject,
+                    'subject': specs.subject,
                     'report_date': template_ano_mes_dia_trigger_local_time,
-                    'email_to_list': email_to_list,
-                    'attach_csv': attach_csv,
-                    'skip_null': skip_null,
+                    'email_to_list': specs.emails,
+                    'attach_csv': specs.attach_csv,
+                    'skip_null': specs.skip_null,
                     },
             )
             exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
