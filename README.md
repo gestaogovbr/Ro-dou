@@ -250,6 +250,44 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
+### Exemplo 7
+Esta configuração produz uma DAG exatamente igual ao exemplo básico, mas
+adiciona uma descrição longa do que a DAG faz, usando o parâmetro
+`doc_md`. Essa descrição pode conter formatação markdown, incluindo
+títulos, listas, links, etc.
+
+Além disso, acrescenta também uma referência ao nome do arquivo que
+gerou a DAG bem como os seus parâmetros.
+
+```yaml {13-21}
+dag:
+  id: markdown_docs_example
+  description: DAG com documentação em markdown
+  search:
+    terms:
+    - dados abertos
+    - governo aberto
+    - lei de acesso à informação
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
+  doc_md: >-
+    ## Ola!
+
+    Esta é uma DAG de exemplo com documentação em markdown. Esta
+    descrição é opcional e pode ser definida no parâmetro `doc_md`.
+
+      * Ah, aqui você também pode usar *markdown* para
+      * escrever listas, por exemplo,
+      * ou colocar [ĺinks](graph)!
+```
+
+Para ver essa documentação, basta clicar o botão "DAG Docs" em qualquer
+tela de visualização da DAG no Airflow.
+
+![Botão "DAG Docs". Captura de tela da documentação de DAG no Airflow.](docs/img/exemplo-dag-doc_md.png)
+
 ## Compreendendo um pouco mais a pesquisa no DOU
 
 Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da
