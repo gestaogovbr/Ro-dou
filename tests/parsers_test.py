@@ -53,13 +53,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "schedule": "37 5 * * *",
                 "description": "DAG de teste",
                 "skip_null": True,
-                "doc_md": textwrap.dedent("""
-                    ## Ola!
-                    Esta é uma DAG de teste. Esta descrição é opcional e pode ser definida no parâmetro `doc_md`.
-
-                      * Ah, aqui você também pode usar *markdown* para
-                      * escrever listas, por exemplo,
-                      * ou colocar [ĺinks](graph)!""").strip(),
+                "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"}
             }
         ),
@@ -141,6 +135,38 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"}
             },
+        ),
+        ("markdown_docs_example.yaml",
+            {
+                "dag_id": "markdown_docs_example",
+                "sources": ["DOU"],
+                "territory_id": None,
+                "dou_sections": ["TODOS"],
+                "search_date": "DIA",
+                "field": "TUDO",
+                "is_exact_search": True,
+                "ignore_signature_match": False,
+                "force_rematch": None,
+                "terms": ["dados abertos",
+                    "governo aberto",
+                    "lei de acesso à informação"],
+                "sql": None,
+                "conn_id": None,
+                "emails": ["destination@economia.gov.br"],
+                "subject": "Teste do Ro-dou",
+                "attach_csv": False,
+                "schedule": "10 5 * * *",
+                "description": "DAG com documentação em markdown",
+                "skip_null": True,
+                "doc_md": textwrap.dedent("""
+                    ## Ola!
+                    Esta é uma DAG de exemplo com documentação em markdown. Esta descrição é opcional e pode ser definida no parâmetro `doc_md`.
+
+                      * Ah, aqui você também pode usar *markdown* para
+                      * escrever listas, por exemplo,
+                      * ou colocar [ĺinks](graph)!""").strip(),
+                "dag_tags": {"dou", "generated_dag"}
+            }
         ),
     ])
 def test_parse(filepath, result_tuple):
