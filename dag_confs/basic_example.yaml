@@ -10,12 +10,3 @@ dag:
     emails:
       - destination@economia.gov.br
     subject: "Teste do Ro-dou"
-  doc_md: >-
-    ## Ola!
-
-    Esta é uma DAG de teste. Esta descrição é opcional e pode ser definida no
-    parâmetro `doc_md`.
-
-      * Ah, aqui você também pode usar *markdown* para
-      * escrever listas, por exemplo,
-      * ou colocar [ĺinks](graph)!
