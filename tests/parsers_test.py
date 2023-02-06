@@ -164,7 +164,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
 
                       * Ah, aqui você também pode usar *markdown* para
                       * escrever listas, por exemplo,
-                      * ou colocar [ĺinks](graph)!""").strip(),
+                      * ou colocar [links](graph)!""").strip(),
                 "dag_tags": {"dou", "generated_dag"}
             }
         ),

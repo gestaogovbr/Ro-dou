@@ -280,7 +280,7 @@ dag:
 
       * Ah, aqui você também pode usar *markdown* para
       * escrever listas, por exemplo,
-      * ou colocar [ĺinks](graph)!
+      * ou colocar [links](graph)!
 ```
 
 Para ver essa documentação, basta clicar o botão "DAG Docs" em qualquer
