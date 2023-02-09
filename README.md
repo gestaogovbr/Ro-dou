@@ -71,16 +71,18 @@ Para desligar o Ro-dou execute o comando:
 make down
 ```
 
-# Restrições da Arquitetura
+~~# Restrições da Arquitetura~~
 
-Em janeiro de 2023 a Imprensa Nacional realizou uma mudança no portal de
+~~Em janeiro de 2023 a Imprensa Nacional realizou uma mudança no portal de
 pesquisa do diário oficial para [bloquear](https://developers.cloudflare.com/fundamentals/get-started/reference/cloudflare-cookies/#__cf_bm-cookie-for-cloudflare-bot-products)
 o acesso automatizado realizado por robôs similares ao Ro-dou. Dessa
 forma, para superar essa barreira foi necessário recorrer ao uso do
 **Selenium**, uma solução robusta porém que ocasiona um grande consumo de
 recursos de memória RAM. Nós defendemos os princípios dos dados abertos
 e enxergamos a mudança no portal do diário oficial como um retrocesso na
-democratização do acesso aos dados abertos.
+democratização do acesso aos dados abertos.~~
+
+Em fevereiro de 2023 a IN desabilitou o cloudfare e a solução anterior, sem o Selenium, voltou a funcionar.
 
 # Configurando em Produção
 
@@ -197,7 +199,7 @@ dag:
       - email-destino@economia.gov.br
     skip_null: False
 ```
-Caso não encontre nenhum resultado, será enviado email informando que 
+Caso não encontre nenhum resultado, será enviado email informando que
 nenhum termo foi encontrado.
 
 
