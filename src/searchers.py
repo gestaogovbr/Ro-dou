@@ -249,7 +249,8 @@ class QDSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    reference_date: datetime):
+                    reference_date: datetime,
+                    result_as_email: bool=True):
         force_rematch = True if force_rematch is None else force_rematch
         term_list = self._cast_term_list(term_list)
         tailored_date = reference_date - timedelta(days=1)
@@ -260,6 +261,7 @@ class QDSearcher(BaseSearcher):
                 search_term=search_term,
                 reference_date=tailored_date,
                 force_rematch=force_rematch,
+                result_as_email=result_as_email,
                 )
             if results:
                 search_results[search_term] = results
@@ -273,6 +275,7 @@ class QDSearcher(BaseSearcher):
                      search_term,
                      reference_date,
                      force_rematch: bool,
+                     result_as_email: bool=True,
                      ) -> list:
         payload = _build_query_payload(search_term, reference_date, result_as_email)
 
@@ -282,7 +285,7 @@ class QDSearcher(BaseSearcher):
         req_result = requests.get(self.API_BASE_URL, params=payload)
 
         parsed_results = [
-            self.parse_result(result)
+            self.parse_result(result, result_as_email)
             for result in json.loads(req_result.content)['gazettes']]
 
         return parsed_results
