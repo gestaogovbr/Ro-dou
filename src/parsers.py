@@ -92,7 +92,6 @@ class YAMLParser(FileParser):
         dag_id = self._try_get(dag, 'id')
         description = self._try_get(dag, 'description')
         report = self._try_get(dag, 'report')
-        emails = self._try_get(report, 'emails')
         search = self._try_get(dag, 'search')
         terms, sql, conn_id = self._get_terms_params(search)
 
@@ -115,8 +114,9 @@ class YAMLParser(FileParser):
         # add default tags
         dag_tags.append('dou')
         dag_tags.append('generated_dag')
-        subject = report.get('subject', 'Extração do DOU')
         skip_null = report.get('skip_null', True)
+        emails = report.get('emails')
+        subject = report.get('subject', 'Extraçao do DOU')
         attach_csv = report.get('attach_csv', False)
 
         return DAGConfig(
