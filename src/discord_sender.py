@@ -19,19 +19,19 @@ class DiscordSender:
         """Parse the content, and send message to Discord"""
         for group, results in search_report.items():
             if group != 'single_group':
-                self.send_text_to_discord(f'**Grupo: {group}**')
+                self.send_text(f'**Grupo: {group}**')
             for term, items in results.items():
                 if items:
-                    self.send_text_to_discord(f'**Resultados para: {term}**')
-                self.send_embeds_to_discord(items)
+                    self.send_text(f'**Resultados para: {term}**')
+                self.send_embeds(items)
 
 
-    def send_text_to_discord(self, content):
-        self.send_discord_data({ "content" : content })
+    def send_text(self, content):
+        self.send_data({ "content" : content })
 
 
-    def send_embeds_to_discord(self, items):
-        self.send_discord_data(
+    def send_embeds(self, items):
+        self.send_data(
             {
                 "embeds" :  [
                     {
@@ -44,7 +44,7 @@ class DiscordSender:
             })
 
 
-    def send_discord_data(self, data):
+    def send_data(self, data):
         data['username'] = 'Querido Prisma (rodou)'
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
