@@ -220,7 +220,7 @@ class DouDigestDagGenerator():
         sources,
         territory_id,
         term_list,
-        dou_sections: [str],
+        dou_sections: List[str],
         search_date,
         field,
         is_exact_search: bool,
@@ -229,8 +229,10 @@ class DouDigestDagGenerator():
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
-        logging.info('Searching for the following terms: %s', ','.join(term_list))
-        logging.info('Trigger date: ' + str(get_trigger_date(context, local_time = True)))
+        logging.info('Searching for: %s', ', '.join(term_list))
+        logging.info(
+            f'Trigger date: {get_trigger_date(context, local_time=True)}')
+
         if 'DOU' in sources:
             dou_result = self.searchers['DOU'].exec_search(
                 term_list,
