@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytest
 from dags.ro_dou.searchers import QDSearcher, _build_query_payload
 
@@ -53,3 +54,31 @@ def test_parse_result_qd(result_as_email: bool, expected: str):
 
     assert parsed == expected
 
+
+@pytest.mark.parametrize(
+        'result_as_email, pre_tags, post_tags',
+        [(True, '<span style="font-family: \'rawline\','
+                'sans-serif; background: #FFA;">', '</span>'),
+         (False,'__', '__')]
+)
+def test_build_query_payload(result_as_email: bool,
+                             pre_tags: str,
+                             post_tags: str):
+    payload = _build_query_payload(
+        search_term='paralelepípedo',
+        reference_date=datetime(2023, 2, 9),
+        result_as_email=result_as_email
+    )
+    expected = [
+        ('size', 100),
+        ('excerpt_size', 250),
+        ('sort_by', 'descending_date'),
+        ('pre_tags', pre_tags),
+        ('post_tags', post_tags),
+        ('number_of_excerpts', 3),
+        ('published_since', '2023-02-09'),
+        ('published_until', '2023-02-09'),
+        ('querystring', '"paralelepípedo"')
+    ]
+
+    assert payload == expected

@@ -274,17 +274,7 @@ class QDSearcher(BaseSearcher):
                      reference_date,
                      force_rematch: bool,
                      ) -> list:
-        payload = [
-            ('size', 100),
-            ('excerpt_size', 250),
-            ('sort_by', 'descending_date'),
-            ('pre_tags', ('<span style="font-family: \'rawline\','
-                          'sans-serif; background: #FFA;">')),
-            ('post_tags', '</span>'),
-            ('number_of_excerpts', 3),
-            ('published_since', reference_date.strftime('%Y-%m-%d')),
-            ('published_until', reference_date.strftime('%Y-%m-%d')),
-            ('querystring', f'"{search_term}"')]
+        payload = _build_query_payload(search_term, reference_date, result_as_email)
 
         if territory_id:
             payload.append(('territory_ids', territory_id))
@@ -316,3 +306,21 @@ class QDSearcher(BaseSearcher):
             'abstract': abstract,
             'date': result['date'],
         }
+
+
+def _build_query_payload(search_term: str,
+                         reference_date: datetime,
+                         result_as_email: bool) -> List[tuple]:
+    return [
+        ('size', 100),
+        ('excerpt_size', 250),
+        ('sort_by', 'descending_date'),
+        ('pre_tags', (
+            '<span style="font-family: \'rawline\','
+            'sans-serif; background: #FFA;">'
+                if result_as_email else '__')),
+        ('post_tags', '</span>' if result_as_email else '__'),
+        ('number_of_excerpts', 3),
+        ('published_since', reference_date.strftime('%Y-%m-%d')),
+        ('published_until', reference_date.strftime('%Y-%m-%d')),
+        ('querystring', f'"{search_term}"')]
