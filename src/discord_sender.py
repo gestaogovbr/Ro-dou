@@ -1,3 +1,5 @@
+import ast
+
 import requests
 
 
@@ -6,6 +8,11 @@ class DiscordSender:
     def __init__(self, webhook_url: str) -> None:
         self.webhook_url = webhook_url
 
+
+    def send_discord(self, search_report: str):
+        obj_results = ast.literal_eval(search_report)
+
+        self._send_discord(obj_results)
 
 
     def _send_discord(self, search_report: list):

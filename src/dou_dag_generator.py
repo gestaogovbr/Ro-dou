@@ -33,6 +33,7 @@ from FastETL.custom_functions.utils.date import (
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from discord_sender import DiscordSender
 from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
 
@@ -186,18 +187,28 @@ class DouDigestDagGenerator():
 
             skip_report_task = EmptyOperator(task_id='skip_report')
 
+            op_kwargs={
+                'search_report_str':
+                    "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                }
+            if specs.discord_webhook:
+                python_callable = DiscordSender(specs.discord_webhook).send_discord
+            else:
+                python_callable = self.send_email
+                op_kwargs.update(
+                    {
+                        'subject': specs.subject,
+                        'report_date': template_ano_mes_dia_trigger_local_time,
+                        'email_to_list': specs.emails,
+                        'attach_csv': specs.attach_csv,
+                        'skip_null': specs.skip_null,
+                    })
+
             send_report_task = PythonOperator(
                 task_id='send_report',
-                python_callable=self.send_report,
-                op_kwargs={
-                    'search_report_str': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    'subject': specs.subject,
-                    'report_date': template_ano_mes_dia_trigger_local_time,
-                    'email_to_list': specs.emails,
-                    'attach_csv': specs.attach_csv,
-                    'skip_null': specs.skip_null,
-                    },
-            )
+                python_callable=python_callable,
+                op_kwargs=op_kwargs)
+
             exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
             has_matches_task >> [send_report_task, skip_report_task]
 
@@ -281,7 +292,7 @@ class DouDigestDagGenerator():
 
         return terms_df.to_json(orient="columns")
 
-    def send_report(self, search_report_str: str, subject, report_date,
+    def send_email(self, search_report_str: str, subject, report_date,
                     email_to_list, attach_csv, skip_null):
         """Builds the email content, the CSV if applies, and send it
         """
