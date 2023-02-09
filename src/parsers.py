@@ -87,6 +87,7 @@ class YAMLParser(FileParser):
         with open(self.filepath, 'r') as file:
             dag_config_dict = yaml.safe_load(file)
 
+        # Mandatory fields
         dag = self._try_get(dag_config_dict, 'dag')
         dag_id = self._try_get(dag, 'id')
         description = self._try_get(dag, 'description')
@@ -168,8 +169,8 @@ class YAMLParser(FileParser):
         return terms, sql, conn_id
 
     def _try_get(self, variable: dict, field, error_msg=None):
-        """Tries to retrieve the property named as `field` from
-        `variable` dict and raises apropriate message"""
+        """Tries to retrieve mandatory property named `field` from
+        `variable` dict and raises appropriate message"""
         try:
             return variable[field]
         except KeyError:
