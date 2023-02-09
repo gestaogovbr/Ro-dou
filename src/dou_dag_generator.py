@@ -161,7 +161,7 @@ class DouDigestDagGenerator():
                 op_kwargs={
                     'sources': specs.sources,
                     'territory_id': specs.territory_id,
-                    'term_list': specs.terms,
+                    'term_list': specs.terms or term_list,
                     'dou_sections': specs.dou_sections,
                     'search_date': specs.search_date,
                     'field': specs.field,
