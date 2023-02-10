@@ -171,6 +171,7 @@ class DouDigestDagGenerator():
                     'is_exact_search': specs.is_exact_search,
                     'ignore_signature_match': specs.ignore_signature_match,
                     'force_rematch': specs.force_rematch,
+                    'result_as_email': not bool(specs.discord_webhook),
                     },
             )
             if specs.sql:
@@ -226,6 +227,7 @@ class DouDigestDagGenerator():
         is_exact_search: bool,
         ignore_signature_match: bool,
         force_rematch: bool,
+        result_as_email: bool,
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
@@ -254,7 +256,8 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context, local_time = True))
+                get_trigger_date(context, local_time = True),
+                result_as_email)
 
         if 'DOU' in sources and 'QD' in sources:
             return merge_results(qd_result, dou_result)

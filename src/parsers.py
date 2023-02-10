@@ -97,8 +97,8 @@ class YAMLParser(FileParser):
 
         # Optional fields
         sources = search.get('sources', ['DOU'])
-        discord_webhook = (dag['discord']['webhook']
-                            if dag.get('discord') else None)
+        discord_webhook = (report['discord']['webhook']
+                            if report.get('discord') else None)
         territory_id = search.get('territory_id', None)
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
