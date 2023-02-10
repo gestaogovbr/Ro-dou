@@ -8,7 +8,7 @@ def test_send_discord_data(session_mocker: MockerFixture):
     session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
 
     sender = DiscordSender(WEBHOOK)
-    sender.send_discord_data(
+    sender.send_data(
         {
             'content': 'string'
         })
@@ -25,7 +25,7 @@ def test_send_text_to_discord(session_mocker: MockerFixture):
     session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
 
     sender = DiscordSender(WEBHOOK)
-    sender.send_text_to_discord('string')
+    sender.send_text('string')
 
     requests.post.assert_called_with(
         WEBHOOK,
@@ -51,7 +51,7 @@ def test_send_embeds_to_discord(session_mocker: MockerFixture):
             'href': 'http://another-link.com',
         },
     ]
-    sender.send_embeds_to_discord(items)
+    sender.send_embeds(items)
 
     requests.post.assert_called_with(
         WEBHOOK,
@@ -123,15 +123,15 @@ def _send_report():
 
 def test_send_report_to_discord__texts(session_mocker: MockerFixture):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text_to_discord')
+        'dags.ro_dou.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds_to_discord')
+        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
 
     _send_report()
 
     args_list =[
         call.args[0]
-        for call in DiscordSender.send_text_to_discord.call_args_list
+        for call in DiscordSender.send_text.call_args_list
     ]
 
     assert args_list == [
@@ -142,15 +142,15 @@ def test_send_report_to_discord__texts(session_mocker: MockerFixture):
 
 def test_send_report_to_discord__embeds(session_mocker: MockerFixture):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text_to_discord')
+        'dags.ro_dou.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds_to_discord')
+        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
 
     _send_report()
 
     args_list =[
         call.args[0]
-        for call in DiscordSender.send_embeds_to_discord.call_args_list
+        for call in DiscordSender.send_embeds.call_args_list
     ]
 
     assert args_list == [
