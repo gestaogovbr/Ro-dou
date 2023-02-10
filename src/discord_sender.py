@@ -9,15 +9,15 @@ class DiscordSender:
         self.webhook_url = webhook_url
 
 
-    def send_discord(self, search_report: str):
-        obj_results = ast.literal_eval(search_report)
+    def send_discord(self, search_report_str: str):
+        obj_results = ast.literal_eval(search_report_str)
 
         self._send_discord(obj_results)
 
 
-    def _send_discord(self, search_report: list):
+    def _send_discord(self, search_report_str: list):
         """Parse the content, and send message to Discord"""
-        for group, results in search_report.items():
+        for group, results in search_report_str.items():
             if group != 'single_group':
                 self.send_text(f'**Grupo: {group}**')
             for term, items in results.items():
