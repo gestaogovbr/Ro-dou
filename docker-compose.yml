@@ -75,7 +75,7 @@
         - ./tests:/opt/airflow/tests
 
         - ./FastETL/hooks/dou_hook.py:/opt/airflow/plugins/FastETL/hooks/dou_hook.py
-        - ./FastETL/custom_functions:/opt/airflow/plugins/FastETL/custom_functions
+        - ./FastETL/custom_functions/utils/:/opt/airflow/plugins/FastETL/custom_functions/utils/
       depends_on:
         postgres:
           condition: service_healthy
