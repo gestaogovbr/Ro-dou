@@ -1,0 +1,9 @@
+s3fs==2023.1.0
+ipdb==0.13.11
+pytest==7.2.1
+mock==5.0.1
+pytest-mock==3.10.0
+unidecode==1.2.0
+xlrd==1.2.0
+ijson==3.0.4
+openpyxl==3.0.7
