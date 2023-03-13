@@ -39,7 +39,8 @@
     version: '3'
     x-airflow-common:
       &airflow-common
-      image: ghcr.io/economiagovbr/airflow2-docker:latest
+      build:
+        context: .
       environment:
         &airflow-common-env
         AIRFLOW__CORE__EXECUTOR: LocalExecutor
