@@ -53,21 +53,15 @@ def test_send_embeds_to_discord(session_mocker: MockerFixture):
     ]
     sender.send_embeds(items)
 
+    embeds = items
+    for item in embeds:
+        item['url'] = item.pop('href')
+        item['description'] = item.pop('abstract')
+
     requests.post.assert_called_with(
         WEBHOOK,
         json={
-            'embeds': [
-                {
-                    'title': 'some title',
-                    'description': 'some abstract',
-                    'url': 'http://some-link.com',
-                },
-                {
-                    'title': 'another title',
-                    'description': 'another abstract',
-                    'url': 'http://another-link.com',
-                },
-            ],
+            'embeds': embeds,
             'username': 'Querido Prisma (rodou)',
         })
 
