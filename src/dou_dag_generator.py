@@ -46,8 +46,20 @@ class DouDigestDagGenerator():
     database.
     """
 
-    SOURCE_DIR = os.path.join(os.environ['AIRFLOW_HOME'], 'dags/ro_dou/')
-    YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs/')
+    base_dir = os.path.join(os.environ['AIRFLOW_HOME'], 'dags')
+    dir_name = 'ro_dou'
+
+    # Walk through the directory tree to find the directory
+    for root, dirs, files in os.walk(base_dir):
+        if dir_name in dirs:
+            # If the directory is found, print its path and exit the loop
+            SOURCE_DIR = os.path.join(root, dir_name)
+            break
+    else:
+        # If the directory is not found, print a message
+        raise Exception("{dir_name} directory not found in {base_dir} or its subdirectories.")
+
+    YAMLS_DIR = os.path.join(SOURCE_DIR, 'dag_confs')
 
     parser = YAMLParser
     searchers: Dict[str, BaseSearcher]
