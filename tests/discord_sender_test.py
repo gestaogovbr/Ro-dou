@@ -123,8 +123,8 @@ def test_send_report_to_discord__texts(session_mocker: MockerFixture):
 
     _send_report()
 
-    args_list =[
-        call.args[0]
+    args_list = [
+        call[0][0]
         for call in DiscordSender.send_text.call_args_list
     ]
 
@@ -142,8 +142,8 @@ def test_send_report_to_discord__embeds(session_mocker: MockerFixture):
 
     _send_report()
 
-    args_list =[
-        call.args[0]
+    args_list = [
+        call[0][0]
         for call in DiscordSender.send_embeds.call_args_list
     ]
 
