@@ -2,9 +2,8 @@ name: Build and Publish Docker Image
 
 on:
   push:
-    branches:
-      - main
-      - build_publish_image
+    tags:
+      - '*'
 
 jobs:
   build_and_push:
@@ -23,9 +22,20 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push Docker image
+    - name: Extract tag name
+      shell: bash
+      run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+
+    - name: Build and push Docker image with tag
       uses: docker/build-push-action@v2
       with:
         context: .
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/ro-dou:latest
+        tags: ghcr.io/${{ github.repository }}:${{ env.TAG_NAME }}
+
+    - name: Build and push Docker image with latest tag
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/${{ github.repository }}:latest
