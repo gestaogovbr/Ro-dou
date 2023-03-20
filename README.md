@@ -27,14 +27,9 @@ clonar o repositório no seu computador, acesse o diretório pela linha de
 comando e execute os comandos a seguir:
 
 ```bash
-make install-deps
-```
-Este comando baixa as dependências necessárias.
-
-```bash
 make run
 ```
-Este comando baixa as imagens docker e sobe todos os contêineres do Ro-dou.
+Este comando baixa as imagens docker necessárias, faz build da contêiner do Ro-dou e sobe tudo.
 
 O Airflow pode demorar alguns minutos para se configurar a primeira vez. Após
 isso ele estará disponível em http://localhost:8080/. Para se autenticar
