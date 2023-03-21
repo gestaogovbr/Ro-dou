@@ -198,34 +198,35 @@ class DouDigestDagGenerator():
                 },
             )
 
-            skip_report_task = EmptyOperator(task_id='skip_report')
+            skip_notification_task = EmptyOperator(task_id='skip_notification')
 
-            op_kwargs={
-                'search_report_str':
-                    "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                }
-            if specs.discord_webhook:
-                python_callable = DiscordSender(specs.discord_webhook).send_discord
-            else:
-                python_callable = self.send_email
-                op_kwargs.update(
-                    {
-                        'subject': specs.subject,
-                        'report_date': template_ano_mes_dia_trigger_local_time,
-                        'email_to_list': specs.emails,
-                        'attach_csv': specs.attach_csv,
-                        'skip_null': specs.skip_null,
+            send_notification_task = PythonOperator(
+                task_id='send_notification',
+                python_callable=self.send_notification,
+                op_kwargs={
+                    'specs': specs,
+                    'search_report':
+                        "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'report_date': template_ano_mes_dia_trigger_local_time,
                     })
 
-            send_report_task = PythonOperator(
-                task_id='send_report',
-                python_callable=python_callable,
-                op_kwargs=op_kwargs)
-
             exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
-            has_matches_task >> [send_report_task, skip_report_task]
+            has_matches_task >> [
+                send_notification_task, skip_notification_task]
 
         return dag
+
+
+    def send_notification(self,
+                          specs: DAGConfig,
+                          search_report: str,
+                          report_date: str):
+        # Convert to data structure after it's retrieved from xcom
+        search_report = ast.literal_eval(search_report)
+        if specs.discord_webhook:
+            DiscordSender(specs.discord_webhook).send_discord(search_report)
+        else:
+            self.send_email(specs, search_report, report_date)
 
 
     def perform_searches(
@@ -283,9 +284,9 @@ class DouDigestDagGenerator():
         if skip_null:
             search_result = ast.literal_eval(search_result)
             items = ['contains' for k, v in search_result.items() if v]
-            return 'send_report' if items else 'skip_report'
+            return 'send_notification' if items else 'skip_notification'
         else:
-            return 'send_report'
+            return 'send_notification'
 
     def select_terms_from_db(self, sql: str, conn_id: str):
         """Queries the `sql` and return the list of terms that will be
@@ -309,34 +310,34 @@ class DouDigestDagGenerator():
 
         return terms_df.to_json(orient="columns")
 
-    def send_email(self, search_report_str: str, subject, report_date,
-                    email_to_list, attach_csv, skip_null):
+
+    def send_email(self, specs: DAGConfig, search_report: dict, report_date):
         """Builds the email content, the CSV if applies, and send it
         """
-        full_subject = f"{subject} - DOs de {report_date}"
-        search_report = ast.literal_eval(search_report_str)
+        full_subject = f"{specs.subject} - DOs de {report_date}"
         items = ['contains' for k, v in search_report.items() if v]
         if items:
             content = self.generate_email_content(search_report)
         else:
-            if skip_null:
-                return 'skip_report'
+            if specs.skip_null:
+                return 'skip_notification'
             content = "Nenhum dos termos pesquisados foi encontrado."
 
-        if attach_csv and items:
+        if specs.attach_csv and items:
             with self.get_csv_tempfile(search_report) as csv_file:
                 send_email(
-                    to=email_to_list,
+                    to=specs.emails,
                     subject=full_subject,
                     files=[csv_file.name],
                     html_content=content,
                     mime_charset='utf-8')
         else:
             send_email(
-                to=email_to_list,
+                to=specs.emails,
                 subject=full_subject,
                 html_content=content,
                 mime_charset='utf-8')
+
 
     def generate_email_content(self, search_report: dict) -> str:
         """Generate HTML content to be sent by email based on
