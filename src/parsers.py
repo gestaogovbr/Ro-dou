@@ -28,6 +28,7 @@ class DAGConfig:
     subject: str
     attach_csv: bool
     discord_webhook: str
+    slack_webhook: str
     schedule: str
     description: str
     skip_null: bool
@@ -99,6 +100,8 @@ class YAMLParser(FileParser):
         sources = search.get('sources', ['DOU'])
         discord_webhook = (report['discord']['webhook']
                             if report.get('discord') else None)
+        slack_webhook = (report['slack']['webhook']
+                            if report.get('slack') else None)
         territory_id = search.get('territory_id', None)
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
@@ -136,6 +139,7 @@ class YAMLParser(FileParser):
             subject=subject,
             attach_csv=attach_csv,
             discord_webhook=discord_webhook,
+            slack_webhook=slack_webhook,
             schedule=schedule,
             description=description,
             skip_null=skip_null,

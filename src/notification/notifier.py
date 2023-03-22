@@ -13,22 +13,25 @@ from typing import List
 from notification.discord_sender import DiscordSender
 from notification.email_sender import EmailSender
 from notification.isender import ISender
+from notification.slack_sender import SlackSender
 from parsers import DAGConfig
 
 
 class Notifier:
     """Performs the notification delivery through different means as
-    defined in the YAML file. Currently it sends notification to email
-    and Discord.
+    defined in the YAML file. Currently it sends notification to email,
+    Discord and Slack.
     """
     senders = List[ISender]
 
     def __init__(self, specs: DAGConfig) -> None:
         self.senders = []
-        if specs.discord_webhook:
-            self.senders.append(DiscordSender(specs))
         if specs.emails:
             self.senders.append(EmailSender(specs))
+        if specs.discord_webhook:
+            self.senders.append(DiscordSender(specs))
+        if specs.slack_webhook:
+            self.senders.append(SlackSender(specs))
 
 
     def send_notification(self, search_report: str, report_date: str):
