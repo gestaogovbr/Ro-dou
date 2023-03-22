@@ -5,8 +5,8 @@ import requests
 
 class DiscordSender:
 
-    def __init__(self, webhook_url: str) -> None:
-        self.webhook_url = webhook_url
+    def __init__(self, specs) -> None:
+        self.webhook_url = specs.discord_webhook
 
 
     def send_discord(self, search_report: dict):
