@@ -13,16 +13,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
+from notification.isender import ISender
 from util import get_source_dir
 
 
-class EmailSender:
+class EmailSender(ISender):
 
     def __init__(self, specs) -> None:
         self.specs = specs
 
 
-    def send_email(self, search_report: dict, report_date: str):
+    def send(self, search_report: dict, report_date: str):
         """Builds the email content, the CSV if applies, and send it
         """
         self.search_report = search_report

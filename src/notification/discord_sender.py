@@ -1,15 +1,15 @@
-import ast
-
 import requests
 
+from notification.isender import ISender
 
-class DiscordSender:
+
+class DiscordSender(ISender):
 
     def __init__(self, specs) -> None:
         self.webhook_url = specs.discord_webhook
 
 
-    def send_discord(self, search_report: dict):
+    def send(self, search_report: dict, report_date: str=None):
         """Parse the content, and send message to Discord"""
         for group, results in search_report.items():
             if group != 'single_group':

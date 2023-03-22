@@ -8,8 +8,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
+from typing import List
+
 from notification.discord_sender import DiscordSender
 from notification.email_sender import EmailSender
+from notification.isender import ISender
 from parsers import DAGConfig
 
 
@@ -18,15 +21,19 @@ class Notifier:
     defined in the YAML file. Currently it sends notification to email
     and Discord.
     """
+    senders = List[ISender]
 
     def __init__(self, specs: DAGConfig) -> None:
-        self.specs = specs
+        self.senders = []
+        if specs.discord_webhook:
+            self.senders.append(DiscordSender(specs))
+        if specs.emails:
+            self.senders.append(EmailSender(specs))
 
 
     def send_notification(self, search_report: str, report_date: str):
         # Convert to data structure after it's retrieved from xcom
         search_report = ast.literal_eval(search_report)
-        if self.specs.discord_webhook:
-            DiscordSender(self.specs).send_discord(search_report)
-        else:
-            EmailSender(self.specs).send_email(search_report, report_date)
+
+        for sender in self.senders:
+            sender.send(search_report, report_date)

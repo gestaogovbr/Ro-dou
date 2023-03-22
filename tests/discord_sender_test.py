@@ -121,7 +121,7 @@ def _send_report(specs):
     }
 
     sender = DiscordSender(specs)
-    sender.send_discord(search_report)
+    sender.send(search_report)
 
 
 def test_send_report_to_discord__texts(session_mocker: MockerFixture,
