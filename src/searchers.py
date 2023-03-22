@@ -249,7 +249,8 @@ class QDSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    reference_date: datetime):
+                    reference_date: datetime,
+                    result_as_email: bool=True):
         force_rematch = True if force_rematch is None else force_rematch
         term_list = self._cast_term_list(term_list)
         tailored_date = reference_date - timedelta(days=1)
@@ -260,6 +261,7 @@ class QDSearcher(BaseSearcher):
                 search_term=search_term,
                 reference_date=tailored_date,
                 force_rematch=force_rematch,
+                result_as_email=result_as_email,
                 )
             if results:
                 search_results[search_term] = results
@@ -273,18 +275,9 @@ class QDSearcher(BaseSearcher):
                      search_term,
                      reference_date,
                      force_rematch: bool,
+                     result_as_email: bool=True,
                      ) -> list:
-        payload = [
-            ('size', 100),
-            ('fragment_size', 250),
-            ('sort_by', 'descending_date'),
-            ('pre_tags', ('<span style="font-family: \'rawline\','
-                          'sans-serif; background: #FFA;">')),
-            ('post_tags', '</span>'),
-            ('number_of_excerpts', 3),
-            ('published_since', reference_date.strftime('%Y-%m-%d')),
-            ('published_until', reference_date.strftime('%Y-%m-%d')),
-            ('querystring', f'"{search_term}"')]
+        payload = _build_query_payload(search_term, reference_date, result_as_email)
 
         if territory_id:
             payload.append(('territory_ids', territory_id))
@@ -292,23 +285,45 @@ class QDSearcher(BaseSearcher):
         req_result = requests.get(self.API_BASE_URL, params=payload)
 
         parsed_results = [
-            self.parse_result(result)
+            self.parse_result(result, result_as_email)
             for result in json.loads(req_result.content)['gazettes']]
 
         return parsed_results
 
 
-    def parse_result(self, result: dict) -> dict:
+    def parse_result(self, result: dict, result_as_email: bool=True) -> dict:
         section = ('extraordinária'
             if result.get('is_extra_edition', False) else 'ordinária')
+        if result_as_email:
+            abstract = (
+                '<p>'
+                + '</p><p>'.join(result['excerpts']).replace('\n', '')
+                + '</p>')
+        else:
+            abstract = '\n'.join(result['excerpts']).replace('\n', '')
         return {
             'section': f"QD - Edição {section} ",
             'title': ("Município de "
                 f"{result['territory_name']} - {result['state_code']}"),
             'href': result['url'],
-            'abstract': (
-                '<p>'
-                + '</p><p>'.join(result['excerpts']).replace('\n', '')
-                + '</p>'),
+            'abstract': abstract,
             'date': result['date'],
         }
+
+
+def _build_query_payload(search_term: str,
+                         reference_date: datetime,
+                         result_as_email: bool) -> List[tuple]:
+    return [
+        ('size', 100),
+        ('excerpt_size', 250),
+        ('sort_by', 'descending_date'),
+        ('pre_tags', (
+            '<span style="font-family: \'rawline\','
+            'sans-serif; background: #FFA;">'
+                if result_as_email else '__')),
+        ('post_tags', '</span>' if result_as_email else '__'),
+        ('number_of_excerpts', 3),
+        ('published_since', reference_date.strftime('%Y-%m-%d')),
+        ('published_until', reference_date.strftime('%Y-%m-%d')),
+        ('querystring', f'"{search_term}"')]

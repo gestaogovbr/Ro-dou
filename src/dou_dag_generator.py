@@ -8,32 +8,35 @@ TODO:
 [] - Definir sufixo do título do email a partir de configuração
 """
 
-from datetime import datetime, timedelta
-import os
 import ast
-from dataclasses import asdict
-from tempfile import NamedTemporaryFile
-import textwrap
-from typing import Dict, List
 import logging
+import os
+import sys
+import textwrap
+from dataclasses import asdict
+from datetime import datetime, timedelta
+from tempfile import NamedTemporaryFile
+from typing import Dict, List
+
 import markdown
 import pandas as pd
-
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils.email import send_email
-from FastETL.custom_functions.utils.date import template_ano_mes_dia_trigger_local_time
-from FastETL.custom_functions.utils.date import get_trigger_date
 
-import sys
+from FastETL.custom_functions.utils.date import (
+    get_trigger_date, template_ano_mes_dia_trigger_local_time)
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from parsers import YAMLParser, DAGConfig
+from discord_sender import DiscordSender
+from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
+
 
 class DouDigestDagGenerator():
     """
@@ -180,6 +183,7 @@ class DouDigestDagGenerator():
                     'is_exact_search': specs.is_exact_search,
                     'ignore_signature_match': specs.ignore_signature_match,
                     'force_rematch': specs.force_rematch,
+                    'result_as_email': not bool(specs.discord_webhook),
                     },
             )
             if specs.sql:
@@ -196,18 +200,28 @@ class DouDigestDagGenerator():
 
             skip_report_task = EmptyOperator(task_id='skip_report')
 
+            op_kwargs={
+                'search_report_str':
+                    "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                }
+            if specs.discord_webhook:
+                python_callable = DiscordSender(specs.discord_webhook).send_discord
+            else:
+                python_callable = self.send_email
+                op_kwargs.update(
+                    {
+                        'subject': specs.subject,
+                        'report_date': template_ano_mes_dia_trigger_local_time,
+                        'email_to_list': specs.emails,
+                        'attach_csv': specs.attach_csv,
+                        'skip_null': specs.skip_null,
+                    })
+
             send_report_task = PythonOperator(
                 task_id='send_report',
-                python_callable=self.send_report,
-                op_kwargs={
-                    'search_report_str': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
-                    'subject': specs.subject,
-                    'report_date': template_ano_mes_dia_trigger_local_time,
-                    'email_to_list': specs.emails,
-                    'attach_csv': specs.attach_csv,
-                    'skip_null': specs.skip_null,
-                    },
-            )
+                python_callable=python_callable,
+                op_kwargs=op_kwargs)
+
             exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
             has_matches_task >> [send_report_task, skip_report_task]
 
@@ -219,17 +233,20 @@ class DouDigestDagGenerator():
         sources,
         territory_id,
         term_list,
-        dou_sections: [str],
+        dou_sections: List[str],
         search_date,
         field,
         is_exact_search: bool,
         ignore_signature_match: bool,
         force_rematch: bool,
+        result_as_email: bool,
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
-        logging.info('Searching for the following terms: %s', ','.join(term_list))
-        logging.info('Trigger date: ' + str(get_trigger_date(context, local_time = True)))
+        logging.info('Searching for: %s', ', '.join(term_list))
+        logging.info(
+            f'Trigger date: {get_trigger_date(context, local_time=True)}')
+
         if 'DOU' in sources:
             dou_result = self.searchers['DOU'].exec_search(
                 term_list,
@@ -251,7 +268,8 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context, local_time = True))
+                get_trigger_date(context, local_time = True),
+                result_as_email)
 
         if 'DOU' in sources and 'QD' in sources:
             return merge_results(qd_result, dou_result)
@@ -291,7 +309,7 @@ class DouDigestDagGenerator():
 
         return terms_df.to_json(orient="columns")
 
-    def send_report(self, search_report_str: str, subject, report_date,
+    def send_email(self, search_report_str: str, subject, report_date,
                     email_to_list, attach_csv, skip_null):
         """Builds the email content, the CSV if applies, and send it
         """

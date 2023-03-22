@@ -27,6 +27,7 @@ class DAGConfig:
     emails: List[str]
     subject: str
     attach_csv: bool
+    discord_webhook: str
     schedule: str
     description: str
     skip_null: bool
@@ -86,16 +87,18 @@ class YAMLParser(FileParser):
         with open(self.filepath, 'r') as file:
             dag_config_dict = yaml.safe_load(file)
 
+        # Mandatory fields
         dag = self._try_get(dag_config_dict, 'dag')
         dag_id = self._try_get(dag, 'id')
         description = self._try_get(dag, 'description')
         report = self._try_get(dag, 'report')
-        emails = self._try_get(report, 'emails')
         search = self._try_get(dag, 'search')
         terms, sql, conn_id = self._get_terms_params(search)
 
         # Optional fields
         sources = search.get('sources', ['DOU'])
+        discord_webhook = (report['discord']['webhook']
+                            if report.get('discord') else None)
         territory_id = search.get('territory_id', None)
         dou_sections = search.get('dou_sections', ['TODOS'])
         search_date = search.get('date', 'DIA')
@@ -111,10 +114,10 @@ class YAMLParser(FileParser):
         # add default tags
         dag_tags.append('dou')
         dag_tags.append('generated_dag')
-        subject = report.get('subject', 'Extração do DOU')
         skip_null = report.get('skip_null', True)
+        emails = report.get('emails')
+        subject = report.get('subject', 'Extraçao do DOU')
         attach_csv = report.get('attach_csv', False)
-        
 
         return DAGConfig(
             dag_id=dag_id,
@@ -132,6 +135,7 @@ class YAMLParser(FileParser):
             emails=emails,
             subject=subject,
             attach_csv=attach_csv,
+            discord_webhook=discord_webhook,
             schedule=schedule,
             description=description,
             skip_null=skip_null,
@@ -165,8 +169,8 @@ class YAMLParser(FileParser):
         return terms, sql, conn_id
 
     def _try_get(self, variable: dict, field, error_msg=None):
-        """Tries to retrieve the property named as `field` from
-        `variable` dict and raises apropriate message"""
+        """Tries to retrieve mandatory property named `field` from
+        `variable` dict and raises appropriate message"""
         try:
             return variable[field]
         except KeyError:
