@@ -1,11 +1,11 @@
+from dags.ro_dou.notification.discord_sender import DiscordSender, requests
 from pytest_mock import MockerFixture
-
-from dags.ro_dou.discord_sender import DiscordSender, requests
 
 WEBHOOK = 'https://some-url.com/xxx'
 
 def test_send_discord_data(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
 
     sender = DiscordSender(WEBHOOK)
     sender.send_data(
@@ -22,7 +22,8 @@ def test_send_discord_data(session_mocker: MockerFixture):
 
 
 def test_send_text_to_discord(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
 
     sender = DiscordSender(WEBHOOK)
     sender.send_text('string')
@@ -36,7 +37,8 @@ def test_send_text_to_discord(session_mocker: MockerFixture):
 
 
 def test_send_embeds_to_discord(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
 
     sender = DiscordSender(WEBHOOK)
     items = [
@@ -117,9 +119,9 @@ def _send_report():
 
 def test_send_report_to_discord__texts(session_mocker: MockerFixture):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
 
     _send_report()
 
@@ -136,9 +138,9 @@ def test_send_report_to_discord__texts(session_mocker: MockerFixture):
 
 def test_send_report_to_discord__embeds(session_mocker: MockerFixture):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
 
     _send_report()
 
