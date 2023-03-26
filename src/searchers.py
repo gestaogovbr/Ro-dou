@@ -191,7 +191,8 @@ class DOUSearcher(BaseSearcher):
                     logging.error('Error - Max retries reached')
                     raise Exception
                 logging.info('Attemp %s of %s: ', retry, max_retries)
-                logging.info('Sleeping for 30 seconds before retry dou_hook.search_text().')
+                logging.info('Sleeping for 30 seconds before retry '
+                             'dou_hook.search_text().')
                 time.sleep(30)
                 retry += 1
 
@@ -229,12 +230,11 @@ class DOUSearcher(BaseSearcher):
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
 
-    def _render_section_descriptions(self, results: list) -> list:
-        return [self._render_section(r) for r in results]
 
-    def _render_section(self, result: dict) -> dict:
-        result['section'] = f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}"
-        return result
+    def _render_section_descriptions(self, results: list) -> list:
+        for result in results:
+            result['section'] = (
+                f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}")
 
 
 class QDSearcher(BaseSearcher):
