@@ -76,8 +76,9 @@ class SlackSender(ISender):
 
 
     def _flush(self):
-        data = {
-            'blocks': self.blocks
-        }
-        result = requests.post(self.webhook_url, json=data)
-        result.raise_for_status()
+        for i in range(0, len(self.blocks), 50):
+            data = {
+                'blocks': self.blocks[i:i + 50]
+            }
+            result = requests.post(self.webhook_url, json=data)
+            result.raise_for_status()
