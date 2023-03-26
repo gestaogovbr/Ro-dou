@@ -211,7 +211,7 @@ class DOUSearcher(BaseSearcher):
         start_name, match_name = self._get_prior_and_matched_name(abstract)
 
         norm_abstract = self._normalize(clean_abstract)
-        norm_abstract_withou_start_name = norm_abstract[len(start_name):]
+        norm_abstract_without_start_name = norm_abstract[len(start_name):]
         norm_term = self._normalize(search_term)
 
         return (
@@ -222,7 +222,7 @@ class DOUSearcher(BaseSearcher):
                 (norm_abstract.startswith(norm_term) or
                 # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
-                norm_abstract_withou_start_name.startswith(norm_term))
+                norm_abstract_without_start_name.startswith(norm_term))
         )
 
     def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
