@@ -1,6 +1,9 @@
 import copy
+import re
 from abc import ABC, abstractmethod
 
+START_PLACEHOLDER_REGEX = re.compile(r"(?<!\s)<%%>")
+END_PLACEHOLDER_REGEX = re.compile(r"</%%>(?!\s)")
 
 class ISender(ABC):
     """Interface that defines a notifier sender.
@@ -43,8 +46,22 @@ class ISender(ABC):
             for _, items in results.items():
                 for item in items:
                     open_tag, close_tag = self.highlight_tags
-                    item['abstract'] = item['abstract'] \
+                    item['abstract'] = _fix_missing_spaces(item['abstract']) \
                         .replace('<%%>', open_tag) \
                         .replace('</%%>', close_tag)
 
         return reports
+
+
+def _fix_missing_spaces(string: str) -> str:
+    """Add missing spaces around placeholders in a string.
+
+    Args:
+        string (str): The string to modify.
+
+    Returns:
+        str: The modified string with spaces added around the placeholders.
+    """
+    new_string = START_PLACEHOLDER_REGEX.sub(" <%%>", string)
+    new_string = END_PLACEHOLDER_REGEX.sub("</%%> ", new_string)
+    return new_string
