@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import requests
 
 from notification.isender import ISender
@@ -55,7 +57,7 @@ class SlackSender(ISender):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Publicado em: 15/03/2023"
+                    "text": f"Publicado em: *{_format_date(item['date'])}*"
                 },
                 "accessory": {
                     "type": "button",
@@ -82,3 +84,19 @@ class SlackSender(ISender):
             }
             result = requests.post(self.webhook_url, json=data)
             result.raise_for_status()
+
+
+WEEKDAYS_EN_TO_PT = [
+    ("Mon", "Seg"),
+    ("Tue", "Ter"),
+    ("Wed", "Qua"),
+    ("Thu", "Qui"),
+    ("Fri", "Sex"),
+    ("Sat", "Sáb"),
+    ("Sun", "Dom")
+]
+
+def _format_date(date_str: str) -> str:
+    date = datetime.strptime(date_str, "%d/%m/%Y")
+    _from, _to = WEEKDAYS_EN_TO_PT[date.weekday()]
+    return date.strftime("%a %d/%m").replace(_from, _to)

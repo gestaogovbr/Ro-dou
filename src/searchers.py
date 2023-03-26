@@ -318,7 +318,8 @@ class QDSearcher(BaseSearcher):
                 f"{result['territory_name']} - {result['state_code']}"),
             'href': result['url'],
             'abstract': abstract,
-            'date': result['date'],
+            'date': datetime.strptime(result['date'],
+                                      "%Y-%m-%d").strftime("%d/%m/%Y"),
         }
 
 
