@@ -13,7 +13,7 @@ from dags.ro_dou.searchers import QDSearcher, _build_query_payload
                 '14.08.2018.Data de Assinatura: 08.02.2023.Proteção de Dados / '
                 '<span style="font-family: \'rawline\',sans-serif; background: '
                 '#FFA;">LGPD</span>, Lei </p>',
-            'date': '2023-02-08',
+            'date': '08/02/2023',
             'href': 'https://querido-diario.nyc3.cdn.digitaloceanspaces.com/4106902/2023-02-08/6147a0767244869c788d3f51a5b7c6bd6be3197e',
             'section': 'QD - Edição ordinária ',
             'title': 'Município de Curitiba - PR'
@@ -25,7 +25,7 @@ from dags.ro_dou.searchers import QDSearcher, _build_query_payload
                 '14.08.2018.Data de Assinatura: 08.02.2023.Proteção de Dados / '
                 '<span style="font-family: \'rawline\',sans-serif; background: '
                 '#FFA;">LGPD</span>, Lei ',
-            'date': '2023-02-08',
+            'date': '08/02/2023',
             'href': 'https://querido-diario.nyc3.cdn.digitaloceanspaces.com/4106902/2023-02-08/6147a0767244869c788d3f51a5b7c6bd6be3197e',
             'section': 'QD - Edição ordinária ',
             'title': 'Município de Curitiba - PR'}
