@@ -16,6 +16,7 @@ feita na Semana de Inovação de 2021.
 - Relatório em `.CSV`
 - Busca dinâmica das palavras chaves de um **BD** ou de uma **Variável**
 - Pesquisa em **Seção** específica
+- Envio de notificações para canais Discord e Slack
 
 # Ambiente de Exemplo
 
@@ -284,6 +285,44 @@ Para ver essa documentação, basta clicar o botão "DAG Docs" em qualquer
 tela de visualização da DAG no Airflow.
 
 ![Botão "DAG Docs". Captura de tela da documentação de DAG no Airflow.](docs/img/exemplo-dag-doc_md.png)
+
+### Exemplo 8
+Esta configuração envia as notificações para canais Discord. É necessário ter
+permissões de administrador no Discord para gerar o Webhook:
+
+```yaml {11}
+dag:
+  id: discord_example
+  description: Envia notificações para canal Discord
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    report:
+    discord:
+      webhook: https://discord.com/api/webhooks/105220xxxxxx811250/Q-XsfdnoHtudTQ-8A6zzzzznitai-vi0bGLE7xxxxxxxxxxxxxxxxxxxmx94R3oZ1h0ngl1
+```
+
+### Exemplo 9
+Esta configuração envia as notificações para canais Slack. É necessário ter
+permissões de administrador no Slack para gerar o Webhook:
+
+```yaml {11}
+dag:
+  id: slack_example
+  description: Envia notificações para canal Slack
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    report:
+    slack:
+      webhook: https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9
+```
 
 ## Compreendendo um pouco mais a pesquisa no DOU
 
