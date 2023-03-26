@@ -4,6 +4,7 @@ from notification.isender import ISender
 
 
 class DiscordSender(ISender):
+    highlight_tags = ('__', '__')
 
     def __init__(self, specs) -> None:
         self.webhook_url = specs.discord_webhook
@@ -30,7 +31,7 @@ class DiscordSender(ISender):
                 "embeds" :  [
                     {
                         'title': item['title'],
-                        'description':item['abstract'],
+                        'description': item['abstract'],
                         'url': item['href'],
                     }
                     for item in items

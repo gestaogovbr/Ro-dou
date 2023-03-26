@@ -167,7 +167,7 @@ class DouDigestDagGenerator():
                     'is_exact_search': specs.is_exact_search,
                     'ignore_signature_match': specs.ignore_signature_match,
                     'force_rematch': specs.force_rematch,
-                    'result_as_email': not bool(specs.discord_webhook),
+                    'result_as_email': result_as_html(specs),
                     },
             )
             if specs.sql:
@@ -302,6 +302,9 @@ def _merge_dict(dict1, dict2):
                 dict3[key] = value + dict1[key]
     return dict3
 
+def result_as_html(specs: DAGConfig) -> bool:
+    """Só utiliza resultado HTML apenas para email"""
+    return specs.discord_webhook and specs.slack_webhook
 
 
 # Run dag generation

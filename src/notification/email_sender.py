@@ -18,6 +18,8 @@ from util import get_source_dir
 
 
 class EmailSender(ISender):
+    highlight_tags = ("<span class='highlight' style='background:#FFA;'>",
+                      "</span>")
 
     def __init__(self, specs) -> None:
         self.specs = specs

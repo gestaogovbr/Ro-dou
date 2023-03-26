@@ -4,6 +4,7 @@ from notification.isender import ISender
 
 
 class SlackSender(ISender):
+    highlight_tags = ('*', '*')
 
     def __init__(self, specs) -> None:
         self.webhook_url = specs.slack_webhook

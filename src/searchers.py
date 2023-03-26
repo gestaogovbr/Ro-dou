@@ -154,7 +154,9 @@ class DOUSearcher(BaseSearcher):
                            if self._really_matched(search_term,
                                                    r.get('abstract'))]
 
-            results = self._render_section_descriptions(results)
+            self._render_section_descriptions(results)
+
+            self._add_standard_highlight_formatting(results)
 
             if results:
                 search_results[search_term] = results
@@ -162,6 +164,15 @@ class DOUSearcher(BaseSearcher):
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
         return search_results
+
+
+    def _add_standard_highlight_formatting(self, results: list) -> None:
+        for result in results:
+            result['abstract'] = result['abstract'].replace(
+                "<span class='highlight' style='background:#FFA;'>", '<%%>'
+                ).replace(
+                "</span>", '</%%>')
+
 
     def _search_text_with_retry(
         self,
@@ -277,7 +288,7 @@ class QDSearcher(BaseSearcher):
                      force_rematch: bool,
                      result_as_email: bool=True,
                      ) -> list:
-        payload = _build_query_payload(search_term, reference_date, result_as_email)
+        payload = _build_query_payload(search_term, reference_date)
 
         if territory_id:
             payload.append(('territory_ids', territory_id))
@@ -312,17 +323,13 @@ class QDSearcher(BaseSearcher):
 
 
 def _build_query_payload(search_term: str,
-                         reference_date: datetime,
-                         result_as_email: bool) -> List[tuple]:
+                         reference_date: datetime) -> List[tuple]:
     return [
         ('size', 100),
         ('excerpt_size', 250),
         ('sort_by', 'descending_date'),
-        ('pre_tags', (
-            '<span style="font-family: \'rawline\','
-            'sans-serif; background: #FFA;">'
-                if result_as_email else '__')),
-        ('post_tags', '</span>' if result_as_email else '__'),
+        ('pre_tags', '<%%>'),
+        ('post_tags', '</%%>'),
         ('number_of_excerpts', 3),
         ('published_since', reference_date.strftime('%Y-%m-%d')),
         ('published_until', reference_date.strftime('%Y-%m-%d')),

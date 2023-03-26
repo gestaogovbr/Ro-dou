@@ -56,18 +56,15 @@ def test_parse_result_qd(result_as_email: bool, expected: str):
 
 
 @pytest.mark.parametrize(
-        'result_as_email, pre_tags, post_tags',
-        [(True, '<span style="font-family: \'rawline\','
-                'sans-serif; background: #FFA;">', '</span>'),
-         (False,'__', '__')]
+        'pre_tags, post_tags',
+        [( '<%%>', '</%%>'),
+         ( '<%%>', '</%%>')]
 )
-def test_build_query_payload(result_as_email: bool,
-                             pre_tags: str,
+def test_build_query_payload(pre_tags: str,
                              post_tags: str):
     payload = _build_query_payload(
         search_term='paralelepípedo',
         reference_date=datetime(2023, 2, 9),
-        result_as_email=result_as_email
     )
     expected = [
         ('size', 100),

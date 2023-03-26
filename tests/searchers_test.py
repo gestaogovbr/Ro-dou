@@ -183,3 +183,30 @@ def test_group_results__list_term_list(dou_searcher,
 
     assert 'ANTONIO DE OLIVEIRA' in grouped_result['single_group']
     assert 'SILVA' in grouped_result['single_group']
+
+
+def test_add_standard_highlight_formatting(dou_searcher):
+    results = [
+        {
+            'section': 'DOU - Seção 1',
+            'title': 'PORTARIA GM/MMA Nº 404, DE 14 DE MARÇO DE 2023',
+            'href': 'https://www.in.gov.br/web/dou/-/'
+                    'portaria-gm/mma-n-404-de-14-de-marco-de-2023-470057067',
+            'abstract':
+                "As manifestações registradas na Plataforma Fala.BR versando "
+                "sobre a <span class='highlight' style='background:#FFA;'>"
+                "Lei</span> de <span class='highlight' style='background:"
+                "#FFA;'>Acesso à Informação</span> têm ritoPORTARIA GM/MMA "
+                "Nº 404, DE 14 DE MARÇO DE 2023 Estabelece, no âmbito do "
+                "Ministério do Meio Ambiente e Mudança do Clima, os "
+                "procedimentos para o recebimento e o "
+                "tratamento de manifestações..."
+            , 'date': '15/03/2023'
+        }]
+    dou_searcher._add_standard_highlight_formatting(results)
+    assert results[0]['abstract'] == \
+        ('As manifestações registradas na Plataforma Fala.BR versando sobre '
+        'a <%%>Lei</%%> de <%%>Acesso à Informação</%%> têm ritoPORTARIA '
+        'GM/MMA Nº 404, DE 14 DE MARÇO DE 2023 Estabelece, no âmbito do '
+        'Ministério do Meio Ambiente e Mudança do Clima, os procedimentos '
+        'para o recebimento e o tratamento de manifestações...')

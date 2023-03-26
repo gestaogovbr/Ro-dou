@@ -39,4 +39,4 @@ class Notifier:
         search_report = ast.literal_eval(search_report)
 
         for sender in self.senders:
-            sender.send(search_report, report_date)
+            sender.send_report(search_report, report_date)
