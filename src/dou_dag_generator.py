@@ -154,8 +154,8 @@ class DouDigestDagGenerator():
                 )
                 term_list = "{{ ti.xcom_pull(task_ids='select_terms_from_db') }}"
 
-            exec_dou_search_task = PythonOperator(
-                task_id='exec_dou_search',
+            exec_search_task = PythonOperator(
+                task_id='exec_search',
                 python_callable=self.perform_searches,
                 op_kwargs={
                     'sources': specs.sources,
@@ -171,13 +171,13 @@ class DouDigestDagGenerator():
                     },
             )
             if specs.sql:
-                select_terms_from_db_task >> exec_dou_search_task # pylint: disable=pointless-statement
+                select_terms_from_db_task >> exec_search_task # pylint: disable=pointless-statement
 
             has_matches_task = BranchPythonOperator(
                 task_id='has_matches',
                 python_callable=self.has_matches,
                 op_kwargs={
-                    'search_result': "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                    'search_result': "{{ ti.xcom_pull(task_ids='exec_search') }}",
                     'skip_null': specs.skip_null,
                 },
             )
@@ -189,11 +189,11 @@ class DouDigestDagGenerator():
                 python_callable=Notifier(specs).send_notification,
                 op_kwargs={
                     'search_report':
-                        "{{ ti.xcom_pull(task_ids='exec_dou_search') }}",
+                        "{{ ti.xcom_pull(task_ids='exec_search') }}",
                     'report_date': template_ano_mes_dia_trigger_local_time,
                     })
 
-            exec_dou_search_task >> has_matches_task # pylint: disable=pointless-statement
+            exec_search_task >> has_matches_task # pylint: disable=pointless-statement
             has_matches_task >> [
                 send_notification_task, skip_notification_task]
 
