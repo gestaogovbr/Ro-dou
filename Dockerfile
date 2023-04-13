@@ -1,19 +1,9 @@
-FROM apache/airflow:2.5.1-python3.9
+FROM apache/airflow:2.5.0-python3.9
 
 USER root
 
 # Copy Ro-dou core files from the host Docker context
 COPY src /opt/airflow/dags/ro_dou
-
-# Install Git
-RUN apt-get update && \
-    apt-get install -y git && \
-    rm -rf /var/lib/apt/lists/*
-
-# Remove Git and clean up package cache
-RUN apt-get remove -y git && \
-    apt-get autoremove -y && \
-    rm -rf /tmp/repo-ro-dou
 
 USER airflow
 
