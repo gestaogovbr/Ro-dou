@@ -28,7 +28,7 @@ from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils.email import send_email
 
-from FastETL.custom_functions.utils.date import (
+from fastetl.custom_functions.utils.date import (
     get_trigger_date, template_ano_mes_dia_trigger_local_time)
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))

@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 
 import pandas as pd
 import requests
-from FastETL.hooks.dou_hook import DOUHook, Field, SearchDate, Section
+from fastetl.hooks.dou_hook import DOUHook, Field, SearchDate, Section
 from unidecode import unidecode
 
 
