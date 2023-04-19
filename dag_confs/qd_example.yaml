@@ -1,5 +1,5 @@
 dag:
-  id: dou_qd_example
+  id: qd_example
   description: DAG de teste
   search:
     sources:

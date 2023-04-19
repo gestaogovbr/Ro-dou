@@ -1,23 +1,18 @@
-import ast
-
 import requests
 
-
-class DiscordSender:
-
-    def __init__(self, webhook_url: str) -> None:
-        self.webhook_url = webhook_url
+from notification.isender import ISender
 
 
-    def send_discord(self, search_report_str: str):
-        obj_results = ast.literal_eval(search_report_str)
+class DiscordSender(ISender):
+    highlight_tags = ('__', '__')
 
-        self._send_discord(obj_results)
+    def __init__(self, specs) -> None:
+        self.webhook_url = specs.discord_webhook
 
 
-    def _send_discord(self, search_report_str: list):
+    def send(self, search_report: dict, report_date: str=None):
         """Parse the content, and send message to Discord"""
-        for group, results in search_report_str.items():
+        for group, results in search_report.items():
             if group != 'single_group':
                 self.send_text(f'**Grupo: {group}**')
             for term, items in results.items():
@@ -36,7 +31,7 @@ class DiscordSender:
                 "embeds" :  [
                     {
                         'title': item['title'],
-                        'description':item['abstract'],
+                        'description': item['abstract'],
                         'url': item['href'],
                     }
                     for item in items

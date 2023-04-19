@@ -1,13 +1,21 @@
-from pytest_mock import MockerFixture
+from collections import namedtuple
 
-from dags.ro_dou.discord_sender import DiscordSender, requests
+import pytest
+from dags.ro_dou.notification.discord_sender import DiscordSender, requests
+from pytest_mock import MockerFixture
 
 WEBHOOK = 'https://some-url.com/xxx'
 
-def test_send_discord_data(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
+@pytest.fixture
+def mocked_specs():
+    Specs = namedtuple('Specs', 'discord_webhook')
+    return Specs(WEBHOOK)
 
-    sender = DiscordSender(WEBHOOK)
+def test_send_discord_data(session_mocker: MockerFixture, mocked_specs):
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
+
+    sender = DiscordSender(mocked_specs)
     sender.send_data(
         {
             'content': 'string'
@@ -21,10 +29,11 @@ def test_send_discord_data(session_mocker: MockerFixture):
         })
 
 
-def test_send_text_to_discord(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
+def test_send_text_to_discord(session_mocker: MockerFixture, mocked_specs):
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
 
-    sender = DiscordSender(WEBHOOK)
+    sender = DiscordSender(mocked_specs)
     sender.send_text('string')
 
     requests.post.assert_called_with(
@@ -35,10 +44,10 @@ def test_send_text_to_discord(session_mocker: MockerFixture):
         })
 
 
-def test_send_embeds_to_discord(session_mocker: MockerFixture):
-    session_mocker.patch('dags.ro_dou.discord_sender.requests.post')
-
-    sender = DiscordSender(WEBHOOK)
+def test_send_embeds_to_discord(session_mocker: MockerFixture, mocked_specs):
+    session_mocker.patch(
+        'dags.ro_dou.notification.discord_sender.requests.post')
+    sender = DiscordSender(mocked_specs)
     items = [
         {
             'title': 'some title',
@@ -66,7 +75,7 @@ def test_send_embeds_to_discord(session_mocker: MockerFixture):
         })
 
 
-def _send_report():
+def _send_report(specs):
     search_report = {
         'single_group': {
             'lei de acesso à informação': [
@@ -111,17 +120,18 @@ def _send_report():
         }
     }
 
-    sender = DiscordSender(WEBHOOK)
-    sender._send_discord(search_report)
+    sender = DiscordSender(specs)
+    sender.send(search_report)
 
 
-def test_send_report_to_discord__texts(session_mocker: MockerFixture):
+def test_send_report_to_discord__texts(session_mocker: MockerFixture,
+                                       mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
 
-    _send_report()
+    _send_report(mocked_specs)
 
     args_list = [
         call[0][0]
@@ -134,13 +144,14 @@ def test_send_report_to_discord__texts(session_mocker: MockerFixture):
     ]
 
 
-def test_send_report_to_discord__embeds(session_mocker: MockerFixture):
+def test_send_report_to_discord__embeds(session_mocker: MockerFixture,
+                                        mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
 
-    _send_report()
+    _send_report(mocked_specs)
 
     args_list = [
         call[0][0]

@@ -154,7 +154,9 @@ class DOUSearcher(BaseSearcher):
                            if self._really_matched(search_term,
                                                    r.get('abstract'))]
 
-            results = self._render_section_descriptions(results)
+            self._render_section_descriptions(results)
+
+            self._add_standard_highlight_formatting(results)
 
             if results:
                 search_results[search_term] = results
@@ -162,6 +164,15 @@ class DOUSearcher(BaseSearcher):
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
         return search_results
+
+
+    def _add_standard_highlight_formatting(self, results: list) -> None:
+        for result in results:
+            result['abstract'] = result['abstract'].replace(
+                "<span class='highlight' style='background:#FFA;'>", '<%%>'
+                ).replace(
+                "</span>", '</%%>')
+
 
     def _search_text_with_retry(
         self,
@@ -191,7 +202,8 @@ class DOUSearcher(BaseSearcher):
                     logging.error('Error - Max retries reached')
                     raise Exception
                 logging.info('Attemp %s of %s: ', retry, max_retries)
-                logging.info('Sleeping for 30 seconds before retry dou_hook.search_text().')
+                logging.info('Sleeping for 30 seconds before retry '
+                             'dou_hook.search_text().')
                 time.sleep(30)
                 retry += 1
 
@@ -211,7 +223,7 @@ class DOUSearcher(BaseSearcher):
         start_name, match_name = self._get_prior_and_matched_name(abstract)
 
         norm_abstract = self._normalize(clean_abstract)
-        norm_abstract_withou_start_name = norm_abstract[len(start_name):]
+        norm_abstract_without_start_name = norm_abstract[len(start_name):]
         norm_term = self._normalize(search_term)
 
         return (
@@ -222,19 +234,18 @@ class DOUSearcher(BaseSearcher):
                 (norm_abstract.startswith(norm_term) or
                 # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
-                norm_abstract_withou_start_name.startswith(norm_term))
+                norm_abstract_without_start_name.startswith(norm_term))
         )
 
     def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
         return groups[0], groups[1]
 
-    def _render_section_descriptions(self, results: list) -> list:
-        return [self._render_section(r) for r in results]
 
-    def _render_section(self, result: dict) -> dict:
-        result['section'] = f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}"
-        return result
+    def _render_section_descriptions(self, results: list) -> list:
+        for result in results:
+            result['section'] = (
+                f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}")
 
 
 class QDSearcher(BaseSearcher):
@@ -277,7 +288,7 @@ class QDSearcher(BaseSearcher):
                      force_rematch: bool,
                      result_as_email: bool=True,
                      ) -> list:
-        payload = _build_query_payload(search_term, reference_date, result_as_email)
+        payload = _build_query_payload(search_term, reference_date)
 
         if territory_id:
             payload.append(('territory_ids', territory_id))
@@ -307,22 +318,19 @@ class QDSearcher(BaseSearcher):
                 f"{result['territory_name']} - {result['state_code']}"),
             'href': result['url'],
             'abstract': abstract,
-            'date': result['date'],
+            'date': datetime.strptime(result['date'],
+                                      "%Y-%m-%d").strftime("%d/%m/%Y"),
         }
 
 
 def _build_query_payload(search_term: str,
-                         reference_date: datetime,
-                         result_as_email: bool) -> List[tuple]:
+                         reference_date: datetime) -> List[tuple]:
     return [
         ('size', 100),
         ('excerpt_size', 250),
         ('sort_by', 'descending_date'),
-        ('pre_tags', (
-            '<span style="font-family: \'rawline\','
-            'sans-serif; background: #FFA;">'
-                if result_as_email else '__')),
-        ('post_tags', '</span>' if result_as_email else '__'),
+        ('pre_tags', '<%%>'),
+        ('post_tags', '</%%>'),
         ('number_of_excerpts', 3),
         ('published_since', reference_date.strftime('%Y-%m-%d')),
         ('published_until', reference_date.strftime('%Y-%m-%d')),
