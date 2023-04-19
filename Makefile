@@ -1,7 +1,3 @@
-.PHONY: install-deps
-install-deps:
-	git clone https://github.com/economiagovbr/FastETL.git
-
 .PHONY: run
 run: setup-containers create-example-variable
 
