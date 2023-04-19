@@ -18,9 +18,6 @@ jobs:
       with:
         path: Ro-dou
 
-    - name: Install dependencies
-      run: cd Ro-dou && make install-deps
-
     - name: Run docker-compose
       run: cd Ro-dou && make run
 
