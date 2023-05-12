@@ -1,6 +1,6 @@
 # Ro-dou
 
-[![CI Tests](https://github.com/economiagovbr/Ro-dou/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/economiagovbr/Ro-dou/actions/workflows/ci-tests.yml)
+[![CI Tests](https://github.com/gestaogovbr/Ro-dou/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/gestaogovbr/Ro-dou/actions/workflows/ci-tests.yml)
 
 O Ro-dou é uma ferramenta para gerar dinamicamente DAGs no
 [Apache Airflow](https://airflow.apache.org/) que fazem *clipping* do Diário
@@ -51,7 +51,7 @@ na cor verde significa que houve resultado e que o email foi enviado.
 Para visualizar o email acesse o endereço http://localhost:5000/. Este é um
 serviço que simula uma caixa de email (servidor SMTP) para fins de
 experimentação. **_Voilà!_**. O arquivo de configuração deste Clipping está na
-pasta `dag_confs/`. Confira [aqui](https://github.com/economiagovbr/Ro-dou/blob/main/dag_confs/all_parameters_example.yaml) no Github.
+pasta `dag_confs/`. Confira [aqui](https://github.com/gestaogovbr/Ro-dou/blob/main/dag_confs/all_parameters_example.yaml) no Github.
 
 Agora teste o Clipping **terms_from_variable** seguindo os mesmo passos. Neste
 caso os termos pesquisados estão listados em uma Variável do Airflow e podem

@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: economiagovbr/ro-dou
+  IMAGE_NAME: gestaogovbr/ro-dou
 
 jobs:
   build_and_push:
