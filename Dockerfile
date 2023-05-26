@@ -11,7 +11,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone the FastETL GitHub repository and copy specified files
-RUN git clone https://github.com/economiagovbr/FastETL.git /tmp/repo-FastETL && \
+RUN git clone https://github.com/gestaogovbr/FastETL.git /tmp/repo-FastETL && \
     mkdir -p /opt/airflow/plugins/fastetl/hooks && \
     mkdir -p /opt/airflow/plugins/fastetl/custom_functions/utils && \
     cp /tmp/repo-FastETL/fastetl/hooks/dou_hook.py /opt/airflow/plugins/fastetl/hooks/ && \
