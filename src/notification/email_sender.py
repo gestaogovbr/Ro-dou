@@ -14,7 +14,6 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 from notification.isender import ISender
-from util import get_source_dir
 
 
 class EmailSender(ISender):
@@ -58,7 +57,7 @@ class EmailSender(ISender):
         """Generate HTML content to be sent by email based on
         search_report dictionary
         """
-        with open(os.path.join(get_source_dir(), 'report_style.css'), 'r') as f:
+        with open('../report_style.css', 'r') as f:
             blocks = [f'<style>\n{f.read()}</style>']
 
         for group, results in self.search_report.items():

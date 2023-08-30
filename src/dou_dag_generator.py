@@ -33,8 +33,6 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
-from util import get_source_dir
-
 
 class DouDigestDagGenerator():
     """
@@ -43,8 +41,12 @@ class DouDigestDagGenerator():
     pré-defined keywords. It's also possible to fetch keywords from the
     database.
     """
-    YAMLS_DIR = os.path.join(get_source_dir(), 'dag_confs')
+    YAMLS_DIR = os.getenv('RO_DOU__DAG_CONF_DIR')
 
+    if YAMLS_DIR is None:
+        raise EnvironmentError("Environment variable RO_DOU__DAG_CONF_DIR not found!")
+
+    YAMLS_DIR_LIST = [dag_confs for dag_confs in YAMLS_DIR.split(":")]
     parser = YAMLParser
     searchers: Dict[str, BaseSearcher]
 
@@ -99,16 +101,19 @@ class DouDigestDagGenerator():
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags
         """
-        files_list = [
-            f for f in os.listdir(self.YAMLS_DIR)
-            if f.split('.')[-1] in ['yaml', 'yml']
-        ]
 
-        for file in files_list:
-            filepath = os.path.join(self.YAMLS_DIR, file)
+        files_list = []
+
+        for directory in self.YAMLS_DIR_LIST:
+            for dirpath, _, filenames in os.walk(directory):
+                for filename in filenames:
+                    if any(ext in filename for ext in ['.yaml', '.yml']):
+                        files_list.extend([os.path.join(dirpath, filename)])
+
+        for filepath in files_list:
             dag_specs = self.parser(filepath).parse()
             dag_id = dag_specs.dag_id
-            globals()[dag_id] = self.create_dag(dag_specs, file)
+            globals()[dag_id] = self.create_dag(dag_specs, filepath)
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
@@ -121,7 +126,7 @@ class DouDigestDagGenerator():
             specs, config_file) if specs.doc_md else specs.doc_md
         # DAG parameters
         default_args = {
-            'owner': 'nitai',
+            'owner': 'cginf',
             'start_date': datetime(2021, 10, 18),
             'depends_on_past': False,
             'retries': 10,
@@ -307,5 +312,5 @@ def result_as_html(specs: DAGConfig) -> bool:
     return specs.discord_webhook and specs.slack_webhook
 
 
-# Run dag generation
+# # Run dag generation
 DouDigestDagGenerator().generate_dags()
