@@ -1,8 +1,8 @@
 ## Change Log
 
-As principais mudanças realizadas no repositório do [Ro-ou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 30/08/2023.
+As principais mudanças realizadas no repositório do [Ro-ou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 31/08/2023.
 
-## [0.0.8] - 2023-08-03
+## [0.1.0] - 2023-08-31
 
 Altera a forma de encontrar os arquivos de configuração das DAGs (`dag_confs/*.yml`).
 
