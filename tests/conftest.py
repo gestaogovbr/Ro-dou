@@ -6,9 +6,6 @@ import os
 import pytest
 from typing import Tuple
 
-from airflow import models
-from airflow.utils import db
-
 from dags.ro_dou.dou_dag_generator import (DouDigestDagGenerator,
                                            SearchResult)
 from dags.ro_dou.parsers import YAMLParser
