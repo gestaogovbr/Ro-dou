@@ -57,7 +57,11 @@ class EmailSender(ISender):
         """Generate HTML content to be sent by email based on
         search_report dictionary
         """
-        with open('../report_style.css', 'r') as f:
+        current_directory = os.path.dirname(__file__)
+        parent_directory = os.path.dirname(current_directory)
+        file_path = os.path.join(parent_directory, 'report_style.css')
+
+        with open(file_path, 'r') as f:
             blocks = [f'<style>\n{f.read()}</style>']
 
         for group, results in self.search_report.items():
