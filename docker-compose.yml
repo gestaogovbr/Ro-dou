@@ -71,6 +71,7 @@
         AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
 
         RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
+        termos_exemplo_variavel: 'exemplo'
 
       volumes:
         - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
