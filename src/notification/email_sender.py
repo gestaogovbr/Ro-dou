@@ -57,7 +57,7 @@ class EmailSender(ISender):
         """Generate HTML content to be sent by email based on
         search_report dictionary
         """
-        with open('../report_style.css', 'r') as f:
+        with open('/opt/airflow/dags/ro_dou/report_style.css', 'r') as f:
             blocks = [f'<style>\n{f.read()}</style>']
 
         for group, results in self.search_report.items():
