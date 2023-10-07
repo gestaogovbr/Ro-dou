@@ -126,7 +126,7 @@ class DouDigestDagGenerator():
             specs, config_file) if specs.doc_md else specs.doc_md
         # DAG parameters
         default_args = {
-            'owner': 'cginf',
+            'owner': specs.owner,
             'start_date': datetime(2021, 10, 18),
             'depends_on_past': False,
             'retries': 10,

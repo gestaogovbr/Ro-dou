@@ -34,6 +34,7 @@ class DAGConfig:
     skip_null: bool
     doc_md: str
     dag_tags: Set[str]
+    owner: str
 
 class FileParser(ABC):
     """Abstract class to build file parsers with DAG configuration.
@@ -97,6 +98,7 @@ class YAMLParser(FileParser):
         terms, sql, conn_id = self._get_terms_params(search)
 
         # Optional fields
+        owner = ", ".join(dag.get('owner', []))
         sources = search.get('sources', ['DOU'])
         discord_webhook = (report['discord']['webhook']
                             if report.get('discord') else None)
@@ -145,6 +147,7 @@ class YAMLParser(FileParser):
             skip_null=skip_null,
             doc_md=doc_md,
             dag_tags=set(dag_tags),
+            owner=owner,
             )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:

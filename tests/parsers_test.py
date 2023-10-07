@@ -56,7 +56,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
-                "dag_tags": {"dou", "generated_dag"}
+                "dag_tags": {"dou", "generated_dag"},
+                "owner": "",
             }
         ),
         ("all_parameters_example.yaml",
@@ -84,7 +85,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "description": "DAG exemplo utilizando todos os demais parâmetros.",
                 "skip_null": True,
                 "doc_md": None,
-                "dag_tags": {"dou", "generated_dag", "projeto_a", "departamento_x"}
+                "dag_tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
+                "owner": "pessoa 1, pessoa 2",
             }
         ),
         ("terms_from_db_example.yaml",
@@ -115,7 +117,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
-                "dag_tags": {"dou", "generated_dag"}
+                "dag_tags": {"dou", "generated_dag"},
+                "owner": "",
             }
         ),
         ("basic_example_skip_null.yaml",
@@ -141,7 +144,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "description": "DAG de teste",
                 "skip_null": False,
                 "doc_md": None,
-                "dag_tags": {"dou", "generated_dag"}
+                "dag_tags": {"dou", "generated_dag"},
+                "owner": "",
             },
         ),
         ("markdown_docs_example.yaml",
@@ -175,7 +179,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                       * Ah, aqui você também pode usar *markdown* para
                       * escrever listas, por exemplo,
                       * ou colocar [links](graph)!""").strip(),
-                "dag_tags": {"dou", "generated_dag"}
+                "dag_tags": {"dou", "generated_dag"},
+                "owner": "",
             }
         ),
     ])

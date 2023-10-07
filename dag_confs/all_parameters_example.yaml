@@ -4,6 +4,9 @@ dag:
   tags:
     - projeto_a
     - departamento_x
+  owner:
+    - pessoa 1
+    - pessoa 2
   schedule: 0 8 * * MON-FRI
   search:
     terms:
