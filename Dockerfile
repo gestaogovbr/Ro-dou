@@ -31,5 +31,5 @@ USER airflow
 RUN pip install --no-cache-dir --user 'apache-airflow[microsoft.mssql,google_auth]'
 
 # Copy and install requirements.txt
-COPY requirements.txt /
-RUN pip install --no-cache-dir -r /requirements.txt
+COPY tests-requirements.txt /
+RUN pip install --no-cache-dir -r /tests-requirements.txt
