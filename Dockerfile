@@ -16,7 +16,7 @@ RUN chown -R airflow /opt/airflow
 USER airflow
 
 RUN pip install --no-cache-dir --user \
-apache-airflow[microsoft.mssql,google_auth] && \
+apache-airflow[microsoft.mssql,google_auth] \
 apache-airflow-providers-fastetl
 
 # Copy and install requirements.txt
