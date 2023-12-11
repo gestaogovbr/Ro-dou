@@ -6,6 +6,8 @@ import json
 import logging
 import re
 import time
+import sys
+import os
 from abc import ABC
 from datetime import datetime, timedelta
 from random import random
@@ -14,10 +16,12 @@ from urllib.parse import urljoin
 
 import pandas as pd
 import requests
-from fastetl.hooks.dou_hook import DOUHook, Field, SearchDate, Section
+
 from unidecode import unidecode
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from dou_hook import DOUHook, Field, SearchDate, Section
 class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile('<.*?>')
