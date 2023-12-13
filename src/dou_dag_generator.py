@@ -25,11 +25,10 @@ from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-from fastetl.custom_functions.utils.date import (
-    get_trigger_date, template_ano_mes_dia_trigger_local_time)
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
+from utils.date import (
+    get_trigger_date, template_ano_mes_dia_trigger_local_time)
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher
