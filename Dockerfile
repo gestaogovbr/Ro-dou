@@ -3,7 +3,7 @@ FROM apache/airflow:2.7.3-python3.10
 USER root
 
 # Copy Ro-dou core files from the host Docker context
-COPY src /opt/airflow/dags/ro_dou
+COPY src /opt/airflow/dags/ro_dou_src
 
 RUN chown -R airflow /opt/airflow
 

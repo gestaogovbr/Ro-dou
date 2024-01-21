@@ -8,8 +8,6 @@ import textwrap
 
 import pytest
 
-import pandas as pd
-
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -185,7 +183,9 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
         ),
     ])
 def test_parse(filepath, result_tuple):
-    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR, filepath)
+    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
+                            "examples_and_tests",
+                            filepath)
     parsed = YAMLParser(filepath=filepath).parse()
 
     assert parsed == DAGConfig(**result_tuple)

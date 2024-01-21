@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import pytest
-from dags.ro_dou.notification.discord_sender import DiscordSender, requests
+from dags.ro_dou_src.notification.discord_sender import DiscordSender, requests
 from pytest_mock import MockerFixture
 
 WEBHOOK = 'https://some-url.com/xxx'
@@ -13,7 +13,7 @@ def mocked_specs():
 
 def test_send_discord_data(session_mocker: MockerFixture, mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.requests.post')
+        'dags.ro_dou_src.notification.discord_sender.requests.post')
 
     sender = DiscordSender(mocked_specs)
     sender.send_data(
@@ -31,7 +31,7 @@ def test_send_discord_data(session_mocker: MockerFixture, mocked_specs):
 
 def test_send_text_to_discord(session_mocker: MockerFixture, mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.requests.post')
+        'dags.ro_dou_src.notification.discord_sender.requests.post')
 
     sender = DiscordSender(mocked_specs)
     sender.send_text('string')
@@ -46,7 +46,7 @@ def test_send_text_to_discord(session_mocker: MockerFixture, mocked_specs):
 
 def test_send_embeds_to_discord(session_mocker: MockerFixture, mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.requests.post')
+        'dags.ro_dou_src.notification.discord_sender.requests.post')
     sender = DiscordSender(mocked_specs)
     items = [
         {
@@ -127,9 +127,9 @@ def _send_report(specs):
 def test_send_report_to_discord__texts(session_mocker: MockerFixture,
                                        mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou_src.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou_src.notification.discord_sender.DiscordSender.send_embeds')
 
     _send_report(mocked_specs)
 
@@ -147,9 +147,9 @@ def test_send_report_to_discord__texts(session_mocker: MockerFixture,
 def test_send_report_to_discord__embeds(session_mocker: MockerFixture,
                                         mocked_specs):
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.DiscordSender.send_text')
+        'dags.ro_dou_src.notification.discord_sender.DiscordSender.send_text')
     session_mocker.patch(
-        'dags.ro_dou.notification.discord_sender.DiscordSender.send_embeds')
+        'dags.ro_dou_src.notification.discord_sender.DiscordSender.send_embeds')
 
     _send_report(mocked_specs)
 

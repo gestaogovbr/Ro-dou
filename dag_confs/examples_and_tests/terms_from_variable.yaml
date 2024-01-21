@@ -8,6 +8,6 @@ dag:
   report:
     emails:
       - destination@economia.gov.br
-    attach_csv: On
+    attach_csv: True
     subject: "Exemplo de termos na Variável"
 

@@ -1,0 +1,12 @@
+{
+    "yaml.schemas": {
+        // XXX para usar um schema do repo oficial https://github.com/gestaogovbr/Ro-dou:
+        // "https://raw.githubusercontent.com/gestaogovbr/Ro-dou/main/schemas/ro-dou.json":
+        // XXX para usar um schema de arquivo local:
+        "./schemas/ro-dou.json": [
+            // XXX edit to your DAGs yaml directory
+            "dag_confs/**/*.yml",
+            "dag_confs/**/*.yaml"
+        ],
+    },
+}
