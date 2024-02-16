@@ -35,6 +35,7 @@ class DAGConfig:
     doc_md: str
     dag_tags: Set[str]
     owner: str
+    department: str
 
 class FileParser(ABC):
     """Abstract class to build file parsers with DAG configuration.
@@ -111,6 +112,7 @@ class YAMLParser(FileParser):
         is_exact_search = search.get('is_exact_search', True)
         ignore_signature_match = search.get('ignore_signature_match', False)
         force_rematch = search.get('force_rematch', None)
+        department = search.get('department', None)
         schedule = self._get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
         doc_md = dag.get('doc_md', None)
         if doc_md:
@@ -148,6 +150,7 @@ class YAMLParser(FileParser):
             doc_md=doc_md,
             dag_tags=set(dag_tags),
             owner=owner,
+            department=department,
             )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:

@@ -116,7 +116,8 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    reference_date: datetime):
+                    reference_date: datetime,
+                    department: str):
         search_results = self._search_all_terms(
             self._cast_term_list(term_list),
             dou_sections,
@@ -125,7 +126,8 @@ class DOUSearcher(BaseSearcher):
             field,
             is_exact_search,
             ignore_signature_match,
-            force_rematch)
+            force_rematch,
+            department)
 
         return self._group_results(search_results, term_list)
 
@@ -137,7 +139,8 @@ class DOUSearcher(BaseSearcher):
                           field,
                           is_exact_search,
                           ignore_signature_match,
-                          force_rematch) -> dict:
+                          force_rematch,
+                          department) -> dict:
         search_results = {}
         for search_term in term_list:
             logging.info('Starting search for term: %s', search_term)
@@ -157,7 +160,8 @@ class DOUSearcher(BaseSearcher):
                 results = [r for r in results
                            if self._really_matched(search_term,
                                                    r.get('abstract'))]
-
+            self._department_matched(results, department)
+                
             self._render_section_descriptions(results)
 
             self._add_standard_highlight_formatting(results)
@@ -240,6 +244,16 @@ class DOUSearcher(BaseSearcher):
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
                 norm_abstract_without_start_name.startswith(norm_term))
         )
+    
+    def _department_matched(self, results: list, department: str) -> list:
+            """Verifica se o termo encontrado pela API realmente é igual ao
+            órgão de busca. Esta função é útil para filtrar resultados
+            retornardos pela API, mas que são específicas do órgão.
+            """
+
+            for result in results[:]:
+                if not department in result["hierarchyList"]:
+                    results.remove(result)
 
     def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
