@@ -76,6 +76,7 @@
         - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
         - ./tests:/opt/airflow/tests # for test purpose
+        - ./schemas:/opt/airflow/schemas # for test purpose
       depends_on:
         postgres:
           condition: service_healthy
@@ -118,7 +119,7 @@
         image: rnwood/smtp4dev:v3
         restart: always
         ports:
-          - '5000:80'
+          - '5001:80'
           - '25:25' # Change the number before : to the port the SMTP server should be accessible on
           - '143:143' # Change the number before : to the port the IMAP server should be accessible on
         volumes:

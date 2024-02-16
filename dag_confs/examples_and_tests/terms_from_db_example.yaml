@@ -16,5 +16,5 @@ dag:
   report:
     emails:
       - destination@economia.gov.br
-    attach_csv: On
+    attach_csv: True
     subject: "[String] com caracteres especiais deve estar entre aspas"

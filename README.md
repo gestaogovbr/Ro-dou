@@ -49,7 +49,7 @@ houve algum resultado encontrado na API da Imprensa Nacional para os termos e
 demais parâmetros deste clipping. Se a tarefa chamada **"send_report"** estiver
 na cor verde significa que houve resultado e que o email foi enviado.
 
-Para visualizar o email acesse o endereço http://localhost:5000/. Este é um
+Para visualizar o email acesse o endereço http://localhost:5001/. Este é um
 serviço que simula uma caixa de email (servidor SMTP) para fins de
 experimentação. **_Voilà!_**. O arquivo de configuração deste Clipping está na
 pasta `dag_confs/`. Confira [aqui](https://github.com/gestaogovbr/Ro-dou/blob/main/dag_confs/all_parameters_example.yaml) no Github.

@@ -3,8 +3,8 @@
 
 import pandas as pd
 import pytest
-from dags.ro_dou.dou_dag_generator import merge_results
-from dags.ro_dou.notification.email_sender import EmailSender, repack_match
+from dags.ro_dou_src.dou_dag_generator import merge_results
+from dags.ro_dou_src.notification.email_sender import EmailSender, repack_match
 
 
 def test_repack_match(report_example):

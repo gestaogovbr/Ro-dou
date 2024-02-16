@@ -14,9 +14,9 @@ dag:
     - governo aberto
     - lei de acesso à informação
     field: TUDO
-    is_exact_search: On
-    ignore_signature_match: On
-    force_rematch: On
+    is_exact_search: True
+    ignore_signature_match: True
+    force_rematch: True
     date: MES
     dou_sections:
       - SECAO_1

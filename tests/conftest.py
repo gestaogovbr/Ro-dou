@@ -6,10 +6,10 @@ import os
 import pytest
 from typing import Tuple
 
-from dags.ro_dou.dou_dag_generator import (DouDigestDagGenerator,
+from dags.ro_dou_src.dou_dag_generator import (DouDigestDagGenerator,
                                            SearchResult)
-from dags.ro_dou.parsers import YAMLParser
-from dags.ro_dou.searchers import DOUSearcher
+from dags.ro_dou_src.parsers import YAMLParser
+from dags.ro_dou_src.searchers import DOUSearcher
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
@@ -42,6 +42,7 @@ def dag_gen() -> DouDigestDagGenerator:
 @pytest.fixture()
 def yaml_parser()-> YAMLParser:
     filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
+                            "examples_and_tests",
                             'basic_example.yaml')
     return YAMLParser(filepath=filepath)
 
