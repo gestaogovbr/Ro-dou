@@ -171,6 +171,7 @@ class DouDigestDagGenerator():
                     'is_exact_search': specs.is_exact_search,
                     'ignore_signature_match': specs.ignore_signature_match,
                     'force_rematch': specs.force_rematch,
+                    'department': specs.department,
                     'result_as_email': result_as_html(specs),
                     },
             )
@@ -216,6 +217,7 @@ class DouDigestDagGenerator():
         ignore_signature_match: bool,
         force_rematch: bool,
         result_as_email: bool,
+        department: str,
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
@@ -232,6 +234,7 @@ class DouDigestDagGenerator():
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
+                department,
                 get_trigger_date(context, local_time = True))
 
         if 'QD' in sources:
