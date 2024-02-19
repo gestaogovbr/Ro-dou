@@ -24,6 +24,7 @@ class DAGConfig:
     terms: List[str]
     sql: str
     conn_id: str
+    department: str    
     emails: List[str]
     subject: str
     attach_csv: bool
@@ -35,7 +36,7 @@ class DAGConfig:
     doc_md: str
     dag_tags: Set[str]
     owner: str
-    department: str
+
 
 class FileParser(ABC):
     """Abstract class to build file parsers with DAG configuration.
@@ -139,6 +140,7 @@ class YAMLParser(FileParser):
             terms=terms,
             sql=sql,
             conn_id=conn_id,
+            department=department,            
             emails=emails,
             subject=subject,
             attach_csv=attach_csv,
@@ -150,7 +152,6 @@ class YAMLParser(FileParser):
             doc_md=doc_md,
             dag_tags=set(dag_tags),
             owner=owner,
-            department=department,
             )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:
