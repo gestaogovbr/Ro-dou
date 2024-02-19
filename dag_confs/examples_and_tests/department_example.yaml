@@ -1,0 +1,12 @@
+dag:
+  id: department_example
+  description: DAG de teste (filtro por departamento)
+  search:
+    terms:
+      - Orçamento de Investimento
+    department: 
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
