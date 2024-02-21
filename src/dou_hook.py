@@ -197,7 +197,6 @@ class DOUHook(BaseHook):
 
             if search_results:
                 for content in search_results:
-                    #if "Ministério da Gestão e da Inovação em Serviços Públicos" in content["hierarchyList"]:
                     item = {}
                     item["section"] = content["pubName"].lower()
                     item["title"] = content["title"]
