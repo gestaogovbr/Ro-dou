@@ -3,9 +3,10 @@ dag:
   description: DAG de teste (filtro por departamento)
   search:
     terms:
-      - Orçamento de Investimento
-    department: 
+      - dados abertos
+    department:
       - Ministério da Gestão e da Inovação em Serviços Públicos
+      - Ministério da Defesa
   report:
     emails:
       - destination@economia.gov.br
