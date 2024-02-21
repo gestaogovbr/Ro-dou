@@ -104,6 +104,35 @@ def test_is_signature(dou_searcher, search_term, abstract):
 def test_really_matched(dou_searcher, search_term, abstract):
     assert dou_searcher._really_matched(search_term, abstract)
 
+def test_match_department(dou_searcher):
+    department = ['Ministério da Defesa']
+    results = [
+        {
+            "section": "Seção 3",
+            "title": "EXTRATO DE COMPROMISSO",
+            "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+            "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+            "date": "02/09/2021",
+            "hierarchyList": ["Ministério da Defesa",
+                              "Comando do Exército",
+                              "Comando Militar do Nordeste",
+                              "6ª Região Militar",
+                              "28º Batalhão de Caçadores"],
+        },
+        {
+            "section": "Seção 3",
+            "title": "EXTRATO DE COMPROMISSO",
+            "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+            "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+            "date": "02/09/2021",
+            "hierarchyList": ["Ministério dos Povos Indígenas"],
+        }        
+    ]    
+    dou_searcher._match_department(results, department)
+    assert len(results) == 1   
+
+
+
 @pytest.mark.parametrize(
     'pre_term_list, casted_term_list',
     [
