@@ -217,7 +217,7 @@ class DouDigestDagGenerator():
         ignore_signature_match: bool,
         force_rematch: bool,
         result_as_email: bool,
-        department: str,
+        department: List[str],
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
