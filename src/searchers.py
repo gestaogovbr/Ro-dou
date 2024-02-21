@@ -116,7 +116,7 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search: bool,
                     ignore_signature_match: bool,
                     force_rematch: bool,
-                    department: str,                    
+                    department: List[str],                    
                     reference_date: datetime):
         search_results = self._search_all_terms(
             self._cast_term_list(term_list),
@@ -160,10 +160,11 @@ class DOUSearcher(BaseSearcher):
                 results = [r for r in results
                            if self._really_matched(search_term,
                                                    r.get('abstract'))]
+
             if department:
-                results = [r for r in results
-                           if department in r.get('hierarchyList')]                
-                
+                self._match_department(results, department)
+                # results = [r for r in results if any(item in r.get('hierarchyList') for item in department)]        
+ 
             self._render_section_descriptions(results)
 
             self._add_standard_highlight_formatting(results)
@@ -246,6 +247,18 @@ class DOUSearcher(BaseSearcher):
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
                 norm_abstract_without_start_name.startswith(norm_term))
         )
+    
+    def _match_department(self, results: list, department: list) -> list:
+        """Aplica o filtro nos resultados pela lista de unidades informada
+        no parâmetro 'department' do YAML
+        """
+        logging.info ("Applying filter for department list")
+        logging.info (department)
+        logging.info (results)
+        for result in results[:]:
+            if not any(dpt in result["hierarchyList"]
+                       for dpt in department):
+                results.remove(result)
 
     def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
         groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
