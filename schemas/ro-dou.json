@@ -84,6 +84,14 @@
                 }
               ]
             },
+            "department": {
+              "type": "array",
+              "description": "departamento para filtro na busca",
+              "items": {
+                "type": "string",
+                "description": "nome do departamento"                
+              }
+            },            
             "field": {
               "type": "string",
               "description": "description",
