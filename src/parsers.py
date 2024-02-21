@@ -24,7 +24,7 @@ class DAGConfig:
     terms: List[str]
     sql: str
     conn_id: str
-    department: str    
+    department: List[str]    
     emails: List[str]
     subject: str
     attach_csv: bool
