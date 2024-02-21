@@ -325,6 +325,26 @@ dag:
       webhook: https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9
 ```
 
+### Exemplo 10
+Esta configuração filtra os resultados por órgão/unidade selecionados. 
+Por enquanto disponível apenas para as pesquisas no DOU.
+
+```yaml {11}
+dag:
+  id: department_example
+  description: DAG de teste (filtro por departamento)
+  search:
+    terms:
+      - dados abertos
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+      - Ministério da Defesa
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
+```
+
 ## Compreendendo um pouco mais a pesquisa no DOU
 
 Todos os parâmetros disponíveis para pesquisa foram criados a partir da API da
