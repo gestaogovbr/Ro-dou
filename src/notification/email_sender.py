@@ -64,6 +64,13 @@ class EmailSender(ISender):
         with open(file_path, 'r') as f:
             blocks = [f'<style>\n{f.read()}</style>']
 
+        if self.specs.department:
+            blocks.append("""<p class="secao-marker">Filtrando resultados somente para:</p>""")
+            blocks.append("<ul>")    
+            for dpt in self.specs.department:
+                blocks.append(f"<li>{dpt}</li>")    
+            blocks.append("</ul>")    
+
         for group, results in self.search_report.items():
             if group != 'single_group':
                 blocks.append('\n')
