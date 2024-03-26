@@ -1,10 +1,11 @@
 """
 Hook para realizar operações de consultas à API do Diário Oficial da União.
 """
+import sys
+import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
-from enum import Enum
 import json
 from typing import List
 import requests
@@ -13,42 +14,8 @@ from airflow.hooks.base import BaseHook
 
 from bs4 import BeautifulSoup
 
-
-class Section(Enum):
-    """Define the section options to be used as parameter in the search"""
-
-    SECAO_1 = "do1"
-    SECAO_2 = "do2"
-    SECAO_3 = "do3"
-    EDICAO_EXTRA = "doe"
-    EDICAO_EXTRA_1A = "do1_extra_a"
-    EDICAO_EXTRA_1B = "do1_extra_b"
-    EDICAO_EXTRA_1D = "do1_extra_d"
-    EDICAO_EXTRA_2A = "do2_extra_a"
-    EDICAO_EXTRA_2B = "do2_extra_b"
-    EDICAO_EXTRA_2D = "do2_extra_d"
-    EDICAO_EXTRA_3A = "do3_extra_a"
-    EDICAO_EXTRA_3B = "do3_extra_b"
-    EDICAO_EXTRA_3D = "do3_extra_d"
-    EDICAO_SUPLEMENTAR = "do1a"
-    TODOS = "todos"
-
-
-class SearchDate(Enum):
-    """Define the search date options to be used as parameter in the search"""
-
-    DIA = "dia"
-    SEMANA = "semana"
-    MES = "mes"
-    ANO = "ano"
-
-
-class Field(Enum):
-    """Define the search field options to be used as parameter in the search"""
-
-    TUDO = "tudo"
-    TITULO = "title_pt_BR"
-    CONTEUDO = "ddm__text__21040__texto_pt_BR"
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from utils.search_domains import SearchDate, Field, Section, calculate_from_datetime
 
 
 class DOUHook(BaseHook):
@@ -88,28 +55,6 @@ class DOUHook(BaseHook):
         else:
             return f"{field.value}-{term}"
 
-    def calculate_from_datetime(
-        self, publish_to_date: datetime, search_date: SearchDate
-    ):
-        """
-        Calculate parameter `publishFrom` to be passed to the API based
-        on publishTo parameter and `search_date`. Perform especial
-        calculation to the MES (month) parameter option
-        """
-        if search_date == SearchDate.DIA:
-            return publish_to_date
-
-        elif search_date == SearchDate.SEMANA:
-            return publish_to_date - timedelta(days=6)
-
-        elif search_date == SearchDate.MES:
-            end_prev_month = publish_to_date.replace(day=1) - timedelta(days=1)
-            publish_from_date = end_prev_month.replace(day=publish_to_date.day)
-            return publish_from_date - timedelta(days=1)
-
-        elif search_date == SearchDate.ANO:
-            return publish_to_date - timedelta(days=364)
-
     def _request_page(self, with_retry: bool, payload: dict):
         try:
             return requests.get(self.IN_API_BASE_URL, params=payload, timeout=10)
@@ -117,7 +62,7 @@ class DOUHook(BaseHook):
             if with_retry:
                 logging.info("Sleep for 30 seconds before retry requests.get().")
                 time.sleep(30)
-                return requests.get(self.IN_API_BASE_URL, params=payload, timeout=10)   
+                return requests.get(self.IN_API_BASE_URL, params=payload, timeout=10)
 
 
     def search_text(
@@ -141,25 +86,25 @@ class DOUHook(BaseHook):
             - A list of dicts of structred results.
         """
 
-        publish_from = self.calculate_from_datetime(reference_date, search_date)
+        publish_from = calculate_from_datetime(reference_date, search_date)
 
         payload = {
             "q": self._get_query_str(search_term, field, is_exact_search),
             "exactDate": "personalizado",
             "publishFrom": publish_from.strftime("%d-%m-%Y"),
             "publishTo": reference_date.strftime("%d-%m-%Y"),
-            "sortType": "0",    
-            "s": [section.value for section in sections]
+            "sortType": "0",
+            "s": [section.value for section in sections],
         }
         page = self._request_page(payload=payload, with_retry=with_retry)
 
         soup = BeautifulSoup(page.content, "html.parser")
-        
+
         # Checks if there is more than one page of results
         pagination_tag = soup.find(
             'button', id='lastPage'
         )
-        
+
         if (pagination_tag) is not None:
             # Get the number of pages in the pagination bar
             number_pages = int(pagination_tag.text.strip())
@@ -174,11 +119,11 @@ class DOUHook(BaseHook):
         # Loop for each page of result
         for page_num in range(number_pages):
             logging.info("Searching in page %s", str(page_num + 1))
-            
+
             # If there is more than one page add extra payload params and reload the page
             if page_num > 0:
                 # The id is needed for pagination to work because it requires
-                # passing the last id from the previous item page in request URL          
+                # passing the last id from the previous item page in request URL
                 # Delta is the number of records per page. By now is restricted up to 20.
                 payload.update({
                     "id": item["id"],
@@ -188,11 +133,11 @@ class DOUHook(BaseHook):
                     "currentPage": page_num,
                 })
                 page = self._request_page(payload=payload, with_retry=with_retry)
-                soup = BeautifulSoup(page.content, "html.parser")            
+                soup = BeautifulSoup(page.content, "html.parser")
 
             script_tag = soup.find(
                 "script", id="_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params"
-            )   
+            )
             search_results = json.loads(script_tag.contents[0])["jsonArray"]
 
             if search_results:

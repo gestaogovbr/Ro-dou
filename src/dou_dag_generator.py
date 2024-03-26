@@ -31,7 +31,7 @@ from utils.date import (
     get_trigger_date, template_ano_mes_dia_trigger_local_time)
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
-from searchers import BaseSearcher, DOUSearcher, QDSearcher
+from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 class DouDigestDagGenerator():
     """
@@ -53,6 +53,7 @@ class DouDigestDagGenerator():
         self.searchers = {
             'DOU': DOUSearcher(),
             'QD': QDSearcher(),
+            'INLABS': INLABSSearcher(),
         }
         self.on_retry_callback = on_retry_callback
         self.on_failure_callback = on_failure_callback
@@ -221,9 +222,8 @@ class DouDigestDagGenerator():
         **context) -> dict:
         """Performs the search in each source and merge the results
         """
-        logging.info('Searching for: %s', ', '.join(term_list))
-        logging.info(
-            f'Trigger date: {get_trigger_date(context, local_time=True)}')
+        logging.info('Searching for: %s', term_list)
+        logging.info('Trigger date: %s', get_trigger_date(context, local_time=True))
 
         if 'DOU' in sources:
             dou_result = self.searchers['DOU'].exec_search(
@@ -236,6 +236,15 @@ class DouDigestDagGenerator():
                 force_rematch,
                 department,
                 get_trigger_date(context, local_time = True))
+        elif 'INLABS' in sources:
+            inlabs_result = self.searchers['INLABS'].exec_search(
+                term_list,
+                dou_sections,
+                search_date,
+                department,
+                ignore_signature_match,
+                get_trigger_date(context, local_time = True)
+            )
 
         if 'QD' in sources:
             qd_result = self.searchers['QD'].exec_search(
@@ -252,8 +261,12 @@ class DouDigestDagGenerator():
 
         if 'DOU' in sources and 'QD' in sources:
             return merge_results(qd_result, dou_result)
+        elif 'INLABS' in sources and 'QD' in sources:
+            return merge_results(qd_result, inlabs_result)
         elif 'DOU' in sources:
             return dou_result
+        elif 'INLABS' in sources:
+            return inlabs_result
         else:
             return qd_result
 

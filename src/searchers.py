@@ -11,17 +11,23 @@ import os
 from abc import ABC
 from datetime import datetime, timedelta
 from random import random
-from typing import Dict, List, Tuple
-from urllib.parse import urljoin
+from typing import Dict, List, Tuple, Union
 import string
 import pandas as pd
 import requests
-
 from unidecode import unidecode
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from dou_hook import DOUHook, Field, SearchDate, Section
+from hooks.dou_hook import DOUHook
+from hooks.inlabs_hook import INLABSHook
+from utils.search_domains import (
+    Field,
+    SearchDate,
+    Section,
+    SectionINLABS,
+    calculate_from_datetime,
+)
 
 
 class BaseSearcher(ABC):
@@ -52,27 +58,28 @@ class BaseSearcher(ABC):
 
         return grouped_result
 
-    def _group_by_term_group(self, search_results: dict, term_n_group: str) -> dict:
+    @staticmethod
+    def _group_by_term_group(search_results: dict, term_n_group: str) -> dict:
         """Rebuild the dict grouping the results based on term_n_group
         mapping
         """
         dict_struct = ast.literal_eval(term_n_group)
         terms, groups = dict_struct.values()
         term_group_map = dict(zip(terms.values(), groups.values()))
-        groups = sorted(list(set(term_group_map.values())))
 
-        grouped_result = {
-            g1: {
-                t: search_results[t]
-                for (t, g2) in sorted(term_group_map.items())
-                if t in search_results and g1 == g2
-            }
-            for g1 in groups
-        }
+        grouped_result = {}
+        for k, v in search_results.items():
+            group = term_group_map[k.split(",")[0]]
+            update = {k: v}
 
-        # Clear empty groups
-        trimmed_result = {k: v for k, v in grouped_result.items() if v}
-        return trimmed_result
+            if group in grouped_result:
+                grouped_result[group].update(update)
+            else:
+                grouped_result[group] = update
+
+        sorted_dict = {key: grouped_result[key] for key in sorted(grouped_result)}
+
+        return sorted_dict
 
     def _really_matched(self, search_term: str, abstract: str) -> bool:
         """Verifica se o termo encontrado pela API realmente é igual ao
@@ -368,3 +375,113 @@ def _build_query_payload(search_term: str, reference_date: datetime) -> List[tup
         ("published_until", reference_date.strftime("%Y-%m-%d")),
         ("querystring", f'"{search_term}"'),
     ]
+
+
+class INLABSSearcher(BaseSearcher):
+    """
+    A searcher class that interfaces with an Airflow INLABSHook to perform
+    DOU searches with various filters such as `terms`, `sections`, `dates`,
+    and `departments`.
+    """
+
+    def exec_search(
+        self,
+        terms: Union[List[str], str],
+        dou_sections: List[str],
+        search_date: str,
+        department: List[str],
+        ignore_signature_match: bool,
+        reference_date: datetime = datetime.now(),
+    ) -> Dict:
+        """
+        Execute a search with given parameters, applying filters and
+        transforming terms as needed.
+
+        Args:
+            terms (Union[List[str], str]): Search terms as a List or a
+                string formatted as a dict (when from sql query).
+            dou_sections (List[str]): List of DOU sections to filter the search.
+                dou_sections examples: SECAO_1, SECAO_3D, EDICAO_EXTRA_1
+            search_date (str): Date interval filter.
+                search_date examples: DIA, SEMANA, MES, ANO
+            department (List[str]): List of departments to filter the search.
+            ignore_signature_match (bool): Flag to ignore publication
+                signature content.
+            reference_date (datetime, optional): Reference date for the
+                search. Defaults to now.
+
+        Returns:
+            Dict: Grouped search results.
+        """
+
+        inlabs_hook = INLABSHook()
+        search_terms = self._prepare_search_terms(terms)
+        self._apply_filters(
+            search_terms,
+            dou_sections,
+            department,
+            reference_date,
+            search_date
+        )
+
+        search_results = inlabs_hook.search_text(
+            search_terms,
+            ignore_signature_match
+        )
+
+        return self._group_results(search_results, terms)
+
+    def _prepare_search_terms(self, terms: Union[List[str], str]) -> Dict:
+        """Prepare search terms based on input terms.
+
+        Args:
+            terms (Union[List[str], str]): Can be one of:
+                String formatted as dictionary when comes from a database
+                query
+                List when comes from `terms` key of the .yaml
+        Returns:
+            Dict: Formatted as {"texto": List of terms}
+        """
+
+        if isinstance(terms, List):
+            return {"texto": terms}
+        return {"texto": self._split_sql_terms(json.loads(terms))}
+
+    def _apply_filters(
+            self,
+            search_terms: Dict,
+            sections: List[str],
+            department: List[str],
+            reference_date: datetime,
+            search_date: str
+    ):
+        """Apply `sections`, `departments` and `date` filters to the
+        search_terms dictionary."""
+
+        if "TODOS" not in sections:
+            search_terms["pub_name"] = self._parse_sections(sections)
+        if department:
+            search_terms["art_category"] = department
+        publish_from = calculate_from_datetime(reference_date, SearchDate[search_date]).strftime("%Y-%m-%d")
+        publish_to = reference_date.strftime("%Y-%m-%d")
+        search_terms["pub_date"] = [publish_from, publish_to]
+
+    @staticmethod
+    def _split_sql_terms(terms: Dict) -> List:
+        """Split SQL terms into a list, removing duplicates.
+        Get only the values from the first key of the Dict."""
+
+        first_key = next(iter(terms))
+        return list(set(terms[first_key].values()))
+
+    @staticmethod
+    def _parse_sections(sections: List) -> List:
+        """Parse DOU section codes into a list of section names based on
+        SectionINLABS class. Avoid duplicates.
+
+        Example:
+            the section ["SECAO_1", "SECAO_3", "EDICAO_EXTRA_3D", "EDICAO_EXTRA",
+            "EDICAO_EXTRA_1"] outputs ['DO1E', 'DO3E', 'DO1', 'DO3']
+        """
+
+        return list({SectionINLABS[section].value for section in sections})
