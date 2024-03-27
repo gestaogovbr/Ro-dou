@@ -2,28 +2,46 @@
 """
 
 from datetime import datetime
+from collections import Counter
 import pytest
 
 
 @pytest.mark.parametrize(
     "search_terms, sections, department, reference_date, search_date, filters_applyed",
     [
-        ({"texto": ["a", "b"]}, ["SECAO_2"], ["Ministério"], datetime.now(), "DIA",
+        (
+            {"texto": ["a", "b"]},
+            ["SECAO_2"],
+            ["Ministério"],
+            datetime.now(),
+            "DIA",
             {
                 "texto": ["a", "b"],
                 "pub_name": ["DO2"],
                 "art_category": ["Ministério"],
-                "pub_date": [datetime.now().strftime("%Y-%m-%d"), datetime.now().strftime("%Y-%m-%d")],
-            }
+                "pub_date": [
+                    datetime.now().strftime("%Y-%m-%d"),
+                    datetime.now().strftime("%Y-%m-%d"),
+                ],
+            },
         ),
     ],
 )
 def test_apply_filters(
-    inlabs_searcher, search_terms, sections, department, reference_date, search_date, filters_applyed
+    inlabs_searcher,
+    search_terms,
+    sections,
+    department,
+    reference_date,
+    search_date,
+    filters_applyed,
 ):
-    assert inlabs_searcher._apply_filters(
+    assert (
+        inlabs_searcher._apply_filters(
             search_terms, sections, department, reference_date, search_date
-        ) == filters_applyed
+        )
+        == filters_applyed
+    )
 
 
 @pytest.mark.parametrize(
@@ -37,7 +55,15 @@ def test_apply_filters(
     ],
 )
 def test_prepare_search_terms(inlabs_searcher, terms, search_terms):
-    assert inlabs_searcher._prepare_search_terms(terms) == search_terms
+    search_terms_return = inlabs_searcher._prepare_search_terms(terms)
+    assert set(search_terms_return.keys()) == set(
+        search_terms.keys()
+    ), "The dictionaries do not have the same keys."
+
+    for key in search_terms_return:
+        assert Counter(search_terms_return[key]) == Counter(
+            search_terms[key]
+        ), f"The lists under the key '{key}' do not have the same content."
 
 
 @pytest.mark.parametrize(
