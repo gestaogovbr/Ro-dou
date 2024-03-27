@@ -27,7 +27,9 @@ class INLABSHook(BaseHook):
     """
 
     DOU_API_URL = os.getenv("DOU_API_URL", "http://dou-api:5057/dou")
-    DOU_API_REQUEST_CHUNKSIZE = int(os.getenv("DOU_API_REQUEST_CHUNKSIZE", "40"))
+    DOU_API_REQUEST_CHUNKSIZE = int(os.getenv("DOU_API_REQUEST_CHUNKSIZE", "100"))
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2
 
     def __init__(self, *args, **kwargs):
         pass
@@ -59,14 +61,28 @@ class INLABSHook(BaseHook):
                 index,
                 math.ceil(len(text_terms) / self.DOU_API_REQUEST_CHUNKSIZE),
             )
-            r = requests.post(
-                self.DOU_API_URL,
-                headers=headers,
-                data=json.dumps(search_terms),
-                timeout=30,
-            )
-            response.extend(r.json())
-            time.sleep(1)
+            retries = 0
+            while retries < self.MAX_RETRIES:
+                try:
+                    r = requests.post(
+                        self.DOU_API_URL,
+                        headers=headers,
+                        data=json.dumps(search_terms),
+                        timeout=45,
+                    )
+                    r.raise_for_status()
+                    response.extend(r.json())
+                    break
+                except (requests.exceptions.ReadTimeout, requests.exceptions.HTTPError) as e:
+                    retries += 1
+                    logging.info(
+                        "Timeout occurred, retrying %s of %s...",
+                        retries,
+                        self.MAX_RETRIES,
+                    )
+                    time.sleep(self.RETRY_DELAY)
+                    if retries == self.MAX_RETRIES:
+                        raise TimeoutError() from e
 
         return (
             self.TextDictHandler().transform_search_results(
@@ -179,7 +195,7 @@ class INLABSHook(BaseHook):
         def _remove_html_tags(text) -> str:
             if isinstance(text, str):
                 text = html2text.HTML2Text().handle(text).replace("\n", " ").strip()
-                text = re.sub(r'\s+', ' ', text)
+                text = re.sub(r"\s+", " ", text)
                 return text
             return ""
 
