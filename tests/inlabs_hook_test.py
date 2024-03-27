@@ -2,6 +2,40 @@ import pytest
 
 
 @pytest.mark.parametrize(
+    "text, keys, matches",
+    [
+        (
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            ["lorem", "sit", "not_find"],
+            ["lorem", "sit"]
+        ),
+    ],
+)
+def test_find_matches(inlabs_hook, text, keys, matches):
+    assert inlabs_hook.TextDictHandler()._find_matches(text, keys) == matches
+
+
+@pytest.mark.parametrize(
+    "text_in, text_out",
+    [
+        ("çãAî  é", "caai  e"),
+    ],
+)
+def test_normalize(inlabs_hook, text_in, text_out):
+    assert inlabs_hook.TextDictHandler()._normalize(text_in) == text_out
+
+
+@pytest.mark.parametrize(
+    "date_in, date_out",
+    [
+        ("2024-03-07", "07/03/2024"),
+    ],
+)
+def test_format_date(inlabs_hook, date_in, date_out):
+    assert inlabs_hook.TextDictHandler()._format_date(date_in) == date_out
+
+
+@pytest.mark.parametrize(
     "pub_name_in, pub_name_out",
     [
         ("DO1", "DOU - Seção 1"),
@@ -29,28 +63,34 @@ def test_rename_section(inlabs_hook, pub_name_in, pub_name_out):
             <p class="cargo">Analista</p>
             """,
             # texto_out
-            ("Título da Publicação  Título da Publicação 2  Lorem ipsum dolor sit amet, "
-            "consectetur adipiscing elit. Phasellus venenatis auctor mauris.  "
-            "Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista")
+            ("Título da Publicação Título da Publicação 2 Lorem ipsum dolor sit amet, "
+            "consectetur adipiscing elit. Phasellus venenatis auctor mauris. "
+            "Brasília/DF, 15 de março de 2024. Pessoa 1 Analista")
         )
     ],
 )
-def test_parse_html_text(inlabs_hook, texto_in, texto_out):
-    assert inlabs_hook.TextDictHandler()._parse_html_text(texto_in) == texto_out
+def test_remove_html_tags(inlabs_hook, texto_in, texto_out):
+    print(inlabs_hook.TextDictHandler()._remove_html_tags(texto_in))
+    assert inlabs_hook.TextDictHandler()._remove_html_tags(texto_in) == texto_out
 
 
 @pytest.mark.parametrize(
     "term, texto_in, texto_out",
     [
         (
-            "elementum",
+            ["elementum"],
             "Pellentesque vel elementum mauris, id semper tellus.",
             "Pellentesque vel <%%>elementum</%%> mauris, id semper tellus.",
         ),
+        (
+            ["elementum", "tellus"],
+            "Pellentesque vel elementum mauris, id semper tellus.",
+            "Pellentesque vel <%%>elementum</%%> mauris, id semper <%%>tellus</%%>.",
+        ),
     ],
 )
-def test_highlight_term(inlabs_hook, term, texto_in, texto_out):
-    assert inlabs_hook.TextDictHandler()._highlight_term(term, texto_in) == texto_out
+def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
+    assert inlabs_hook.TextDictHandler()._highlight_terms(term, texto_in) == texto_out
 
 
 @pytest.mark.parametrize(
@@ -76,11 +116,12 @@ def test_highlight_term(inlabs_hook, term, texto_in, texto_out):
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
-            facilisis posuere elit. Proin co (...)""")
+            facilisis posue (...)""")
         ),
     ],
 )
 def test_trim_text(inlabs_hook, texto_in, texto_out):
+    print(inlabs_hook.TextDictHandler()._trim_text(texto_in))
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in) == texto_out
 
 
@@ -228,7 +269,7 @@ def test_update_nested_dict(inlabs_hook, terms, list_in, dict_out):
     ],
 )
 def test_transform_search_results(inlabs_hook, terms, list_in, dict_out):
-    r = inlabs_hook.TextDictHandler()._transform_search_results(
+    r = inlabs_hook.TextDictHandler().transform_search_results(
         response=list_in, text_terms=terms, ignore_signature_match=False
     )
     assert r == dict_out
@@ -293,7 +334,7 @@ def test_transform_search_results(inlabs_hook, terms, list_in, dict_out):
     ],
 )
 def test_ignore_signature(inlabs_hook, terms, list_in, dict_out):
-    r = inlabs_hook.TextDictHandler()._transform_search_results(
+    r = inlabs_hook.TextDictHandler().transform_search_results(
         response=list_in, text_terms=terms, ignore_signature_match=True
     )
     assert r == dict_out

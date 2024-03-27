@@ -416,7 +416,7 @@ class INLABSSearcher(BaseSearcher):
 
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
-        self._apply_filters(
+        search_terms = self._apply_filters(
             search_terms,
             dou_sections,
             department,
@@ -465,6 +465,8 @@ class INLABSSearcher(BaseSearcher):
         publish_from = calculate_from_datetime(reference_date, SearchDate[search_date]).strftime("%Y-%m-%d")
         publish_to = reference_date.strftime("%Y-%m-%d")
         search_terms["pub_date"] = [publish_from, publish_to]
+
+        return search_terms
 
     @staticmethod
     def _split_sql_terms(terms: Dict) -> List:

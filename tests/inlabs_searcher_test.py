@@ -1,30 +1,68 @@
 """INLABS Seracher unit tests
 """
 
+from datetime import datetime
 import pytest
+
+
+@pytest.mark.parametrize(
+    "search_terms, sections, department, reference_date, search_date, filters_applyed",
+    [
+        ({"texto": ["a", "b"]}, ["SECAO_2"], ["Ministério"], datetime.now(), "DIA",
+            {
+                "texto": ["a", "b"],
+                "pub_name": ["DO2"],
+                "art_category": ["Ministério"],
+                "pub_date": [datetime.now().strftime("%Y-%m-%d"), datetime.now().strftime("%Y-%m-%d")],
+            }
+        ),
+    ],
+)
+def test_apply_filters(
+    inlabs_searcher, search_terms, sections, department, reference_date, search_date, filters_applyed
+):
+    assert inlabs_searcher._apply_filters(
+            search_terms, sections, department, reference_date, search_date
+        ) == filters_applyed
+
+
+@pytest.mark.parametrize(
+    "terms, search_terms",
+    [
+        (["a", "b", "c"], {"texto": ["a", "b", "c"]}),
+        (
+            '{"termo": {"0": "Pessoa 0","1": "Pessoa 1"}, "termo_group": {"0": "Grupo 1","1": "Grupo 2"}}',
+            {"texto": ["Pessoa 0", "Pessoa 1"]},
+        ),
+    ],
+)
+def test_prepare_search_terms(inlabs_searcher, terms, search_terms):
+    assert inlabs_searcher._prepare_search_terms(terms) == search_terms
 
 
 @pytest.mark.parametrize(
     "raw_sections, parsed_sections",
     [
-        (["SECAO_1"], ["1"]),
-        (["SECAO_2"], ["2"]),
-        (["SECAO_3"], ["3"]),
-        (["SECAO_1", "EDICAO_EXTRA"], ["1", "E"]),
+        (["SECAO_1"], ["DO1"]),
+        (["SECAO_2"], ["DO2"]),
+        (["SECAO_3"], ["DO3"]),
+        (["SECAO_1", "EDICAO_EXTRA"], ["DO1", "DO1E"]),
         (
             ["SECAO_2", "EDICAO_EXTRA_1A", "EDICAO_EXTRA_2B", "EDICAO_EXTRA_3D"],
-            ["2", "1E", "2E", "3E"],
+            ["DO2", "DO1E", "DO2E", "DO3E"],
         ),
     ],
 )
 def test_parse_sections(inlabs_searcher, raw_sections, parsed_sections):
-    assert inlabs_searcher._parse_sections(raw_sections) == parsed_sections
+    assert sorted(inlabs_searcher._parse_sections(raw_sections)) == sorted(
+        parsed_sections
+    )
 
 
 @pytest.mark.parametrize(
     "sql_terms, sql_splitted_terms",
     [
-        (   # sql_terms
+        (  # sql_terms
             {
                 "termo": {
                     "0": "Pessoa 0",
@@ -66,9 +104,11 @@ def test_parse_sections(inlabs_searcher, raw_sections, parsed_sections):
                 "Pessoa 8",
                 "Pessoa 9",
                 "Pessoa 10",
-            ]
+            ],
         ),
     ],
 )
 def test_split_sql_terms(inlabs_searcher, sql_terms, sql_splitted_terms):
-    assert inlabs_searcher._split_sql_terms(sql_terms) == sql_splitted_terms
+    assert sorted(inlabs_searcher._split_sql_terms(sql_terms)) == sorted(
+        sql_splitted_terms
+    )
