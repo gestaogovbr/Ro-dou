@@ -9,7 +9,8 @@ from typing import Tuple
 from dags.ro_dou_src.dou_dag_generator import (DouDigestDagGenerator,
                                            SearchResult)
 from dags.ro_dou_src.parsers import YAMLParser
-from dags.ro_dou_src.searchers import DOUSearcher
+from dags.ro_dou_src.searchers import DOUSearcher, INLABSSearcher
+from dags.ro_dou_src.hooks.inlabs_hook import INLABSHook
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
@@ -49,6 +50,14 @@ def yaml_parser()-> YAMLParser:
 @pytest.fixture()
 def dou_searcher()-> DOUSearcher:
     return DOUSearcher()
+
+@pytest.fixture()
+def inlabs_searcher()-> INLABSSearcher:
+    return INLABSSearcher()
+
+@pytest.fixture()
+def inlabs_hook()-> INLABSHook:
+    return INLABSHook()
 
 @pytest.fixture()
 def report_example() -> dict:

@@ -42,7 +42,7 @@
               "description": "description",
               "items": {
                 "type": "string",
-                "enum": ["QD", "DOU"]
+                "enum": ["QD", "DOU", "INLABS"]
               }
             },
             "territory_id": {
@@ -89,9 +89,9 @@
               "description": "departamento para filtro na busca",
               "items": {
                 "type": "string",
-                "description": "nome do departamento"                
+                "description": "nome do departamento"
               }
-            },            
+            },
             "field": {
               "type": "string",
               "description": "description",
@@ -164,7 +164,9 @@
                   "description": "description",
                   "format": "uri-reference"
                 }
-              }
+              },
+              "required": ["webhook"],
+              "additionalProperties": false
             },
             "discord": {
               "type": "object",
@@ -175,7 +177,9 @@
                   "description": "description",
                   "format": "uri-reference"
                 }
-              }
+              },
+              "required": ["webhook"],
+              "additionalProperties": false
             },
             "emails": {
               "type": "array",
