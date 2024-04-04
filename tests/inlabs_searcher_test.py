@@ -17,9 +17,9 @@ import pytest
             "DIA",
             {
                 "texto": ["a", "b"],
-                "pub_name": ["DO2"],
-                "art_category": ["Ministério"],
-                "pub_date": [
+                "pubname": ["DO2"],
+                "artcategory": ["Ministério"],
+                "pubdate": [
                     datetime.now().strftime("%Y-%m-%d"),
                     datetime.now().strftime("%Y-%m-%d"),
                 ],

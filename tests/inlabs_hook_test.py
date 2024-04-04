@@ -1,4 +1,44 @@
 import pytest
+import pandas as pd
+from datetime import datetime
+
+
+@pytest.mark.parametrize(
+    "data_in, query_out",
+    [
+        (
+            {
+                "texto": ["term1", "term2"],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
+        ),
+    ],
+)
+def test_generate_sql(inlabs_hook, data_in, query_out):
+    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
+
+
+@pytest.mark.parametrize(
+    "data_in, data_out",
+    [
+        (
+            {
+                "texto": ["term1", "term2"],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            {
+                "texto": ["term1", "term2"],
+                "pubname": ["DO1E"],
+                "pubdate": ["2024-03-31", "2024-04-01"],
+            },
+        ),
+    ],
+)
+def test_adapt_search_terms_to_extra(inlabs_hook, data_in, data_out):
+    assert inlabs_hook._adapt_search_terms_to_extra(data_in) == data_out
 
 
 @pytest.mark.parametrize(
@@ -7,7 +47,7 @@ import pytest
         (
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             ["lorem", "sit", "not_find"],
-            ["lorem", "sit"]
+            "lorem, sit",
         ),
     ],
 )
@@ -23,16 +63,6 @@ def test_find_matches(inlabs_hook, text, keys, matches):
 )
 def test_normalize(inlabs_hook, text_in, text_out):
     assert inlabs_hook.TextDictHandler()._normalize(text_in) == text_out
-
-
-@pytest.mark.parametrize(
-    "date_in, date_out",
-    [
-        ("2024-03-07", "07/03/2024"),
-    ],
-)
-def test_format_date(inlabs_hook, date_in, date_out):
-    assert inlabs_hook.TextDictHandler()._format_date(date_in) == date_out
 
 
 @pytest.mark.parametrize(
@@ -52,7 +82,7 @@ def test_rename_section(inlabs_hook, pub_name_in, pub_name_out):
 @pytest.mark.parametrize(
     "texto_in, texto_out",
     [
-        (   # texto_in
+        (  # texto_in
             """
             <p class="identifica">Título da Publicação</p>
             <p class="identifica">Título da Publicação 2</p>
@@ -63,9 +93,11 @@ def test_rename_section(inlabs_hook, pub_name_in, pub_name_out):
             <p class="cargo">Analista</p>
             """,
             # texto_out
-            ("Título da Publicação Título da Publicação 2 Lorem ipsum dolor sit amet, "
-            "consectetur adipiscing elit. Phasellus venenatis auctor mauris. "
-            "Brasília/DF, 15 de março de 2024. Pessoa 1 Analista")
+            (
+                "Título da Publicação Título da Publicação 2 Lorem ipsum dolor sit amet, "
+                "consectetur adipiscing elit. Phasellus venenatis auctor mauris. "
+                "Brasília/DF, 15 de março de 2024. Pessoa 1 Analista"
+            ),
         )
     ],
 )
@@ -96,7 +128,7 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
 @pytest.mark.parametrize(
     "texto_in, texto_out",
     [
-        (   # texto_in
+        (  # texto_in
             """
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
@@ -110,13 +142,15 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista
             """,
             # texto_out
-            ("""(...) cing elit.
+            (
+                """(...) cing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
-            facilisis posue (...)""")
+            facilisis posue (...)"""
+            ),
         ),
     ],
 )
@@ -126,47 +160,50 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
 
 
 @pytest.mark.parametrize(
-    "terms, list_in, dict_out",
+    "df_in, dict_out",
     [
         (
-            # terms
-            ["Lorem", "Pellentesque"],
-            # list_in
-            [
-                {
-                    "title": "Título da Publicação",
-                    "href": "http://xxx.gov.br/",
-                    "date": "2024-03-15",
-                    "section": "DO1",
-                    "abstract": "Lorem ipsum dolor sit amet.",
-                },
-                {
-                    "title": "Título da Publicação",
-                    "href": "http://xxx.gov.br/",
-                    "date": "2024-03-15",
-                    "section": "DO1",
-                    "abstract": "Pellentesque vel elementum mauris.",
-                },
-                {
-                    "title": "Título da Publicação",
-                    "href": "http://xxx.gov.br/",
-                    "date": "2024-03-15",
-                    "section": "DO1",
-                    "abstract": "Dolor sit amet, lórem consectetur adipiscing elit.",
-                },
-            ],
+            # df_in
+            pd.DataFrame(
+                [
+                    {
+                        "title": "Título da Publicação 1",
+                        "href": "http://xxx.gov.br/",
+                        "date": "2024-03-15",
+                        "section": "DO1",
+                        "abstract": "Lorem ipsum dolor sit amet.",
+                        "matches": "Lorem",
+                    },
+                    {
+                        "title": "Título da Publicação 2",
+                        "href": "http://xxx.gov.br/",
+                        "date": "2024-03-15",
+                        "section": "DO1",
+                        "abstract": "Pellentesque vel elementum mauris.",
+                        "matches": "Pellentesque",
+                    },
+                    {
+                        "title": "Título da Publicação 3",
+                        "href": "http://xxx.gov.br/",
+                        "date": "2024-03-15",
+                        "section": "DO1",
+                        "abstract": "Dolor sit amet, lórem consectetur adipiscing elit.",
+                        "matches": "Lorem",
+                    },
+                ]
+            ),
             # dict_out
             {
                 "Lorem": [
                     {
-                        "title": "Título da Publicação",
+                        "title": "Título da Publicação 1",
                         "href": "http://xxx.gov.br/",
                         "date": "2024-03-15",
                         "section": "DO1",
                         "abstract": "Lorem ipsum dolor sit amet.",
                     },
                     {
-                        "title": "Título da Publicação",
+                        "title": "Título da Publicação 3",
                         "href": "http://xxx.gov.br/",
                         "date": "2024-03-15",
                         "section": "DO1",
@@ -175,7 +212,7 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
                 ],
                 "Pellentesque": [
                     {
-                        "title": "Título da Publicação",
+                        "title": "Título da Publicação 2",
                         "href": "http://xxx.gov.br/",
                         "date": "2024-03-15",
                         "section": "DO1",
@@ -186,64 +223,65 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
         ),
     ],
 )
-def test_update_nested_dict(inlabs_hook, terms, list_in, dict_out):
-    all_results = {}
-    for item in list_in:
-        for term in terms:
-            if inlabs_hook.TextDictHandler()._normalize(
-                term.upper()
-            ) in inlabs_hook.TextDictHandler()._normalize(item["abstract"].upper()):
-                all_results = inlabs_hook.TextDictHandler()._update_nested_dict(
-                    all_results, term, item
-                )
+def test_group_to_dict(inlabs_hook, df_in, dict_out):
+    cols = [
+        "section",
+        "title",
+        "href",
+        "abstract",
+        "date",
+    ]
+    r = inlabs_hook.TextDictHandler()._group_to_dict(df_in, "matches", cols)
 
-    assert all_results == dict_out
+    assert r == dict_out
 
 
 @pytest.mark.parametrize(
-    "terms, list_in, dict_out",
+    "terms, df_in, dict_out",
     [
         (
             ["Pellentesque", "Lorem"],
-            [
-                {
-                    "art_category": "Texto exemplo art_category",
-                    "art_type": "Publicação xxx",
-                    "article_id": 1,
-                    "assina": "Pessoa 1",
-                    "data": "Brasília/DF, 15 de março de 2024.",
-                    "ementa": "None",
-                    "identifica": "Título da Publicação",
-                    "name": "15.03.2024 bsb DOU xxx",
-                    "pdf_page": "http://xxx.gov.br/",
-                    "pub_date": "2024-03-15",
-                    "pub_name": "DO1",
-                    "sub_titulo": "None",
-                    "texto": "Lorem ipsum dolor sit amet.",
-                    "titulo": "None",
-                },
-                {
-                    "art_category": "Texto exemplo art_category",
-                    "art_type": "Publicação xxx",
-                    "article_id": 2,
-                    "assina": "Pessoa 2",
-                    "data": "Brasília/DF, 15 de março de 2024.",
-                    "ementa": "None",
-                    "identifica": "Título da Publicação",
-                    "name": "15.03.2024 bsb DOU xxx",
-                    "pdf_page": "http://xxx.gov.br/",
-                    "pub_date": "2024-03-15",
-                    "pub_name": "DO1",
-                    "sub_titulo": "None",
-                    "texto": "Dolor sit amet, consectetur adipiscing elit. Pellentesque.",
-                    "titulo": "None",
-                },
-            ],
+            pd.DataFrame(
+                [
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 1,
+                        "assina": "Pessoa 1",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação 1",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": "Lorem ipsum dolor sit amet.",
+                        "titulo": "None",
+                    },
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 2,
+                        "assina": "Pessoa 2",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação 2",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": "Dolor sit amet, consectetur adipiscing elit. Pellentesque.",
+                        "titulo": "None",
+                    },
+                ]
+            ),
             {
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação",
+                        "title": "Título da Publicação 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "(...) <%%>Lorem</%%> ipsum dolor sit amet. (...)",
                         "date": "15/03/2024",
@@ -255,7 +293,7 @@ def test_update_nested_dict(inlabs_hook, terms, list_in, dict_out):
                 "Pellentesque": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação",
+                        "title": "Título da Publicação 2",
                         "href": "http://xxx.gov.br/",
                         "abstract": "(...) Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>. (...)",
                         "date": "15/03/2024",
@@ -268,53 +306,55 @@ def test_update_nested_dict(inlabs_hook, terms, list_in, dict_out):
         )
     ],
 )
-def test_transform_search_results(inlabs_hook, terms, list_in, dict_out):
+def test_transform_search_results(inlabs_hook, terms, df_in, dict_out):
     r = inlabs_hook.TextDictHandler().transform_search_results(
-        response=list_in, text_terms=terms, ignore_signature_match=False
+        response=df_in, text_terms=terms, ignore_signature_match=False
     )
     assert r == dict_out
 
 
 @pytest.mark.parametrize(
-    "terms, list_in, dict_out",
+    "terms, df_in, dict_out",
     [
-        (   # terms
+        (  # terms
             ["Pellentesque", "Pessoa 1"],
-            # list_in
-            [
-                {
-                    "art_category": "Texto exemplo art_category",
-                    "art_type": "Publicação xxx",
-                    "article_id": 1,
-                    "assina": "Pessoa 1",
-                    "data": "Brasília/DF, 15 de março de 2024.",
-                    "ementa": "None",
-                    "identifica": "Título da Publicação",
-                    "name": "15.03.2024 bsb DOU xxx",
-                    "pdf_page": "http://xxx.gov.br/",
-                    "pub_date": "2024-03-15",
-                    "pub_name": "DO1",
-                    "sub_titulo": "None",
-                    "texto": "Pessoa 1 ipsum dolor sit amet.",
-                    "titulo": "None",
-                },
-                {
-                    "art_category": "Texto exemplo art_category",
-                    "art_type": "Publicação xxx",
-                    "article_id": 2,
-                    "assina": "Pessoa 2",
-                    "data": "Brasília/DF, 15 de março de 2024.",
-                    "ementa": "None",
-                    "identifica": "Título da Publicação",
-                    "name": "15.03.2024 bsb DOU xxx",
-                    "pdf_page": "http://xxx.gov.br/",
-                    "pub_date": "2024-03-15",
-                    "pub_name": "DO1",
-                    "sub_titulo": "None",
-                    "texto": "Pellentesque Phasellus venenatis auctor mauris.",
-                    "titulo": "None",
-                },
-            ],
+            # df_in
+            pd.DataFrame(
+                [
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 1,
+                        "assina": "Pessoa 1",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": "Pessoa 1 ipsum dolor sit amet.",
+                        "titulo": "None",
+                    },
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 2,
+                        "assina": "Pessoa 2",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": "Pellentesque Phasellus venenatis auctor mauris.",
+                        "titulo": "None",
+                    },
+                ]
+            ),
             # dict_out
             {
                 "Pellentesque": [
@@ -333,8 +373,8 @@ def test_transform_search_results(inlabs_hook, terms, list_in, dict_out):
         )
     ],
 )
-def test_ignore_signature(inlabs_hook, terms, list_in, dict_out):
+def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
     r = inlabs_hook.TextDictHandler().transform_search_results(
-        response=list_in, text_terms=terms, ignore_signature_match=True
+        response=df_in, text_terms=terms, ignore_signature_match=True
     )
     assert r == dict_out

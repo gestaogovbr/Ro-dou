@@ -1,42 +1,36 @@
 """Apache Airflow Hook to execute DOU searches from INLABS source.
 """
 
-import os
-import logging
 import re
-from datetime import datetime, timedelta
-import time
-import json
-from collections.abc import Iterator
+from datetime import datetime, timedelta, date
+import pandas as pd
 import unicodedata
-import math
-import requests
-from requests import Response
 import html2text
 
 from airflow.hooks.base import BaseHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
-    the DOU API provided by INLABS.
+    the DOU Postgres Database provided by INLABS.
 
     Attributes:
-        DOU_API_URL (str): URL of the DOU API to send requests to.
-        DOU_API_REQUEST_CHUNKSIZE (str): Size of chunks to split the
-            search terms into for batch processing.
+        CONN_ID (str): DOU INLABS Database Airflow conn id.
     """
 
-    DOU_API_URL = os.getenv("DOU_API_URL", "http://dou-api:5057/dou")
-    DOU_API_REQUEST_CHUNKSIZE = int(os.getenv("DOU_API_REQUEST_CHUNKSIZE", "100"))
-    MAX_RETRIES = 3
-    RETRY_DELAY = 2
+    CONN_ID = "inlabs_db"
 
     def __init__(self, *args, **kwargs):
         pass
 
-    def search_text(self, search_terms: dict, ignore_signature_match: bool) -> dict:
-        """Searches the DOU API with the provided search terms and processes
+    def search_text(
+        self,
+        search_terms: dict,
+        ignore_signature_match: bool,
+        conn_id: str = CONN_ID,
+    ) -> dict:
+        """Searches the DOU Database with the provided search terms and processes
         the results.
 
         Args:
@@ -44,109 +38,136 @@ class INLABSHook(BaseHook):
                 parameters.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
+            conn_id (str): DOU Database Airflow conn id
 
         Returns:
             dict: A dictionary of processed search results.
         """
 
-        response = []
-        text_terms = search_terms["texto"]
+        hook = PostgresHook(conn_id)
 
-        for index, chunk in enumerate(
-            self._iterate_in_chunks(text_terms, self.DOU_API_REQUEST_CHUNKSIZE), start=1
-        ):
-            search_terms["texto"] = chunk
-            logging.info(
-                "Loading chunk: %s of %s",
-                index,
-                math.ceil(len(text_terms) / self.DOU_API_REQUEST_CHUNKSIZE),
-            )
-            retries = 0
-            while retries < self.MAX_RETRIES:
-                try:
-                    r = self._request_api_data(search_terms)
-                    r.raise_for_status()
-                    response.extend(r.json())
+        # Fetching results for main search terms
+        main_search_queries = self._generate_sql(search_terms)
+        hook.run(main_search_queries["create_extension"], autocommit=True)
+        main_search_results = hook.get_pandas_df(main_search_queries["select"])
 
-                    r = self._request_api_data(
-                        self._adapt_search_terms_to_extra(search_terms)
-                    )
-                    r.raise_for_status()
-                    response.extend(r.json())
-                    break
-                except (
-                    requests.exceptions.ReadTimeout,
-                    requests.exceptions.HTTPError,
-                ) as e:
-                    retries += 1
-                    logging.info(
-                        "Timeout occurred, retrying %s of %s...",
-                        retries,
-                        self.MAX_RETRIES,
-                    )
-                    time.sleep(self.RETRY_DELAY)
-                    if retries == self.MAX_RETRIES:
-                        raise TimeoutError() from e
+        # Fetching results for yesterday extra search terms
+        extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
+        extra_search_queries = self._generate_sql(extra_search_terms)
+        extra_search_results = hook.get_pandas_df(extra_search_queries["select"])
+
+        # Combining main and extra search results
+        all_results = pd.concat(
+            [main_search_results, extra_search_results], ignore_index=True
+        )
 
         return (
             self.TextDictHandler().transform_search_results(
-                response, text_terms, ignore_signature_match
+                all_results, search_terms["texto"], ignore_signature_match
             )
-            if response
+            if not all_results.empty
             else {}
         )
 
     @staticmethod
-    def _iterate_in_chunks(lst: list, chunk_size: int) -> Iterator[list]:
-        """Splits a list into chunks of a specified size.
+    def _generate_sql(payload: dict) -> str:
+        """Generates SQL query based on a dictionary of lists. The
+        dictionary key is the table column and the dictionary values
+        are a list of the terms to filter.
+
+        Args:
+            payload (dict): A dictionary containing search parameters.
+                example = {
+                    "texto": ["Termo 1", "Termo 2"],
+                    "pubdate": ["2024-04-01", "2024-04-01"]
+                    "pubname": ["DO1"]
+                }
+
+        Returns:
+            str: The generated SQL query.
         """
 
-        for i in range(0, len(lst), chunk_size):
-            yield lst[i : i + chunk_size]
+        allowed_keys = [
+            "name",
+            "pubname",
+            "artcategory",
+            "identifica",
+            "titulo",
+            "subtitulo",
+            "texto",
+        ]
+        filtered_dict = {k: payload[k] for k in payload if k in allowed_keys}
 
-    def _request_api_data(self, payload: dict) -> Response:
-        headers = {"Content-Type": "application/json"}
-        post_result = requests.post(
-            self.DOU_API_URL,
-            headers=headers,
-            data=json.dumps(payload),
-            timeout=45,
-        )
+        pub_date = payload.get("pubdate", [date.today().strftime("%Y-%m-%d")])
+        pub_date_from = pub_date[0]
+        try:
+            pub_date_to = pub_date[1]
+        except IndexError:
+            pub_date_to = pub_date_from
 
-        print(post_result.json())
+        query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
 
-        return post_result
+        conditions = []
+        for key, values in filtered_dict.items():
+            key_conditions = " OR ".join(
+                [
+                    rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                    for value in values
+                ]
+            )
+            conditions.append(f"({key_conditions})")
+
+        if conditions:
+            query = f"{query} AND {' AND '.join(conditions)}"
+
+        queries = {
+            "create_extension": "CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA dou_inlabs",
+            "select": query,
+        }
+
+        return queries
 
     @staticmethod
     def _adapt_search_terms_to_extra(payload: dict) -> dict:
-        payload["pub_date"] = [
+        """Modifies payload dictionary by subtracting one day of `pubdate`
+        and adding `E` (for extra publication) on `pubname`.
+
+        Args:
+            payload (dict): A dictionary containing search parameters.
+
+        Returns:
+            dict: The modified payload dictionary with adapted search terms.
+        """
+
+        payload["pubdate"] = [
             (datetime.strptime(date, "%Y-%m-%d") - timedelta(days=1)).strftime(
                 "%Y-%m-%d"
             )
-            for date in payload["pub_date"]
+            for date in payload["pubdate"]
         ]
-        payload["pub_name"] = [
-            s if s.endswith("E") else s + "E" for s in payload["pub_name"]
+        payload["pubname"] = [
+            s if s.endswith("E") else s + "E" for s in payload["pubname"]
         ]
 
         return payload
 
     class TextDictHandler:
         """Handles the transformation and organization of text search
-        results from the DOU API.
+        results from the DOU Database.
         """
 
         def __init__(self, *args, **kwargs):
             pass
 
         def transform_search_results(
-            self, response: list, text_terms: list, ignore_signature_match: bool
+            self, response: pd.DataFrame, text_terms: list, ignore_signature_match: bool
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
 
             Args:
-                response (list): The list of search results from the API.
+                response (pd.DataFrame): The dataframe of search results
+                    from the Database.
                 text_terms (list): The list of text terms used in the search.
                 ignore_signature_match (bool): Flag to ignore publication
                     signature content.
@@ -155,53 +176,59 @@ class INLABSHook(BaseHook):
                 dict: A dictionary of sorted and processed search results.
             """
 
-            all_results = {}
-            # sort by publication title (from api called `identifica`)
-            sorted_data = sorted(
-                response, key=lambda x: x["identifica"] if x["identifica"] else ""
+            df = response.copy()
+            df.dropna(subset=["identifica"], inplace=True)
+            df["pubname"] = df["pubname"].apply(self._rename_section)
+            df["identifica"] = df["identifica"].apply(self._remove_html_tags)
+            df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
+            df["texto"] = df["texto"].apply(self._remove_html_tags)
+            df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+            df["matches_assina"] = df.apply(
+                lambda row: self._normalize(row["matches"])
+                in self._normalize(row["assina"]),
+                axis=1,
             )
-            for content in sorted_data:
-                item = {
-                    "section": self._rename_section(content["pub_name"]),
-                    "title": self._remove_html_tags(content["identifica"]),
-                    "href": content["pdf_page"],
-                    "abstract": self._remove_html_tags(content["texto"]),
-                    "date": self._format_date(content["pub_date"]),
-                    "id": content["article_id"],
-                    "display_date_sortable": None,
-                    "hierarchyList": None,
-                }
+            df["count_assina"] = df.apply(
+                lambda row: (
+                    row["texto"].count(row["assina"])
+                    if row["assina"] is not None
+                    else 0
+                ),
+                axis=1,
+            )
+            df["texto"] = df.apply(
+                lambda row: self._highlight_terms(
+                    row["matches"].split(", "), row["texto"]
+                ),
+                axis=1,
+            )
+            df["texto"] = df["texto"].apply(self._trim_text)
+            df["display_date_sortable"] = None
+            df["hierarchyList"] = None
 
-                #XXX check here
-                matches = self._find_matches(item["abstract"], text_terms)
+            if ignore_signature_match:
+                df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
 
-                if matches and item["title"]:
-                    matches_n = [self._normalize(v) for v in matches]
-                    # The signature text cames inside the columns `texto`
-                    # (signature + content) and `assina` (only the signature).
-                    # So if tagged to ignore_signature_match, is checked
-                    # if the signature in the `texto` and `assina` columns
-                    # are the same and that the signature only appears
-                    # one time at `texto` column.
-                    if not (
-                        ignore_signature_match
-                        and self._normalize(item["abstract"]).count(
-                            self._normalize(content["assina"])
-                        )
-                        == 1
-                        and self._normalize(content["assina"]) in matches_n
-                    ):
-                        item["abstract"] = self._highlight_terms(
-                            matches, item["abstract"]
-                        )
-                        item["abstract"] = self._trim_text(item["abstract"])
-                        all_results = self._update_nested_dict(
-                            all_results, ", ".join(matches), item
-                        )
+            cols_rename = {
+                "pubname": "section",
+                "identifica": "title",
+                "pdfpage": "href",
+                "texto": "abstract",
+                "pubdate": "date",
+                "id": "id",
+                "display_date_sortable": "display_date_sortable",
+                "hierarchyList": "hierarchyList",
+            }
+            df.rename(columns=cols_rename, inplace=True)
+            cols_output = list(cols_rename.values())
 
-            sorted_dict = {k: all_results[k] for k in sorted(all_results)}
-
-            return sorted_dict
+            return (
+                {}
+                if df.empty
+                else self._group_to_dict(
+                    df.sort_values(by="matches"), "matches", cols_output
+                )
+            )
 
         @staticmethod
         def _rename_section(section: str) -> str:
@@ -222,10 +249,6 @@ class INLABSHook(BaseHook):
                 text = re.sub(r"\s+", " ", text)
                 return text
             return ""
-
-        @staticmethod
-        def _format_date(date: str) -> str:
-            return datetime.strptime(date, "%Y-%m-%d").strftime("%d/%m/%Y")
 
         def _find_matches(self, text: str, keys: list) -> list:
             """Find keys that match the text, considering normalization
@@ -251,7 +274,7 @@ class INLABSHook(BaseHook):
                 )
             ]
 
-            return sorted(set(matches))
+            return ", ".join(sorted(set(matches)))
 
         @staticmethod
         def _normalize(text: str) -> str:
@@ -310,30 +333,23 @@ class INLABSHook(BaseHook):
             )
 
         @staticmethod
-        def _update_nested_dict(dict_to_update: dict, key: str, value: dict) -> dict:
-            """Append value to dictionary existent key or create new key
-            with value if not exists.
+        def _group_to_dict(df: pd.DataFrame, group_column: str, cols: list) -> dict:
+            """Convert DataFrame grouped by a column to a dictionary.
 
             Args:
-                dict_to_update (dict): Dictionary to update key, values.
-                key (str): Dictionary key to add or update.
-                value (dict): Value/content of the key.
+                df (pd.DataFrame): Input dataframe to transform.
+                group_column (str): The dataframe column to group_by.
+                cols (list): Filter of the cols that will remain on the
+                    output dataframe.
 
             Returns:
-                dict: Updated dictionary.
-
-            Example:
-                input ({}, "key1", "value1")
-                output ({"key1": ["value1"]})
-                input ({"key1": ["value1"]}, "key1", "value2")
-                output ({"key1": ["value1", "value2"]})
-                input ({"key1": ["value1", "value2"]}, "key2", "value3")
-                output ({"key1": ["value1", "value2"], "key2": ["value3"]})
+                dict: Dictionary with keys as unique values of group_column
+                    and values as lists of dictionaries representing the
+                    selected columns.
             """
 
-            if key in dict_to_update:
-                dict_to_update[key].append(value)
-            else:
-                dict_to_update[key] = [value]
-
-            return dict_to_update
+            return (
+                df.groupby(group_column)
+                .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
+                .to_dict()
+            )

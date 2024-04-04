@@ -459,12 +459,12 @@ class INLABSSearcher(BaseSearcher):
         search_terms dictionary."""
 
         if "TODOS" not in sections:
-            search_terms["pub_name"] = self._parse_sections(sections)
+            search_terms["pubname"] = self._parse_sections(sections)
         if department:
-            search_terms["art_category"] = department
+            search_terms["artcategory"] = department
         publish_from = calculate_from_datetime(reference_date, SearchDate[search_date]).strftime("%Y-%m-%d")
         publish_to = reference_date.strftime("%Y-%m-%d")
-        search_terms["pub_date"] = [publish_from, publish_to]
+        search_terms["pubdate"] = [publish_from, publish_to]
 
         return search_terms
 
