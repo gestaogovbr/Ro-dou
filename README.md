@@ -66,6 +66,9 @@ provedor SMTP real que enviará os emails para os destinatários verdadeiros.
 > Para utilizar o `source: - INLABS` é necessário criar a conexão `inlabs_db`
 > no Airflow apontando para o banco `Postgres` que está carregado com os
 > dados do inlabs.
+>
+> Exemplo de como carregar um banco com os dados do inlabs aqui ->
+> `[ro-dou_inlabs_load_pg_dag.py](/dag_load_inlabs/ro-dou_inlabs_load_pg_dag.py)`.
 
 Para desligar o Ro-dou execute o comando:
 
