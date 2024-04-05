@@ -68,7 +68,7 @@ provedor SMTP real que enviará os emails para os destinatários verdadeiros.
 > dados do inlabs.
 >
 > Exemplo de como carregar um banco com os dados do inlabs aqui ->
-> `[ro-dou_inlabs_load_pg_dag.py](/dag_load_inlabs/ro-dou_inlabs_load_pg_dag.py)`.
+> [`ro-dou_inlabs_load_pg_dag.py`](/dag_load_inlabs/ro-dou_inlabs_load_pg_dag.py).
 
 Para desligar o Ro-dou execute o comando:
 
