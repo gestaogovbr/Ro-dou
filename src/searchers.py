@@ -458,7 +458,9 @@ class INLABSSearcher(BaseSearcher):
         """Apply `sections`, `departments` and `date` filters to the
         search_terms dictionary."""
 
-        if "TODOS" not in sections:
+        if "TODOS" in sections:
+            search_terms["pubname"] = ["DO1", "DO2", "DO3"]
+        else:
             search_terms["pubname"] = self._parse_sections(sections)
         if department:
             search_terms["artcategory"] = department
