@@ -62,6 +62,11 @@ ou pela URL http://localhost:8080/variable/list/.
 Leia a seção **Configurando em Produção** para instalar o Ro-dou utilizando um
 provedor SMTP real que enviará os emails para os destinatários verdadeiros.
 
+> [!WARNING]
+> Para utilizar o `source: - INLABS` é necessário criar a conexão `inlabs_db`
+> no Airflow apontando para o banco `Postgres` que está carregado com os
+> dados do inlabs.
+
 Para desligar o Ro-dou execute o comando:
 
 ```bash
@@ -326,7 +331,7 @@ dag:
 ```
 
 ### Exemplo 10
-Esta configuração filtra os resultados por órgão/unidade selecionados. 
+Esta configuração filtra os resultados por órgão/unidade selecionados.
 Por enquanto disponível apenas para as pesquisas no DOU.
 
 ```yaml {11}
