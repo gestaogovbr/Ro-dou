@@ -3,8 +3,8 @@
 
 import re
 from datetime import datetime, timedelta, date
-import pandas as pd
 import unicodedata
+import pandas as pd
 import html2text
 
 from airflow.hooks.base import BaseHook
@@ -177,6 +177,9 @@ class INLABSHook(BaseHook):
             """
 
             df = response.copy()
+            # `identifica` column is the publication title. If None
+            # can be a table or other text content that is not inside
+            # a publication.
             df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["identifica"] = df["identifica"].apply(self._remove_html_tags)
@@ -226,7 +229,9 @@ class INLABSHook(BaseHook):
                 {}
                 if df.empty
                 else self._group_to_dict(
-                    df.sort_values(by="matches"), "matches", cols_output
+                    df.sort_values(by=["matches", "section", "title"]),
+                    "matches",
+                    cols_output,
                 )
             )
 
