@@ -108,6 +108,18 @@ serviço **smtp4dev** uma vez que ele não será mais necessário.
 make run
 ```
 
+## Notificação de erros na execução das DAGs
+
+O Ro-Dou permite envio de mensagens slack quando ocorrer alguma falha na
+execução da `dag`. Para isso:
+
+1. Criar o app no slack conforme orientações do vídeo [How to Add Slack Notifications to Your Airflow DAG's with Airflow Notifiers](https://www.youtube.com/watch?v=4yQJWnhKEa4&ab_channel=TheDataGuy).
+2. Criar conexão no Airflow com a seguinte configuração:
+  * `Connection Id` = `slack_notify_rodou_dagrun`
+  * `Connection Type` = `Slack API`
+  * `Description` = `{"channel": "nome-do-channel-pra-mandar-mensagem"}`
+  * `Slack API Token` = `obtido no passo 1`
+
 # Exemplos de Configuração YAML
 
 ### Exemplo 1
