@@ -78,7 +78,7 @@ class DouDigestDagGenerator():
             slack_notifier = None
 
         self.on_failure_callback = slack_notifier
-        self.on_retry_callback = slack_notifier
+        self.on_retry_callback = None
 
 
     @staticmethod
