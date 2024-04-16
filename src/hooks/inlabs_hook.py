@@ -110,12 +110,21 @@ class INLABSHook(BaseHook):
 
         conditions = []
         for key, values in filtered_dict.items():
-            key_conditions = " OR ".join(
-                [
-                    rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
-                    for value in values
-                ]
-            )
+            key_conditions = ''
+            if key == 'texto':
+                key_conditions += " OR " .join(
+                    [
+                        rf"to_tsvector('portuguese', dou_inlabs.unaccent(texto)) @@ to_tsquery('portuguese', '{value}')"
+                        for value in values
+                    ]
+                )
+            else:
+                key_conditions += " OR ".join(
+                    [
+                        rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                        for value in values
+                    ]
+                )
             conditions.append(f"({key_conditions})")
 
         if conditions:
