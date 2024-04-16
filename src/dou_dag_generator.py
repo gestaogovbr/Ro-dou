@@ -195,6 +195,7 @@ class DouDigestDagGenerator():
                     'is_exact_search': specs.is_exact_search,
                     'ignore_signature_match': specs.ignore_signature_match,
                     'force_rematch': specs.force_rematch,
+                    'full_text': specs.full_text,
                     'department': specs.department,
                     'result_as_email': result_as_html(specs),
                     },
@@ -240,6 +241,7 @@ class DouDigestDagGenerator():
         is_exact_search: bool,
         ignore_signature_match: bool,
         force_rematch: bool,
+        full_text: bool,
         result_as_email: bool,
         department: List[str],
         **context) -> dict:
@@ -266,6 +268,7 @@ class DouDigestDagGenerator():
                 search_date,
                 department,
                 ignore_signature_match,
+                full_text,
                 get_trigger_date(context, local_time = True)
             )
 
