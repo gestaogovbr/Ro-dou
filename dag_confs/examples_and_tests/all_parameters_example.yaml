@@ -21,6 +21,7 @@ dag:
     dou_sections:
       - SECAO_1
       - EDICAO_SUPLEMENTAR
+    full_text: True
   report:
     emails:
       - dest1@economia.gov.br

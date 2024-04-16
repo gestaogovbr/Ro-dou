@@ -21,10 +21,11 @@ class DAGConfig:
     is_exact_search: bool
     ignore_signature_match: bool
     force_rematch: bool
+    full_text: bool
     terms: List[str]
     sql: str
     conn_id: str
-    department: List[str]    
+    department: List[str]
     emails: List[str]
     subject: str
     attach_csv: bool
@@ -113,6 +114,7 @@ class YAMLParser(FileParser):
         is_exact_search = search.get('is_exact_search', True)
         ignore_signature_match = search.get('ignore_signature_match', False)
         force_rematch = search.get('force_rematch', None)
+        full_text = search.get('full_text', None)
         department = search.get('department', None)
         schedule = self._get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
         doc_md = dag.get('doc_md', None)
@@ -137,10 +139,11 @@ class YAMLParser(FileParser):
             is_exact_search=is_exact_search,
             ignore_signature_match=ignore_signature_match,
             force_rematch=force_rematch,
+            full_text=full_text,
             terms=terms,
             sql=sql,
             conn_id=conn_id,
-            department=department,            
+            department=department,
             emails=emails,
             subject=subject,
             attach_csv=attach_csv,

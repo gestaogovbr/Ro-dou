@@ -28,6 +28,7 @@ class INLABSHook(BaseHook):
         self,
         search_terms: dict,
         ignore_signature_match: bool,
+        full_text: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
         """Searches the DOU Database with the provided search terms and processes
@@ -63,7 +64,7 @@ class INLABSHook(BaseHook):
 
         return (
             self.TextDictHandler().transform_search_results(
-                all_results, search_terms["texto"], ignore_signature_match
+                all_results, search_terms["texto"], ignore_signature_match, full_text
             )
             if not all_results.empty
             else {}
@@ -160,7 +161,11 @@ class INLABSHook(BaseHook):
             pass
 
         def transform_search_results(
-            self, response: pd.DataFrame, text_terms: list, ignore_signature_match: bool
+            self,
+            response: pd.DataFrame,
+            text_terms: list,
+            ignore_signature_match: bool,
+            full_text: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -171,6 +176,8 @@ class INLABSHook(BaseHook):
                 text_terms (list): The list of text terms used in the search.
                 ignore_signature_match (bool): Flag to ignore publication
                     signature content.
+                full_text (bool):  If trim result text content.
+                    Defaults to False.
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
@@ -205,7 +212,8 @@ class INLABSHook(BaseHook):
                 ),
                 axis=1,
             )
-            df["texto"] = df["texto"].apply(self._trim_text)
+            if not full_text:
+                df["texto"] = df["texto"].apply(self._trim_text)
             df["display_date_sortable"] = None
             df["hierarchyList"] = None
 
