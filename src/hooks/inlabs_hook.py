@@ -114,7 +114,7 @@ class INLABSHook(BaseHook):
             if key == 'texto':
                 key_conditions += " OR " .join(
                     [
-                        rf"to_tsvector('portuguese', dou_inlabs.unaccent(texto)) @@ to_tsquery('portuguese', '{value}')"
+                        rf"to_tsvector('portuguese', texto) @@ to_tsquery('portuguese', '{value}')"
                         for value in values
                     ]
                 )
