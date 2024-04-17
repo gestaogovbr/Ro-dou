@@ -129,7 +129,7 @@ class INLABSHook(BaseHook):
 
         if conditions:
             query = f"{query} AND {' AND '.join(conditions)}"
-
+            print (query)
         queries = {
             "create_extension": "CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA dou_inlabs",
             "select": query,
@@ -191,7 +191,8 @@ class INLABSHook(BaseHook):
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
-
+            search_terms_text = [term.split("&") for term in text_terms]
+            search_terms_text = [item.strip() for sublist in search_terms_text for item in sublist]
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
@@ -201,7 +202,7 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].apply(self._remove_html_tags)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags)
-            df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+            df["matches"] = df["texto"].apply(self._find_matches, keys=search_terms_text)
             df["matches_assina"] = df.apply(
                 lambda row: self._normalize(row["matches"])
                 in self._normalize(row["assina"]),
@@ -290,7 +291,7 @@ class INLABSHook(BaseHook):
                 key
                 for key in keys
                 if re.search(
-                    r"\b" + re.escape(self._normalize(key)) + r"\b",
+                    re.escape(self._normalize(key)),
                     normalized_text,
                     re.IGNORECASE,
                 )
