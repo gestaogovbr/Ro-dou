@@ -335,7 +335,7 @@ class INLABSHook(BaseHook):
             """
 
             escaped_terms = [re.escape(term) for term in terms]
-            pattern = rf"\b({'|'.join(escaped_terms)})\b"
+            pattern = f"({'|'.join(escaped_terms)})"
             highlighted_text = re.sub(
                 pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE
             )
