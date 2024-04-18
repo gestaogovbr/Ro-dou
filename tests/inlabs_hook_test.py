@@ -370,7 +370,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
             True,
         ),
         (
-            ["Lorem & ipsum"],
+            ["Lorem & ipsum ! notpresent"],
             pd.DataFrame(
                 [
                     {
