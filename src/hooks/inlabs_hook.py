@@ -108,14 +108,45 @@ class INLABSHook(BaseHook):
 
         query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
 
+        # Operadores possíveis do campo terms
+        term_operators = ['&', '!']
+
         conditions = []
         for key, values in filtered_dict.items():
-            key_conditions = " OR ".join(
-                [
-                    rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
-                    for value in values
-                ]
-            )
+            if key == 'texto':
+                key_conditions = []
+                for term in values:
+                    if any(operator in term for operator in term_operators):
+                        operator_str = ''.join(term_operators)
+                        # quebra a string em substrings incluíndo os operadores
+                        sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
+                        like_positive =  True
+                        sub_conditions = []
+                        for sub_term in sub_terms:
+                            # Caso o operador anterior da string for & o ilike é positivo
+                            if sub_term.strip() == '&':
+                                like_positive = True
+                            # Caso o operador anterior da string for ! o ilike é negativo
+                            elif sub_term.strip() == '!':
+                                like_positive =  False
+                            else:
+                                # Gera o SQL com a condição do ILIKE
+                                if like_positive:
+                                    sub_conditions.append(rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{sub_term}\y')")
+                                else:
+                                    sub_conditions.append(rf"dou_inlabs.unaccent({key}) !~* dou_inlabs.unaccent('\y{sub_term}\y')")
+                        key_conditions.append("(" + " AND ".join(sub_conditions) + ")")
+                    else:
+                        key_conditions.append(rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
+                key_conditions = " OR ".join(key_conditions)
+
+            else:
+                key_conditions = " OR ".join(
+                    [
+                        rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                        for value in values
+                    ]
+                )
             conditions.append(f"({key_conditions})")
 
         if conditions:
@@ -182,6 +213,10 @@ class INLABSHook(BaseHook):
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
+            term_operators = ['&', '!']
+            operator_str = ''.join(term_operators)
+            split_text_terms = [re.split(rf'\s*[{re.escape(operator_str)}]\s*', term) for term in text_terms]
+            text_terms = [item for sublist in split_text_terms for item in sublist]
 
             df = response.copy()
             # `identifica` column is the publication title. If None
