@@ -19,6 +19,22 @@ from datetime import datetime
 def test_generate_sql(inlabs_hook, data_in, query_out):
     assert inlabs_hook._generate_sql(data_in)["select"] == query_out
 
+@pytest.mark.parametrize(
+    "data_in, query_out",
+    [
+        (
+            {
+                "texto": ["term1 & term2 ! term3", "term4 & term5" ],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND ((dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y') AND dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\\yterm3\\y')) OR (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm4\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm5\\y'))) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
+        ),
+    ],
+)
+def test_generate_sql_with_search_operators(inlabs_hook, data_in, query_out):
+    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
+
 
 @pytest.mark.parametrize(
     "data_in, data_out",
@@ -352,6 +368,44 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 ],
             },
             True,
+        ),
+        (
+            ["Lorem & ipsum"],
+            pd.DataFrame(
+                [
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 1,
+                        "assina": "Pessoa 1",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação 1",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": "Lorem ipsum dolor sit amet.",
+                        "titulo": "None",
+                    },
+                ]
+            ),
+            {
+                "Lorem, ipsum": [
+                    {
+                        "section": "DOU - Seção 1",
+                        "title": "Título da Publicação 1",
+                        "href": "http://xxx.gov.br/",
+                        "abstract": "(...) <%%>Lorem</%%> <%%>ipsum</%%> dolor sit amet. (...)",
+                        "date": "15/03/2024",
+                        "id": 1,
+                        "display_date_sortable": None,
+                        "hierarchyList": None,
+                    }
+                ]
+            },
+            False,
         ),
     ],
 )
