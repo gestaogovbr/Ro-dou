@@ -262,7 +262,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "ignore_signature_match": False,
                 "full_text": None,
                 "force_rematch": None,
-                "terms": ["instituto & federal ! paraná"],
+                "terms": ["instituto & federal ! paraná", "CONSELHO REGIONAL DE ENFERMAGEM | CRM"],
                 "sql": None,
                 "conn_id": None,
                 "department": None,
