@@ -109,7 +109,7 @@ class INLABSHook(BaseHook):
         query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
 
         # Operadores possíveis do campo terms
-        term_operators = ['&', '!']
+        term_operators = ['&', '!', '|']
 
         conditions = []
         for key, values in filtered_dict.items():
