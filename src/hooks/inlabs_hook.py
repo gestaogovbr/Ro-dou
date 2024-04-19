@@ -120,24 +120,48 @@ class INLABSHook(BaseHook):
                         operator_str = ''.join(term_operators)
                         # quebra a string em substrings incluíndo os operadores
                         sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
-                        like_positive =  True
+                        like_positive = True
+                        operator = 'AND'
                         sub_conditions = []
                         for sub_term in sub_terms:
-                            # Caso o operador anterior da string for & o ilike é positivo
-                            if sub_term.strip() == '&':
-                                like_positive = True
-                            # Caso o operador anterior da string for ! o ilike é negativo
-                            elif sub_term.strip() == '!':
-                                like_positive =  False
+                            if sub_term in term_operators:
+                                # Caso o operador anterior da string for & o ilike é positivo
+                                if sub_term.strip() == '&':
+                                    like_positive = True
+                                # Caso o operador anterior da string for ! o ilike é negativo
+                                elif sub_term.strip() == '!':
+                                    like_positive =  False
+                                # Caso o operador anterior da string for | o operador é o OR
+                                elif sub_term.strip() == '|':
+                                    like_positive = True
+                                    operator = 'OR'
                             else:
-                                # Gera o SQL com a condição do ILIKE
-                                if like_positive:
-                                    sub_conditions.append(rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{sub_term}\y')")
-                                else:
-                                    sub_conditions.append(rf"dou_inlabs.unaccent({key}) !~* dou_inlabs.unaccent('\y{sub_term}\y')")
-                        key_conditions.append("(" + " AND ".join(sub_conditions) + ")")
+                                sub_conditions.append([
+                                    operator,
+                                    rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
+                                    ])
+
+                        and_condition = " AND ".join(str_operator[1]
+                            for str_operator in sub_conditions if 'AND' in str_operator[0])
+                        or_condition = " OR ".join(str_operator[1]
+                            for str_operator in sub_conditions if 'OR' in str_operator[0])
+
+                        final_condition = ""
+                        if and_condition:
+                            final_condition += and_condition
+                        if and_condition and or_condition:
+                            final_condition += ' AND '
+                        if or_condition:
+                            final_condition += or_condition
+
+                        # Add parentheses around the final condition string
+
+                        # Add the final condition string to key_conditions
+                        key_conditions.append("(" + final_condition + ")")
                     else:
-                        key_conditions.append(rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
+                        key_conditions.append(
+                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
+                # Join the key_conditions using OR for the | operator
                 key_conditions = " OR ".join(key_conditions)
 
             else:
