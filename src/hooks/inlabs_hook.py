@@ -215,6 +215,27 @@ class INLABSHook(BaseHook):
         def __init__(self, *args, **kwargs):
             pass
 
+        @staticmethod
+        def filter_text_terms(text_terms) -> list:
+            """
+            Filter the text terms by removing words that succeed the delimitator ! and
+            split words based on search term operators
+
+            Args:
+                text_terms (list): The list of text terms used in the search.
+
+            Returns:
+                list: A list of filtered text terms
+            """
+            search_term_operators = ['&', '!', '|']
+
+            text_terms = [re.sub(r"! .*", "", term).strip() for term in text_terms]
+            operator_str = ''.join(search_term_operators)
+            split_text_terms = [re.split(rf'\s*[{re.escape(operator_str)}]\s*', term) for term in text_terms]
+            text_terms = [item for sublist in split_text_terms for item in sublist]
+
+            return text_terms
+
         def transform_search_results(
             self,
             response: pd.DataFrame,
@@ -237,10 +258,8 @@ class INLABSHook(BaseHook):
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
-            term_operators = ['&', '!']
-            operator_str = ''.join(term_operators)
-            split_text_terms = [re.split(rf'\s*[{re.escape(operator_str)}]\s*', term) for term in text_terms]
-            text_terms = [item for sublist in split_text_terms for item in sublist]
+            # Remove the words that suceeds the delimitator !
+            filtered_text_terms = self.filter_text_terms(text_terms)
 
             df = response.copy()
             # `identifica` column is the publication title. If None
@@ -251,7 +270,7 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].apply(self._remove_html_tags)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags)
-            df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+            df["matches"] = df["texto"].apply(self._find_matches, keys=filtered_text_terms)
             df["matches_assina"] = df.apply(
                 lambda row: self._normalize(row["matches"])
                 in self._normalize(row["assina"]),
