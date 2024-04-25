@@ -136,57 +136,59 @@ class INLABSHook(BaseHook):
 
         query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
 
-        # Operadores possíveis do campo terms
-        term_operators = ['&', '!', '|']
+        # Term search operators
+        term_operators = ['&', '!', '|', '(', ')']
 
         conditions = []
         for key, values in filtered_dict.items():
+
             if key == 'texto':
                 key_conditions = []
-                operators = []
+
                 for term in values:
                     if any(operator in term for operator in term_operators):
                         operator_str = ''.join(term_operators)
-                        # quebra a string em substrings incluíndo os operadores
+                        # split the string based on the operators
                         sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
-                        like_positive = True
+                        # remove blank items
+                        sub_terms = [sub_term for sub_term in sub_terms if sub_term.strip()]
+
                         sub_conditions = []
+                        # If the previous operator in the string is different from '!', the ilike is inclusive
+                        like_positive = True
                         for sub_term in sub_terms:
+
                             if sub_term in term_operators:
-                                # Caso o operador anterior da string for & o ilike é positivo
-                                if sub_term.strip() == '&':
+                                if sub_term in {'&', '!'}:
+                                    # If the previous operator in the string is equal to '!',
+                                    # the ilike is exlusive
+                                    like_positive = sub_term != "!"
+                                    # If the previous operator in the string is '&' or '!', the operator is 'OR'
+                                    operator = ' AND '
+                                # If the previous operator in the string is '|', the operator is 'OR'
+                                elif sub_term == '|':
                                     like_positive = True
-                                    operators.append('AND')
-                                # Caso o operador anterior da string for ! o ilike é negativo
-                                elif sub_term.strip() == '!':
-                                    like_positive =  False
-                                    operators.append('AND')
-                                # Caso o operador anterior da string for | o operador é o OR
-                                elif sub_term.strip() == '|':
+                                    operator = ' OR '
+                                elif sub_term in {'(', ')'}:
                                     like_positive = True
-                                    operators.append('OR')
+                                    operator = sub_term
+                                sub_conditions.append(operator)
                             else:
                                 sub_conditions.append(
                                     rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
                                     )
 
-                        statement = ''
-                        for index, condition in enumerate(sub_conditions):
-                            # Append the current item to the result string
-                            statement += condition
-                            # If it's not the last element, append the separator
-                            if index < len(sub_conditions) - 1:
-                                statement += f" {operators[index]} "
-                        # Add parentheses around the final condition string
+                        statement = ''.join(sub_conditions)
 
-                        # Add the final condition string to key_conditions
+                        # Add the parentheses-enclosed statement to key_conditions
                         key_conditions.append("(" + statement + ")")
+
                     else:
+                        # If there isn't operator in the string
                         key_conditions.append(
                             rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
-                # Join the key_conditions using OR for the | operator
-                key_conditions = " OR ".join(key_conditions)
 
+                key_conditions = " OR ".join(key_conditions)
             else:
                 key_conditions = " OR ".join(
                     [
