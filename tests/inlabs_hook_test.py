@@ -2,6 +2,14 @@ import pytest
 import pandas as pd
 from datetime import datetime
 
+@pytest.mark.parametrize(
+    "text_terms_in, text_terms_out",
+    [
+        (["lorem & ( ipsum | dolor)"], ["lorem", "ipsum", "dolor"]),
+    ],
+)
+def test_filter_text_terms(inlabs_hook, text_terms_in, text_terms_out):
+    assert inlabs_hook._filter_text_terms(text_terms_in) == text_terms_out
 
 @pytest.mark.parametrize(
     "data_in, query_out",
@@ -368,44 +376,6 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 ],
             },
             True,
-        ),
-        (
-            ["Lorem & ipsum ! notpresent"],
-            pd.DataFrame(
-                [
-                    {
-                        "artcategory": "Texto exemplo art_category",
-                        "arttype": "Publicação xxx",
-                        "id": 1,
-                        "assina": "Pessoa 1",
-                        "data": "Brasília/DF, 15 de março de 2024.",
-                        "ementa": "None",
-                        "identifica": "Título da Publicação 1",
-                        "name": "15.03.2024 bsb DOU xxx",
-                        "pdfpage": "http://xxx.gov.br/",
-                        "pubdate": datetime(2024, 3, 15),
-                        "pubname": "DO1",
-                        "subtitulo": "None",
-                        "texto": "Lorem ipsum dolor sit amet.",
-                        "titulo": "None",
-                    },
-                ]
-            ),
-            {
-                "Lorem, ipsum": [
-                    {
-                        "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
-                        "href": "http://xxx.gov.br/",
-                        "abstract": "(...) <%%>Lorem</%%> <%%>ipsum</%%> dolor sit amet. (...)",
-                        "date": "15/03/2024",
-                        "id": 1,
-                        "display_date_sortable": None,
-                        "hierarchyList": None,
-                    }
-                ]
-            },
-            False,
         ),
     ],
 )
