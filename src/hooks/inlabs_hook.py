@@ -2,6 +2,7 @@
 """
 
 import re
+import logging
 from datetime import datetime, timedelta, date
 import unicodedata
 import pandas as pd
@@ -115,49 +116,44 @@ class INLABSHook(BaseHook):
         for key, values in filtered_dict.items():
             if key == 'texto':
                 key_conditions = []
+                operators = []
                 for term in values:
                     if any(operator in term for operator in term_operators):
                         operator_str = ''.join(term_operators)
                         # quebra a string em substrings incluíndo os operadores
                         sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
                         like_positive = True
-                        operator = 'AND'
                         sub_conditions = []
                         for sub_term in sub_terms:
                             if sub_term in term_operators:
                                 # Caso o operador anterior da string for & o ilike é positivo
                                 if sub_term.strip() == '&':
                                     like_positive = True
+                                    operators.append('AND')
                                 # Caso o operador anterior da string for ! o ilike é negativo
                                 elif sub_term.strip() == '!':
                                     like_positive =  False
+                                    operators.append('AND')
                                 # Caso o operador anterior da string for | o operador é o OR
                                 elif sub_term.strip() == '|':
                                     like_positive = True
-                                    operator = 'OR'
+                                    operators.append('OR')
                             else:
-                                sub_conditions.append([
-                                    operator,
+                                sub_conditions.append(
                                     rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
-                                    ])
+                                    )
 
-                        and_condition = " AND ".join(str_operator[1]
-                            for str_operator in sub_conditions if 'AND' in str_operator[0])
-                        or_condition = " OR ".join(str_operator[1]
-                            for str_operator in sub_conditions if 'OR' in str_operator[0])
-
-                        final_condition = ""
-                        if and_condition:
-                            final_condition += and_condition
-                        if and_condition and or_condition:
-                            final_condition += ' AND '
-                        if or_condition:
-                            final_condition += or_condition
-
+                        statement = ''
+                        for index, condition in enumerate(sub_conditions):
+                            # Append the current item to the result string
+                            statement += condition
+                            # If it's not the last element, append the separator
+                            if index < len(sub_conditions) - 1:
+                                statement += f" {operators[index]} "
                         # Add parentheses around the final condition string
 
                         # Add the final condition string to key_conditions
-                        key_conditions.append("(" + final_condition + ")")
+                        key_conditions.append("(" + statement + ")")
                     else:
                         key_conditions.append(
                             rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
@@ -171,10 +167,13 @@ class INLABSHook(BaseHook):
                         for value in values
                     ]
                 )
+
             conditions.append(f"({key_conditions})")
 
         if conditions:
             query = f"{query} AND {' AND '.join(conditions)}"
+
+        logging.info(query)
 
         queries = {
             "create_extension": "CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA dou_inlabs",
