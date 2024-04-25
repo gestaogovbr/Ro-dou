@@ -10,8 +10,8 @@ dag:
     sources:
     - INLABS
     terms:
+    - designar & ( MGI | MINISTÉRIO FAZENDA)
     - instituto & federal ! paraná
-    - CONSELHO REGIONAL DE ENFERMAGEM | CRM
   report:
     emails:
       - destination@economia.gov.br
