@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple, Set
+from typing import Dict, List, Tuple, Set
 import ast
 import yaml
 import textwrap
@@ -11,13 +11,12 @@ import textwrap
 from airflow.models import Variable
 
 @dataclass
-class DAGConfig:
-    dag_id: str
+class SearchConfig:
     sources: List[str]
     territory_id: int
     dou_sections: List[str]
-    search_date: str
     field: str
+    search_date: str
     is_exact_search: bool
     ignore_signature_match: bool
     force_rematch: bool
@@ -26,6 +25,11 @@ class DAGConfig:
     sql: str
     conn_id: str
     department: List[str]
+
+@dataclass
+class DAGConfig:
+    dag_id: str
+    search_dict: Dict[str, SearchConfig]
     emails: List[str]
     subject: str
     attach_csv: bool
@@ -37,7 +41,6 @@ class DAGConfig:
     doc_md: str
     dag_tags: Set[str]
     owner: str
-
 
 class FileParser(ABC):
     """Abstract class to build file parsers with DAG configuration.
