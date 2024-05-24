@@ -135,8 +135,9 @@ class DOUSearcher(BaseSearcher):
             force_rematch,
             department,
         )
+        group_results = self._group_results(search_results, term_list)
 
-        return self._group_results(search_results, term_list)
+        return group_results
 
     def _search_all_terms(
         self,
@@ -419,20 +420,16 @@ class INLABSSearcher(BaseSearcher):
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
         search_terms = self._apply_filters(
-            search_terms,
-            dou_sections,
-            department,
-            reference_date,
-            search_date
+            search_terms, dou_sections, department, reference_date, search_date
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms,
-            ignore_signature_match,
-            full_text
+            search_terms, ignore_signature_match, full_text
         )
 
-        return self._group_results(search_results, terms)
+        group_results = self._group_results(search_results, terms)
+
+        return group_results
 
     def _prepare_search_terms(self, terms: Union[List[str], str]) -> Dict:
         """Prepare search terms based on input terms.
@@ -451,12 +448,12 @@ class INLABSSearcher(BaseSearcher):
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
-            self,
-            search_terms: Dict,
-            sections: List[str],
-            department: List[str],
-            reference_date: datetime,
-            search_date: str
+        self,
+        search_terms: Dict,
+        sections: List[str],
+        department: List[str],
+        reference_date: datetime,
+        search_date: str,
     ):
         """Apply `sections`, `departments` and `date` filters to the
         search_terms dictionary."""
@@ -467,7 +464,9 @@ class INLABSSearcher(BaseSearcher):
             search_terms["pubname"] = self._parse_sections(sections)
         if department:
             search_terms["artcategory"] = department
-        publish_from = calculate_from_datetime(reference_date, SearchDate[search_date]).strftime("%Y-%m-%d")
+        publish_from = calculate_from_datetime(
+            reference_date, SearchDate[search_date]
+        ).strftime("%Y-%m-%d")
         publish_to = reference_date.strftime("%Y-%m-%d")
         search_terms["pubdate"] = [publish_from, publish_to]
 
