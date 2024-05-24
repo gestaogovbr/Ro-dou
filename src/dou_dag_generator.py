@@ -20,6 +20,7 @@ import json
 
 import pandas as pd
 from airflow import DAG
+from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
@@ -313,44 +314,137 @@ class DouDigestDagGenerator():
         the email report and the generated CSV.
         """
         conn_type = BaseHook.get_connection(conn_id).conn_type
-        if conn_type == 'mssql':
+        if conn_type == "mssql":
             db_hook = MsSqlHook(conn_id)
-        elif conn_type in ('postgresql', 'postgres'):
+        elif conn_type in ("postgresql", "postgres"):
             db_hook = PostgresHook(conn_id)
         else:
-            raise Exception('Tipo de banco de dados não suportado: ', conn_type)
+            raise Exception("Tipo de banco de dados não suportado: ", conn_type)
 
         terms_df = db_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
-        terms_df = terms_df.applymap(
-            lambda x: str.strip(x) if pd.notnull(x) else '')
+        terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
 
         return terms_df.to_json(orient="columns")
 
+    def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
+        """Creates the DAG object and tasks
 
+        Depending on configuration it adds an extra prior task to query
+        the term_list from a database
+        """
+        # Prepare the markdown documentation
+        doc_md = (
+            self.prepare_doc_md(specs, config_file) if specs.doc_md else specs.doc_md
+        )
+        # DAG parameters
+        default_args = {
+            "owner": specs.owner,
+            "start_date": datetime(2021, 10, 18),
+            "depends_on_past": False,
+            "retries": 10,
+            "retry_delay": timedelta(minutes=20),
+            "on_retry_callback": self.on_retry_callback,
+            "on_failure_callback": self.on_failure_callback,
+        }
+        dag = DAG(
+            specs.dag_id,
+            default_args=default_args,
+            schedule=specs.schedule,
+            description=specs.description,
+            doc_md=doc_md,
+            catchup=False,
+            params={"trigger_date": "2022-01-02T12:00"},
+            tags=specs.dag_tags,
+        )
 
-SearchResult = Dict[str, Dict[str, List[dict]]]
+        with dag:
 
-def merge_results(result_1: SearchResult,
-                  result_2: SearchResult) -> SearchResult:
-    """Merge search results by group and term as keys"""
-    return {
-        group: _merge_dict(result_1.get(group, {}),
-                           result_2.get(group, {}))
-        for group in set((*result_1, *result_2))}
+            with TaskGroup(group_id="exec_searchs") as tg_exec_searchs:
+                counter = 0
+                for subsearch in specs.search:
+                    counter += 1
+                    if subsearch["sql"]:
+                        select_terms_from_db_task = PythonOperator(
+                            task_id=f"select_terms_from_db_{counter}",
+                            python_callable=self.select_terms_from_db,
+                            op_kwargs={
+                                "sql": subsearch["sql"],
+                                "conn_id": subsearch["conn_id"],
+                            },
+                        )
+                    term_list = (
+                        "{{ ti.xcom_pull(task_ids='select_terms_from_db_"
+                        + str(counter)
+                        + "') }}"
+                    )
 
+                    exec_search_task = PythonOperator(
+                        task_id=f"exec_search_{counter}",
+                        python_callable=self.perform_searches,
+                        op_kwargs={
+                            "header": subsearch["header"],
+                            "sources": subsearch["sources"],
+                            "territory_id": subsearch["territory_id"],
+                            "term_list": subsearch["terms"] or term_list,
+                            "dou_sections": subsearch["dou_sections"],
+                            "search_date": subsearch["search_date"],
+                            "field": subsearch["field"],
+                            "is_exact_search": subsearch["is_exact_search"],
+                            "ignore_signature_match": subsearch[
+                                "ignore_signature_match"
+                            ],
+                            "force_rematch": subsearch["force_rematch"],
+                            "full_text": subsearch["full_text"],
+                            "department": subsearch["department"],
+                            "result_as_email": result_as_html(specs),
+                        },
+                    )
 
-def _merge_dict(dict1, dict2):
-    """Merge dictionaries and sum values of common keys"""
-    dict3 = {**dict1, **dict2}
-    for key, value in dict3.items():
-        if key in dict1 and key in dict2:
-                dict3[key] = value + dict1[key]
-    return dict3
+                    if subsearch["sql"]:
+                        (
+                            select_terms_from_db_task >> exec_search_task
+                        )  # pylint: disable=pointless-statement
 
-def result_as_html(specs: DAGConfig) -> bool:
-    """Só utiliza resultado HTML apenas para email"""
-    return specs.discord_webhook and specs.slack_webhook
+            has_matches_task = BranchPythonOperator(
+                task_id="has_matches",
+                python_callable=self.has_matches,
+                op_kwargs={
+                    "search_result": "{{ ti.xcom_pull(task_ids="
+                    + str(
+                        [
+                            f"exec_searchs.exec_search_{count + 1}"
+                            for count in range(counter)
+                        ]
+                    )
+                    + ") }}",
+                    "skip_null": specs.skip_null,
+                },
+            )
+
+            skip_notification_task = EmptyOperator(task_id="skip_notification")
+
+            send_notification_task = PythonOperator(
+                task_id="send_notification",
+                python_callable=Notifier(specs).send_notification,
+                op_kwargs={
+                    "search_report": "{{ ti.xcom_pull(task_ids="
+                    + str(
+                        [
+                            f"exec_searchs.exec_search_{count + 1}"
+                            for count in range(counter)
+                        ]
+                    )
+                    + ") }}",
+                    "report_date": template_ano_mes_dia_trigger_local_time,
+                },
+            )
+
+            tg_exec_searchs >> has_matches_task
+
+            has_matches_task >> [send_notification_task, skip_notification_task]
+
+        return dag
 
 
 # # Run dag generation
