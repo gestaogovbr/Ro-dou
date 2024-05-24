@@ -8,45 +8,55 @@ import textwrap
 
 import pytest
 
-currentdir = os.path.dirname(
-    os.path.abspath(inspect.getfile(inspect.currentframe())))
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
 
+
 @pytest.mark.parametrize(
-    'dag_id, size, hashed',
+    "dag_id, size, hashed",
     [
-        ('unique_id_for_each_dag', 60, 56),
-        ('generates_sparses_hashed_results', 120, 59),
-        ('unique_id_for_each_dag', 10, 6),
-        ('', 10, 0),
-        ('', 100, 0),
-    ])
+        ("unique_id_for_each_dag", 60, 56),
+        ("generates_sparses_hashed_results", 120, 59),
+        ("unique_id_for_each_dag", 10, 6),
+        ("", 10, 0),
+        ("", 100, 0),
+    ],
+)
 def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
     assert yaml_parser._hash_dag_id(dag_id, size) == hashed
+
 
 @pytest.mark.parametrize(
     "filepath, result_tuple",
     [
-        ("basic_example.yaml",
+        (
+            "basic_example.yaml",
             {
                 "dag_id": "basic_example",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["dados abertos",
-                    "governo aberto",
-                    "lei de acesso à informação"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": [
+                            "dados abertos",
+                            "governo aberto",
+                            "lei de acesso à informação",
+                        ],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "Teste do Ro-dou",
                 "attach_csv": False,
@@ -58,26 +68,34 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
-            }
+            },
         ),
-        ("all_parameters_example.yaml",
+        (
+            "all_parameters_example.yaml",
             {
                 "dag_id": "all_parameters_example",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["SECAO_1", "EDICAO_SUPLEMENTAR"],
-                "search_date": "MES",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": True,
-                "full_text": True,
-                "force_rematch": True,
-                "terms": ["dados abertos",
-                    "governo aberto",
-                    "lei de acesso à informação"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": [
+                            "dados abertos",
+                            "governo aberto",
+                            "lei de acesso à informação",
+                        ],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["SECAO_1", "EDICAO_SUPLEMENTAR"],
+                        "search_date": "MES",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": True,
+                        "force_rematch": True,
+                        "full_text": True,
+                        "department": None,
+                    }
+                ],
                 "emails": ["dest1@economia.gov.br", "dest2@economia.gov.br"],
                 "subject": "Assunto do Email",
                 "attach_csv": True,
@@ -89,29 +107,37 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
                 "owner": "pessoa 1, pessoa 2",
-            }
+            },
         ),
-        ("terms_from_db_example.yaml",
+        (
+            "terms_from_db_example.yaml",
             {
                 "dag_id": "terms_from_db_example",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "MES",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": [],
-                "sql": ("SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
-                    "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
-                    "UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO "
-                    "UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO "
-                    "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
-                    "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"),
-                "conn_id": "example_database_conn",
-                "department": None,
+                "search": [
+                    {
+                        "terms": [],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": (
+                            "SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
+                            "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
+                            "UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO "
+                            "UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO "
+                            "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
+                            "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"
+                        ),
+                        "conn_id": "example_database_conn",
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "MES",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "[String] com caracteres especiais deve estar entre aspas",
                 "attach_csv": True,
@@ -123,26 +149,32 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
-            }
+            },
         ),
-        ("basic_example_skip_null.yaml",
+        (
+            "basic_example_skip_null.yaml",
             {
                 "dag_id": "basic_example_skip_null",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["cimentodaaroeira"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": ["cimentodaaroeira"],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
-                "subject": 'Teste do Ro-dou',
+                "subject": "Teste do Ro-dou",
                 "attach_csv": False,
                 "discord_webhook": None,
                 "slack_webhook": None,
@@ -154,24 +186,32 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
             },
         ),
-        ("markdown_docs_example.yaml",
+        (
+            "markdown_docs_example.yaml",
             {
                 "dag_id": "markdown_docs_example",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["dados abertos",
-                    "governo aberto",
-                    "lei de acesso à informação"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": [
+                            "dados abertos",
+                            "governo aberto",
+                            "lei de acesso à informação",
+                        ],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "Teste do Ro-dou",
                 "attach_csv": False,
@@ -180,34 +220,44 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "schedule": "10 5 * * *",
                 "description": "DAG com documentação em markdown",
                 "skip_null": True,
-                "doc_md": textwrap.dedent("""
+                "doc_md": textwrap.dedent(
+                    """
                     ## Ola!
                     Esta é uma DAG de exemplo com documentação em markdown. Esta descrição é opcional e pode ser definida no parâmetro `doc_md`.
 
                       * Ah, aqui você também pode usar *markdown* para
                       * escrever listas, por exemplo,
-                      * ou colocar [links](graph)!""").strip(),
+                      * ou colocar [links](graph)!"""
+                ).strip(),
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
-            }
+            },
         ),
-        ("department_example.yaml",
+        (
+            "department_example.yaml",
             {
                 "dag_id": "department_example",
-                "sources": ["DOU"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["dados abertos"],
-                "sql": None,
-                "conn_id": None,
-                "department": ["Ministério da Gestão e da Inovação em Serviços Públicos",
-                               "Ministério da Defesa"],
+                "search": [
+                    {
+                        "terms": ["dados abertos"],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": [
+                            "Ministério da Gestão e da Inovação em Serviços Públicos",
+                            "Ministério da Defesa",
+                        ],
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "Teste do Ro-dou",
                 "attach_csv": False,
@@ -219,24 +269,30 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
-            }
+            },
         ),
-        ("inlabs_example.yaml",
+        (
+            "inlabs_example.yaml",
             {
                 "dag_id": "inlabs_example",
-                "sources": ["INLABS"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["tecnologia", "informação"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": ["tecnologia", "informação"],
+                        "header": None,
+                        "sources": ["INLABS"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "Teste do Ro-dou",
                 "attach_csv": True,
@@ -248,24 +304,33 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
                 "owner": "cdata",
-            }
+            },
         ),
-        ("inlabs_advanced_search_example.yaml",
+        (
+            "inlabs_advanced_search_example.yaml",
             {
                 "dag_id": "inlabs_advanced_search_example",
-                "sources": ["INLABS"],
-                "territory_id": None,
-                "dou_sections": ["TODOS"],
-                "search_date": "DIA",
-                "field": "TUDO",
-                "is_exact_search": True,
-                "ignore_signature_match": False,
-                "full_text": None,
-                "force_rematch": None,
-                "terms": ["designar & ( MGI | MINISTÉRIO FAZENDA)", "instituto & federal ! paraná"],
-                "sql": None,
-                "conn_id": None,
-                "department": None,
+                "search": [
+                    {
+                        "terms": [
+                            "designar & ( MGI | MINISTÉRIO FAZENDA)",
+                            "instituto & federal ! paraná",
+                        ],
+                        "header": None,
+                        "sources": ["INLABS"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": None,
+                    }
+                ],
                 "emails": ["destination@economia.gov.br"],
                 "subject": "Teste do Ro-dou",
                 "attach_csv": True,
@@ -277,13 +342,73 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
                 "owner": "cdata",
-            }
+            },
         ),
-    ])
+        (
+            "multiple_searchs_example.yaml",
+            {
+                "dag_id": "multiple_searchs_example",
+                "search": [
+                    {
+                        "terms": [
+                            "dados abertos",
+                            "governo aberto",
+                            "lei de acesso à informação",
+                        ],
+                        "header": "Pesquisa no DOU",
+                        "sources": ["INLABS"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": True,
+                        "force_rematch": True,
+                        "full_text": None,
+                        "department": None,
+                    },
+                    {
+                        "terms": [
+                            "dados abertos",
+                            "governo aberto",
+                            "lei de acesso à informação",
+                        ],
+                        "header": "Pesquisa no QD",
+                        "sources": ["QD"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": True,
+                        "force_rematch": True,
+                        "full_text": None,
+                        "department": None,
+                    },
+                ],
+                "emails": ["destination@economia.gov.br"],
+                "subject": "Teste do Ro-dou",
+                "attach_csv": False,
+                "discord_webhook": None,
+                "slack_webhook": None,
+                "schedule": "0 8 * * MON-FRI",
+                "description": "DAG de teste com múltiplas buscas",
+                "skip_null": False,
+                "doc_md": None,
+                "dag_tags": {"dou", "generated_dag", "inlabs"},
+                "owner": "",
+            },
+        ),
+    ],
+)
 def test_parse(filepath, result_tuple):
-    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
-                            "examples_and_tests",
-                            filepath)
+    filepath = os.path.join(
+        DouDigestDagGenerator().YAMLS_DIR, "examples_and_tests", filepath
+    )
     parsed = YAMLParser(filepath=filepath).parse()
 
     assert parsed == DAGConfig(**result_tuple)
