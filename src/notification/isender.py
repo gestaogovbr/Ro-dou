@@ -20,18 +20,21 @@ class ISender(ABC):
         pass
 
 
-    def send_report(self, search_report: dict, report_date: str=None):
+    def send_report(self, search_report: list, report_date: str=None):
         """Send a notification with the search report, after highlighting the abstracts.
 
         Args:
-            search_report (dict): A dictionary containing the search results.
+            search_report (list): A list containing the search results.
             report_date (str, optional): The date of the search report. Defaults to None.
         """
-        search_report = self._highlighted_reports(search_report)
-        self.send(search_report, report_date)
+        highlighted_reports = []
+        for report in search_report:
+            highlighted_reports.append(self._highlighted_reports(report))
+
+        self.send(highlighted_reports, report_date)
 
 
-    def _highlighted_reports(self, search_report) -> dict:
+    def _highlighted_reports(self, search_report: dict) -> dict:
         """Replace placeholders with specific formatting depending on
         the sender type.
 
@@ -42,7 +45,8 @@ class ISender(ABC):
             dict: A dictionary with the placeholders replaced with formatting tags.
         """
         reports = copy.deepcopy(search_report)
-        for _, results in reports.items():
+
+        for _, results in reports["result"].items():
             for _, items in results.items():
                 for item in items:
                     open_tag, close_tag = self.highlight_tags
