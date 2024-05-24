@@ -101,40 +101,39 @@ class YAMLParser(FileParser):
         with open(self.filepath, "r") as file:
             dag_config_dict = yaml.safe_load(file)
 
-        # Mandatory fields
         dag = self._try_get(dag_config_dict, "dag")
         dag_id = self._try_get(dag, "id")
         description = self._try_get(dag, "description")
         report = self._try_get(dag, "report")
         search = self._try_get(dag, "search")
 
-        search_dict = {}
-        if isinstance(search, dict):
-            for key, subsearch in search.items():
-                search_dict[key] = {}
-                search_dict[key]["sources"] = search.get("sources", ["DOU"])
-                (
-                    search_dict[key]["terms"],
-                    search_dict[key]["sql"],
-                    search_dict[key]["conn"],
-                ) = self._get_terms_params(subsearch)
-                search_dict[key]["territory_id"] = subsearch.get("territory_id", None)
-                search_dict[key]["dou_sections"] = subsearch.get(
-                    "dou_sections", ["TODOS"]
-                )
-                search_dict[key]["search_date"] = subsearch.get("date", "DIA")
-                search_dict[key]["field"] = subsearch.get("field", "TUDO")
-                search_dict[key]["is_exact_search"] = subsearch.get(
-                    "is_exact_search", True
-                )
-                search_dict[key]["ignore_signature_match"] = subsearch.get(
-                    "ignore_signature_match", False
-                )
-                search_dict[key]["force_rematch"] = subsearch.get("force_rematch", None)
-                search_dict[key]["full_text"] = subsearch.get("full_text", None)
-                search_dict[key]["department"] = subsearch.get("department", None)
+        # Case the search is written in the old structure
+        if not isinstance(search, list):
+            search = [search]
 
-        # Optional fields
+        proc_search = []
+        for subsearch in search:
+            proc_subsearch = {}
+            proc_subsearch["header"] = subsearch.get("header", None)
+            proc_subsearch["sources"] = subsearch.get("sources", ["DOU"])
+            (
+                proc_subsearch["terms"],
+                proc_subsearch["sql"],
+                proc_subsearch["conn_id"],
+            ) = self._get_terms_params(subsearch)
+            proc_subsearch["territory_id"] = subsearch.get("territory_id", None)
+            proc_subsearch["dou_sections"] = subsearch.get("dou_sections", ["TODOS"])
+            proc_subsearch["search_date"] = subsearch.get("date", "DIA")
+            proc_subsearch["field"] = subsearch.get("field", "TUDO")
+            proc_subsearch["is_exact_search"] = subsearch.get("is_exact_search", True)
+            proc_subsearch["ignore_signature_match"] = subsearch.get(
+                "ignore_signature_match", False
+            )
+            proc_subsearch["force_rematch"] = subsearch.get("force_rematch", None)
+            proc_subsearch["full_text"] = subsearch.get("full_text", None)
+            proc_subsearch["department"] = subsearch.get("department", None)
+            proc_search.append(proc_subsearch)
+
         owner = ", ".join(dag.get("owner", []))
         discord_webhook = (
             report["discord"]["webhook"] if report.get("discord") else None
@@ -156,7 +155,7 @@ class YAMLParser(FileParser):
 
         return DAGConfig(
             dag_id=dag_id,
-            search_dict=search_dict,
+            search=proc_search,
             emails=emails,
             subject=subject,
             attach_csv=attach_csv,
