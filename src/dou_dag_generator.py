@@ -30,20 +30,46 @@ from airflow.providers.slack.notifications.slack import SlackNotifier
 
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from utils.date import (
-    get_trigger_date, template_ano_mes_dia_trigger_local_time)
+from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
-class DouDigestDagGenerator():
+
+SearchResult = Dict[str, Dict[str, List[dict]]]
+
+
+def merge_results(result_1: SearchResult, result_2: SearchResult) -> SearchResult:
+    """Merge search results by group and term as keys"""
+    return {
+        group: _merge_dict(result_1.get(group, {}), result_2.get(group, {}))
+        for group in set((*result_1, *result_2))
+    }
+
+
+def _merge_dict(dict1, dict2):
+    """Merge dictionaries and sum values of common keys"""
+    dict3 = {**dict1, **dict2}
+    for key, value in dict3.items():
+        if key in dict1 and key in dict2:
+            dict3[key] = value + dict1[key]
+    return dict3
+
+
+def result_as_html(specs: DAGConfig) -> bool:
+    """Só utiliza resultado HTML apenas para email"""
+    return specs.discord_webhook and specs.slack_webhook
+
+
+class DouDigestDagGenerator:
     """
     YAML based Generator of DAGs that digests the DOU (gazette) daily
     publication and send email report listing all documents matching
     pré-defined keywords. It's also possible to fetch keywords from the
     database.
     """
-    YAMLS_DIR = os.getenv('RO_DOU__DAG_CONF_DIR')
+
+    YAMLS_DIR = os.getenv("RO_DOU__DAG_CONF_DIR")
 
     if YAMLS_DIR is None:
         raise EnvironmentError("Environment variable RO_DOU__DAG_CONF_DIR not found!")
@@ -55,9 +81,9 @@ class DouDigestDagGenerator():
 
     def __init__(self):
         self.searchers = {
-            'DOU': DOUSearcher(),
-            'QD': QDSearcher(),
-            'INLABS': INLABSSearcher(),
+            "DOU": DOUSearcher(),
+            "QD": QDSearcher(),
+            "INLABS": INLABSSearcher(),
         }
         try:
             conn = BaseHook.get_connection(self.SLACK_CONN_ID)
@@ -81,7 +107,6 @@ class DouDigestDagGenerator():
         self.on_failure_callback = slack_notifier
         self.on_retry_callback = None
 
-
     @staticmethod
     def prepare_doc_md(specs: DAGConfig, config_file: str) -> str:
         """Prepares the markdown documentation for a dag.
@@ -97,24 +122,22 @@ class DouDigestDagGenerator():
         # options that won't show in the "DAG Docs"
         del config["description"]
         del config["doc_md"]
-        doc_md = (
-            specs.doc_md +
-            textwrap.dedent(f"""
+        doc_md = specs.doc_md + textwrap.dedent(
+            f"""
 
             **Configuração da dag definida no arquivo `{config_file}`**:
 
             <dl>
             """
-            )
         )
         for key, value in config.items():
             doc_md = doc_md + f"<dt>{key}</dt>"
             if isinstance(value, list) or isinstance(value, set):
                 doc_md = doc_md + (
-                    "<dd>\n\n" +
-                    " * " +
-                    "\n * ".join(str(item) for item in value) +
-                    "\n</dd>"
+                    "<dd>\n\n"
+                    + " * "
+                    + "\n * ".join(str(item) for item in value)
+                    + "\n</dd>"
                 )
             else:
                 doc_md = doc_md + f"<dd>{str(value)}</dd>"
@@ -123,15 +146,14 @@ class DouDigestDagGenerator():
         return doc_md
 
     def generate_dags(self):
-        """Iterates over the YAML files and creates all dags
-        """
+        """Iterates over the YAML files and creates all dags"""
 
         files_list = []
 
         for directory in self.YAMLS_DIR_LIST:
             for dirpath, _, filenames in os.walk(directory):
                 for filename in filenames:
-                    if any(ext in filename for ext in ['.yaml', '.yml']):
+                    if any(ext in filename for ext in [".yaml", ".yml"]):
                         files_list.extend([os.path.join(dirpath, filename)])
 
         for filepath in files_list:
@@ -245,14 +267,14 @@ class DouDigestDagGenerator():
         full_text: bool,
         result_as_email: bool,
         department: List[str],
-        **context) -> dict:
-        """Performs the search in each source and merge the results
-        """
-        logging.info('Searching for: %s', term_list)
-        logging.info('Trigger date: %s', get_trigger_date(context, local_time=True))
+        **context,
+    ) -> dict:
+        """Performs the search in each source and merge the results"""
+        logging.info("Searching for: %s", term_list)
+        logging.info("Trigger date: %s", get_trigger_date(context, local_time=True))
 
-        if 'DOU' in sources:
-            dou_result = self.searchers['DOU'].exec_search(
+        if "DOU" in sources:
+            dou_result = self.searchers["DOU"].exec_search(
                 term_list,
                 dou_sections,
                 search_date,
@@ -261,20 +283,21 @@ class DouDigestDagGenerator():
                 ignore_signature_match,
                 force_rematch,
                 department,
-                get_trigger_date(context, local_time = True))
-        elif 'INLABS' in sources:
-            inlabs_result = self.searchers['INLABS'].exec_search(
+                get_trigger_date(context, local_time=True),
+            )
+        elif "INLABS" in sources:
+            inlabs_result = self.searchers["INLABS"].exec_search(
                 term_list,
                 dou_sections,
                 search_date,
                 department,
                 ignore_signature_match,
                 full_text,
-                get_trigger_date(context, local_time = True)
+                get_trigger_date(context, local_time=True),
             )
 
-        if 'QD' in sources:
-            qd_result = self.searchers['QD'].exec_search(
+        if "QD" in sources:
+            qd_result = self.searchers["QD"].exec_search(
                 territory_id,
                 term_list,
                 dou_sections,
