@@ -34,122 +34,138 @@
           "pattern": "^(\\S+\\s+){4}\\S+$|^@(once|continuous|hourly|daily|weekly|monthly|quarterly|yearly)$"
         },
         "search": {
-          "type": "object",
-          "description": "Seção para definição da busca no Diário",
-          "properties": {
-            "sources": {
+          "oneOf":
+          [
+            {
               "type": "array",
-              "description": "description",
+              "description": "Seção para definição da busca no Diário",
               "items": {
-                "type": "string",
-                "enum": ["QD", "DOU", "INLABS"]
+                "type": "object"
               }
             },
-            "territory_id": {
-              "type": "integer",
-              "description": "Id do território no Querido Diário - QD"
-            },
-            "terms": {
-              "oneOf": [
-                {
+            {
+              "type": "object",
+              "description": "Seção para definição da busca no Diário",
+              "properties": {
+                "header": {
+                  "type": "string",
+                  "description": "Cabeçalho da consulta"
+                },
+                "sources": {
                   "type": "array",
-                  "description": "Lista de termos de busca no Diário",
+                  "description": "description",
                   "items": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["QD", "DOU", "INLABS"]
                   }
                 },
-                {
-                  "type": "object",
-                  "description": "description",
-                  "properties": {
-                    "from_airflow_variable": {
-                      "type": "string",
-                      "description": "description"
+                "territory_id": {
+                  "type": "integer",
+                  "description": "Id do território no Querido Diário - QD"
+                },
+                "terms": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "description": "Lista de termos de busca no Diário",
+                      "items": {
+                        "type": "string"
+                      }
                     },
-                    "from_db_select": {
+                    {
                       "type": "object",
                       "description": "description",
                       "properties": {
-                        "sql": {
+                        "from_airflow_variable": {
                           "type": "string",
                           "description": "description"
                         },
-                        "conn_id": {
-                          "type": "string",
-                          "description": "description"
+                        "from_db_select": {
+                          "type": "object",
+                          "description": "description",
+                          "properties": {
+                            "sql": {
+                              "type": "string",
+                              "description": "description"
+                            },
+                            "conn_id": {
+                              "type": "string",
+                              "description": "description"
+                            }
+                          }
                         }
                       }
                     }
+                  ]
+                },
+                "department": {
+                  "type": "array",
+                  "description": "departamento para filtro na busca",
+                  "items": {
+                    "type": "string",
+                    "description": "nome do departamento"
+                  }
+                },
+                "field": {
+                  "type": "string",
+                  "description": "description",
+                  "enum": ["TUDO", "TITULO", "CONTEUDO"]
+                },
+                "is_exact_search": {
+                  "type": "boolean",
+                  "description": "description"
+                },
+                "ignore_signature_match": {
+                  "type": "boolean",
+                  "description": "description"
+                },
+                "force_rematch": {
+                  "type": "boolean",
+                  "description": "description"
+                },
+                "full_text": {
+                  "type": "boolean",
+                  "description": "description"
+                },
+                "date": {
+                  "type": "string",
+                  "description": "description",
+                  "enum": [
+                      "DIA",
+                      "SEMANA",
+                      "MES",
+                      "ANO"
+                    ]
+                },
+                "dou_sections": {
+                  "type": "array",
+                  "description": "description",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "SECAO_1",
+                      "SECAO_2",
+                      "SECAO_3",
+                      "EDICAO_EXTRA",
+                      "EDICAO_EXTRA_1A",
+                      "EDICAO_EXTRA_1B",
+                      "EDICAO_EXTRA_1D",
+                      "EDICAO_EXTRA_2A",
+                      "EDICAO_EXTRA_2B",
+                      "EDICAO_EXTRA_2D",
+                      "EDICAO_EXTRA_3A",
+                      "EDICAO_EXTRA_3B",
+                      "EDICAO_EXTRA_3D",
+                      "EDICAO_SUPLEMENTAR",
+                      "TODOS"
+                    ]
                   }
                 }
-              ]
-            },
-            "department": {
-              "type": "array",
-              "description": "departamento para filtro na busca",
-              "items": {
-                "type": "string",
-                "description": "nome do departamento"
-              }
-            },
-            "field": {
-              "type": "string",
-              "description": "description",
-              "enum": ["TUDO", "TITULO", "CONTEUDO"]
-            },
-            "is_exact_search": {
-              "type": "boolean",
-              "description": "description"
-            },
-            "ignore_signature_match": {
-              "type": "boolean",
-              "description": "description"
-            },
-            "force_rematch": {
-              "type": "boolean",
-              "description": "description"
-            },
-            "full_text": {
-              "type": "boolean",
-              "description": "description"
-            },
-            "date": {
-              "type": "string",
-              "description": "description",
-              "enum": [
-                  "DIA",
-                  "SEMANA",
-                  "MES",
-                  "ANO"
-                ]
-            },
-            "dou_sections": {
-              "type": "array",
-              "description": "description",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "SECAO_1",
-                  "SECAO_2",
-                  "SECAO_3",
-                  "EDICAO_EXTRA",
-                  "EDICAO_EXTRA_1A",
-                  "EDICAO_EXTRA_1B",
-                  "EDICAO_EXTRA_1D",
-                  "EDICAO_EXTRA_2A",
-                  "EDICAO_EXTRA_2B",
-                  "EDICAO_EXTRA_2D",
-                  "EDICAO_EXTRA_3A",
-                  "EDICAO_EXTRA_3B",
-                  "EDICAO_EXTRA_3D",
-                  "EDICAO_SUPLEMENTAR",
-                  "TODOS"
-                ]
-              }
+              },
+              "required": ["terms"],
+              "additionalProperties": false
             }
-          },
-          "required": ["terms"],
-          "additionalProperties": false
+          ]
         },
         "doc_md": {
           "type": "string",
