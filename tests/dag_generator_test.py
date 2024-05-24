@@ -8,11 +8,13 @@ from dags.ro_dou_src.notification.email_sender import EmailSender, repack_match
 
 
 def test_repack_match(report_example):
-    match_dict = report_example['single_group']['antonio de oliveira'][0]
-    repacked_match = repack_match('single_group',
-                                          'antonio de oliveira',
-                                          match_dict)
-    assert repacked_match == ('single_group',
+    match_dict = report_example[0]['result']['single_group']['antonio de oliveira'][0]
+    repacked_match = repack_match('Teste Report',
+                                    'single_group',
+                                    'antonio de oliveira',
+                                    match_dict)
+    assert repacked_match == ('Teste Report',
+                              'single_group',
                               'antonio de oliveira',
                               'Seção 3',
                               match_dict['href'],
@@ -39,7 +41,7 @@ def test_convert_report_dict__returns_tuples(email_sender):
 def test_convert_report_dict__returns_tuples_of_seven(email_sender):
     tuple_list = email_sender.convert_report_dict_to_tuple_list()
     for tpl in tuple_list:
-        assert len(tpl) == 7
+        assert len(tpl) == 8
 
 def test_convert_report_to_dataframe__rows_count(email_sender):
     df = email_sender.convert_report_to_dataframe()
@@ -48,15 +50,15 @@ def test_convert_report_to_dataframe__rows_count(email_sender):
 
 def test_convert_report_to_dataframe__cols_single_group(email_sender):
     df = email_sender.convert_report_to_dataframe()
-    assert tuple(df.columns) == ('Termo de pesquisa', 'Seção', 'URL',
+    assert tuple(df.columns) == ('Consulta', 'Termo de pesquisa', 'Seção', 'URL',
                                  'Título', 'Resumo', 'Data')
 
 def test_convert_report_to_dataframe__cols_grouped_report(email_sender, report_example):
-    report_example['group_name_different_of_single_group'] = \
-        report_example.pop('single_group')
+    report_example[0]['result']['group_name_different_of_single_group'] = \
+        report_example[0]['result'].pop('single_group')
     email_sender.search_report = report_example
     df = email_sender.convert_report_to_dataframe()
-    assert tuple(df.columns) == ('Grupo', 'Termo de pesquisa', 'Seção', 'URL',
+    assert tuple(df.columns) == ('Consulta', 'Grupo', 'Termo de pesquisa', 'Seção', 'URL',
                                  'Título', 'Resumo', 'Data')
 
 def test_get_csv_tempfile__valid_file_name_preffix(email_sender):
