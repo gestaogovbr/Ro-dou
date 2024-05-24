@@ -215,28 +215,41 @@ class DouDigestDagGenerator:
                 is_exact_search,
                 ignore_signature_match,
                 force_rematch,
-                get_trigger_date(context, local_time = True),
-                result_as_email)
+                get_trigger_date(context, local_time=True),
+                result_as_email,
+            )
 
-        if 'DOU' in sources and 'QD' in sources:
-            return merge_results(qd_result, dou_result)
-        elif 'INLABS' in sources and 'QD' in sources:
-            return merge_results(qd_result, inlabs_result)
-        elif 'DOU' in sources:
-            return dou_result
-        elif 'INLABS' in sources:
-            return inlabs_result
+        if "DOU" in sources and "QD" in sources:
+            result = merge_results(qd_result, dou_result)
+        elif "INLABS" in sources and "QD" in sources:
+            result = merge_results(qd_result, inlabs_result)
+        elif "DOU" in sources:
+            result = dou_result
+        elif "INLABS" in sources:
+            result = inlabs_result
         else:
-            return qd_result
+            result = qd_result
 
+        # Add more specs info
+        search_dict = {}
+        search_dict["result"] = result
+        search_dict["header"] = header
+        search_dict["department"] = department
 
-    def has_matches(self, search_result: str, skip_null: bool) -> str:
+        return search_dict
+
+    def has_matches(self, search_result: list, skip_null: bool) -> str:
+
         if skip_null:
+            skip_notification = True
             search_result = ast.literal_eval(search_result)
-            items = ['contains' for k, v in search_result.items() if v]
-            return 'send_notification' if items else 'skip_notification'
+            for search in search_result:
+                items = ["contains" for k, v in search["result"].items() if v]
+                if items:
+                    skip_notification = False
+            return "skip_notification" if skip_notification else "send_notification"
         else:
-            return 'send_notification'
+            return "send_notification"
 
     def select_terms_from_db(self, sql: str, conn_id: str):
         """Queries the `sql` and return the list of terms that will be
