@@ -4,42 +4,47 @@ from notification.isender import ISender
 
 
 class DiscordSender(ISender):
-    highlight_tags = ('__', '__')
+    highlight_tags = ("__", "__")
 
     def __init__(self, specs) -> None:
         self.webhook_url = specs.discord_webhook
 
-
-    def send(self, search_report: dict, report_date: str=None):
+    def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
-        for group, results in search_report.items():
-            if group != 'single_group':
-                self.send_text(f'**Grupo: {group}**')
-            for term, items in results.items():
-                if items:
-                    self.send_text(f'**Resultados para: {term}**')
-                self.send_embeds(items)
+        for search in search_report:
+            self.send_text(f'**{search["header"]}**')
 
+            for group, results in search["result"].items():
+                if results:
+                    if group != "single_group":
+                        self.send_text(f"**Grupo: {group}**")
+                    for term, items in results.items():
+                        if items:
+                            self.send_text(f"**Resultados para: {term}**")
+                        self.send_embeds(items)
+                else:
+                    self.send_text(
+                        "**Nenhum dos termos pesquisados foi encontrado nesta consulta**"
+                    )
 
     def send_text(self, content):
-        self.send_data({ "content" : content })
-
+        self.send_data({"content": content})
 
     def send_embeds(self, items):
         self.send_data(
             {
-                "embeds" :  [
+                "embeds": [
                     {
-                        'title': item['title'],
-                        'description': item['abstract'],
-                        'url': item['href'],
+                        "title": item["title"],
+                        "description": item["abstract"],
+                        "url": item["href"],
                     }
                     for item in items
                 ]
-            })
-
+            }
+        )
 
     def send_data(self, data):
-        data['username'] = 'Querido Prisma (rodou)'
+        data["username"] = "Querido Prisma (rodou)"
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
