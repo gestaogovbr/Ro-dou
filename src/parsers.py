@@ -10,8 +10,10 @@ import textwrap
 
 from airflow.models import Variable
 
+
 @dataclass
 class SearchConfig:
+    header: str
     sources: List[str]
     territory_id: int
     dou_sections: List[str]
@@ -26,10 +28,11 @@ class SearchConfig:
     conn_id: str
     department: List[str]
 
+
 @dataclass
 class DAGConfig:
     dag_id: str
-    search_dict: Dict[str, SearchConfig]
+    search: List[SearchConfig]
     emails: List[str]
     subject: str
     attach_csv: bool
@@ -42,9 +45,10 @@ class DAGConfig:
     dag_tags: Set[str]
     owner: str
 
+
 class FileParser(ABC):
-    """Abstract class to build file parsers with DAG configuration.
-    """
+    """Abstract class to build file parsers with DAG configuration."""
+
     @abstractmethod
     def parse(self):
         pass
@@ -53,11 +57,11 @@ class FileParser(ABC):
         """Hashes the `dag_id` into a integer between 0 and `size`"""
         buffer = 0
         for _char in dag_id:
-            buffer += (ord(_char))
+            buffer += ord(_char)
         try:
             _hash = buffer % size
         except ZeroDivisionError:
-            raise ValueError('`size` deve ser maior que 0.')
+            raise ValueError("`size` deve ser maior que 0.")
         return _hash
 
     def _get_safe_schedule(self, dag: dict, default_schedule: str) -> str:
@@ -67,12 +71,13 @@ class FileParser(ABC):
         dag_id que retorna valor entre 0 e 60 que define o minuto de
         execução.
         """
-        schedule = dag.get('schedule', default_schedule)
+        schedule = dag.get("schedule", default_schedule)
         if schedule == default_schedule:
-            id_based_minute = self._hash_dag_id(dag['id'], 60)
-            schedule_without_min = ' '.join(schedule.split(" ")[1:])
-            schedule = f'{id_based_minute} {schedule_without_min}'
+            id_based_minute = self._hash_dag_id(dag["id"], 60)
+            schedule_without_min = " ".join(schedule.split(" ")[1:])
+            schedule = f"{id_based_minute} {schedule_without_min}"
         return schedule
+
 
 class YAMLParser(FileParser):
     """Parses YAML file and get the DAG parameters.
@@ -80,7 +85,8 @@ class YAMLParser(FileParser):
     It guarantees that mandatory fields are in place and are properly
     defined providing clear error messages.
     """
-    DEFAULT_SCHEDULE = '0 5 * * *'
+
+    DEFAULT_SCHEDULE = "0 5 * * *"
 
     def __init__(self, filepath: str):
         self.filepath = filepath
@@ -165,28 +171,28 @@ class YAMLParser(FileParser):
         )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:
-        """Parses the `terms` config property handling different options.
-        """
-        terms = self._try_get(search, 'terms')
+        """Parses the `terms` config property handling different options."""
+        terms = self._try_get(search, "terms")
         sql = None
         conn_id = None
         if isinstance(terms, dict):
-            if 'from_airflow_variable' in terms:
-                var_value = Variable.get(terms.get('from_airflow_variable'))
+            if "from_airflow_variable" in terms:
+                var_value = Variable.get(terms.get("from_airflow_variable"))
                 try:
                     terms = ast.literal_eval(var_value)
                 except (ValueError, SyntaxError):
                     terms = var_value.splitlines()
-            elif 'from_db_select' in terms:
-                from_db_select = terms.get('from_db_select')
+            elif "from_db_select" in terms:
+                from_db_select = terms.get("from_db_select")
                 terms = []
-                sql = self._try_get(from_db_select, 'sql')
-                conn_id = self._try_get(from_db_select, 'conn_id')
+                sql = self._try_get(from_db_select, "sql")
+                conn_id = self._try_get(from_db_select, "conn_id")
             else:
                 raise ValueError(
-                    'O campo `terms` aceita como valores válidos '
-                    'uma lista de strings ou parâmetros do tipo '
-                    '`from_airflow_variable` ou `from_db_select`.')
+                    "O campo `terms` aceita como valores válidos "
+                    "uma lista de strings ou parâmetros do tipo "
+                    "`from_airflow_variable` ou `from_db_select`."
+                )
         return terms, sql, conn_id
 
     def _try_get(self, variable: dict, field, error_msg=None):
@@ -196,7 +202,7 @@ class YAMLParser(FileParser):
             return variable[field]
         except KeyError:
             if not error_msg:
-                error_msg = f'O campo `{field}` é obrigatório.'
-            file_name = self.filepath.split('/')[-1]
-            error_msg = f'Erro no arquivo {file_name}: {error_msg}'
+                error_msg = f"O campo `{field}` é obrigatório."
+            file_name = self.filepath.split("/")[-1]
+            error_msg = f"Erro no arquivo {file_name}: {error_msg}"
             raise ValueError(error_msg)
