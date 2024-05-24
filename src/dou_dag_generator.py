@@ -319,7 +319,7 @@ class DouDigestDagGenerator:
                             },
                         )
                     term_list = (
-                        "{{ ti.xcom_pull(task_ids='select_terms_from_db_"
+                        "{{ ti.xcom_pull(task_ids='exec_searchs.select_terms_from_db_"
                         + str(counter)
                         + "') }}"
                     )
