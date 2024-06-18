@@ -220,6 +220,10 @@
             "skip_null": {
               "type": "boolean",
               "description": "description"
+            },
+            "hide_filters": {
+              "type": "boolean",
+              "description": "description"
             }
           },
           "additionalProperties": false
