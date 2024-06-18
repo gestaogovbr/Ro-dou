@@ -74,14 +74,16 @@ class EmailSender(ISender):
 
             if search["header"]:
                 blocks.append(f"<h1>{search['header']}</h1>")
-            if search["department"]:
-                blocks.append(
-                    """<p class="secao-marker">Filtrando resultados somente para:</p>"""
-                )
-                blocks.append("<ul>")
-                for dpt in search["department"]:
-                    blocks.append(f"<li>{dpt}</li>")
-                blocks.append("</ul>")
+
+            if not self.specs.hide_filters:
+                if search["department"]:
+                    blocks.append(
+                        """<p class="secao-marker">Filtrando resultados somente para:</p>"""
+                    )
+                    blocks.append("<ul>")
+                    for dpt in search["department"]:
+                        blocks.append(f"<li>{dpt}</li>")
+                    blocks.append("</ul>")
 
             for group, results in search["result"].items():
 
@@ -90,25 +92,34 @@ class EmailSender(ISender):
                         "Nenhum dos termos pesquisados foi encontrado nesta consulta."
                     )
                 else:
-                    if group != "single_group":
-                        blocks.append("\n")
-                        blocks.append(f"**Grupo: {group}**")
-                        blocks.append("\n\n")
+                    if not self.specs.hide_filters:
+                        if group != "single_group":
+                            blocks.append("\n")
+                            blocks.append(f"**Grupo: {group}**")
+                            blocks.append("\n\n")
 
                     for term, items in results.items():
                         blocks.append("\n")
-                        blocks.append(f"* # Resultados para: {term}")
+                        if not self.specs.hide_filters:
+                            blocks.append(f"* # Resultados para: {term}")
 
                         for item in items:
-                            sec_desc = item["section"]
-                            item_html = f"""
-                                    <p class="secao-marker">{sec_desc}</p>
-                                    ### [{item['title']}]({item['href']})
-                                    <p class='abstract-marker'>{item['abstract']}</p>
-                                    <p class='date-marker'>{item['date']}</p>"""
-                            blocks.append(
-                                textwrap.indent(textwrap.dedent(item_html), " " * 4)
-                            )
+
+                            if not self.specs.hide_filters:
+                                sec_desc = item["section"]
+                                item_html = f"""
+                                        <p class="secao-marker">{sec_desc}</p>
+                                        ### [{item['title']}]({item['href']})
+                                        <p class='abstract-marker'>{item['abstract']}</p>
+                                        <p class='date-marker'>{item['date']}</p>"""
+                                blocks.append(
+                                    textwrap.indent(textwrap.dedent(item_html), " " * 4)
+                                )
+                            else:
+                                item_html = f"### [{item['title']}]({item['href']})"
+                                item_html += f"<p class='abstract-marker'>{item['abstract']}</p><br><br>"
+                                blocks.append(textwrap.dedent(item_html))
+
             blocks.append("---")
 
         return markdown.markdown("\n".join(blocks))
