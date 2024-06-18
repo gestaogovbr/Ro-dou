@@ -1,0 +1,22 @@
+dag:
+  id: hide_filters_example
+  description: DAG de teste
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  search:
+    header: HEADER TEXT
+    sources:
+    - INLABS
+    terms:
+    - tecnologia
+    - informação
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+      - Ministério da Defesa
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+    hide_filters: True
