@@ -44,6 +44,7 @@ class DAGConfig:
     doc_md: str
     dag_tags: Set[str]
     owner: str
+    hide_filters: bool
 
 
 class FileParser(ABC):
@@ -152,6 +153,7 @@ class YAMLParser(FileParser):
         emails = report.get("emails")
         subject = report.get("subject", "Extraçao do DOU")
         attach_csv = report.get("attach_csv", False)
+        hide_filters = report.get("hide_filters", False)
 
         return DAGConfig(
             dag_id=dag_id,
@@ -167,6 +169,7 @@ class YAMLParser(FileParser):
             doc_md=doc_md,
             dag_tags=set(dag_tags),
             owner=owner,
+            hide_filters=hide_filters
         )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:
