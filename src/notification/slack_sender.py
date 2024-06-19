@@ -9,6 +9,7 @@ class SlackSender(ISender):
     highlight_tags = ("*", "*")
 
     def __init__(self, specs) -> None:
+        self.specs = specs
         self.webhook_url = specs.slack_webhook
         self.blocks = []
 
@@ -19,11 +20,13 @@ class SlackSender(ISender):
                 self._add_header(search["header"])
             for group, results in search["result"].items():
                 if results:
-                    if group != "single_group":
-                        self._add_header(f"Grupo: {group}")
+                    if not self.specs.hide_filters:
+                        if group != "single_group":
+                            self._add_header(f"Grupo: {group}")
                     for term, items in results.items():
                         if items:
-                            self._add_header(f"Termo: {term}")
+                            if not self.specs.hide_filters:
+                                self._add_header(f"Termo: {term}")
                             for item in items:
                                 self._add_block(item)
                 else:
