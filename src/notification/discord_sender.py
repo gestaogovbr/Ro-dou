@@ -8,19 +8,23 @@ class DiscordSender(ISender):
 
     def __init__(self, specs) -> None:
         self.webhook_url = specs.discord_webhook
+        self.hide_filters = specs.hide_filters
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
         for search in search_report:
-            self.send_text(f'**{search["header"]}**')
+            if search["header"]:
+                self.send_text(f'**{search["header"]}**')
 
             for group, results in search["result"].items():
                 if results:
-                    if group != "single_group":
-                        self.send_text(f"**Grupo: {group}**")
+                    if not self.hide_filters:
+                        if group != "single_group":
+                            self.send_text(f"**Grupo: {group}**")
                     for term, items in results.items():
-                        if items:
-                            self.send_text(f"**Resultados para: {term}**")
+                        if not self.hide_filters:
+                            if items:
+                                self.send_text(f"**Resultados para: {term}**")
                         self.send_embeds(items)
                 else:
                     self.send_text(
