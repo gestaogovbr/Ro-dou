@@ -8,8 +8,8 @@ WEBHOOK = 'https://some-url.com/xxx'
 
 @pytest.fixture
 def mocked_specs():
-    Specs = namedtuple('Specs', 'discord_webhook')
-    return Specs(WEBHOOK)
+    Specs = namedtuple('Specs', ['discord_webhook', 'hide_filters'])
+    return Specs(WEBHOOK, False)
 
 def test_send_discord_data(session_mocker: MockerFixture, mocked_specs):
     session_mocker.patch(
