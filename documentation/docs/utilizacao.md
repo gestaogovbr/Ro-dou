@@ -1,0 +1,99 @@
+# Como utilizar
+
+Nesta seção, você encontrará as seguintes informações sobre o Ro-DOU:
+
+* Instalação e configuração
+* Ambiente local e ambiente de produção
+* Usuários internos e externos ao Ministério da Gestão e da Inovação em Serviços Públicos
+* Notificação de erros na execução das DAGs do Apache Airflow
+
+## Instalação e configuração
+
+### Configurando o ambiente local 'Hello World'
+
+O código-fonte está disponibilizado no [perfil do GitHub do Ministério da Gestão e da Inovação em Serviços Públicos](https://github.com/gestaogovbr/Ro-dou).
+
+Neste título, fornecemos abaixo uma configuração demonstrativa para que você possa executar o Ro-DOU no seu computador. Para isso, é necessário ter o Docker Compose na versão 1.29 ou maior instalado. Os passos para a instalação estão disponíveis em [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/) ou em tutoriais no YouTube.
+
+Após clonar o repositório do Ro-DOU para o seu computador com o comando `git clone`, acesse o diretório pelo terminal e execute os comandos a seguir:
+
+```bash
+make run
+```
+
+Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
+
+O Apache Airflow, que também é usado para rodar o Ro-DOU, pode demorar alguns minutos para se configurar na primeira vez. Posteriormente, ele estará disponível em http://localhost:8080/. Para se autenticar e acessar o Apache Airflow, entre no link e utilize login `airflow` e senha `airflow`.
+
+Na página sobre [o que é o Ro-DOU](rodou.md), explicamos o que é um grafo acíclico dirigido (DAG) do Airflow e como obter mais informações sobre este conceito.
+
+Na tela inicial do Airflow, são fornecidos clippings de exemplo. A partir dos arquivos YAML (.yaml) do diretório `dag_confs/`, é possível manipular e customizar as pesquisas de clipping desejadas nos diários oficiais. Dentro dos arquivos YAML, é possível, por exemplo, definir palavras-chave de busca e um endereço de e-mail para recebimento de uma mensagem com os resultados da busca no(s) diário(s) oficial(is).
+
+Para executar qualquer DAG do Airflow, é necessário ligá-la. Inicialmente, todas as DAGs ficam pausadas por padrão. Sugerimos começar testando o clipping **all_parameters_example**. Utilize o botão _toggle_ para ligá-lo. Após ativá-lo, o Airflow executará a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
+para visualizar o detalhe da execução.
+
+Você observará que, tanto na visualização em árvore (**Tree**) como na visualização em Grafo (**Graph**) dentro do Apache Airflow, é possível constatar se houve algum resultado encontrado na API da Imprensa Nacional para os termos e demais parâmetros deste clipping. Se a tarefa chamada **"send_report"** estiver na cor verde, significa que foi encontrado um resultado e que uma mensagem de e-mail foi enviada para o endereço configurado no arquivo YAML.
+
+Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/. Este é um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação. **_Voilà!_**.
+
+Lembre-se que o arquivo de configuração deste clipping está na pasta `dag_confs/`. Confira [aqui no GitHub](https://github.com/gestaogovbr/Ro-dou/blob/main/dag_confs/all_parameters_example.yaml) o conteúdo do arquivo YAML.
+
+Agora, faremos um segundo teste: o clipping **terms_from_variable**, seguindo os mesmo passos. Neste caso, os termos pesquisados estão listados em uma variável do Airflow e podem ser modificados pela interface gráfica. Acesse no menu **Admin >> Variables** ou pela URL http://localhost:8080/variable/list/.
+
+Leia a seção **Configurando em Produção** para instalar o Ro-dou utilizando um provedor SMTP real que enviará os e-mails para os destinatários verdadeiros.
+
+**Observação:** Para utilizar o `source: - INLABS`, é necessário criar a conexão `inlabs_db` no Apache Airflow, apontando para o banco `Postgres` que está carregado com os dados do inlabs. Você poderá encontrar aqui um exemplo de como carregar um banco com os dados do inlabs: [`ro-dou_inlabs_load_pg_dag.py`](https://github.com/gestaogovbr/Ro-dou/blob/main/dag_load_inlabs/ro-dou_inlabs_load_pg_dag.py).
+
+Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por meio do seguinte comando:
+
+```bash
+make down
+```
+
+### Configurando o ambiente de produção
+
+Para utilizar o Ro-DOU em ambiente de produção, é necessário que o servidor tenha disponível um serviço SMTP que será utilizado pelo Apache Airflow para envio de mensagens de e-mail pela Internet. Siga os seguintes passos:
+
+1. Utilize as credenciais do serviço SMTP (host, usuário, senha, porta etc.)
+para editar o arquivo `docker-compose.yml`, substituindo as variáveis referentes ao serviço SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
+
+2. Ao final do arquivo `docker-compose.yml`, remova as linhas que declaram o
+serviço **smtp4dev**, uma vez que ele não será mais necessário.
+
+Uma vez executados esses passos, basta agora inicializar o Ro-DOU por meio do comando:
+
+```bash
+make run
+```
+
+## Usuários internos e externos
+
+### Usuários do Ministério da Gestão e da Inovação em Serviços Públicos
+
+Para as unidades do Ministério da Gestão e da Inovação em Serviços Públicos que desejem solicitar a utilização de clippings via Ro-DOU, a Secretaria de Gestão e Inovação do MGI está disponível para auxiliá-las a configurar o serviço.
+
+É preciso que a unidade interessada encaminhe as seguintes informações para o endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br):
+
+* texto do assunto do e-mail que conterá o relatório do Ro-DOU;
+* lista de termos (palavras-chaves) para a pesquisa, separadas linha a linha;
+* seção ou seções do DOU que deverá(ão) ser pesquisada(s);
+* horário e dias da semana para realização da pesquisa e envio do relatório (por padrão, ocorre às 9h da manhã, de segunda-feira a sexta-feira); e
+* lista com os endereços de e-mail  que receberão o relatório do Ro-DOU.
+
+### Usuários externos (de fora do MGI)
+
+Usuários de órgãos públicos que não sejam unidades do Ministério da Gestão e da Inovação em Serviços Públicos poderão enviar dúvidas ou comentários ao endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br).
+
+## Notificação de erros na execução das DAGs
+
+É importante recordar que o Ro-DOU permite o envio de mensagens via Slack quando ocorre alguma falha na execução da DAG no Apache Airflow. Para usar essa funcionalidade, efetue as seguintes configurações:
+
+1. Criar o app no Slack conforme orientações do vídeo [How to Add Slack Notifications to Your Airflow DAG's with Airflow Notifiers](https://www.youtube.com/watch?v=4yQJWnhKEa4&ab_channel=TheDataGuy).
+
+2. Criar uma conexão no Apache Airflow com a seguinte configuração:
+
+  * `Connection Id` = `slack_notify_rodou_dagrun`
+  * `Connection Type` = `Slack API`
+  * `Description` = `{"channel": "nome-do-channel-para-mandar-mensagem"}`
+  * `Slack API Token` = `obtido no passo 1`
+
