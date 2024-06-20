@@ -70,6 +70,9 @@ class EmailSender(ISender):
         with open(file_path, "r") as f:
             blocks = [f"<style>\n{f.read()}</style>"]
 
+        if self.specs.header_text:
+            blocks.append(self.specs.header_text)
+
         for search in self.search_report:
 
             if search["header"]:
