@@ -69,6 +69,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -109,6 +110,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
                 "owner": "pessoa 1, pessoa 2",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -152,6 +154,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -188,6 +191,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -236,6 +240,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -275,6 +280,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -311,6 +317,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
                 "owner": "cdata",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -350,6 +357,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
                 "owner": "cdata",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -410,6 +418,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
                 "owner": "",
                 "hide_filters": False,
+                "header_text": None,
             },
         ),
         (
@@ -449,10 +458,52 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "inlabs", "generated_dag"},
                 "owner": "",
                 "hide_filters": True,
+                "header_text": None,
+            },
+        ),
+        (
+            "header_and_footer_example.yaml",
+            {
+                "dag_id": "header_and_footer_example",
+                "search": [
+                    {
+                        "terms": ["tecnologia", "informação"],
+                        "header": None,
+                        "sources": ["INLABS"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": None,
+                        "full_text": None,
+                        "department": [
+                            "Ministério da Gestão e da Inovação em Serviços Públicos",
+                            "Ministério da Defesa",
+                        ],
+                    }
+                ],
+                "emails": ["destination@economia.gov.br"],
+                "subject": "Teste do Ro-dou",
+                "attach_csv": False,
+                "discord_webhook": None,
+                "slack_webhook": None,
+                "schedule": "0 8 * * MON-FRI",
+                "description": "DAG de teste",
+                "skip_null": True,
+                "doc_md": None,
+                "dag_tags": {"dou", "inlabs", "generated_dag"},
+                "owner": "",
+                "hide_filters": False,
+                "header_text": "<p><strong>Greetings<strong></p>"
             },
         ),
     ],
 )
+
 def test_parse(filepath, result_tuple):
     filepath = os.path.join(
         DouDigestDagGenerator().YAMLS_DIR, "examples_and_tests", filepath
