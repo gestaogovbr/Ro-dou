@@ -124,6 +124,8 @@ class EmailSender(ISender):
                                 blocks.append(textwrap.dedent(item_html))
 
             blocks.append("---")
+            if self.specs.footer_text:
+                blocks.append(self.specs.footer_text)
 
         return markdown.markdown("\n".join(blocks))
 
