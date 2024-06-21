@@ -469,7 +469,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                     {
                         "terms": ["tecnologia", "informação"],
                         "header": None,
-                        "sources": ["INLABS"],
+                        "sources": ["DOU"],
                         "sql": None,
                         "conn_id": None,
                         "territory_id": None,
@@ -495,7 +495,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
-                "dag_tags": {"dou", "inlabs", "generated_dag"},
+                "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
                 "header_text": "<p><strong>Greetings<strong></p>"
