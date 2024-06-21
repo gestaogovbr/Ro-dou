@@ -1,0 +1,24 @@
+# TODO
+
+name: Create Ro-DOU documentation pages with MkDocs
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build MkDocs
+        uses: actions/setup-python@v2
+        run: pip install mkdocs
+
+

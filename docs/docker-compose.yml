@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mkdocs:
-    image: python:3.10-slim
+    image: python:3.1-slim
     container_name: mkdocs-site
     working_dir: /usr/src/app
     volumes:
@@ -13,6 +13,3 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    dns:
-      - 1.1.1.1
-      - 1.0.0.1
