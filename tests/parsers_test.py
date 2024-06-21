@@ -70,6 +70,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -111,6 +112,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "pessoa 1, pessoa 2",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -155,6 +157,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -192,6 +195,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -241,6 +245,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -281,6 +286,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -318,6 +324,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "cdata",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -358,6 +365,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "cdata",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -419,6 +427,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": False,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -459,6 +468,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "owner": "",
                 "hide_filters": True,
                 "header_text": None,
+                "footer_text": None,
             },
         ),
         (
@@ -498,7 +508,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "dag_tags": {"dou", "generated_dag"},
                 "owner": "",
                 "hide_filters": False,
-                "header_text": "<p><strong>Greetings<strong></p>"
+                "header_text": "<p><strong>Greetings<strong></p>",
+                "footer_text": "<p>Best Regards</p>",
             },
         ),
     ],
