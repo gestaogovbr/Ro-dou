@@ -10,6 +10,7 @@ class DiscordSender(ISender):
         self.webhook_url = specs.discord_webhook
         self.hide_filters = specs.hide_filters
         self.header_text = specs.header_text
+        self.footer_text = specs.footer_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
@@ -35,6 +36,10 @@ class DiscordSender(ISender):
                     self.send_text(
                         "**Nenhum dos termos pesquisados foi encontrado nesta consulta**"
                     )
+
+        if self.footer_text:
+            footer_text = self._remove_html_tags(self.footer_text)
+            self.send_text(footer_text)
 
     def send_text(self, content):
         self.send_data({"content": content})
