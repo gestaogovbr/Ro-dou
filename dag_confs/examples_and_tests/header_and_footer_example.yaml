@@ -17,5 +17,5 @@ dag:
     emails:
       - destination@economia.gov.br
     subject: "Teste do Ro-dou"
-    header_text: |
-      <p><strong>Greetings<strong></p>
+    header_text: <p><strong>Greetings<strong></p>
+    footer_text: <p>Best Regards</p>
