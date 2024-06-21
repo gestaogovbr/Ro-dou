@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  mkdocs:
+    image: python:3.10-slim
+    container_name: mkdocs-site
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+    command: mkdocs serve -a 0.0.0.0:8000
+    build:
+      context: .
+      dockerfile: Dockerfile
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1

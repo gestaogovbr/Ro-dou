@@ -9,6 +9,4 @@ Neste site, você encontrará informações sobre como usar o Ro-DOU e quais fun
 
 O Ro-DOU é uma solução desenvolvida pela Secretaria de Gestão e Inovação do [Ministério da Gestão e da Inovação em Serviços Públicos](https://www.gov.br/gestao/pt-br).
 
-Confira o histórico de alterações do Ro-DOU aqui: [CHANGELOG.md](CHANGELOG.md).
-
 
