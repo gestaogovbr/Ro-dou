@@ -123,9 +123,9 @@ class EmailSender(ISender):
                                 item_html += f"<p class='abstract-marker'>{item['abstract']}</p><br><br>"
                                 blocks.append(textwrap.dedent(item_html))
 
-            blocks.append("---")
-            if self.specs.footer_text:
-                blocks.append(self.specs.footer_text)
+        blocks.append("---")
+        if self.specs.footer_text:
+            blocks.append(self.specs.footer_text)
 
         return markdown.markdown("\n".join(blocks))
 
