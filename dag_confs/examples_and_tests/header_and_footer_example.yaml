@@ -6,7 +6,7 @@ dag:
   schedule: 0 8 * * MON-FRI
   search:
     sources:
-    - INLABS
+    - DOU
     terms:
     - tecnologia
     - informação
@@ -19,4 +19,3 @@ dag:
     subject: "Teste do Ro-dou"
     header_text: |
       <p><strong>Greetings<strong></p>
-
