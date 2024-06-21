@@ -70,6 +70,9 @@ class EmailSender(ISender):
         with open(file_path, "r") as f:
             blocks = [f"<style>\n{f.read()}</style>"]
 
+        if self.specs.header_text:
+            blocks.append(self.specs.header_text)
+
         for search in self.search_report:
 
             if search["header"]:
@@ -120,7 +123,9 @@ class EmailSender(ISender):
                                 item_html += f"<p class='abstract-marker'>{item['abstract']}</p><br><br>"
                                 blocks.append(textwrap.dedent(item_html))
 
-            blocks.append("---")
+        blocks.append("---")
+        if self.specs.footer_text:
+            blocks.append(self.specs.footer_text)
 
         return markdown.markdown("\n".join(blocks))
 

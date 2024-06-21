@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import requests
-
+import re
 from notification.isender import ISender
 
 
@@ -12,9 +12,15 @@ class SlackSender(ISender):
         self.webhook_url = specs.slack_webhook
         self.blocks = []
         self.hide_filters = specs.hide_filters
+        self.header_text = specs.header_text
+        self.footer_text = specs.footer_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Slack"""
+        if self.header_text:
+            header_text = _remove_html_tags(self.header_text)
+            self._add_header(header_text)
+
         for search in search_report:
             if search["header"]:
                 self._add_header(search["header"])
@@ -33,6 +39,10 @@ class SlackSender(ISender):
                     self._add_text(
                         "Nenhum dos termos pesquisados foi encontrado nesta consulta."
                     )
+
+        if self.footer_text:
+            footer_text = _remove_html_tags(self.footer_text)
+            self._add_header(footer_text)
         self._flush()
 
     def _add_header(self, text):
@@ -99,3 +109,9 @@ def _format_date(date_str: str) -> str:
     date = datetime.strptime(date_str, "%d/%m/%Y")
     _from, _to = WEEKDAYS_EN_TO_PT[date.weekday()]
     return date.strftime("%a %d/%m").replace(_from, _to)
+
+def _remove_html_tags(text):
+    # Define a regular expression pattern to match HTML tags
+    clean = re.compile('<.*?>')
+    # Substitute HTML tags with an empty string
+    return re.sub(clean, '', text)

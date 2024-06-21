@@ -224,6 +224,14 @@
             "hide_filters": {
               "type": "boolean",
               "description": "description"
+            },
+            "header_text": {
+              "type": "string",
+              "description": "description"
+            },
+            "footer_text": {
+              "type": "string",
+              "description": "description"
             }
           },
           "additionalProperties": false

@@ -1,5 +1,5 @@
 import requests
-
+import re
 from notification.isender import ISender
 
 
@@ -9,9 +9,15 @@ class DiscordSender(ISender):
     def __init__(self, specs) -> None:
         self.webhook_url = specs.discord_webhook
         self.hide_filters = specs.hide_filters
+        self.header_text = specs.header_text
+        self.footer_text = specs.footer_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
+        if self.header_text:
+            header_text = self._remove_html_tags(self.header_text)
+            self.send_text(header_text)
+
         for search in search_report:
             if search["header"]:
                 self.send_text(f'**{search["header"]}**')
@@ -30,6 +36,10 @@ class DiscordSender(ISender):
                     self.send_text(
                         "**Nenhum dos termos pesquisados foi encontrado nesta consulta**"
                     )
+
+        if self.footer_text:
+            footer_text = self._remove_html_tags(self.footer_text)
+            self.send_text(footer_text)
 
     def send_text(self, content):
         self.send_data({"content": content})
@@ -52,3 +62,9 @@ class DiscordSender(ISender):
         data["username"] = "Querido Prisma (rodou)"
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
+
+    def _remove_html_tags(self, text):
+        # Define a regular expression pattern to match HTML tags
+        clean = re.compile('<.*?>')
+        # Substitute HTML tags with an empty string
+        return re.sub(clean, '', text)
