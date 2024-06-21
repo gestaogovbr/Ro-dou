@@ -13,6 +13,7 @@ class SlackSender(ISender):
         self.blocks = []
         self.hide_filters = specs.hide_filters
         self.header_text = specs.header_text
+        self.footer_text = specs.footer_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Slack"""
@@ -38,6 +39,10 @@ class SlackSender(ISender):
                     self._add_text(
                         "Nenhum dos termos pesquisados foi encontrado nesta consulta."
                     )
+
+        if self.footer_text:
+            footer_text = _remove_html_tags(self.footer_text)
+            self._add_header(footer_text)
         self._flush()
 
     def _add_header(self, text):
