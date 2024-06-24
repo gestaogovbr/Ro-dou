@@ -92,7 +92,7 @@ class EmailSender(ISender):
 
                 if not results:
                     blocks.append(
-                        "Nenhum dos termos pesquisados foi encontrado nesta consulta."
+                        "<p>Nenhum dos termos pesquisados foi encontrado nesta consulta.</p>"
                     )
                 else:
                     if not self.specs.hide_filters:
@@ -119,8 +119,9 @@ class EmailSender(ISender):
                                     textwrap.indent(textwrap.dedent(item_html), " " * 4)
                                 )
                             else:
-                                item_html = f"### [{item['title']}]({item['href']})"
-                                item_html += f"<p class='abstract-marker'>{item['abstract']}</p><br><br>"
+                                item_html = f"""
+                                    ### [{item['title']}]({item['href']})
+                                    <p class='abstract-marker'>{item['abstract']}</p><br><br>"""
                                 blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
