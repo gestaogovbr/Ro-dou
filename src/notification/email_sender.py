@@ -113,7 +113,7 @@ class EmailSender(ISender):
                                 item_html = f"""
                                         <p class="secao-marker">{sec_desc}</p>
                                         ### [{item['title']}]({item['href']})
-                                        <p class='abstract-marker'>{item['abstract']}</p>
+                                        <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p>
                                         <p class='date-marker'>{item['date']}</p>"""
                                 blocks.append(
                                     textwrap.indent(textwrap.dedent(item_html), " " * 4)
@@ -121,7 +121,7 @@ class EmailSender(ISender):
                             else:
                                 item_html = f"""
                                     ### [{item['title']}]({item['href']})
-                                    <p class='abstract-marker'>{item['abstract']}</p><br><br>"""
+                                    <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p><br><br>"""
                                 blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
