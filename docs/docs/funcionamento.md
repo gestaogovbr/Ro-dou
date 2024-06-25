@@ -64,7 +64,7 @@ dag:
       - open source
   report:
     emails:
-      - nitaibezerra@protonmail.com
+      - endereco@dominio.com
 ```
 
 ### Exemplo 2
