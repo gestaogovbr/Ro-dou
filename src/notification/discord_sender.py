@@ -11,6 +11,7 @@ class DiscordSender(ISender):
         self.hide_filters = specs.hide_filters
         self.header_text = specs.header_text
         self.footer_text = specs.footer_text
+        self.no_results_found_text = specs.no_results_found_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
@@ -34,7 +35,7 @@ class DiscordSender(ISender):
                         self.send_embeds(items)
                 else:
                     self.send_text(
-                        "**Nenhum dos termos pesquisados foi encontrado nesta consulta**"
+                        f"**{self.no_results_found_text}**"
                     )
 
         if self.footer_text:
