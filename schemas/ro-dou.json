@@ -232,6 +232,10 @@
             "footer_text": {
               "type": "string",
               "description": "description"
+            },
+            "no_results_found_text": {
+              "type": "string",
+              "description": "description"
             }
           },
           "additionalProperties": false
