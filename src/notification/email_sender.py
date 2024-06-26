@@ -33,7 +33,7 @@ class EmailSender(ISender):
             if items:
                 skip_notification = False
             else:
-                content = "Nenhum dos termos pesquisados foi encontrado."
+                content = self.specs.no_results_found_text
 
         if skip_notification:
             if self.specs.skip_null:
@@ -92,7 +92,7 @@ class EmailSender(ISender):
 
                 if not results:
                     blocks.append(
-                        "<p>Nenhum dos termos pesquisados foi encontrado nesta consulta.</p>"
+                        f"<p>{self.specs.no_results_found_text}.</p>"
                     )
                 else:
                     if not self.specs.hide_filters:
