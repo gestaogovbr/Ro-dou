@@ -27,4 +27,4 @@ jobs:
         run: pip install mkdocs
 
       - name: Build MkDocs site
-        run: mkdocs gh-deploy -f docs/mkdocs.yml -b gh-pages
+        run: mkdocs gh-deploy --force -f docs/mkdocs.yml -b gh-pages
