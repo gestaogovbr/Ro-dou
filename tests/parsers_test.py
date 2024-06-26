@@ -71,6 +71,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -113,6 +114,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -158,6 +160,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -196,6 +199,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -246,6 +250,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -287,6 +292,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -325,6 +331,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -366,6 +373,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -428,6 +436,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -469,6 +478,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": True,
                 "header_text": None,
                 "footer_text": None,
+                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
             },
         ),
         (
@@ -490,10 +500,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
-                        "department": [
-                            "Ministério da Gestão e da Inovação em Serviços Públicos",
-                            "Ministério da Defesa",
-                        ],
+                        "department": None,
                     }
                 ],
                 "emails": ["destination@economia.gov.br"],
@@ -510,6 +517,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "hide_filters": False,
                 "header_text": "<p><strong>Greetings<strong></p>",
                 "footer_text": "<p>Best Regards</p>",
+                "no_results_found_text": "No results found",
             },
         ),
     ],
