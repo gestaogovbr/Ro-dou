@@ -47,6 +47,7 @@ class DAGConfig:
     hide_filters: bool
     header_text: str
     footer_text: str
+    no_results_found_text: str
 
 
 class FileParser(ABC):
@@ -158,6 +159,10 @@ class YAMLParser(FileParser):
         hide_filters = report.get("hide_filters", False)
         header_text = report.get("header_text", None)
         footer_text = report.get("footer_text", None)
+        no_results_found_text = report.get(
+            "no_results_found_text",
+            "Nenhum dos termos pesquisados foi encontrado nesta consulta",
+        )
 
         return DAGConfig(
             dag_id=dag_id,
@@ -175,7 +180,8 @@ class YAMLParser(FileParser):
             owner=owner,
             hide_filters=hide_filters,
             header_text=header_text,
-            footer_text=footer_text
+            footer_text=footer_text,
+            no_results_found_text=no_results_found_text,
         )
 
     def _get_terms_params(self, search) -> Tuple[List[str], str, str]:
