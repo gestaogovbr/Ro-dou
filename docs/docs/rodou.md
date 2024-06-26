@@ -18,6 +18,6 @@ Nos arquivos YAML, é possível configurar os detalhes dos termos de pesquisa de
 
 A maneira como os diferentes componentes do Ro-DOU se relacionam pode ser sintetizada no diagrama abaixo:
 
-[INSERIR DIAGRAMA]
+-- [INSERIR DIAGRAMA] --
 
 
