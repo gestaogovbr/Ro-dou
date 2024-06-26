@@ -1,12 +1,3 @@
-# Como utilizar
-
-Nesta seção, você encontrará as seguintes informações sobre o Ro-DOU:
-
-* Instalação e configuração
-* Ambiente local e ambiente de produção
-* Usuários internos e externos ao Ministério da Gestão e da Inovação em Serviços Públicos
-* Notificação de erros na execução das DAGs do Apache Airflow
-
 ## Instalação e configuração
 
 ### Configurando o ambiente local 'Hello World'
@@ -65,35 +56,3 @@ Uma vez executados esses passos, basta agora inicializar o Ro-DOU por meio do co
 ```bash
 make run
 ```
-
-## Usuários internos e externos
-
-### Usuários do Ministério da Gestão e da Inovação em Serviços Públicos
-
-Para as unidades do Ministério da Gestão e da Inovação em Serviços Públicos que desejem solicitar a utilização de clippings via Ro-DOU, a Secretaria de Gestão e Inovação do MGI está disponível para auxiliá-las a configurar o serviço.
-
-É preciso que a unidade interessada encaminhe as seguintes informações para o endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br):
-
-* texto do assunto do e-mail que conterá o relatório do Ro-DOU;
-* lista de termos (palavras-chaves) para a pesquisa, separadas linha a linha;
-* seção ou seções do DOU que deverá(ão) ser pesquisada(s);
-* horário e dias da semana para realização da pesquisa e envio do relatório (por padrão, ocorre às 9h da manhã, de segunda-feira a sexta-feira); e
-* lista com os endereços de e-mail  que receberão o relatório do Ro-DOU.
-
-### Usuários externos (de fora do MGI)
-
-Usuários de órgãos públicos que não sejam unidades do Ministério da Gestão e da Inovação em Serviços Públicos poderão enviar dúvidas ou comentários ao endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br).
-
-## Notificação de erros na execução das DAGs
-
-É importante recordar que o Ro-DOU permite o envio de mensagens via Slack quando ocorre alguma falha na execução da DAG no Apache Airflow. Para usar essa funcionalidade, efetue as seguintes configurações:
-
-1. Criar o app no Slack conforme orientações do vídeo [How to Add Slack Notifications to Your Airflow DAG's with Airflow Notifiers](https://www.youtube.com/watch?v=4yQJWnhKEa4&ab_channel=TheDataGuy).
-
-2. Criar uma conexão no Apache Airflow com a seguinte configuração:
-
-  * `Connection Id` = `slack_notify_rodou_dagrun`
-  * `Connection Type` = `Slack API`
-  * `Description` = `{"channel": "nome-do-channel-para-mandar-mensagem"}`
-  * `Slack API Token` = `obtido no passo 1`
-
