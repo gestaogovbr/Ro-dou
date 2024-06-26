@@ -4,21 +4,33 @@ name: Create Ro-DOU documentation pages with MkDocs
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
     paths:
       - 'docs/**'
-  workflow_dispatch:
 
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Build MkDocs
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
         run: pip install mkdocs
 
+      - name: Build MkDocs site
+        run: mkdocs build
 
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
