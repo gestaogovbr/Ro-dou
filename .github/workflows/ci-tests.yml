@@ -3,8 +3,12 @@ name: CI Tests
 on:
   push:
     branches: [ "*" ]
+    paths-ignore:
+      - 'docs/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
 
 jobs:
 
