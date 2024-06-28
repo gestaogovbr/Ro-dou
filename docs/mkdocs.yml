@@ -4,24 +4,26 @@ nav:
   - Página Inicial: index.md
   - O que é Ro-DOU?: rodou.md
   - Como utilizar:
-    - Introdução: como_utilizar/index.md
-    - Instalação:
-      - Instalação: como_utilizar/instalacao/instalacao.md
-      - Notificação de Erros: como_utilizar/instalacao/notificacao_de_erros.md
+    - Introdução: como_utilizar/intro_utilizacao.md
+    - Instalação e configuração: como_utilizar/instalacao.md
+    - Usuários internos e externos: como_utilizar/usuarios.md
+    - Notificação de erros: como_utilizar/notificacao_de_erros.md
   - Como funciona:
-    - Introdução: como_funciona/index.md
+    - Introdução: como_funciona/intro_funcionamento.md
+    - Compreendendo a pesquisa no D.O.U.: como_funciona/pesquisa_dou.md
+    - Recursos e funcionalidades: como_funciona/recursos_funcionalidades.md
     - Parâmetros de pesquisa: como_funciona/parametros.md
     - Operadores de pesquisa avançada: como_funciona/operadores.md
-    - Exemplos: como_funciona/exemplos/exemplos.md
+    - Exemplos: como_funciona/exemplos.md
   - Como contribuir:
-    - contribuicoes.md
+    - Contribuições: contribuicoes.md
   - Oficinas e mídias:
-    - midias.md
+    - Conteúdos sobre o Ro-DOU: midias.md
   - Outros:
-    - faq.md
+    - FAQ: faq.md
   - Links relevantes: links.md
   - Contato: contato.md
-  - Changelog: changelog.md
+  - CHANGELOG: changelog.md
 
 theme:
   name: 'readthedocs'
