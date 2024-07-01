@@ -1,13 +1,13 @@
-"""Abstract and concrete classes to parse DAG configuration from a file.
-"""
+"""Abstract and concrete classes to parse DAG configuration from a file."""
 
+import ast
+import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Set
-import ast
-import yaml
-import textwrap
+from typing import List, Set, Tuple, Union
 
+import yaml
+from airflow import Dataset
 from airflow.models import Variable
 
 
@@ -68,7 +68,9 @@ class FileParser(ABC):
             raise ValueError("`size` deve ser maior que 0.")
         return _hash
 
-    def _get_safe_schedule(self, dag: dict, default_schedule: str) -> str:
+    def _get_safe_schedule(
+        self, dag: dict, default_schedule: str
+    ) -> Union[str, Dataset]:
         """Retorna um novo valor de `schedule` randomizando o
         minuto de execução baseado no `dag_id`, caso a dag utilize o
         schedule padrão. Aplica uma função de hash na string
@@ -76,10 +78,15 @@ class FileParser(ABC):
         execução.
         """
         schedule = dag.get("schedule", default_schedule)
-        if schedule == default_schedule:
-            id_based_minute = self._hash_dag_id(dag["id"], 60)
-            schedule_without_min = " ".join(schedule.split(" ")[1:])
-            schedule = f"{id_based_minute} {schedule_without_min}"
+        # is_cron?
+        if len(schedule.split(" ")) == 5:
+            if schedule == default_schedule:
+                id_based_minute = self._hash_dag_id(dag["id"], 60)
+                schedule_without_min = " ".join(schedule.split(" ")[1:])
+                schedule = f"{id_based_minute} {schedule_without_min}"
+        else:
+            schedule = [Dataset(schedule)]
+
         return schedule
 
 
