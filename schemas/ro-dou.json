@@ -30,8 +30,7 @@
         },
         "schedule": {
           "type": "string",
-          "description": "Expressão cron válida ou uma das seguintes strings: @once, @continuous, @hourly, @daily, @weekly, @monthly, @quarterly, @yearly.",
-          "pattern": "^(\\S+\\s+){4}\\S+$|^@(once|continuous|hourly|daily|weekly|monthly|quarterly|yearly)$"
+          "description": "Expressão cron ou nome do Dataset"
         },
         "search": {
           "oneOf":
