@@ -9,8 +9,9 @@ Para operar, o Ro-DOU utiliza diferentes tecnologias, ferramentas e dependência
 * [Pandas](https://pandas.pydata.org/docs/)
 * [YAML](https://yaml.org/)
 
-O Ro-DOU também utiliza as funcionalidades da ferramenta Querido Diário:
+O Ro-DOU também utiliza as funcionalidades das ferramentas INLABS e Querido Diário:
 
+* [INLABS](https://github.com/Imprensa-Nacional/inlabs)
 * [Querido Diário](https://docs.queridodiario.ok.org.br/pt-br/latest/)
 
 Este site de documentação do Ro-DOU foi elaborado com a ajuda do MkDocs:

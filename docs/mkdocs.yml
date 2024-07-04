@@ -2,7 +2,7 @@ site_name: Ro-DOU - ferramenta de clipping dos diários oficiais
 
 nav:
   - Página Inicial: index.md
-  - O que é Ro-DOU?: rodou.md
+  - O que é Ro-DOU?: definicao/rodou.md
   - Como utilizar:
     - Introdução: como_utilizar/intro_utilizacao.md
     - Instalação e configuração: como_utilizar/instalacao.md
@@ -16,14 +16,15 @@ nav:
     - Operadores de pesquisa avançada: como_funciona/operadores.md
     - Exemplos: como_funciona/exemplos.md
   - Como contribuir:
-    - Contribuições: contribuicoes.md
+    - Contribuições: como_contribuir/contribuicoes.md
   - Oficinas e mídias:
-    - Conteúdos sobre o Ro-DOU: midias.md
+    - Conteúdos sobre o Ro-DOU: oficinas_midias/oficinas_midias.md
   - Outros:
-    - FAQ: faq.md
-  - Links relevantes: links.md
-  - Contato: contato.md
-  - CHANGELOG: changelog.md
+    - FAQ: outros/faq.md
+    - Links relevantes: outros/links.md
+    - Contato: outros/contato.md
+  - CHANGELOG:
+    - Changelog: changelog/changelog.md
 
 theme:
   name: 'readthedocs'
