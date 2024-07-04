@@ -1,5 +1,9 @@
 ## Links relevantes
 
+O Diário Oficial da União (D.O.U.) é publicado pela Imprensa Nacional:
+
+* [Diário Oficial da União](https://www.gov.br/imprensanacional/pt-br)
+
 Para operar, o Ro-DOU utiliza diferentes tecnologias, ferramentas e dependências. Podem ser destacadas as seguintes:
 
 * [Python](https://docs.python.org/)
