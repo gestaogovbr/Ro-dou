@@ -109,8 +109,15 @@ class DOUHook(BaseHook):
             # Get the number of pages in the pagination bar
             number_pages = int(pagination_tag.text.strip())
         else:
-            # If is a single page
-            number_pages = 1
+            # issue https://github.com/gestaogovbr/Ro-dou/issues/101
+            second_page_tag = soup.find(
+                'button', id='2btn'
+            )
+            if second_page_tag:
+                number_pages = 2
+            else:
+                # If is a single page
+                number_pages = 1
 
         logging.info("Total pages: %s", number_pages)
 
