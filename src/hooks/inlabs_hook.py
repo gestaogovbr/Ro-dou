@@ -271,9 +271,8 @@ class INLABSHook(BaseHook):
             # a publication.
             df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
-            df["identifica"] = df["identifica"].apply(self._remove_html_tags)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            df["texto"] = df["texto"].apply(self._remove_html_tags)
+            df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
             df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
             df["matches_assina"] = df.apply(
                 lambda row: self._normalize(row["matches"])
