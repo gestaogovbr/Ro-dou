@@ -338,9 +338,14 @@ class INLABSHook(BaseHook):
             return section[:2] + "U - Seção " + section[2:].replace("E", " Extra")
 
         @staticmethod
-        def _remove_html_tags(text) -> str:
+        def _remove_html_tags(text, full_text=False) -> str:
             if isinstance(text, str):
-                text = html2text.HTML2Text().handle(text).replace("\n", " ").strip()
+                text_maker = html2text.HTML2Text()
+                text_maker.body_width = 0
+                text = text_maker.handle(text)
+                # If full_text is True break lines
+                separator = "<br>" if full_text else " "
+                text = text.replace("\n", separator).strip()
                 text = re.sub(r"\s+", " ", text)
                 return text
             return ""
