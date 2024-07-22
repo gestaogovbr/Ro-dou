@@ -367,7 +367,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "Título da Publicação 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tincidunt urna. Cras tincidunt nunc vestibulum velit pellentesque facilisis. Aenean sollicitudin ante elit, vitae vehicula nisi congue id. Brasília/DF, 15 de março de 2024. Pessoa 1 Analista",
+                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tincidunt urna. Cras tincidunt nunc vestibulum velit pellentesque facilisis. Aenean sollicitudin ante elit, vitae vehicula nisi congue id. Brasília/DF, 15 de março de 2024. Pessoa 1 Analista <br>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
