@@ -117,10 +117,10 @@ class EmailSender(ISender):
                             if not self.specs.hide_filters:
                                 sec_desc = item["section"]
                                 item_html = f"""
-                                        <p class="secao-marker">{sec_desc}</p>
-                                        ### [{item['title']}]({item['href']})
-                                        <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p>
-                                        <p class='date-marker'>{item['date']}</p>"""
+                                    <p class="secao-marker">{sec_desc}</p>
+                                    ### [{item['title']}]({item['href']})
+                                    <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p>
+                                    <p class='date-marker'>{item['date']}</p>"""
                                 blocks.append(
                                     textwrap.indent(textwrap.dedent(item_html), " " * 4)
                                 )
