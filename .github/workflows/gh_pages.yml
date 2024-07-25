@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Move file to target directory
-        run: cp -f CHANGELOG.md docs/changelog/changelog.md
+        run: cp -f CHANGELOG.md docs/docs/changelog/changelog.md
 
       - name: Set up Python
         uses: actions/setup-python@v3
