@@ -18,9 +18,13 @@ from notification.isender import ISender
 
 class EmailSender(ISender):
     highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
-
     def __init__(self, specs) -> None:
         self.specs = specs
+        self.watermark = """
+            <p><small>Esta pesquisa foi realizada automaticamente pelo
+            <a href="https://gestaogovbr.github.io/Ro-dou/">Ro-DOU</a>
+            </small>
+        """
 
     def send(self, search_report: list, report_date: str):
         """Builds the email content, the CSV if applies, and send it"""
@@ -40,6 +44,8 @@ class EmailSender(ISender):
                 return "skip_notification"
         else:
             content = self.generate_email_content()
+
+        content += self.watermark
 
         if self.specs.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
