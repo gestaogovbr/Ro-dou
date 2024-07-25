@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'CHANGELOG.md'
 
 jobs:
   build_and_push:
@@ -17,6 +18,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Move file to target directory
+        run: cp -f CHANGELOG.md docs/changelog/changelog.md
 
       - name: Set up Python
         uses: actions/setup-python@v3
