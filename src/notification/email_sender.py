@@ -23,7 +23,7 @@ class EmailSender(ISender):
         self.watermark = """
             <p><small>Esta pesquisa foi realizada automaticamente pelo
             <a href="https://gestaogovbr.github.io/Ro-dou/">Ro-DOU</a>
-            </small>
+            </small></p>
         """
 
     def send(self, search_report: list, report_date: str):
