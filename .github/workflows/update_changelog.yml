@@ -1,4 +1,4 @@
-name: GitHub CLI Workflow
+name: Update Changelog file
 
 on:
   workflow_dispatch:
