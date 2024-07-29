@@ -1,0 +1,42 @@
+changelog:
+  categories:
+    - title: 🚀 Novas Funcionalidades
+      labels:
+        - 'feature'
+        - 'enhancement'
+        
+    - title: 🐛 Correções de Bugs
+      labels:
+        - 'bug'
+        - 'fix'
+
+    - title: 🛠️ Melhorias
+      labels:
+        - 'improvement'
+        - 'refactor'
+        - 'optimization'
+
+    - title: 📝 Documentação
+      labels:
+        - 'documentation'
+        - 'docs'
+
+    - title: 🔧 Outras Mudanças
+      labels:
+        - 'chore'
+        - 'maintenance'
+
+template:
+  - |
+    ## 📦 Nova Release: ${{ version }}
+
+    ${{ date }}
+
+    ${{ body }}
+
+    ---
+    **Resumo das Mudanças:**
+
+    ${{ changelog }}
+
+    ---
