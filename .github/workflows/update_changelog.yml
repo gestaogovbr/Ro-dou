@@ -1,0 +1,33 @@
+name: GitHub CLI Workflow
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up GitHub CLI
+        uses: cli/gh-action@v2
+
+      - name: Get latest release tag
+        id: get_latest_release
+        run: echo "::set-output name=tag::$(gh release list -R ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')"
+
+      - name: Get release notes
+        id: get_release_notes
+        run: |
+          release_notes=$(gh release view ${{ steps.get_latest_release.outputs.tag }} -R ${{ github.repository }} --json body --jq '.body')
+          echo "::set-output name=notes::$release_notes"
+
+      - name: Update CHANGELOG.md
+        run: |
+          echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")" >> CHANGELOG.md
+          echo "${{ steps.get_release_notes.outputs.notes }}" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
