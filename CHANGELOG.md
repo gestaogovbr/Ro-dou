@@ -27,3 +27,6 @@ RO_DOU__DAG_CONF_DIR=/opt/airflow/dags/repo1/dag_confs:/opt/airflow/dags/repo2/d
 ```
 
 Esta alteração permite que os arquivos de configuração das DAGs (`dag_confs/*.yml`) estejam em qualquer pasta da máquina ou container.
+## [0.1.3] - 2024-07-29
+## What's Changed
+
