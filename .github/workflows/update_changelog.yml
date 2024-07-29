@@ -12,19 +12,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set up GitHub CLI
-        uses: cli/gh-action@v2
-
+        
       - name: Get latest release tag
         id: get_latest_release
         run: echo "::set-output name=tag::$(gh release list -R ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')"
-
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get release notes
         id: get_release_notes
         run: |
           release_notes=$(gh release view ${{ steps.get_latest_release.outputs.tag }} -R ${{ github.repository }} --json body --jq '.body')
           echo "::set-output name=notes::$release_notes"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update CHANGELOG.md
         run: |
