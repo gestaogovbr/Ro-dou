@@ -32,10 +32,19 @@ jobs:
           echo "${{ steps.get_release_notes.outputs.notes }}" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
 
-      - name: Commit and push changes
+      - name: Create new branch
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b update-changelog-${{ steps.get_latest_release.outputs.tag }}
           git add CHANGELOG.md
           git commit -m 'Update CHANGELOG.md for ${{ steps.get_latest_release.outputs.tag }}'
-          git push origin HEAD:${{ github.ref }}
+          git push -u origin update-changelog-${{ steps.get_latest_release.outputs.tag }}
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Update CHANGELOG.md for ${{ steps.get_latest_release.outputs.tag }}" \
+            --body "This PR updates the CHANGELOG.md file with the release notes for ${{ steps.get_latest_release.outputs.tag }}." \
+            --head update-changelog-${{ steps.get_latest_release.outputs.tag }} \
+            --base main
