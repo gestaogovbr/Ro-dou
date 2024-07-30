@@ -18,6 +18,3 @@ changelog:
         - 'documentation'
         - 'docs'
     - title: 🔧 Outras Mudanças
-      labels:
-        - 'chore'
-        - 'maintenance'
