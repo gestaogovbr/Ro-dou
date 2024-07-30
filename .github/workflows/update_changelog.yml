@@ -34,7 +34,7 @@ jobs:
 
       - name: Update Changelog.md at specific line
         run: |
-          line_number=4
+          line_number=3
           sed -i "${line_number}r new_entry.md" CHANGELOG.md        
 
       - name: Create new branch
