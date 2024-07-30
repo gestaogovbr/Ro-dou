@@ -26,11 +26,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update CHANGELOG.md
+      - name: Create temp file
         run: |
           echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")" >> CHANGELOG.md
           echo "${{ steps.get_release_notes.outputs.notes }}" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
+
+      - name: Update Changelog.md at specific line
+        run: |
+          line_number=4
+          sed -i "${line_number}r new_entry.md" CHANGELOG.md        
 
       - name: Create new branch
         run: |
