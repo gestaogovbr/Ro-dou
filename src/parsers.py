@@ -1,5 +1,3 @@
-"""Abstract and concrete classes to parse DAG configuration from a file."""
-
 import ast
 import textwrap
 from abc import ABC, abstractmethod
