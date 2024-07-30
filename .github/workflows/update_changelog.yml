@@ -18,19 +18,17 @@ jobs:
         run: echo "::set-output name=tag::$(gh release list -R ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Get release notes
         id: get_release_notes
         run: |
-          release_notes=$(gh release view ${{ steps.get_latest_release.outputs.tag }} -R ${{ github.repository }} --json body --jq '.body')
-          echo "::set-output name=notes::$release_notes"
+          {
+            echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")"
+            gh release view ${{ steps.get_latest_release.outputs.tag }} -R ${{ github.repository }} --json body --jq '.body'
+            echo ""
+          } >> new_entry.md      
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create temp file
-        run: |
-          echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")" >> new_entry.md
-          echo "${{ steps.get_release_notes.outputs.notes }}" >> new_entry.md
-          echo "" >> new_entry.md
 
       - name: Update Changelog.md at specific line
         run: |
