@@ -28,9 +28,9 @@ jobs:
 
       - name: Create temp file
         run: |
-          echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")" >> CHANGELOG.md
-          echo "${{ steps.get_release_notes.outputs.notes }}" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          echo "## [${{ steps.get_latest_release.outputs.tag }}] - $(date +"%Y-%m-%d")" >> new_entry.md
+          echo "${{ steps.get_release_notes.outputs.notes }}" >> new_entry.md
+          echo "" >> new_entry.md
 
       - name: Update Changelog.md at specific line
         run: |
