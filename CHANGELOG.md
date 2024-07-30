@@ -8,6 +8,7 @@ As principais mudanças realizadas no repositório do [Ro-dou](https://github.co
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.1.3...0.1.4
 
 ## [0.1.3] - 2024-07-25
+- Cria a nova página de documentação do Ro-DOU no Github Pages
 - Cria a marca d'agua do Ro-DOU no template do email
 - Adiciona quebra de linhas no texto no modo full_text (INLABS)
 - Corrige bug quando a paginação de resultados é igual a 2 (DOU)
@@ -28,6 +29,17 @@ As principais mudanças realizadas no repositório do [Ro-dou](https://github.co
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.1.2...0.1.3
 
 ## [0.1.2]
+- Integração com o portal INLABS, da Imprensa Nacional, permitindo a leitura das edições do DOU pelos arquivos XML
+- Remove dependências com o framework FastETL
+- Cria filtro de pesquisa por unidade (department)
+- Cria opção de exibição de texto completo da publicação
+- Cria opção de busca avançada usando operadores lógicos (INLABS)
+- Implementa a opção de múltiplos searchs no mesmo YAML
+- Cria opção para omitir metadados (hide_filter) no relatório do clipping
+- Cria opção para permitir inclusão de cabeçalho e rodapé no corpo do relatório
+- Formata o texto para modo justificado
+
+
 ### What's Changed
 * Move DOUhook from FastETL to Ro-dou src by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/66
 * Validate yaml by @vitorbellini in https://github.com/gestaogovbr/Ro-dou/pull/75
