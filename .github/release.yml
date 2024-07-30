@@ -19,18 +19,3 @@ changelog:
         - 'docs'
     - title: 🔧 Outras Mudanças
       labels: []
-
-  template: |
-    ## 📦 Nova Release: ${{ version }}
-  
-    Data de lançamento: ${{ date }}
-  
-    ${{ body }}
-  
-    ---
-    **Resumo das Mudanças:**
-  
-    ${{ changelog }}
-  
-    ---
-    **Detalhes da Release:**
