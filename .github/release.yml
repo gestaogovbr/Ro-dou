@@ -1,4 +1,8 @@
 changelog:
+  exclude:
+    authors:
+      - github-actions
+      - github-actions[bot]
   categories:
     - title: 🚀 Novas Funcionalidades
       labels:
@@ -21,3 +25,19 @@ changelog:
       labels:
         - 'chore'
         - 'maintenance'
+        
+template:
+  - |
+    ## 📦 Nova Release: ${{ version }}
+
+    ${{ date }}
+
+    ${{ body }}
+
+    ---
+    **Resumo das Mudanças:**
+
+    ${{ changelog }}
+
+    ---
+    **Detalhes da Release:**
