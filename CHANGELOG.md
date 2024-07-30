@@ -1,6 +1,9 @@
 ## Change Log
 
 As principais mudanças realizadas no repositório do [Ro-ou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 31/08/2023.
+## [1.0.1] - 2024-07-30
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
 ## [0.1.3] - 2024-07-25
 - Cria a marca d'agua do Ro-DOU no template do email
 - Adiciona quebra de linhas no texto no modo full_text (INLABS)
