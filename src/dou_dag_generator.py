@@ -15,7 +15,7 @@ import sys
 import textwrap
 from dataclasses import asdict
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 import json
 
 import pandas as pd
@@ -170,11 +170,12 @@ class DouDigestDagGenerator:
         dou_sections: List[str],
         search_date,
         field,
-        is_exact_search: bool,
-        ignore_signature_match: bool,
-        force_rematch: bool,
-        full_text: bool,
-        result_as_email: bool,
+        is_exact_search: Optional[bool],
+        ignore_signature_match: Optional[bool],
+        force_rematch: Optional[bool],
+        full_text: Optional[bool],
+        use_summary: Optional[bool],
+        result_as_email: Optional[bool],
         department: List[str],
         **context,
     ) -> dict:
@@ -202,6 +203,7 @@ class DouDigestDagGenerator:
                 department,
                 ignore_signature_match,
                 full_text,
+                use_summary,
                 get_trigger_date(context, local_time=True),
             )
 
@@ -341,6 +343,7 @@ class DouDigestDagGenerator:
                             ],
                             "force_rematch": subsearch["force_rematch"],
                             "full_text": subsearch["full_text"],
+                            "use_summary": subsearch["use_summary"],
                             "department": subsearch["department"],
                             "result_as_email": result_as_html(specs),
                         },
