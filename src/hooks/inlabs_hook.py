@@ -55,6 +55,7 @@ class INLABSHook(BaseHook):
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
+        use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
         """Searches the DOU Database with the provided search terms and processes
@@ -65,6 +66,8 @@ class INLABSHook(BaseHook):
                 parameters.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
+            full_text (bool): If trim result text content
+            use_summary (bool): If exists, use summary as excerpt or full text
             conn_id (str): DOU Database Airflow conn id
 
         Returns:
@@ -92,7 +95,7 @@ class INLABSHook(BaseHook):
 
         return (
             self.TextDictHandler().transform_search_results(
-                all_results, filtered_text_terms, ignore_signature_match, full_text
+                all_results, filtered_text_terms, ignore_signature_match, full_text, use_summary
             )
             if not all_results.empty
             else {}
@@ -249,6 +252,7 @@ class INLABSHook(BaseHook):
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
+            use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -261,6 +265,9 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
+                use_summary (bool): If exists, use summary instead of
+                    excerpt or full text.
+                    Defaults to False
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
@@ -295,6 +302,10 @@ class INLABSHook(BaseHook):
             )
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
+
+            if use_summary:
+                # If use_summary replace texto value by summary value
+                df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
             df["display_date_sortable"] = None
             df["hierarchyList"] = None
 
