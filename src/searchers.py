@@ -391,6 +391,7 @@ class INLABSSearcher(BaseSearcher):
         department: List[str],
         ignore_signature_match: bool,
         full_text: bool,
+        use_summary: bool,
         reference_date: datetime = datetime.now(),
     ) -> Dict:
         """
@@ -408,6 +409,7 @@ class INLABSSearcher(BaseSearcher):
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
             full_text (bool): If trim result text content
+            use_summary (bool): If exists, use summary as excerpt or full text
             reference_date (datetime, optional): Reference date for the
                 search. Defaults to now.
 
@@ -422,7 +424,7 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text
+            search_terms, ignore_signature_match, full_text, use_summary
         )
 
         group_results = self._group_results(search_results, terms)

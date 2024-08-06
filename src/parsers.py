@@ -23,6 +23,7 @@ class SearchConfig:
     ignore_signature_match: bool
     force_rematch: bool
     full_text: bool
+    use_summary: bool
     terms: List[str]
     sql: str
     conn_id: str
@@ -142,6 +143,7 @@ class YAMLParser(FileParser):
             )
             proc_subsearch["force_rematch"] = subsearch.get("force_rematch", None)
             proc_subsearch["full_text"] = subsearch.get("full_text", None)
+            proc_subsearch["use_summary"] = subsearch.get("use_summary", None)
             proc_subsearch["department"] = subsearch.get("department", None)
             proc_search.append(proc_subsearch)
 
