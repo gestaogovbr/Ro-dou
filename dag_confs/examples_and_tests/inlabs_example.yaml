@@ -10,8 +10,9 @@ dag:
     sources:
     - INLABS
     terms:
-    - tecnologia
-    - informação
+      - tecnologia
+      - informação
+    use_summary: True
   report:
     emails:
       - destination@economia.gov.br

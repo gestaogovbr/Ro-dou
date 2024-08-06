@@ -22,6 +22,7 @@ dag:
       - SECAO_1
       - EDICAO_SUPLEMENTAR
     full_text: True
+    use_summary: True
   report:
     emails:
       - dest1@economia.gov.br
