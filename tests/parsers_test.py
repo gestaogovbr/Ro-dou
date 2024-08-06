@@ -54,6 +54,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
@@ -97,6 +98,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": True,
                         "force_rematch": True,
                         "full_text": True,
+                        "use_summary": True,
                         "department": None,
                     }
                 ],
@@ -143,6 +145,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
@@ -182,6 +185,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
@@ -225,6 +229,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
@@ -272,6 +277,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": [
                             "Ministério da Gestão e da Inovação em Serviços Públicos",
                             "Ministério da Defesa",
@@ -314,6 +320,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": True,
                         "department": None,
                     }
                 ],
@@ -356,6 +363,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
@@ -399,6 +407,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": True,
                         "force_rematch": True,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     },
                     {
@@ -419,6 +428,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": True,
                         "force_rematch": True,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     },
                 ],
@@ -458,6 +468,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": [
                             "Ministério da Gestão e da Inovação em Serviços Públicos",
                             "Ministério da Defesa",
@@ -500,6 +511,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                         "ignore_signature_match": False,
                         "force_rematch": None,
                         "full_text": None,
+                        "use_summary": None,
                         "department": None,
                     }
                 ],
