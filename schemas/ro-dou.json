@@ -126,6 +126,10 @@
                   "type": "boolean",
                   "description": "description"
                 },
+                "use_summary": {
+                  "type": "boolean",
+                  "description": "description"
+                },
                 "date": {
                   "type": "string",
                   "description": "description",
