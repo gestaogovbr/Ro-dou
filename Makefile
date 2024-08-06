@@ -2,7 +2,7 @@
 run: setup-containers create-example-variable
 
 setup-containers:
-	docker-compose up -d --force-recreate --remove-orphans
+	docker compose up -d --force-recreate --remove-orphans
 
 create-example-variable:
 	@echo 'Waiting for Airflow API to start ...'
@@ -24,7 +24,7 @@ create-example-variable:
 
 .PHONY: down
 down:
-	docker-compose down
+	docker compose down
 
 .PHONY: tests
 tests:
