@@ -2,7 +2,7 @@
 
 Nesta seção, você encontrará perguntas e respostas comuns e solução de problemas mais frequentes na utilização do Ro-DOU.
 
-4. Do que é preciso para instalar o Ro-DOU?
+1. Do que é preciso para instalar o Ro-DOU?
 Resposta: As instruções detalhadas de instalação estão [neste link](https://gestaogovbr.github.io/Ro-dou/como_utilizar/instalacao/).
 
 1. Como configurar os parâmetros de pesquisa do Ro-DOU?
