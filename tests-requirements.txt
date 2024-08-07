@@ -11,3 +11,4 @@ jsonschema==4.21.1
 PyYAML==6.0.1
 requests==2.31.0
 html2text==2024.2.26
+markdown==3.6.0
