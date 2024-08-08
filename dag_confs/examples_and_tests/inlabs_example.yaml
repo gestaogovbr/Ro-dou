@@ -4,6 +4,7 @@ dag:
   tags:
     - inlabs
   schedule: 0 8 * * MON-FRI
+  dataset: inlabs
   owner:
     - cdata
   search:
