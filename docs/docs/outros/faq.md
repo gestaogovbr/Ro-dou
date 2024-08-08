@@ -29,6 +29,9 @@ Resposta: Sim, basta indicar a data desejada no campo "trigger_date". <br>
 **9. Como receber atualizações de versão do Ro-DOU?** <br>
 Resposta: Sim, basta acompanhar o change log (log de atualizações) disponível [aqui](https://gestaogovbr.github.io/Ro-dou/changelog/changelog/). <br>
 
+**10. Posso utilizar o Ro-dou em meu órgão?** <br>
+Resposta: Sim. Confira as instruções [aqui](https://gestaogovbr.github.io/Ro-dou/como_utilizar/usuarios/).
+
 **10. Posso utilizar o Ro-dou na minha empresa privada?** <br>
 Resposta: Sim. Não são cobrados direitos autorais ou de exclusividade. <br>
 
