@@ -8,8 +8,10 @@ import subprocess
 import logging
 from datetime import datetime, timedelta
 
+from airflow import Dataset
 from airflow.decorators import dag, task
 from airflow.models import Variable
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -57,7 +59,7 @@ def load_inlabs():
         context = get_current_context()
         return get_trigger_date(context, local_time=True).strftime("%Y-%m-%d")
 
-    @task
+    @task.short_circuit
     def download_n_unzip_files(trigger_date: str):
         import requests
         from bs4 import BeautifulSoup
@@ -107,6 +109,9 @@ def load_inlabs():
                 "origem": "736372697074",
             }
             files = _find_files(session, headers)
+            if not files:
+                return False
+
             for file in files:
                 r = session.request(
                     "GET",
@@ -117,6 +122,8 @@ def load_inlabs():
                     f.write(r.content)
 
             logging.info("Downloaded files: %s", files)
+
+            return True
 
         def _unzip_files():
             all_files = os.listdir(dest_path)
@@ -131,8 +138,10 @@ def load_inlabs():
         inlabs_conn = BaseHook.get_connection(INLABS_CONN_ID)
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         _create_directories()
-        _download_files()
+        files_exists = _download_files()
         _unzip_files()
+
+        return files_exists
 
     @task
     def load_data(trigger_date: str):
@@ -191,6 +200,19 @@ def load_inlabs():
         )
         logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
 
+    check_loaded_data = SQLCheckOperator(
+        task_id="check_loaded_data",
+        conn_id=DEST_CONN_ID,
+        sql=f"""
+            SELECT 1
+                FROM
+                    {STG_TABLE}
+                WHERE
+                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
+            """,
+        outlets=[Dataset("inlabs")]
+        )
+
     @task
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
@@ -200,7 +222,7 @@ def load_inlabs():
     ## Orchestration
     trigger_date = get_date()
     download_n_unzip_files(trigger_date) >> \
-    load_data(trigger_date) >> \
+    load_data(trigger_date) >> check_loaded_data >> \
     remove_directory()
 
 

@@ -30,7 +30,11 @@
         },
         "schedule": {
           "type": "string",
-          "description": "Expressão cron ou nome do Dataset"
+          "description": "Expressão cron"
+        },
+        "dataset": {
+          "type": "string",
+          "description": "Nome do Dataset"
         },
         "search": {
           "oneOf":

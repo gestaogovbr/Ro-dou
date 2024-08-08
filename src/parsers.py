@@ -1,6 +1,7 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
 import ast
+import os
 import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,7 +10,6 @@ from typing import List, Set, Tuple, Union
 import yaml
 from airflow import Dataset
 from airflow.models import Variable
-
 
 @dataclass
 class SearchConfig:
@@ -40,6 +40,7 @@ class DAGConfig:
     discord_webhook: str
     slack_webhook: str
     schedule: str
+    dataset: str
     description: str
     skip_null: bool
     doc_md: str
@@ -57,48 +58,12 @@ class FileParser(ABC):
     @abstractmethod
     def parse(self):
         pass
-
-    def _hash_dag_id(self, dag_id: str, size: int) -> int:
-        """Hashes the `dag_id` into a integer between 0 and `size`"""
-        buffer = 0
-        for _char in dag_id:
-            buffer += ord(_char)
-        try:
-            _hash = buffer % size
-        except ZeroDivisionError:
-            raise ValueError("`size` deve ser maior que 0.")
-        return _hash
-
-    def _get_safe_schedule(
-        self, dag: dict, default_schedule: str
-    ) -> Union[str, Dataset]:
-        """Retorna um novo valor de `schedule` randomizando o
-        minuto de execução baseado no `dag_id`, caso a dag utilize o
-        schedule padrão. Aplica uma função de hash na string
-        dag_id que retorna valor entre 0 e 60 que define o minuto de
-        execução.
-        """
-        schedule = dag.get("schedule", default_schedule)
-        # is_cron?
-        if len(schedule.split(" ")) == 5:
-            if schedule == default_schedule:
-                id_based_minute = self._hash_dag_id(dag["id"], 60)
-                schedule_without_min = " ".join(schedule.split(" ")[1:])
-                schedule = f"{id_based_minute} {schedule_without_min}"
-        else:
-            schedule = [Dataset(schedule)]
-
-        return schedule
-
-
 class YAMLParser(FileParser):
     """Parses YAML file and get the DAG parameters.
 
     It guarantees that mandatory fields are in place and are properly
     defined providing clear error messages.
     """
-
-    DEFAULT_SCHEDULE = "0 5 * * *"
 
     def __init__(self, filepath: str):
         self.filepath = filepath
@@ -153,7 +118,8 @@ class YAMLParser(FileParser):
         )
         slack_webhook = report["slack"]["webhook"] if report.get("slack") else None
 
-        schedule = self._get_safe_schedule(dag, self.DEFAULT_SCHEDULE)
+        schedule = dag.get("schedule", None)
+        dataset = dag.get("dataset", None)
         doc_md = dag.get("doc_md", None)
         if doc_md:
             doc_md = textwrap.dedent(doc_md)
@@ -182,6 +148,7 @@ class YAMLParser(FileParser):
             discord_webhook=discord_webhook,
             slack_webhook=slack_webhook,
             schedule=schedule,
+            dataset=dataset,
             description=description,
             skip_null=skip_null,
             doc_md=doc_md,

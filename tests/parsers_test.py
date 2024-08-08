@@ -5,7 +5,7 @@ import os
 import sys
 import inspect
 import textwrap
-
+import yaml
 import pytest
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -13,19 +13,6 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
 
-
-@pytest.mark.parametrize(
-    "dag_id, size, hashed",
-    [
-        ("unique_id_for_each_dag", 60, 56),
-        ("generates_sparses_hashed_results", 120, 59),
-        ("unique_id_for_each_dag", 10, 6),
-        ("", 10, 0),
-        ("", 100, 0),
-    ],
-)
-def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
-    assert yaml_parser._hash_dag_id(dag_id, size) == hashed
 
 
 @pytest.mark.parametrize(
@@ -63,7 +50,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": False,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "37 5 * * *",
+                "schedule": None,
+                "dataset": None,
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
@@ -108,6 +96,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "discord_webhook": None,
                 "slack_webhook": None,
                 "schedule": "0 8 * * MON-FRI",
+                "dataset": None,
                 "description": "DAG exemplo utilizando todos os demais parâmetros.",
                 "skip_null": True,
                 "doc_md": None,
@@ -154,7 +143,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": True,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "2 5 * * *",
+                "schedule": None,
+                "dataset": None,
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
@@ -194,7 +184,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": False,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "29 5 * * *",
+                "schedule": None,
+                "dataset": None,
                 "description": "DAG de teste",
                 "skip_null": False,
                 "doc_md": None,
@@ -238,7 +229,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": False,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "10 5 * * *",
+                "schedule": None,
+                "dataset": None,
                 "description": "DAG com documentação em markdown",
                 "skip_null": True,
                 "doc_md": textwrap.dedent(
@@ -289,7 +281,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": False,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "59 5 * * *",
+                "schedule": None,
+                "dataset": None,
                 "description": "DAG de teste (filtro por departamento)",
                 "skip_null": True,
                 "doc_md": None,
@@ -330,6 +323,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "discord_webhook": None,
                 "slack_webhook": None,
                 "schedule": "0 8 * * MON-FRI",
+                "dataset": "inlabs",
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
@@ -372,7 +366,8 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "attach_csv": True,
                 "discord_webhook": None,
                 "slack_webhook": None,
-                "schedule": "0 8 * * MON-FRI",
+                "schedule": None,
+                "dataset": "inlabs",
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
@@ -438,6 +433,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "discord_webhook": None,
                 "slack_webhook": None,
                 "schedule": "0 8 * * MON-FRI",
+                "dataset": None,
                 "description": "DAG de teste com múltiplas buscas",
                 "skip_null": False,
                 "doc_md": None,
@@ -481,6 +477,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "discord_webhook": None,
                 "slack_webhook": None,
                 "schedule": "0 8 * * MON-FRI",
+                "dataset": None,
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
@@ -521,6 +518,7 @@ def test_hash_dag_id(yaml_parser, dag_id, size, hashed):
                 "discord_webhook": None,
                 "slack_webhook": None,
                 "schedule": "0 8 * * MON-FRI",
+                "dataset": None,
                 "description": "DAG de teste",
                 "skip_null": True,
                 "doc_md": None,
