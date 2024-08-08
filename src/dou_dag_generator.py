@@ -15,11 +15,11 @@ import sys
 import textwrap
 from dataclasses import asdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 import json
 
 import pandas as pd
-from airflow import DAG
+from airflow import DAG, Dataset
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
@@ -27,6 +27,8 @@ from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.slack.notifications.slack import SlackNotifier
+from airflow.timetables.datasets import DatasetOrTimeSchedule
+from airflow.timetables.trigger import CronTriggerTimetable
 
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
@@ -76,6 +78,8 @@ class DouDigestDagGenerator:
 
     YAMLS_DIR_LIST = [dag_confs for dag_confs in YAMLS_DIR.split(":")]
     SLACK_CONN_ID = "slack_notify_rodou_dagrun"
+    DEFAULT_SCHEDULE = "0 5 * * *"
+
     parser = YAMLParser
     searchers: Dict[str, BaseSearcher]
 
@@ -144,6 +148,76 @@ class DouDigestDagGenerator:
             doc_md = doc_md + "\n"
         doc_md = doc_md + "</dl>\n"
         return doc_md
+
+    @staticmethod
+    def _hash_dag_id(dag_id: str, size: int) -> int:
+        """Hashes the `dag_id` into a integer between 0 and `size`"""
+        buffer = 0
+        for _char in dag_id:
+            buffer += ord(_char)
+        try:
+            _hash = buffer % size
+        except ZeroDivisionError:
+            raise ValueError("`size` deve ser maior que 0.")
+        return _hash
+
+    def _get_safe_schedule(self, specs: DAGConfig, default_schedule: str) -> str:
+        """Retorna um novo valor de `schedule` randomizando o
+        minuto de execução baseado no `dag_id`, caso a dag utilize o
+        schedule padrão. Aplica uma função de hash na string
+        dag_id que retorna valor entre 0 e 60 que define o minuto de
+        execução.
+        """
+
+        schedule = default_schedule
+        id_based_minute = self._hash_dag_id(specs.dag_id, 60)
+        schedule_without_min = " ".join(schedule.split(" ")[1:])
+        schedule = f"{id_based_minute} {schedule_without_min}"
+
+        return schedule
+
+    def _update_schedule_with_dataset(
+        self, dataset: str, schedule: str, is_default_schedule: bool
+    ) -> Union[Dataset, DatasetOrTimeSchedule]:
+        """Caso informado um dataset o schedule é alterado
+        para ser condicionado a execução por Dataset ou
+        DatasetOrTimeSchedule
+        (caso o valor de schedule esteja informado no YAML).
+        """
+        if not is_default_schedule:
+            return DatasetOrTimeSchedule(
+                timetable=CronTriggerTimetable(
+                    schedule, timezone=os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE")
+                ),
+                datasets=[Dataset(dataset)],
+            )
+        return [Dataset(dataset)]
+
+    def _update_schedule(
+        self, specs: DAGConfig
+    ) -> Union[str, Union[Dataset, DatasetOrTimeSchedule]]:
+        """Atualiza o valor do schedule para o
+        valor default ou para Dataset, se for o caso.
+        """
+        schedule = specs.schedule
+
+        if schedule is None:
+            schedule = self._get_safe_schedule(
+                specs=specs,
+                default_schedule=self.DEFAULT_SCHEDULE
+            )
+            is_default_schedule = True
+        else:
+            is_default_schedule = False
+
+        if specs.dataset is not None:
+            schedule = self._update_schedule_with_dataset(
+                dataset=specs.dataset,
+                schedule=schedule,
+                is_default_schedule=is_default_schedule,
+            )
+
+        return schedule
 
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags"""
@@ -294,10 +368,13 @@ class DouDigestDagGenerator:
             "on_retry_callback": self.on_retry_callback,
             "on_failure_callback": self.on_failure_callback,
         }
+
+        schedule = self._update_schedule(specs)
+
         dag = DAG(
             specs.dag_id,
             default_args=default_args,
-            schedule=specs.schedule,
+            schedule=schedule,
             description=specs.description,
             doc_md=doc_md,
             catchup=False,
