@@ -5,22 +5,25 @@ import pandas as pd
 import pytest
 from dags.ro_dou_src.dou_dag_generator import merge_results
 from dags.ro_dou_src.notification.email_sender import EmailSender, repack_match
+from airflow import Dataset
+from airflow.timetables.datasets import DatasetOrTimeSchedule
 
 
 def test_repack_match(report_example):
-    match_dict = report_example[0]['result']['single_group']['antonio de oliveira'][0]
-    repacked_match = repack_match('Teste Report',
-                                    'single_group',
-                                    'antonio de oliveira',
-                                    match_dict)
-    assert repacked_match == ('Teste Report',
-                              'single_group',
-                              'antonio de oliveira',
-                              'Seção 3',
-                              match_dict['href'],
-                              match_dict['title'],
-                              match_dict['abstract'],
-                              match_dict['date'])
+    match_dict = report_example[0]["result"]["single_group"]["antonio de oliveira"][0]
+    repacked_match = repack_match(
+        "Teste Report", "single_group", "antonio de oliveira", match_dict
+    )
+    assert repacked_match == (
+        "Teste Report",
+        "single_group",
+        "antonio de oliveira",
+        "Seção 3",
+        match_dict["href"],
+        match_dict["title"],
+        match_dict["abstract"],
+        match_dict["date"],
+    )
 
 
 @pytest.fixture
