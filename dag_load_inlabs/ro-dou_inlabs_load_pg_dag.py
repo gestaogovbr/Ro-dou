@@ -8,8 +8,10 @@ import subprocess
 import logging
 from datetime import datetime, timedelta
 
+from airflow import Dataset
 from airflow.decorators import dag, task
 from airflow.models import Variable
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -191,6 +193,19 @@ def load_inlabs():
         )
         logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
 
+    check_loaded_data = SQLCheckOperator(
+        task_id="check_loaded_data",
+        conn_id=DEST_CONN_ID,
+        sql=f"""
+            SELECT 1
+                FROM
+                    {STG_TABLE}
+                WHERE
+                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
+            """,
+        outlets=[Dataset("inlabs")]
+        )
+
     @task
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
@@ -200,7 +215,7 @@ def load_inlabs():
     ## Orchestration
     trigger_date = get_date()
     download_n_unzip_files(trigger_date) >> \
-    load_data(trigger_date) >> \
+    load_data(trigger_date) >> check_loaded_data >> \
     remove_directory()
 
 
