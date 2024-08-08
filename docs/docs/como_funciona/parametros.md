@@ -7,6 +7,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 * **description**: Descrição da DAG de pesquisa.
 * **doc_md**: Documentação em markdown da DAG para uma descrição mais completa.
 * **schedule**: Agendamento da periodicidade de execução da DAG. Padrão cron (0 8 * * MON-FRI)
+* **dataset**: Agendamento da DAG baseado na atualização de um Dataset do Airflow. Em conjunto com o schedule a execução é condicionada ao schedule e dataset.
 * **tags**: Tags para categorizar a DAG.
 * **owner**: Responsável pela DAG.
 
