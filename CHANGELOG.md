@@ -1,6 +1,16 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.1.5] - 2024-08-09
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Cria parâmetro opcional para uso da ementa (se houver) da publicação ao invés da janela de contexto ou texto completo. by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/113
+* Cria parâmetro para uso de **dataset** no Data-Aware Schedulling. O schedule da DAG agora pode ser definido por três meios: _cron, dataset_ ou _cron + dataset_ <br>
+*  by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/115
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.1.4...0.1.5
+
 ## [0.1.4] - 2024-07-30
 ### What's Changed
 * Close p tag in watermark by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/109
