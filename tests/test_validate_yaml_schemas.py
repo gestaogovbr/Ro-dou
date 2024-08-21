@@ -1,10 +1,11 @@
+import glob
 import json
+from urllib.parse import urlparse
+import yaml
+
 import jsonschema
 import pytest
-import glob
-import yaml
 import requests
-from urllib.parse import urlparse
 
 
 YAMLS_DIR = "../dags/ro_dou/dag_confs"
@@ -31,6 +32,7 @@ def get_schema(filepath):
 
 
 SCHEMA = get_schema(SCHEMA_FILEPATH)
+
 
 @pytest.mark.parametrize(
     "data_file",
