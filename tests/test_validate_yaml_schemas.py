@@ -1,3 +1,6 @@
+"""Test validation of yaml files according to the defined schemas.
+"""
+
 import glob
 import json
 from urllib.parse import urlparse
