@@ -5,7 +5,7 @@ import os
 import sys
 import inspect
 import textwrap
-import yaml
+
 import pytest
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
