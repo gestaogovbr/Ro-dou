@@ -1,7 +1,7 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-import ast
 from dataclasses import dataclass
+import json
 import textwrap
 from typing import List, Set, Tuple
 import yaml
@@ -161,7 +161,7 @@ class YAMLParser:
             if "from_airflow_variable" in terms:
                 var_value = Variable.get(terms.get("from_airflow_variable"))
                 try:
-                    terms = ast.literal_eval(var_value)
+                    terms = json.loads(var_value)
                 except (ValueError, SyntaxError):
                     terms = var_value.splitlines()
             elif "from_db_select" in terms:
