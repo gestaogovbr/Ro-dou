@@ -10,6 +10,7 @@ import yaml
 from airflow import Dataset
 from airflow.models import Variable
 
+
 @dataclass
 class SearchConfig:
     header: str
@@ -57,6 +58,8 @@ class FileParser(ABC):
     @abstractmethod
     def parse(self):
         pass
+
+
 class YAMLParser(FileParser):
     """Parses YAML file and get the DAG parameters.
 
