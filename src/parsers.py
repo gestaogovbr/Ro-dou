@@ -1,13 +1,12 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-import ast
-import os
-import textwrap
 from abc import ABC, abstractmethod
+import ast
 from dataclasses import dataclass
-from typing import List, Set, Tuple, Union
-
+import textwrap
+from typing import List, Set, Tuple
 import yaml
+
 from airflow import Dataset
 from airflow.models import Variable
 
