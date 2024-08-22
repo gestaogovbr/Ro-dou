@@ -1,6 +1,5 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-from abc import ABC, abstractmethod
 import ast
 from dataclasses import dataclass
 import textwrap
@@ -9,6 +8,8 @@ import yaml
 
 from airflow import Dataset
 from airflow.models import Variable
+
+from schemas import RoDouConfig
 
 
 @dataclass
@@ -52,15 +53,7 @@ class DAGConfig:
     no_results_found_text: str
 
 
-class FileParser(ABC):
-    """Abstract class to build file parsers with DAG configuration."""
-
-    @abstractmethod
-    def parse(self):
-        pass
-
-
-class YAMLParser(FileParser):
+class YAMLParser:
     """Parses YAML file and get the DAG parameters.
 
     It guarantees that mandatory fields are in place and are properly
