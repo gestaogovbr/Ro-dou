@@ -71,9 +71,6 @@ class YAMLParser(FileParser):
         self.filepath = filepath
 
     def parse(self) -> DAGConfig:
-        return self._parse_yaml()
-
-    def _parse_yaml(self) -> DAGConfig:
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
