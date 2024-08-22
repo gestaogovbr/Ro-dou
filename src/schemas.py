@@ -46,7 +46,7 @@ class SearchField(BaseModel):
     value: str
 
 
-class Search(BaseModel):
+class SearchConfig(BaseModel):
     """Represents the search configuration in the YAML file."""
 
     header: Optional[str] = Field(
@@ -70,7 +70,7 @@ class Search(BaseModel):
     )
 
 
-class Report(BaseModel):
+class ReportConfig(BaseModel):
     """Represents the report configuration in the YAML file."""
 
     slack: Optional[dict] = Field(
@@ -107,7 +107,7 @@ class Report(BaseModel):
     )
 
 
-class DAG(BaseModel):
+class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
     id: str = Field(description="Nome único da DAG")
@@ -120,17 +120,17 @@ class DAG(BaseModel):
     )
     schedule: Optional[str] = Field(default=None, description="Expressão cron")
     dataset: Optional[str] = Field(default=None, description="Nome do Dataset")
-    search: Union[List[Search], Search] = Field(
+    search: Union[List[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
     doc_md: Optional[str] = Field(default="", description="description")
-    report: Report = Field(
+    report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
     )
 
 
-class Config(BaseModel):
+class RoDouConfig(BaseModel):
     """Represents the overall configuration in the YAML file."""
 
-    dag: DAG = Field(description="Instanciação da DAG")
+    dag: DAGConfig = Field(description="Instanciação da DAG")

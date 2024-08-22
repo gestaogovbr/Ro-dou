@@ -11,7 +11,7 @@ import yaml
 
 # add module path so we can import from other modules
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from schemas import Config
+from schemas import RoDouConfig
 
 YAMLS_DIR = "../dags/ro_dou/dag_confs"
 
@@ -29,6 +29,6 @@ def test_pydantic_validation(data_file):
         data = yaml.safe_load(data_fp)
 
     try:
-        Config(**data)
+        RoDouConfig(**data)
     except ValidationError as e:
         pytest.fail(f"YAML file {data_file} is not valid:\n{e}")
