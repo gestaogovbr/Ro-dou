@@ -63,13 +63,17 @@ class YAMLParser:
     def __init__(self, filepath: str):
         self.filepath = filepath
 
+    def read(self) -> dict:
+        """Reads the contents of the YAML file."""
+        with open(self.filepath, "r", encoding="utf-8") as file:
+            dag_config_dict = yaml.safe_load(file)
+        return dag_config_dict
+
     def parse(self) -> DAGConfig:
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
-        with open(self.filepath, "r") as file:
-            dag_config_dict = yaml.safe_load(file)
-
+        dag_config_dict = self.read()
         dag = self._try_get(dag_config_dict, "dag")
         dag_id = self._try_get(dag, "id")
         description = self._try_get(dag, "description")
