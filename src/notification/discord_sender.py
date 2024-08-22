@@ -1,17 +1,20 @@
-import requests
 import re
+
+import requests
+
 from notification.isender import ISender
+from schemas import ReportConfig
 
 
 class DiscordSender(ISender):
     highlight_tags = ("__", "__")
 
-    def __init__(self, specs) -> None:
-        self.webhook_url = specs.discord_webhook
-        self.hide_filters = specs.hide_filters
-        self.header_text = specs.header_text
-        self.footer_text = specs.footer_text
-        self.no_results_found_text = specs.no_results_found_text
+    def __init__(self, report_config: ReportConfig) -> None:
+        self.webhook_url = report_config.discord["webhook"]
+        self.hide_filters = report_config.hide_filters
+        self.header_text = report_config.header_text
+        self.footer_text = report_config.footer_text
+        self.no_results_found_text = report_config.no_results_found_text
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""

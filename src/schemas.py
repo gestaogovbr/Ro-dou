@@ -14,6 +14,7 @@ These models are used to validate the YAML files using the Pydantic
 library.
 """
 
+import textwrap
 from typing import List, Optional, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 
@@ -64,6 +65,52 @@ class SearchConfig(BaseModel):
     )
     terms: Union[List[str], SearchTerms] = Field(
         description="Lista de termos de pesquisa ou uma forma de buscá-los"
+    )
+    field: Optional[str] = Field(
+        default="TUDO",
+        description="Campos dos quais os termos devem ser pesquisados. "
+        "Valores: TUDO, TITULO, CONTEUDO. Default: TUDO",
+    )
+    is_exact_search: Optional[bool] = Field(
+        default=True,
+        description="Busca somente o termo exato. Valores: True ou False. "
+        "Default: True.",
+    )
+    ignore_signature_match: Optional[bool] = Field(
+        default=False,
+        description="Busca somente o termo exato. Valores: True ou False. "
+        "Default: True.",
+    )
+    date: Optional[str] = Field(
+        default="DIA",
+        description="Intervalo de data para busca. Valores: DIA, SEMANA, "
+        "MES, ANO. Default: DIA",
+    )
+    dou_sections: Optional[List[str]] = Field(
+        default=["TODOS"],
+        description=textwrap.dedent(
+            """
+            Seção do Diário Oficial a procurar:
+
+            - SECAO_1
+            - SECAO_2
+            - SECAO_3
+            - EDICAO_EXTRA
+            - EDICAO_EXTRA_1A
+            - EDICAO_EXTRA_1B
+            - EDICAO_EXTRA_1D
+            - EDICAO_EXTRA_2A
+            - EDICAO_EXTRA_2B
+            - EDICAO_EXTRA_2D
+            - EDICAO_EXTRA_3A
+            - EDICAO_EXTRA_3B
+            - EDICAO_EXTRA_3D
+            - EDICAO_SUPLEMENTAR
+            - TODOS
+
+            Default: TODOS
+        """
+        ),
     )
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"

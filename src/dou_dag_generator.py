@@ -60,7 +60,7 @@ def _merge_dict(dict1, dict2):
 
 def result_as_html(specs: DAGConfig) -> bool:
     """Só utiliza resultado HTML apenas para email"""
-    return specs.discord_webhook and specs.slack_webhook
+    return specs.report.discord["webhook"] and specs.report.slack["webhook"]
 
 
 class DouDigestDagGenerator:
@@ -122,7 +122,7 @@ class DouDigestDagGenerator:
         Returns:
             str: The DAG documentation in markdown format.
         """
-        config = asdict(specs)
+        config = specs.model_dump()
         # options that won't show in the "DAG Docs"
         del config["description"]
         del config["doc_md"]
@@ -170,7 +170,7 @@ class DouDigestDagGenerator:
         """
 
         schedule = default_schedule
-        id_based_minute = self._hash_dag_id(specs.dag_id, 60)
+        id_based_minute = self._hash_dag_id(specs.id, 60)
         schedule_without_min = " ".join(schedule.split(" ")[1:])
         schedule = f"{id_based_minute} {schedule_without_min}"
 
@@ -232,7 +232,7 @@ class DouDigestDagGenerator:
 
         for filepath in files_list:
             dag_specs = self.parser(filepath).parse()
-            dag_id = dag_specs.dag_id
+            dag_id = dag_specs.id
             globals()[dag_id] = self.create_dag(dag_specs, filepath)
 
     def perform_searches(
@@ -356,7 +356,7 @@ class DouDigestDagGenerator:
         """
         # Prepare the markdown documentation
         doc_md = (
-            self.prepare_doc_md(specs, config_file) if specs.doc_md else specs.doc_md
+            self.prepare_doc_md(specs, config_file) if specs.doc_md else None
         )
         # DAG parameters
         default_args = {
@@ -372,14 +372,14 @@ class DouDigestDagGenerator:
         schedule = self._update_schedule(specs)
 
         dag = DAG(
-            specs.dag_id,
+            specs.id,
             default_args=default_args,
             schedule=schedule,
             description=specs.description,
             doc_md=doc_md,
             catchup=False,
             params={"trigger_date": "2022-01-02T12:00"},
-            tags=specs.dag_tags,
+            tags=specs.tags,
         )
 
         with dag:
@@ -427,9 +427,8 @@ class DouDigestDagGenerator:
                     )
 
                     if subsearch["sql"]:
-                        (
-                            select_terms_from_db_task >> exec_search_task
-                        )  # pylint: disable=pointless-statement
+                        # pylint: disable=pointless-statement
+                        select_terms_from_db_task >> exec_search_task
 
             has_matches_task = BranchPythonOperator(
                 task_id="has_matches",
@@ -443,7 +442,7 @@ class DouDigestDagGenerator:
                         ]
                     )
                     + ") }}",
-                    "skip_null": specs.skip_null,
+                    "skip_null": specs.report.skip_null,
                 },
             )
 
@@ -465,6 +464,7 @@ class DouDigestDagGenerator:
                 },
             )
 
+            # pylint: disable=pointless-statement
             tg_exec_searchs >> has_matches_task
 
             has_matches_task >> [send_notification_task, skip_notification_task]
