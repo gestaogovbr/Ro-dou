@@ -64,24 +64,6 @@ class SearchConfig(BaseModel):
         description="ID do território no Querido Diário para filtragem "
         "baseada em localização",
     )
-    terms: Union[List[str], FetchTermsConfig] = Field(
-        description="Lista de termos de pesquisa ou uma forma de buscá-los"
-    )
-    field: Optional[str] = Field(
-        default="TUDO",
-        description="Campos dos quais os termos devem ser pesquisados. "
-        "Valores: TUDO, TITULO, CONTEUDO. Default: TUDO",
-    )
-    is_exact_search: Optional[bool] = Field(
-        default=True,
-        description="Busca somente o termo exato. Valores: True ou False. "
-        "Default: True.",
-    )
-    ignore_signature_match: Optional[bool] = Field(
-        default=False,
-        description="Busca somente o termo exato. Valores: True ou False. "
-        "Default: True.",
-    )
     date: Optional[str] = Field(
         default="DIA",
         description="Intervalo de data para busca. Valores: DIA, SEMANA, "
@@ -115,6 +97,42 @@ class SearchConfig(BaseModel):
     )
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
+    )
+    terms: Union[List[str], FetchTermsConfig] = Field(
+        description="Lista de termos de pesquisa ou uma forma de buscá-los"
+    )
+    field: Optional[str] = Field(
+        default="TUDO",
+        description="Campos dos quais os termos devem ser pesquisados. "
+        "Valores: TUDO, TITULO, CONTEUDO. Default: TUDO",
+    )
+    is_exact_search: Optional[bool] = Field(
+        default=True,
+        description="Busca somente o termo exato. Valores: True ou False. "
+        "Default: True.",
+    )
+    ignore_signature_match: Optional[bool] = Field(
+        default=False,
+        description="Busca somente o termo exato. Valores: True ou False. "
+        "Default: True.",
+    )
+    force_rematch: Optional[bool] = Field(
+        default=False,
+        description="Indica que a busca deve ser forçada, mesmo que já "
+        "tenha sido feita anteriormente. Valores: True ou False. "
+        "Default: False.",
+    )
+    full_text: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibido o texto completo, "
+        "ao invés de um resumo. Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    use_summary: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibido a ementa, se existir. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
     )
 
 
