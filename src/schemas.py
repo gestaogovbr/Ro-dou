@@ -26,8 +26,9 @@ class DBSelect(BaseModel):
     conn_id: str = Field(description="Airflow connection ID to use for the SQL query")
 
 
-class SearchTerms(BaseModel):
-    """Represents the search terms in the YAML file."""
+class FetchTermsConfig(BaseModel):
+    """Represents configuration information for fetching search terms from
+    a data source."""
 
     from_airflow_variable: Optional[str] = Field(
         default=None,
@@ -63,7 +64,7 @@ class SearchConfig(BaseModel):
         description="ID do território no Querido Diário para filtragem "
         "baseada em localização",
     )
-    terms: Union[List[str], SearchTerms] = Field(
+    terms: Union[List[str], FetchTermsConfig] = Field(
         description="Lista de termos de pesquisa ou uma forma de buscá-los"
     )
     field: Optional[str] = Field(
