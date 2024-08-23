@@ -17,6 +17,7 @@ library.
 import textwrap
 from typing import List, Optional, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
+from pydantic import field_validator
 
 
 class DBSelect(BaseModel):
@@ -199,6 +200,19 @@ class DAGConfig(BaseModel):
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
     )
+
+    @field_validator("search")
+    @staticmethod
+    def cast_to_list(
+        search_param: Union[List[SearchConfig], SearchConfig]
+    ) -> List[SearchConfig]:
+        """Cast the value of "search" parameter to always be a list.
+        If the yaml configuration file does not use a list, convert to
+        a list with a single search.
+        """
+        if not isinstance(search_param, list):
+            return [search_param]
+        return search_param
 
 
 class RoDouConfig(BaseModel):
