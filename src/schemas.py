@@ -149,18 +149,22 @@ class ReportConfig(BaseModel):
         default=None, description="Lista de endereços de e-mail para enviar o relatório"
     )
     attach_csv: Optional[bool] = Field(
-        default=None,
-        description="Se deve anexar um arquivo CSV com os resultados da pesquisa",
+        default=False,
+        description="Se deve anexar um arquivo CSV com os resultados da pesquisa."
+        "Default: False.",
     )
     subject: Optional[str] = Field(
         default=None, description="Assunto do relatório por e-mail"
     )
     skip_null: Optional[bool] = Field(
-        default=None,
-        description="Se deve pular a notificação de resultados nulos/vazios",
+        default=True,
+        description="Se deve pular a notificação de resultados nulos/vazios. "
+        "Default: True.",
     )
     hide_filters: Optional[bool] = Field(
-        default=None, description="Se deve ocultar os filtros aplicados no relatório"
+        default=False,
+        description="Se deve ocultar os filtros aplicados no relatório."
+        "Default: False.",
     )
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
@@ -169,7 +173,8 @@ class ReportConfig(BaseModel):
         default=None, description="Texto a ser incluído no rodapé do relatório"
     )
     no_results_found_text: Optional[str] = Field(
-        default=None, description="Texto a ser exibido quando não há resultados"
+        default="Nenhum dos termos pesquisados foi encontrado nesta consulta",
+        description="Texto a ser exibido quando não há resultados",
     )
 
 
