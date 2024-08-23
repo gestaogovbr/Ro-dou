@@ -12,7 +12,7 @@ def mocked_specs():
     Specs = namedtuple(
         "Specs",
         [
-            "discord_webhook",
+            "discord",
             "hide_filters",
             "header_text",
             "footer_text",
@@ -20,7 +20,7 @@ def mocked_specs():
         ],
     )
     return Specs(
-        WEBHOOK,
+        {"webhook": WEBHOOK},
         False,
         None,
         None,
