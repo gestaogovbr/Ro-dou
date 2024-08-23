@@ -14,14 +14,14 @@ sys.path.insert(0, parentdir)
 from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
 
 
-
 @pytest.mark.parametrize(
     "filepath, result_tuple",
     [
         (
             "basic_example.yaml",
             {
-                "dag_id": "basic_example",
+                "id": "basic_example",
+                "description": "DAG de teste",
                 "search": [
                     {
                         "terms": [
@@ -39,34 +39,37 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "field": "TUDO",
                         "is_exact_search": True,
                         "ignore_signature_match": False,
-                        "force_rematch": None,
-                        "full_text": None,
-                        "use_summary": None,
+                        "force_rematch": False,
+                        "full_text": False,
+                        "use_summary": False,
                         "department": None,
                     }
                 ],
-                "emails": ["destination@economia.gov.br"],
-                "subject": "Teste do Ro-dou",
-                "attach_csv": False,
-                "discord_webhook": None,
-                "slack_webhook": None,
-                "schedule": None,
-                "dataset": None,
-                "description": "DAG de teste",
-                "skip_null": True,
-                "doc_md": None,
-                "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
-                "hide_filters": False,
-                "header_text": None,
-                "footer_text": None,
-                "no_results_found_text": "Nenhum dos termos pesquisados foi encontrado nesta consulta",
+                "report": {
+                    "emails": ["destination@economia.gov.br"],
+                    "subject": "Teste do Ro-dou",
+                    "attach_csv": False,
+                    "discord_webhook": None,
+                    "slack_webhook": None,
+                    "schedule": None,
+                    "dataset": None,
+                    "description": "DAG de teste",
+                    "skip_null": True,
+                    "doc_md": None,
+                    "dag_tags": {"dou", "generated_dag"},
+                    "owner": [],
+                    "hide_filters": False,
+                    "header_text": None,
+                    "footer_text": None,
+                    "no_results_found_text": "Nenhum dos termos pesquisados "
+                    "foi encontrado nesta consulta",
+                },
             },
         ),
         (
             "all_parameters_example.yaml",
             {
-                "dag_id": "all_parameters_example",
+                "id": "all_parameters_example",
                 "search": [
                     {
                         "terms": [
@@ -111,7 +114,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "terms_from_db_example.yaml",
             {
-                "dag_id": "terms_from_db_example",
+                "id": "terms_from_db_example",
                 "search": [
                     {
                         "terms": [],
@@ -149,7 +152,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": True,
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
@@ -159,7 +162,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "basic_example_skip_null.yaml",
             {
-                "dag_id": "basic_example_skip_null",
+                "id": "basic_example_skip_null",
                 "search": [
                     {
                         "terms": ["cimentodaaroeira"],
@@ -190,7 +193,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": False,
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
@@ -200,7 +203,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "markdown_docs_example.yaml",
             {
-                "dag_id": "markdown_docs_example",
+                "id": "markdown_docs_example",
                 "search": [
                     {
                         "terms": [
@@ -243,7 +246,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                       * ou colocar [links](graph)!"""
                 ).strip(),
                 "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
@@ -253,7 +256,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "department_example.yaml",
             {
-                "dag_id": "department_example",
+                "id": "department_example",
                 "search": [
                     {
                         "terms": ["dados abertos"],
@@ -287,7 +290,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": True,
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
@@ -297,7 +300,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "inlabs_example.yaml",
             {
-                "dag_id": "inlabs_example",
+                "id": "inlabs_example",
                 "search": [
                     {
                         "terms": ["tecnologia", "informação"],
@@ -338,7 +341,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "inlabs_advanced_search_example.yaml",
             {
-                "dag_id": "inlabs_advanced_search_example",
+                "id": "inlabs_advanced_search_example",
                 "search": [
                     {
                         "terms": [
@@ -382,7 +385,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "multiple_searchs_example.yaml",
             {
-                "dag_id": "multiple_searchs_example",
+                "id": "multiple_searchs_example",
                 "search": [
                     {
                         "terms": [
@@ -438,7 +441,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": False,
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag", "inlabs"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": None,
                 "footer_text": None,
@@ -448,7 +451,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "hide_filters_example.yaml",
             {
-                "dag_id": "hide_filters_example",
+                "id": "hide_filters_example",
                 "search": [
                     {
                         "terms": ["tecnologia", "informação"],
@@ -482,7 +485,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": True,
                 "doc_md": None,
                 "dag_tags": {"dou", "inlabs", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": True,
                 "header_text": None,
                 "footer_text": None,
@@ -492,7 +495,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         (
             "header_and_footer_example.yaml",
             {
-                "dag_id": "header_and_footer_example",
+                "id": "header_and_footer_example",
                 "search": [
                     {
                         "terms": ["tecnologia", "informação"],
@@ -523,7 +526,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "skip_null": True,
                 "doc_md": None,
                 "dag_tags": {"dou", "generated_dag"},
-                "owner": "",
+                "owner": [],
                 "hide_filters": False,
                 "header_text": "<p><strong>Greetings<strong></p>",
                 "footer_text": "<p>Best Regards</p>",
@@ -532,11 +535,10 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
         ),
     ],
 )
-
 def test_parse(filepath, result_tuple):
     filepath = os.path.join(
         DouDigestDagGenerator().YAMLS_DIR, "examples_and_tests", filepath
     )
     parsed = YAMLParser(filepath=filepath).parse()
 
-    assert parsed == DAGConfig(**result_tuple)
+    assert parsed.model_dump() == DAGConfig(**result_tuple).model_dump()
