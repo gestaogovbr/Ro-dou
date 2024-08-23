@@ -28,9 +28,9 @@ class Notifier:
         self.senders = []
         if specs.report.emails:
             self.senders.append(EmailSender(specs.report))
-        if specs.report.discord["webhook"]:
+        if specs.report.discord:
             self.senders.append(DiscordSender(specs.report))
-        if specs.report.slack["webhook"]:
+        if specs.report.slack:
             self.senders.append(SlackSender(specs.report))
 
 

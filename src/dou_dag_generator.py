@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
+from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 
@@ -59,7 +60,7 @@ def _merge_dict(dict1, dict2):
 
 def result_as_html(specs: DAGConfig) -> bool:
     """Só utiliza resultado HTML apenas para email"""
-    return specs.report.discord["webhook"] and specs.report.slack["webhook"]
+    return specs.report.discord and specs.report.slack
 
 
 class DouDigestDagGenerator:
@@ -353,9 +354,7 @@ class DouDigestDagGenerator:
         the term_list from a database
         """
         # Prepare the markdown documentation
-        doc_md = (
-            self.prepare_doc_md(specs, config_file) if specs.doc_md else None
-        )
+        doc_md = self.prepare_doc_md(specs, config_file) if specs.doc_md else None
         # DAG parameters
         default_args = {
             "owner": specs.owner,
@@ -383,48 +382,63 @@ class DouDigestDagGenerator:
         with dag:
 
             with TaskGroup(group_id="exec_searchs") as tg_exec_searchs:
-                counter = 0
-                for subsearch in specs.search:
-                    counter += 1
-                    if subsearch["sql"]:
+
+                # is it a single search or a list of searchers?
+                if isinstance(specs.search, list):
+                    searches = specs.search
+                else:
+                    searches = [specs.search]
+
+                for counter, subsearch in enumerate(searches, 1):
+
+                    # are terms to be fetched from a database?
+                    terms_come_from_db: bool = isinstance(
+                        subsearch.terms, FetchTermsConfig
+                    ) and getattr(subsearch.terms, "from_db_select", None)
+
+                    # determine the terms list
+                    term_list = []
+                    # is it a directly defined list of terms or is it a
+                    # configuration for fetching terms from a data source?
+                    if isinstance(subsearch.terms, list):
+                        term_list = subsearch.terms
+                    elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
                             task_id=f"select_terms_from_db_{counter}",
                             python_callable=self.select_terms_from_db,
                             op_kwargs={
-                                "sql": subsearch["sql"],
-                                "conn_id": subsearch["conn_id"],
+                                "sql": subsearch.terms.from_db_select.sql,
+                                "conn_id": subsearch.terms.from_db_select.conn_id,
                             },
                         )
-                    term_list = (
-                        "{{ ti.xcom_pull(task_ids='exec_searchs.select_terms_from_db_"
-                        + str(counter)
-                        + "') }}"
-                    )
+                        term_list = (
+                            "{{ ti.xcom_pull(task_ids='exec_searchs.select_terms_from_db_"
+                            + str(counter)
+                            + "') }}"
+                        )
 
                     exec_search_task = PythonOperator(
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,
                         op_kwargs={
-                            "header": subsearch["header"],
-                            "sources": subsearch["sources"],
-                            "territory_id": subsearch["territory_id"],
-                            "term_list": subsearch["terms"] or term_list,
-                            "dou_sections": subsearch["dou_sections"],
-                            "search_date": subsearch["search_date"],
-                            "field": subsearch["field"],
-                            "is_exact_search": subsearch["is_exact_search"],
-                            "ignore_signature_match": subsearch[
-                                "ignore_signature_match"
-                            ],
-                            "force_rematch": subsearch["force_rematch"],
-                            "full_text": subsearch["full_text"],
-                            "use_summary": subsearch["use_summary"],
-                            "department": subsearch["department"],
+                            "header": subsearch.header,
+                            "sources": subsearch.sources,
+                            "territory_id": subsearch.territory_id,
+                            "term_list": term_list,
+                            "dou_sections": subsearch.dou_sections,
+                            "search_date": subsearch.date,
+                            "field": subsearch.field,
+                            "is_exact_search": subsearch.is_exact_search,
+                            "ignore_signature_match": subsearch.ignore_signature_match,
+                            "force_rematch": subsearch.force_rematch,
+                            "full_text": subsearch.full_text,
+                            "use_summary": subsearch.use_summary,
+                            "department": subsearch.department,
                             "result_as_email": result_as_html(specs),
                         },
                     )
 
-                    if subsearch["sql"]:
+                    if terms_come_from_db:
                         # pylint: disable=pointless-statement
                         select_terms_from_db_task >> exec_search_task
 
@@ -435,8 +449,8 @@ class DouDigestDagGenerator:
                     "search_result": "{{ ti.xcom_pull(task_ids="
                     + str(
                         [
-                            f"exec_searchs.exec_search_{count + 1}"
-                            for count in range(counter)
+                            f"exec_searchs.exec_search_{count}"
+                            for count in range(1, len(searches) + 1)
                         ]
                     )
                     + ") }}",
@@ -453,8 +467,8 @@ class DouDigestDagGenerator:
                     "search_report": "{{ ti.xcom_pull(task_ids="
                     + str(
                         [
-                            f"exec_searchs.exec_search_{count + 1}"
-                            for count in range(counter)
+                            f"exec_searchs.exec_search_{count}"
+                            for count in range(1, len(searches) + 1)
                         ]
                     )
                     + ") }}",
