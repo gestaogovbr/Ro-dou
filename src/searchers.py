@@ -45,16 +45,23 @@ class BaseSearcher(ABC):
             else pd.read_json(pre_term_list).iloc[:, 0].tolist()
         )
 
-    def _group_results(self, search_results: dict, term_list: Dict[list, str]) -> dict:
-        """Produces a grouped result based on if `term_list` is already
-        the list of terms or it is a string received through xcom
+    def _group_results(
+        self,
+        search_results: dict,
+        term_list: Dict[list, str],
+        department: list[str] = None,
+    ) -> dict:
+        """Produces a grouped result based on departments and group name.
+        If `term_list` is already  the list of terms or it is a string received through xcom
         from `select_terms_from_db` task and the sql_query returned a
         second column (used as the group name)
         """
+        dpt_grouped_result = self._group_by_department(search_results, department)
+
         if isinstance(term_list, str) and len(ast.literal_eval(term_list).values()) > 1:
-            grouped_result = self._group_by_term_group(search_results, term_list)
+            grouped_result = self._group_by_term_group(dpt_grouped_result, term_list)
         else:
-            grouped_result = {"single_group": search_results}
+            grouped_result = {"single_group": dpt_grouped_result}
 
         return grouped_result
 
@@ -80,6 +87,32 @@ class BaseSearcher(ABC):
         sorted_dict = {key: grouped_result[key] for key in sorted(grouped_result)}
 
         return sorted_dict
+
+    @staticmethod
+    def _group_by_department(search_results: dict, department: list) -> dict:
+        dpt_grouped_result = {}
+        # Iterate over all terms under the group
+        for term, results in search_results.items():
+            # Initialize the department group for this term
+            dpt_grouped_result[term] = {}
+
+            for result in results:
+                # change all units in hierarchyList to lower case
+                # for unit in result['hierarchyList']:
+                if department:
+                    for dept in department:
+                        if dept.casefold() in str(result["hierarchyList"]).casefold():
+                            # Initialize the group if not present
+                            if dept not in dpt_grouped_result:
+                                dpt_grouped_result[term][dept] = []
+                            dpt_grouped_result[term][dept].append(result)
+                else:
+                    dpt_grouped_result[term].setdefault("single_department", [])
+                    dpt_grouped_result[term]["single_department"].append(result)
+
+        search_results = dpt_grouped_result
+
+        return search_results
 
     def _really_matched(self, search_term: str, abstract: str) -> bool:
         """Verifica se o termo encontrado pela API realmente é igual ao
@@ -135,7 +168,7 @@ class DOUSearcher(BaseSearcher):
             force_rematch,
             department,
         )
-        group_results = self._group_results(search_results, term_list)
+        group_results = self._group_results(search_results, term_list, department)
 
         return group_results
 
@@ -427,7 +460,7 @@ class INLABSSearcher(BaseSearcher):
             search_terms, ignore_signature_match, full_text, use_summary
         )
 
-        group_results = self._group_results(search_results, terms)
+        group_results = self._group_results(search_results, terms, department)
 
         return group_results
 
