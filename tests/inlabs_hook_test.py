@@ -311,7 +311,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
-                        "hierarchyList": None,
+                        "hierarchyList": "Texto exemplo art_category",
                     }
                 ],
                 "Pellentesque": [
@@ -323,7 +323,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
-                        "hierarchyList": None,
+                        "hierarchyList": "Texto exemplo art_category",
                     }
                 ],
             },
@@ -372,7 +372,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
-                        "hierarchyList": None,
+                        "hierarchyList": "Texto exemplo art_category",
                     }
                 ],
             },
@@ -423,7 +423,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
-                        "hierarchyList": None,
+                        "hierarchyList": "Texto exemplo art_category",
                     }
                 ],
             },
@@ -503,7 +503,7 @@ def test_transform_search_results(
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
-                        "hierarchyList": None,
+                        "hierarchyList": "Texto exemplo art_category",
                     }
                 ]
             },
