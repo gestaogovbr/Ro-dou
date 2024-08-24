@@ -377,7 +377,9 @@ class QDSearcher(BaseSearcher):
         return parsed_results
 
     def parse_result(self, result: dict, result_as_email: bool = True) -> dict:
-        section = "extraordinária" if result.get("is_extra_edition", False) else "ordinária"
+        section = (
+            "extraordinária" if result.get("is_extra_edition", False) else "ordinária"
+        )
         if result_as_email:
             abstract = (
                 "<p>" + "</p><p>".join(result["excerpts"]).replace("\n", "") + "</p>"
