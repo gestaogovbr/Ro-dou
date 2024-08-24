@@ -25,21 +25,27 @@ class SlackSender(ISender):
         for search in search_report:
             if search["header"]:
                 self._add_header(search["header"])
-            for group, results in search["result"].items():
-                if results:
-                    if not self.hide_filters:
-                        if group != "single_group":
-                            self._add_header(f"Grupo: {group}")
-                    for term, items in results.items():
-                        if items:
-                            if not self.hide_filters:
-                                self._add_header(f"Termo: {term}")
-                            for item in items:
-                                self._add_block(item)
-                else:
-                    self._add_text(
-                        self.no_results_found_text
-                    )
+
+            for group, search_results in search["result"].items():
+                if not self.hide_filters:
+                    if group != "single_group":
+                        self._add_header(f"Grupo: {group}")
+
+                for term, term_results in search_results.items():
+                    if not term_results:
+                        self._add_text(
+                            self.no_results_found_text
+                        )
+                    else:
+                        if not self.hide_filters:
+                            self._add_header(f"Termo: {term}")
+
+                        for department, results in term_results.items():
+                            if not self.hide_filters and department != 'single_department':
+                                    self._add_header(f"{department}")
+
+                            for result in results:
+                                self._add_block(result)
 
         if self.footer_text:
             footer_text = _remove_html_tags(self.footer_text)
