@@ -32,7 +32,6 @@ class EmailSender(ISender):
         full_subject = f"{self.specs.subject} - DOs de {report_date}"
         skip_notification = True
         for search in self.search_report:
-
             items = ["contains" for k, v in search["result"].items() if v]
             if items:
                 skip_notification = False
@@ -94,41 +93,45 @@ class EmailSender(ISender):
                         blocks.append(f"<li>{dpt}</li>")
                     blocks.append("</ul>")
 
-            for group, results in search["result"].items():
+            for group, search_results in search["result"].items():
 
-                if not results:
+                if not search_results:
                     blocks.append(
                         f"<p>{self.specs.no_results_found_text}.</p>"
                     )
                 else:
-                    if not self.specs.hide_filters:
-                        if group != "single_group":
-                            blocks.append("\n")
-                            blocks.append(f"**Grupo: {group}**")
-                            blocks.append("\n\n")
-
-                    for term, items in results.items():
-                        blocks.append("\n")
                         if not self.specs.hide_filters:
-                            blocks.append(f"* # Resultados para: {term}")
+                            if group != "single_group":
+                                blocks.append("\n")
+                                blocks.append(f"**Grupo: {group}**")
+                                blocks.append("\n\n")
 
-                        for item in items:
-
+                        for term, term_results in search_results.items():
+                            blocks.append("\n")
                             if not self.specs.hide_filters:
-                                sec_desc = item["section"]
-                                item_html = f"""
-                                    <p class="secao-marker">{sec_desc}</p>
-                                    ### [{item['title']}]({item['href']})
-                                    <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p>
-                                    <p class='date-marker'>{item['date']}</p>"""
-                                blocks.append(
-                                    textwrap.indent(textwrap.dedent(item_html), " " * 4)
-                                )
-                            else:
-                                item_html = f"""
-                                    ### [{item['title']}]({item['href']})
-                                    <p style='text-align:justify' class='abstract-marker'>{item['abstract']}</p><br><br>"""
-                                blocks.append(textwrap.dedent(item_html))
+                                blocks.append(f"* # Resultados para: {term}")
+
+                            for department, results in term_results.items():
+
+                                if not self.specs.hide_filters and department != 'single_department':
+                                    blocks.append(f"**{department}**")
+
+                                for result in results:
+                                    if not self.specs.hide_filters:
+                                        sec_desc = result["section"]
+                                        item_html = f"""
+                                            <p class="secao-marker">{sec_desc}</p>
+                                            ### [{result['title']}]({result['href']})
+                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
+                                            <p class='date-marker'>{result['date']}</p>"""
+                                        blocks.append(
+                                            textwrap.indent(textwrap.dedent(item_html), " " * 4)
+                                        )
+                                    else:
+                                        item_html = f"""
+                                            ### [{result['title']}]({result['href']})
+                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
+                                        blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
         if self.specs.footer_text:
@@ -147,6 +150,7 @@ class EmailSender(ISender):
             "Consulta",
             "Grupo",
             "Termo de pesquisa",
+            "Unidade",
             "Seção",
             "URL",
             "Título",
@@ -155,17 +159,24 @@ class EmailSender(ISender):
         ]
         del_header = True
         del_single_group = False
+        del_single_department = False
 
         for search in self.search_report:
             if search["header"] is not None:
                 del_header = False
             if "single_group" in search["result"]:
                 del_single_group = True
+            for _, terms in search["result"].items():
+                for _, departments_data in terms.items():
+                    if "single_department" in departments_data:
+                        del_single_department = True
 
         if del_header:
             del df["Consulta"]
         if del_single_group:
             del df["Grupo"]
+        if del_single_department:
+            del df["Unidade"]
 
         return df
 
@@ -174,17 +185,19 @@ class EmailSender(ISender):
         for search in self.search_report:
             header = search["header"] if search["header"] else None
             for group, results in search["result"].items():
-                for term, matches in results.items():
-                    for match in matches:
-                        tuple_list.append(repack_match(header, group, term, match))
-        return tuple_list
+                for term, departments in results.items():
+                    for department, dpt_matches in departments.items():
+                        for match in dpt_matches:
+                            tuple_list.append(repack_match(header, group, term, department, match))
+            return tuple_list
 
 
-def repack_match(header: str, group: str, search_term: str, match: dict) -> tuple:
+def repack_match(header: str, group: str, search_term: str, department: str, match: dict) -> tuple:
     return (
         header,
         group,
         search_term,
+        department,
         match["section"],
         match["href"],
         match["title"],
