@@ -384,42 +384,47 @@ def term_n_group():
 def merge_results_samples() -> Tuple[SearchResult, SearchResult, SearchResult]:
     results_dou = {
         'grupo_1': {
-            'term_1': ['result1', 'result2', 'resultn'],
-            'term_2': ['result1', 'result2', 'resultn'],
-            'term_3': ['result1', 'result2', 'resultn'],
+            'term_1': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_2': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_3': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
         },
         'grupo_2': {
-            'term_4': ['result1', 'result2', 'resultn'],
-            'term_5': ['result1', 'result2', 'resultn'],
-            'term_6': ['result1', 'result2', 'resultn'],
+            'term_4': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_5': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_6': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
         }
     }
     results_qd = {
         'grupo_1': {
-            'term_2': ['result1', 'result2', 'resultn'],
-            'term_3': ['result1', 'result2', 'resultn'],
-            'term_10': ['result1', 'result2', 'resultn'],
+            'term_2':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_3':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_10': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
         },
         'grupo_3': {
-            'term_7': ['result1', 'result2', 'resultn'],
-            'term_8': ['result1', 'result2', 'resultn'],
-            'term_9': ['result1', 'result2', 'resultn'],
+            'term_7':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_8':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_9':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}],
+                        "mgi": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
         }
     }
     merged_results = {
         'grupo_2': {
-            'term_4': ['result1', 'result2', 'resultn'],
-            'term_5': ['result1', 'result2', 'resultn'],
-            'term_6': ['result1', 'result2', 'resultn']},
+            'term_4':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_5':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_6':  {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]}
+        },
         'grupo_3': {
-            'term_7': ['result1', 'result2', 'resultn'],
-            'term_8': ['result1', 'result2', 'resultn'],
-            'term_9': ['result1', 'result2', 'resultn']},
+            'term_7': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_8': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_9': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}],
+                        "mgi": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+        },
         'grupo_1': {
-            'term_1': ['result1', 'result2', 'resultn'],
-            'term_2': ['result1', 'result2', 'resultn', 'result1', 'result2', 'resultn'],
-            'term_3': ['result1', 'result2', 'resultn', 'result1', 'result2', 'resultn'],
-            'term_10': ['result1', 'result2', 'resultn']}
+            'term_1': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_2': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}, {'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_3': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}, {'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]},
+            'term_10': {"single_department": [{'key1': 'result1'}, {'key2': 'result2'}, {'key3': 'resultn'}]}
+        }
     }
 
     return (results_dou, results_qd, merged_results)
