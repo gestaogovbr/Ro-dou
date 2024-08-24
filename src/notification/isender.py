@@ -45,14 +45,16 @@ class ISender(ABC):
             dict: A dictionary with the placeholders replaced with formatting tags.
         """
         reports = copy.deepcopy(search_report)
-
         for _, results in reports["result"].items():
-            for _, items in results.items():
-                for item in items:
-                    open_tag, close_tag = self.highlight_tags
-                    item['abstract'] = _fix_missing_spaces(item['abstract']) \
-                        .replace('<%%>', open_tag) \
-                        .replace('</%%>', close_tag)
+            for _,dpt in results.items():
+                for _, items in dpt.items():
+                    for item in items:
+                        open_tag, close_tag = self.highlight_tags
+                        item['abstract'] = _fix_missing_spaces(item['abstract']) \
+                            .replace('<%%>', open_tag) \
+                            .replace('</%%>', close_tag)
+
+        print (reports)
 
         return reports
 
