@@ -307,7 +307,6 @@ class INLABSHook(BaseHook):
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
             df["display_date_sortable"] = None
-            df["hierarchyList"] = None
 
             if ignore_signature_match:
                 df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
@@ -320,7 +319,7 @@ class INLABSHook(BaseHook):
                 "pubdate": "date",
                 "id": "id",
                 "display_date_sortable": "display_date_sortable",
-                "hierarchyList": "hierarchyList",
+                "artcategory": "hierarchyList",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
