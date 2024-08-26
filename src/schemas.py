@@ -195,7 +195,7 @@ class DAGConfig(BaseModel):
     search: Union[List[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
-    doc_md: Optional[str] = Field(default="", description="description")
+    doc_md: Optional[str] = Field(default=None, description="description")
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
