@@ -10,14 +10,15 @@ from airflow.timetables.datasets import DatasetOrTimeSchedule
 
 
 def test_repack_match(report_example):
-    match_dict = report_example[0]["result"]["single_group"]["antonio de oliveira"][0]
+    match_dict = report_example[0]["result"]["single_group"]["antonio de oliveira"]["single_department"][0]
     repacked_match = repack_match(
-        "Teste Report", "single_group", "antonio de oliveira", match_dict
+        "Teste Report", "single_group", "antonio de oliveira", "single_department", match_dict
     )
     assert repacked_match == (
         "Teste Report",
         "single_group",
         "antonio de oliveira",
+        "single_department",
         "Seção 3",
         match_dict["href"],
         match_dict["title"],
@@ -44,10 +45,10 @@ def test_convert_report_dict__returns_tuples(email_sender):
         assert isinstance(tpl, tuple)
 
 
-def test_convert_report_dict__returns_tuples_of_seven(email_sender):
+def test_convert_report_dict__returns_tuples_of_nine(email_sender):
     tuple_list = email_sender.convert_report_dict_to_tuple_list()
     for tpl in tuple_list:
-        assert len(tpl) == 8
+        assert len(tpl) == 9
 
 
 def test_convert_report_to_dataframe__rows_count(email_sender):

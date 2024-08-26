@@ -186,8 +186,7 @@ def test_cast_term_list__list_param(dou_searcher):
     pre_term_list = ["a", "b", "c"]
     assert tuple(dou_searcher._cast_term_list(pre_term_list)) == tuple(pre_term_list)
 
-
-def assert_grouped_result(grouped_result):
+def assert_grouped_term_result(grouped_result):
     assert "ATI" in grouped_result
     assert "SILVA" in grouped_result["ATI"]
     assert len(grouped_result["ATI"]["SILVA"]) == 4
@@ -195,18 +194,31 @@ def assert_grouped_result(grouped_result):
     assert "ANTONIO DE OLIVEIRA" in grouped_result["EPPGG"]
     assert len(grouped_result["EPPGG"]["ANTONIO DE OLIVEIRA"]) == 3
 
+def assert_grouped_term_dept_result(grouped_result):
+    assert "ATI" in grouped_result
+    assert "SILVA" in grouped_result["ATI"]
+    assert len(grouped_result["ATI"]["SILVA"]["single_department"]) == 4
+    assert "EPPGG" in grouped_result
+    assert "ANTONIO DE OLIVEIRA" in grouped_result["EPPGG"]
+    assert len(grouped_result["EPPGG"]["ANTONIO DE OLIVEIRA"]["single_department"]) == 3
+
 
 # TODO incluir teste com search_results vazio
 def test_group_by_term_group(dou_searcher, search_results, term_n_group):
     grouped_result = dou_searcher._group_by_term_group(search_results, term_n_group)
-    assert_grouped_result(grouped_result)
+    assert_grouped_term_result(grouped_result)
 
+def test_group_by_department(dou_searcher, search_results):
+    grouped_result = dou_searcher._group_by_department(search_results, None)
+    assert "single_department" in grouped_result["ANTONIO DE OLIVEIRA"]
+    assert "single_department" in grouped_result["SILVA"]
+    assert len(grouped_result["SILVA"]["single_department"]) == 4
 
 def test_group_results__sql_term_list_with_group(
     dou_searcher, search_results, term_n_group
 ):
     grouped_result = dou_searcher._group_results(search_results, term_n_group)
-    assert_grouped_result(grouped_result)
+    assert_grouped_term_dept_result(grouped_result)
 
 
 def test_group_results__sql_term_list_without_group(dou_searcher, search_results):

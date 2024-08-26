@@ -26,20 +26,25 @@ class DiscordSender(ISender):
             if search["header"]:
                 self.send_text(f'**{search["header"]}**')
 
-            for group, results in search["result"].items():
-                if results:
+            for group, search_results in search["result"].items():
+                if not self.hide_filters:
+                    if group != "single_group":
+                        self.send_text(f"**Grupo: {group}**")
+
+                for term, term_results in search_results.items():
                     if not self.hide_filters:
-                        if group != "single_group":
-                            self.send_text(f"**Grupo: {group}**")
-                    for term, items in results.items():
-                        if not self.hide_filters:
-                            if items:
-                                self.send_text(f"**Resultados para: {term}**")
-                        self.send_embeds(items)
-                else:
-                    self.send_text(
-                        f"**{self.no_results_found_text}**"
-                    )
+                        if not term_results:
+                            self.send_text(
+                                f"**{self.no_results_found_text}**"
+                            )
+                        else:
+                            self.send_text(f"**Resultados para: {term}**")
+
+                            for department, results in term_results.items():
+                                if not self.hide_filters and department != 'single_department':
+                                    self.send_text(f"{department}")
+
+                                self.send_embeds(results)
 
         if self.footer_text:
             footer_text = self._remove_html_tags(self.footer_text)

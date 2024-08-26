@@ -15,6 +15,7 @@ import sys
 import textwrap
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
+from functools import reduce
 import json
 
 import pandas as pd
@@ -29,7 +30,6 @@ from airflow.providers.slack.notifications.slack import SlackNotifier
 from airflow.timetables.datasets import DatasetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
 
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
 from notification.notifier import Notifier
@@ -38,24 +38,55 @@ from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 
-SearchResult = Dict[str, Dict[str, List[dict]]]
+SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
-def merge_results(result_1: SearchResult, result_2: SearchResult) -> SearchResult:
-    """Merge search results by group and term as keys"""
-    return {
-        group: _merge_dict(result_1.get(group, {}), result_2.get(group, {}))
-        for group in set((*result_1, *result_2))
-    }
+def merge_results(*dicts: SearchResult) -> SearchResult:
+    """
+    Merge multiple dictionaries and sum/concatenate values of common keys,
+    including nested dictionaries.
+    """
+
+    def merge_two(dict1, dict2):
+        merged = {}
+
+        # Combine keys from both dictionaries
+        all_keys = set(dict1) | set(dict2)
+
+        for key in all_keys:
+            value1 = dict1.get(key)
+
+            value2 = dict2.get(key)
 
 
-def _merge_dict(dict1, dict2):
-    """Merge dictionaries and sum values of common keys"""
-    dict3 = {**dict1, **dict2}
-    for key, value in dict3.items():
-        if key in dict1 and key in dict2:
-            dict3[key] = value + dict1[key]
-    return dict3
+            if isinstance(value1, dict) and isinstance(value2, dict):
+                # If both values are dictionaries, merge them recursively
+                merged[key] = merge_results(value1, value2)
+            elif isinstance(value1, dict) or isinstance(value2, dict):
+                # If one of the values is a dict, prefer the dict (override with dict)
+                merged[key] = value1 if isinstance(value1, dict) else value2
+            else:
+                # Sum or concatenate the values, treating None or missing keys as 0
+                merged[key] = (value1) + (value2)
+
+        return merged
+
+    # Pre-processing step: Filter out dictionaries where the first key's value is empty
+    filtered_dicts = []
+
+    for d in dicts:
+        if d:  # Ensure the dictionary is not empty
+            first_key = next(iter(d))
+            first_value = d.get(first_key)
+            if first_value:  # Only include if the first key's value is non-empty
+                filtered_dicts.append(d)
+
+    # If no dictionaries remain after filtering, return an empty dictionary
+    if not filtered_dicts:
+        return {}
+
+    # Reduce the list of dictionaries by merging them two at a time
+    return reduce(merge_two, filtered_dicts)
 
 
 def result_as_html(specs: DAGConfig) -> bool:
@@ -367,7 +398,6 @@ class DouDigestDagGenerator:
         }
 
         schedule = self._update_schedule(specs)
-
         dag = DAG(
             specs.id,
             default_args=default_args,
