@@ -185,7 +185,8 @@ class DAGConfig(BaseModel):
     id: str = Field(description="Nome único da DAG")
     description: str = Field(description="Descrição da DAG")
     tags: Optional[Set[str]] = Field(
-        default=[], description="Conjunto de tags para filtragem da DAG no Airflow"
+        default={"dou", "generated_dag"},
+        description="Conjunto de tags para filtragem da DAG no Airflow",
     )
     owner: Optional[List[str]] = Field(
         default=[], description="Lista de owners para filtragem da DAG no Airflow"
@@ -216,10 +217,9 @@ class DAGConfig(BaseModel):
 
     @field_validator("tags")
     @staticmethod
-    def add_default_tags(tags_param: Optional[Set[str]]) -> Optional[Set[str]]:
+    def add_default_tags(tags_param: Optional[Set[str]]) -> Set[str]:
         """Add default tags to the list of tags."""
-        if tags_param is not None:
-            tags_param.update({"dou", "generated_dag"})
+        tags_param.update({"dou", "generated_dag"})
         return tags_param
 
 
