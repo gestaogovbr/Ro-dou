@@ -15,7 +15,7 @@ library.
 """
 
 import textwrap
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator
 
@@ -184,8 +184,8 @@ class DAGConfig(BaseModel):
 
     id: str = Field(description="Nome único da DAG")
     description: str = Field(description="Descrição da DAG")
-    tags: Optional[List[str]] = Field(
-        default=[], description="Lista de tags para filtragem da DAG no Airflow"
+    tags: Optional[Set[str]] = Field(
+        default=[], description="Conjunto de tags para filtragem da DAG no Airflow"
     )
     owner: Optional[List[str]] = Field(
         default=[], description="Lista de owners para filtragem da DAG no Airflow"
@@ -213,6 +213,14 @@ class DAGConfig(BaseModel):
         if not isinstance(search_param, list):
             return [search_param]
         return search_param
+
+    @field_validator("tags")
+    @staticmethod
+    def add_default_tags(tags_param: Optional[Set[str]]) -> Optional[Set[str]]:
+        """Add default tags to the list of tags."""
+        if tags_param is not None:
+            tags_param.update({"dou", "generated_dag"})
+        return tags_param
 
 
 class RoDouConfig(BaseModel):
