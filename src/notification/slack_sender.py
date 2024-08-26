@@ -49,7 +49,7 @@ class SlackSender(ISender):
 
                         for department, results in term_results.items():
                             if not self.hide_filters and department != 'single_department':
-                                    self._add_header(f"{department}")
+                                self._add_header(f"{department}")
 
                             for result in results:
                                 self._add_block(result)

@@ -104,42 +104,45 @@ class EmailSender(ISender):
             for group, search_results in search["result"].items():
 
                 if not results:
-                    blocks.append(
-                        f"<p>{self.report_config.no_results_found_text}.</p>"
-                    )
+                    blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
                 else:
-                        if not self.report_config.hide_filters:
-                            if group != "single_group":
-                                blocks.append("\n")
-                                blocks.append(f"**Grupo: {group}**")
-                                blocks.append("\n\n")
-
-                        for term, term_results in results.items():
+                    if not self.report_config.hide_filters:
+                        if group != "single_group":
                             blocks.append("\n")
-                            if not self.report_config.hide_filters:
-                                blocks.append(f"* # Resultados para: {term}")
+                            blocks.append(f"**Grupo: {group}**")
+                            blocks.append("\n\n")
 
-                            for department, results in term_results.items():
+                    for term, term_results in results.items():
+                        blocks.append("\n")
+                        if not self.report_config.hide_filters:
+                            blocks.append(f"* # Resultados para: {term}")
 
-                                if not self.report_config.hide_filters and department != 'single_department':
-                                    blocks.append(f"**{department}**")
+                        for department, results in term_results.items():
 
-                                for result in results:
-                                    if not self.report_config.hide_filters:
-                                        sec_desc = result["section"]
-                                        item_html = f"""
-                                            <p class="secao-marker">{sec_desc}</p>
-                                            ### [{result['title']}]({result['href']})
-                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
-                                            <p class='date-marker'>{result['date']}</p>"""
-                                        blocks.append(
-                                            textwrap.indent(textwrap.dedent(item_html), " " * 4)
+                            if (
+                                not self.report_config.hide_filters
+                                and department != "single_department"
+                            ):
+                                blocks.append(f"**{department}**")
+
+                            for result in results:
+                                if not self.report_config.hide_filters:
+                                    sec_desc = result["section"]
+                                    item_html = f"""
+                                        <p class="secao-marker">{sec_desc}</p>
+                                        ### [{result['title']}]({result['href']})
+                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
+                                        <p class='date-marker'>{result['date']}</p>"""
+                                    blocks.append(
+                                        textwrap.indent(
+                                            textwrap.dedent(item_html), " " * 4
                                         )
-                                    else:
-                                        item_html = f"""
-                                            ### [{result['title']}]({result['href']})
-                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
-                                        blocks.append(textwrap.dedent(item_html))
+                                    )
+                                else:
+                                    item_html = f"""
+                                        ### [{result['title']}]({result['href']})
+                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
+                                    blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
         if self.report_config.footer_text:
@@ -196,11 +199,15 @@ class EmailSender(ISender):
                 for term, departments in results.items():
                     for department, dpt_matches in departments.items():
                         for match in dpt_matches:
-                            tuple_list.append(repack_match(header, group, term, department, match))
+                            tuple_list.append(
+                                repack_match(header, group, term, department, match)
+                            )
             return tuple_list
 
 
-def repack_match(header: str, group: str, search_term: str, department: str, match: dict) -> tuple:
+def repack_match(
+    header: str, group: str, search_term: str, department: str, match: dict
+) -> tuple:
     return (
         header,
         group,
