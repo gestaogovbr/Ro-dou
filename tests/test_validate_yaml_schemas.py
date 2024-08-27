@@ -1,36 +1,20 @@
-import json
-import jsonschema
-import pytest
-import glob
-import yaml
-import requests
-from urllib.parse import urlparse
+"""Test validation of yaml files according to the defined schemas.
+"""
 
+import glob
+import os
+import sys
+
+from pydantic import ValidationError
+import pytest
+import yaml
+
+# add module path so we can import from other modules
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from schemas import RoDouConfig
 
 YAMLS_DIR = "../dags/ro_dou/dag_confs"
-SCHEMA_FILEPATH = "../schemas/ro-dou.json"
-# or
-# SCHEMA_FILEPATH = "https://raw.githubusercontent.com/gestaogovbr/Ro-dou/main/schemas/ro-dou.json"
 
-
-def get_schema(filepath):
-    def _is_valid_url(url):
-        try:
-            result = urlparse(url)
-            return all([result.scheme, result.netloc])
-        except ValueError:
-            return False
-
-    if _is_valid_url(filepath):
-        response = requests.get(filepath)
-        response.raise_for_status()
-        return json.loads(response.text)
-    else:
-        with open(filepath) as f:
-            return json.load(f)
-
-
-SCHEMA = get_schema(SCHEMA_FILEPATH)
 
 @pytest.mark.parametrize(
     "data_file",
@@ -40,8 +24,11 @@ SCHEMA = get_schema(SCHEMA_FILEPATH)
         + glob.glob(f"{YAMLS_DIR}/**/*.yaml", recursive=True)
     ],
 )
-def test_json_schema_validation(data_file):
+def test_pydantic_validation(data_file):
     with open(data_file) as data_fp:
         data = yaml.safe_load(data_fp)
 
-    jsonschema.validate(instance=data, schema=SCHEMA)
+    try:
+        RoDouConfig(**data)
+    except ValidationError as e:
+        pytest.fail(f"YAML file {data_file} is not valid:\n{e}")

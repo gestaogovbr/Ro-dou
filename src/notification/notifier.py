@@ -26,15 +26,21 @@ class Notifier:
 
     def __init__(self, specs: DAGConfig) -> None:
         self.senders = []
-        if specs.emails:
-            self.senders.append(EmailSender(specs))
-        if specs.discord_webhook:
-            self.senders.append(DiscordSender(specs))
-        if specs.slack_webhook:
-            self.senders.append(SlackSender(specs))
+        if specs.report.emails:
+            self.senders.append(EmailSender(specs.report))
+        if specs.report.discord:
+            self.senders.append(DiscordSender(specs.report))
+        if specs.report.slack:
+            self.senders.append(SlackSender(specs.report))
 
 
     def send_notification(self, search_report: str, report_date: str):
+        """Sends the notification to the specified email, Discord or Slack
+
+        Args:
+            search_report (str): The report to be sent
+            report_date (str): The date of the report
+        """
         # Convert to data structure after it's retrieved from xcom
         search_report = ast.literal_eval(search_report)
 

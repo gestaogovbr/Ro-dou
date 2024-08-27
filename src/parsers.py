@@ -1,64 +1,18 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-import ast
-import os
+# from dataclasses import dataclass
+import json
 import textwrap
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import List, Set, Tuple, Union
-
+from typing import List, Tuple
 import yaml
+
 from airflow import Dataset
 from airflow.models import Variable
 
-@dataclass
-class SearchConfig:
-    header: str
-    sources: List[str]
-    territory_id: int
-    dou_sections: List[str]
-    field: str
-    search_date: str
-    is_exact_search: bool
-    ignore_signature_match: bool
-    force_rematch: bool
-    full_text: bool
-    use_summary: bool
-    terms: List[str]
-    sql: str
-    conn_id: str
-    department: List[str]
+from schemas import RoDouConfig, DAGConfig
 
 
-@dataclass
-class DAGConfig:
-    dag_id: str
-    search: List[SearchConfig]
-    emails: List[str]
-    subject: str
-    attach_csv: bool
-    discord_webhook: str
-    slack_webhook: str
-    schedule: str
-    dataset: str
-    description: str
-    skip_null: bool
-    doc_md: str
-    dag_tags: Set[str]
-    owner: str
-    hide_filters: bool
-    header_text: str
-    footer_text: str
-    no_results_found_text: str
-
-
-class FileParser(ABC):
-    """Abstract class to build file parsers with DAG configuration."""
-
-    @abstractmethod
-    def parse(self):
-        pass
-class YAMLParser(FileParser):
+class YAMLParser:
     """Parses YAML file and get the DAG parameters.
 
     It guarantees that mandatory fields are in place and are properly
@@ -68,16 +22,20 @@ class YAMLParser(FileParser):
     def __init__(self, filepath: str):
         self.filepath = filepath
 
-    def parse(self) -> DAGConfig:
-        return self._parse_yaml()
+    def read(self) -> dict:
+        """Reads the contents of the YAML file."""
+        with open(self.filepath, "r", encoding="utf-8") as file:
+            dag_config_dict = yaml.safe_load(file)
+        return dag_config_dict
 
-    def _parse_yaml(self) -> DAGConfig:
+    def parse(self) -> DAGConfig:
         """Processes the config file in order to instantiate the DAG in
         Airflow.
         """
-        with open(self.filepath, "r") as file:
-            dag_config_dict = yaml.safe_load(file)
+        config = RoDouConfig(**self.read())
+        return config.dag
 
+        # TODO: remove old parser code
         dag = self._try_get(dag_config_dict, "dag")
         dag_id = self._try_get(dag, "id")
         description = self._try_get(dag, "description")
@@ -169,7 +127,7 @@ class YAMLParser(FileParser):
             if "from_airflow_variable" in terms:
                 var_value = Variable.get(terms.get("from_airflow_variable"))
                 try:
-                    terms = ast.literal_eval(var_value)
+                    terms = json.loads(var_value)
                 except (ValueError, SyntaxError):
                     terms = var_value.splitlines()
             elif "from_db_select" in terms:

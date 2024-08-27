@@ -9,6 +9,7 @@ dag:
     - pessoa 2
   schedule: 0 8 * * MON-FRI
   search:
+    header: Pesquisa no DOU
     terms:
     - dados abertos
     - governo aberto

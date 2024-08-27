@@ -1,7 +1,10 @@
+"""Module for sending emails.
+"""
+
 import os
 import sys
-import textwrap
 from tempfile import NamedTemporaryFile
+import textwrap
 
 import markdown
 import pandas as pd
@@ -14,12 +17,17 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 from notification.isender import ISender
+from schemas import ReportConfig
 
 
 class EmailSender(ISender):
+    """Prepare and send e-mails with the reports."""
+
     highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
-    def __init__(self, specs) -> None:
-        self.specs = specs
+
+    def __init__(self, report_config: ReportConfig) -> None:
+        self.report_config = report_config
+        self.search_report = ""
         self.watermark = """
             <p><small>Esta pesquisa foi realizada automaticamente pelo
             <a href="https://gestaogovbr.github.io/Ro-dou/">Ro-DOU</a>
@@ -29,27 +37,27 @@ class EmailSender(ISender):
     def send(self, search_report: list, report_date: str):
         """Builds the email content, the CSV if applies, and send it"""
         self.search_report = search_report
-        full_subject = f"{self.specs.subject} - DOs de {report_date}"
+        full_subject = f"{self.report_config.subject} - DOs de {report_date}"
         skip_notification = True
         for search in self.search_report:
             items = ["contains" for k, v in search["result"].items() if v]
             if items:
                 skip_notification = False
             else:
-                content = self.specs.no_results_found_text
+                content = self.report_config.no_results_found_text
 
         if skip_notification:
-            if self.specs.skip_null:
+            if self.report_config.skip_null:
                 return "skip_notification"
         else:
             content = self.generate_email_content()
 
         content += self.watermark
 
-        if self.specs.attach_csv and skip_notification is False:
+        if self.report_config.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
                 send_email(
-                    to=self.specs.emails,
+                    to=self.report_config.emails,
                     subject=full_subject,
                     files=[csv_file.name],
                     html_content=content,
@@ -57,7 +65,7 @@ class EmailSender(ISender):
                 )
         else:
             send_email(
-                to=self.specs.emails,
+                to=self.report_config.emails,
                 subject=full_subject,
                 html_content=content,
                 mime_charset="utf-8",
@@ -72,18 +80,18 @@ class EmailSender(ISender):
         parent_directory = os.path.dirname(current_directory)
         file_path = os.path.join(parent_directory, "report_style.css")
 
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             blocks = [f"<style>\n{f.read()}</style>"]
 
-        if self.specs.header_text:
-            blocks.append(self.specs.header_text)
+        if self.report_config.header_text:
+            blocks.append(self.report_config.header_text)
 
         for search in self.search_report:
 
             if search["header"]:
                 blocks.append(f"<h1>{search['header']}</h1>")
 
-            if not self.specs.hide_filters:
+            if not self.report_config.hide_filters:
                 if search["department"]:
                     blocks.append(
                         """<p class="secao-marker">Filtrando resultados somente para:</p>"""
@@ -95,47 +103,50 @@ class EmailSender(ISender):
 
             for group, search_results in search["result"].items():
 
-                if not search_results:
-                    blocks.append(
-                        f"<p>{self.specs.no_results_found_text}.</p>"
-                    )
+                if not results:
+                    blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
                 else:
-                        if not self.specs.hide_filters:
-                            if group != "single_group":
-                                blocks.append("\n")
-                                blocks.append(f"**Grupo: {group}**")
-                                blocks.append("\n\n")
-
-                        for term, term_results in search_results.items():
+                    if not self.report_config.hide_filters:
+                        if group != "single_group":
                             blocks.append("\n")
-                            if not self.specs.hide_filters:
-                                blocks.append(f"* # Resultados para: {term}")
+                            blocks.append(f"**Grupo: {group}**")
+                            blocks.append("\n\n")
 
-                            for department, results in term_results.items():
+                    for term, term_results in results.items():
+                        blocks.append("\n")
+                        if not self.report_config.hide_filters:
+                            blocks.append(f"* # Resultados para: {term}")
 
-                                if not self.specs.hide_filters and department != 'single_department':
-                                    blocks.append(f"**{department}**")
+                        for department, results in term_results.items():
 
-                                for result in results:
-                                    if not self.specs.hide_filters:
-                                        sec_desc = result["section"]
-                                        item_html = f"""
-                                            <p class="secao-marker">{sec_desc}</p>
-                                            ### [{result['title']}]({result['href']})
-                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
-                                            <p class='date-marker'>{result['date']}</p>"""
-                                        blocks.append(
-                                            textwrap.indent(textwrap.dedent(item_html), " " * 4)
+                            if (
+                                not self.report_config.hide_filters
+                                and department != "single_department"
+                            ):
+                                blocks.append(f"**{department}**")
+
+                            for result in results:
+                                if not self.report_config.hide_filters:
+                                    sec_desc = result["section"]
+                                    item_html = f"""
+                                        <p class="secao-marker">{sec_desc}</p>
+                                        ### [{result['title']}]({result['href']})
+                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
+                                        <p class='date-marker'>{result['date']}</p>"""
+                                    blocks.append(
+                                        textwrap.indent(
+                                            textwrap.dedent(item_html), " " * 4
                                         )
-                                    else:
-                                        item_html = f"""
-                                            ### [{result['title']}]({result['href']})
-                                            <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
-                                        blocks.append(textwrap.dedent(item_html))
+                                    )
+                                else:
+                                    item_html = f"""
+                                        ### [{result['title']}]({result['href']})
+                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
+                                    blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
-        if self.specs.footer_text:
-            blocks.append(self.specs.footer_text)
+        if self.report_config.footer_text:
+            blocks.append(self.report_config.footer_text)
 
         return markdown.markdown("\n".join(blocks))
 
@@ -188,11 +199,15 @@ class EmailSender(ISender):
                 for term, departments in results.items():
                     for department, dpt_matches in departments.items():
                         for match in dpt_matches:
-                            tuple_list.append(repack_match(header, group, term, department, match))
+                            tuple_list.append(
+                                repack_match(header, group, term, department, match)
+                            )
             return tuple_list
 
 
-def repack_match(header: str, group: str, search_term: str, department: str, match: dict) -> tuple:
+def repack_match(
+    header: str, group: str, search_term: str, department: str, match: dict
+) -> tuple:
     return (
         header,
         group,
