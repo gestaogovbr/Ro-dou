@@ -126,18 +126,22 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "dataset": None,
                 "search": [
                     {
-                        "terms": [],
+                        "terms": {
+                            "from_airflow_variable": None,
+                            "from_db_select": {
+                                "sql": (
+                                    "SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
+                                    "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
+                                    "UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO "
+                                    "UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO "
+                                    "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
+                                    "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"
+                                ),
+                                "conn_id": "example_database_conn",
+                            }
+                        },
                         "header": None,
                         "sources": ["DOU"],
-                        "sql": (
-                            "SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO "
-                            "UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO "
-                            "UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO "
-                            "UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO "
-                            "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
-                            "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"
-                        ),
-                        "conn_id": "example_database_conn",
                         "territory_id": None,
                         "dou_sections": ["TODOS"],
                         "date": "MES",
