@@ -1,14 +1,17 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-# from dataclasses import dataclass
 import json
 import textwrap
+import os
+import sys
+
 from typing import List, Tuple
 import yaml
 
 from airflow import Dataset
 from airflow.models import Variable
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from schemas import RoDouConfig, DAGConfig
 
 

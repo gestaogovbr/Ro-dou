@@ -387,7 +387,7 @@ class DouDigestDagGenerator:
         doc_md = self.prepare_doc_md(specs, config_file) if specs.doc_md else None
         # DAG parameters
         default_args = {
-            "owner": specs.owner,
+            "owner": ",".join(specs.owner),
             "start_date": datetime(2021, 10, 18),
             "depends_on_past": False,
             "retries": 10,
