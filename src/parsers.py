@@ -12,48 +12,6 @@ from airflow.models import Variable
 from schemas import RoDouConfig, DAGConfig
 
 
-# TODO: remove old dataclasses
-# @dataclass
-# class SearchConfig:
-#     header: str
-#     sources: List[str]
-#     territory_id: int
-#     dou_sections: List[str]
-#     field: str
-#     search_date: str
-#     is_exact_search: bool
-#     ignore_signature_match: bool
-#     force_rematch: bool
-#     full_text: bool
-#     use_summary: bool
-#     terms: List[str]
-#     sql: str
-#     conn_id: str
-#     department: List[str]
-
-
-# @dataclass
-# class DAGConfig:
-#     dag_id: str
-#     search: List[SearchConfig]
-#     emails: List[str]
-#     subject: str
-#     attach_csv: bool
-#     discord_webhook: str
-#     slack_webhook: str
-#     schedule: str
-#     dataset: str
-#     description: str
-#     skip_null: bool
-#     doc_md: str
-#     dag_tags: Set[str]
-#     owner: str
-#     hide_filters: bool
-#     header_text: str
-#     footer_text: str
-#     no_results_found_text: str
-
-
 class YAMLParser:
     """Parses YAML file and get the DAG parameters.
 
