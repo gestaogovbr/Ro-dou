@@ -289,40 +289,39 @@ class DouDigestDagGenerator:
 
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
-                term_list,
-                dou_sections,
-                search_date,
-                field,
-                is_exact_search,
-                ignore_signature_match,
-                force_rematch,
-                department,
-                get_trigger_date(context, local_time=True),
+                term_list=term_list,
+                dou_sections=dou_sections,
+                search_date=search_date,
+                field=field,
+                is_exact_search=is_exact_search,
+                ignore_signature_match=ignore_signature_match,
+                force_rematch=force_rematch,
+                department=department,
+                reference_date=get_trigger_date(context, local_time=True),
             )
         elif "INLABS" in sources:
             inlabs_result = self.searchers["INLABS"].exec_search(
-                term_list,
-                dou_sections,
-                search_date,
-                department,
-                ignore_signature_match,
-                full_text,
-                use_summary,
-                get_trigger_date(context, local_time=True),
+                terms=term_list,
+                dou_sections=dou_sections,
+                search_date=search_date,
+                department=department,
+                ignore_signature_match=ignore_signature_match,
+                full_text=full_text,
+                use_summary=use_summary,
+                reference_date=get_trigger_date(context, local_time=True),
             )
 
         if "QD" in sources:
             qd_result = self.searchers["QD"].exec_search(
-                territory_id,
-                term_list,
-                dou_sections,
-                search_date,
-                field,
-                is_exact_search,
-                ignore_signature_match,
-                force_rematch,
-                get_trigger_date(context, local_time=True),
-                result_as_email,
+                territory_id=territory_id,
+                term_list=term_list,
+                dou_sections=dou_sections,
+                search_date=search_date,
+                field=field,
+                is_exact_search=is_exact_search,
+                ignore_signature_match=ignore_signature_match,
+                reference_date=get_trigger_date(context, local_time=True),
+                result_as_email=result_as_email,
             )
 
         if "DOU" in sources and "QD" in sources:
