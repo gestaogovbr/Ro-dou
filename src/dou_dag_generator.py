@@ -91,7 +91,7 @@ def merge_results(*dicts: SearchResult) -> SearchResult:
 
 def result_as_html(specs: DAGConfig) -> bool:
     """Só utiliza resultado HTML apenas para email"""
-    return specs.report.discord and specs.report.slack
+    return bool(not(specs.report.discord or specs.report.slack))
 
 
 class DouDigestDagGenerator:
