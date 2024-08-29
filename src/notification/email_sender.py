@@ -175,12 +175,14 @@ class EmailSender(ISender):
         for search in self.search_report:
             if search["header"] is not None:
                 del_header = False
-            for group, terms in search["result"].items():
-                if not "single_group" in group:
+
+            for group, search_result in search["result"].items():
+                if group is not "single_group":
                     del_single_group = False
-                for dpt,_ in terms.items():
-                    if not "single_department" in dpt:
-                        del_single_department = False
+                for _, term_results in search_result.items():
+                    for dpt,_ in term_results.items():
+                        if dpt is not "single_department":
+                            del_single_department = False
 
         # Drop empty or default columns
         if del_header:
