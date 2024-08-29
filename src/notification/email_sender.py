@@ -103,7 +103,7 @@ class EmailSender(ISender):
 
             for group, search_results in search["result"].items():
 
-                if not results:
+                if not search_results:
                     blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
                 else:
                     if not self.report_config.hide_filters:
@@ -112,7 +112,7 @@ class EmailSender(ISender):
                             blocks.append(f"**Grupo: {group}**")
                             blocks.append("\n\n")
 
-                    for term, term_results in results.items():
+                    for term, term_results in search_results.items():
                         blocks.append("\n")
                         if not self.report_config.hide_filters:
                             blocks.append(f"* # Resultados para: {term}")
