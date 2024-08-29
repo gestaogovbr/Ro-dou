@@ -169,25 +169,34 @@ class EmailSender(ISender):
             "Data",
         ]
         del_header = True
-        del_single_group = False
-        del_single_department = False
+        del_single_group = True
+        del_single_department = True
 
         for search in self.search_report:
             if search["header"] is not None:
                 del_header = False
-            if "single_group" in search["result"]:
-                del_single_group = True
-            for _, terms in search["result"].items():
-                for _, departments_data in terms.items():
-                    if "single_department" in departments_data:
-                        del_single_department = True
+            for group, terms in search["result"].items():
+                if not "single_group" in group:
+                    del_single_group = False
+                for dpt,_ in terms.items():
+                    if not "single_department" in dpt:
+                        del_single_department = False
 
+        # Drop empty or default columns
         if del_header:
             del df["Consulta"]
+
         if del_single_group:
             del df["Grupo"]
+        else:
+            # Replace single_group with blank
+            df["Grupo"] = df["Grupo"].replace("single_group", "")
+
         if del_single_department:
             del df["Unidade"]
+        else:
+            # Replace single_group with blank
+            df["Unidade"] = df["Unidade"].replace("single_department", "")
 
         return df
 
@@ -202,7 +211,7 @@ class EmailSender(ISender):
                             tuple_list.append(
                                 repack_match(header, group, term, department, match)
                             )
-            return tuple_list
+        return tuple_list
 
 
 def repack_match(
