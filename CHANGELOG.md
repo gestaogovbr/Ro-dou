@@ -1,6 +1,24 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.2.0] - 2024-08-29
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Os resultados agora são agrupados por unidade, quando informada. 
+* Utilização do Pydantic para validação dos campos do yaml.
+### 🚀 Outros
+* Agrupar resultados por unidade by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/122
+* Migrate yaml file validation from JSON schema to Pydantic schemas by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/118
+* Fix logic operators in result_as_html function by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/123
+* Add syspath for schemas and change dag.owners to string by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/125
+* Alter trigger to run CI Tests on push only to main branch by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/127
+* Hotfix para correção de variável no módulo de envio de email by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/128
+* Corrige as linhas e colunas na exportação via CSV by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/129
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.1.5...0.2.0
+
 ## [0.1.5] - 2024-08-09
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
