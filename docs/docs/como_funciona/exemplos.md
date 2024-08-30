@@ -239,3 +239,46 @@ dag:
       - destination@gestao.gov.br
     subject: "Teste do Ro-dou"
 ```
+
+### Exemplo 11
+Esta configuração permite múltiplas buscas utilizando o mesmo arquivo.
+O Ro-dou permite numa mesma busca juntar resultados do DOU e Querido Diário.
+
+```yaml
+dag:
+  id: multiple_searchs_example
+  description: DAG de teste com múltiplas buscas
+  search:
+    - header: "Pesquisa no DOU"
+      sources:
+        - DOU
+      terms:
+        - dados abertos
+        - governo aberto
+        - lei de acesso à informação
+      force_rematch: On
+      ignore_signature_match: On
+    - header: "Pesquisa no QD"
+      sources:
+        - QD
+      terms:
+        - dados abertos
+        - governo aberto
+        - lei de acesso à informação
+      force_rematch: On
+      ignore_signature_match: On
+    - header: "Pesquisa no DOU e QD (misto)"
+      sources:
+        - DOU
+        - QD
+      terms:
+        - dados abertos
+        - governo aberto
+        - lei de acesso à informação
+      force_rematch: On
+      ignore_signature_match: On
+  report:
+    emails:
+      - destination@gestao.gov.br
+    subject: "Teste do Ro-dou"
+```
