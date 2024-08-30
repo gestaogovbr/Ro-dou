@@ -320,6 +320,7 @@ class DouDigestDagGenerator:
                 field=field,
                 is_exact_search=is_exact_search,
                 ignore_signature_match=ignore_signature_match,
+                force_rematch=force_rematch,
                 reference_date=get_trigger_date(context, local_time=True),
                 result_as_email=result_as_email,
             )
