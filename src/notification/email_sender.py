@@ -177,11 +177,11 @@ class EmailSender(ISender):
                 del_header = False
 
             for group, search_result in search["result"].items():
-                if group is not "single_group":
+                if group != "single_group":
                     del_single_group = False
                 for _, term_results in search_result.items():
                     for dpt,_ in term_results.items():
-                        if dpt is not "single_department":
+                        if dpt != "single_department":
                             del_single_department = False
 
         # Drop empty or default columns
