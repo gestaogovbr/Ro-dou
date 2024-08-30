@@ -1,6 +1,18 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.2.1] - 2024-08-30
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Criar busca de exemplo para DOU e Querido Diário (modo misto) by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/132
+### 🚀 Outros
+* Hotfix by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/131
+
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.2.0...0.2.1
+
 ## [0.2.0] - 2024-08-29
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
