@@ -8,7 +8,6 @@ TODO:
 [] - Definir sufixo do título do email a partir de configuração
 """
 
-import ast
 import logging
 import os
 import sys
