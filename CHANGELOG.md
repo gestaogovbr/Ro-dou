@@ -1,6 +1,19 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.2.3] - 2024-09-04
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Hotfix
+* Ajusta o código para utilizar XCom_pull de múltiplos Tasks IDs no Airflow 2.10.0. by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/140
+### 🚀 Outros
+* Ignore markdown files in CI Tests by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/141
+
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.2.2...0.2.3
+
 ## [0.2.2] - 2024-09-02
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
