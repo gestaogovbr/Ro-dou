@@ -343,18 +343,6 @@ class DouDigestDagGenerator:
 
         return search_dict
 
-    def _ensure_list_of_searches(self, specs: DAGConfig) -> list:
-        """Ensure that the search attribute is returned as a list,
-        whether it's originally a single element or a list."""
-
-        # is it a single search or a list of searchers?
-        if isinstance(specs.search, list):
-            searches = specs.search
-        else:
-            searches = [specs.search]
-
-        return searches
-
     def get_xcom_pull_tasks(self, num_searches, **context):
         """Retrieve XCom values from multiple tasks and append them to a new list.
         Function required for Airflow version 2.10.0 or later
@@ -455,7 +443,7 @@ class DouDigestDagGenerator:
 
             with TaskGroup(group_id="exec_searchs") as tg_exec_searchs:
 
-                searches = self._ensure_list_of_searches(specs=specs)
+                searches = specs.search
 
                 for counter, subsearch in enumerate(searches, 1):
 
