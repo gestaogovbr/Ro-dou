@@ -343,12 +343,41 @@ class DouDigestDagGenerator:
 
         return search_dict
 
-    def has_matches(self, search_result: list, skip_null: bool) -> str:
+    def _ensure_list_of_searches(self, specs: DAGConfig) -> list:
+        """Ensure that the search attribute is returned as a list,
+        whether it's originally a single element or a list."""
+
+        # is it a single search or a list of searchers?
+        if isinstance(specs.search, list):
+            searches = specs.search
+        else:
+            searches = [specs.search]
+
+        return searches
+
+    def get_xcom_pull_tasks(self, num_searches, **context):
+        """Retrieve XCom values from multiple tasks and append them to a new list.
+        Function required for Airflow version 2.10.0 or later
+        (https://github.com/apache/airflow/issues/41983).
+        """
+        search_results = []
+        for counter in range(1, num_searches + 1):
+            search_results.append(context["ti"].xcom_pull(
+                task_ids=f'exec_searchs.exec_search_{counter}'))
+
+        return search_results
+
+
+    def has_matches(self, num_searches: int, skip_null: bool, **context) -> str:
+        """Check if search has matches and return to skip notification or not"""
 
         if skip_null:
+            search_results = self.get_xcom_pull_tasks(num_searches=num_searches,
+                                                      **context)
+
             skip_notification = True
-            search_result = ast.literal_eval(search_result)
-            for search in search_result:
+
+            for search in search_results:
                 items = ["contains" for k, v in search["result"].items() if v]
                 if items:
                     skip_notification = False
@@ -412,11 +441,7 @@ class DouDigestDagGenerator:
 
             with TaskGroup(group_id="exec_searchs") as tg_exec_searchs:
 
-                # is it a single search or a list of searchers?
-                if isinstance(specs.search, list):
-                    searches = specs.search
-                else:
-                    searches = [specs.search]
+                searches = self._ensure_list_of_searches(specs=specs)
 
                 for counter, subsearch in enumerate(searches, 1):
 
@@ -475,14 +500,7 @@ class DouDigestDagGenerator:
                 task_id="has_matches",
                 python_callable=self.has_matches,
                 op_kwargs={
-                    "search_result": "{{ ti.xcom_pull(task_ids="
-                    + str(
-                        [
-                            f"exec_searchs.exec_search_{count}"
-                            for count in range(1, len(searches) + 1)
-                        ]
-                    )
-                    + ") }}",
+                    "num_searches": len(searches),
                     "skip_null": specs.report.skip_null,
                 },
             )
