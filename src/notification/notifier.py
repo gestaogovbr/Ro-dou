@@ -41,8 +41,6 @@ class Notifier:
             search_report (str): The report to be sent
             report_date (str): The date of the report
         """
-        # Convert to data structure after it's retrieved from xcom
-        search_report = ast.literal_eval(search_report)
 
         for sender in self.senders:
             sender.send_report(search_report, report_date)
