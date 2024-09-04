@@ -406,6 +406,20 @@ class DouDigestDagGenerator:
 
         return terms_df.to_json(orient="columns")
 
+    def send_notification(self,
+                          num_searches: int,
+                          specs: DAGConfig,
+                          report_date: str,
+                          **context) -> str:
+        """Send user notification using class Notifier
+        """
+        search_report = self.get_xcom_pull_tasks(num_searches=num_searches,
+                                                    **context)
+
+        notifier = Notifier(specs)
+
+        notifier.send_notification(search_report=search_report, report_date=report_date)
+
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
 
@@ -509,16 +523,10 @@ class DouDigestDagGenerator:
 
             send_notification_task = PythonOperator(
                 task_id="send_notification",
-                python_callable=Notifier(specs).send_notification,
+                python_callable=self.send_notification,
                 op_kwargs={
-                    "search_report": "{{ ti.xcom_pull(task_ids="
-                    + str(
-                        [
-                            f"exec_searchs.exec_search_{count}"
-                            for count in range(1, len(searches) + 1)
-                        ]
-                    )
-                    + ") }}",
+                    "num_searches": len(searches),
+                    "specs": specs,
                     "report_date": template_ano_mes_dia_trigger_local_time,
                 },
             )
