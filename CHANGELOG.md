@@ -1,6 +1,21 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.2.2] - 2024-09-02
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+
+* Upgrade Airflow to 2.10.0 by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/137
+
+### 🚀 Outros
+
+* Cast tags to a list when generating dags by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/135
+
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.2.1...0.2.2
+
 ## [0.2.1] - 2024-08-30
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
