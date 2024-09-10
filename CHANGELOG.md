@@ -1,6 +1,15 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.2.4] - 2024-09-10
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Hotfix
+Corrige resultados incompletos na busca com filtros por unidades [b57b486a2fb692e3e664e764dcc5e2c0f83c9948](https://github.com/gestaogovbr/Ro-dou/commit/b57b486a2fb692e3e664e764dcc5e2c0f83c9948)
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.2.3...0.2.4
+
 ## [0.2.3] - 2024-09-04
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
