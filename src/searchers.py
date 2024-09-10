@@ -103,7 +103,7 @@ class BaseSearcher(ABC):
                     for dept in department:
                         if dept.casefold() in str(result["hierarchyList"]).casefold():
                             # Initialize the group if not present
-                            if dept not in dpt_grouped_result:
+                            if dept not in dpt_grouped_result[term]:
                                 dpt_grouped_result[term][dept] = []
                             dpt_grouped_result[term][dept].append(result)
                 else:
