@@ -76,6 +76,8 @@
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
         - ./tests:/opt/airflow/tests # for test purpose
         - ./schemas:/opt/airflow/schemas # for test purpose
+        - ./mnt/logs:/opt/airflow/logs # for logs
+        - ./dag_load_inlabs:/opt/airflow/dags # for inlabs load 
       depends_on:
         postgres:
           condition: service_healthy
