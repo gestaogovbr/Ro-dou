@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 DEST_DIR = "download_inlabs"
 #XXX update here
-DEST_CONN_ID = "database_to_load_inlabs_data"
+DEST_CONN_ID = "inlabs_db"
 #XXX connection to https://inlabs.in.gov.br/
 INLABS_CONN_ID = "inlabs_portal"
 #XXX remember to create schema `dou_inlabs` on db
