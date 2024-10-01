@@ -1,3 +1,4 @@
+![banner](docs/img/banner.png)
 # Ro-DOU
 
 [![CI Tests](https://github.com/gestaogovbr/Ro-dou/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/gestaogovbr/Ro-dou/actions/workflows/ci-tests.yml)
