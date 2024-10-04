@@ -212,7 +212,6 @@ def load_inlabs():
                 WHERE
                     DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
             """,
-        outlets=[Dataset("inlabs")]
         )
 
     @task.branch
