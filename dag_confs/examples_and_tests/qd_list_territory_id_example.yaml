@@ -1,0 +1,23 @@
+dag:
+  id: qd_list_territory_id_example
+  description: DAG de teste com múltiplos territory_id
+  schedule: 0 8 * * MON-FRI
+  search:
+    header: "Teste com múltiplos territory_id"
+    territory_id: 
+      - 3300100
+      - 3300159
+      - 3300209
+      - 3305703
+    sources:
+      - QD
+    terms:
+      - LGPD
+      - RIO DE JANEIRO
+    force_rematch: On
+    ignore_signature_match: On
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
+    skip_null: False

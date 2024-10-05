@@ -365,7 +365,9 @@ class QDSearcher(BaseSearcher):
         payload = _build_query_payload(search_term, reference_date)
 
         if territory_id:
-            payload.append(("territory_ids", territory_id))
+            if isinstance(territory_id, int): territory_id = [territory_id]
+            for terr_id in territory_id:
+                payload.append(("territory_ids", terr_id))
 
         req_result = requests.get(self.API_BASE_URL, params=payload)
 
