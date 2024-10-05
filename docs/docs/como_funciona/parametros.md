@@ -24,7 +24,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **is_exact_search**: Busca somente o termo exato. Valores: True ou False. Default: True.
 - **sources**: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS.
 - **terms**: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca.
-- **territory_id**: Identificador do id do município. Necessário para buscar no Querido Diário.
+- **territory_id**: Lista de identificadores do id do município. Necessário para buscar no Querido Diário.
 
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.

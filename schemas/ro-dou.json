@@ -63,9 +63,21 @@
                   }
                 },
                 "territory_id": {
-                  "type": "integer",
-                  "description": "Id do território no Querido Diário - QD"
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "description": "Id do território no Querido Diário - QD",
+                    },
+                    {
+                      "type": "array",
+                      "description": "Lista de Id do território no Querido Diário - QD",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  ]
                 },
+
                 "terms": {
                   "oneOf": [
                     {
