@@ -60,7 +60,7 @@ class SearchConfig(BaseModel):
         description="Lista de fontes de dados para pesquisar (Querido Diário [QD], "
         "Diário Oficial da União [DOU], INLABS). Default: DOU.",
     )
-    territory_id: Optional[int] = Field(
+    territory_id: Optional[Union[int, List[int]]] = Field(
         default=None,
         description="ID do território no Querido Diário para filtragem "
         "baseada em localização",
