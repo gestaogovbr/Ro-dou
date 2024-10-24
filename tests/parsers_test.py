@@ -579,6 +579,53 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 },
             },
         ),
+        (
+            "qd_list_territory_id_example.yaml",
+            {
+                "id": "qd_list_territory_id_example",
+                "description": "DAG de teste com múltiplos territory_id",
+                "schedule": '0 8 * * MON-FRI',
+                "dataset": None,
+                "doc_md": None,
+                "tags": {"dou", "generated_dag"},
+                "owner": [],
+                "search": [
+                    {
+                        "terms": [
+                            "LGPD",
+                            "RIO DE JANEIRO",
+                        ],
+                        "header": "Teste com múltiplos territory_id",
+                        "sources": ["QD"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": [3300100,3300159,3300209,3305703],
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": True,
+                        "force_rematch": True,
+                        "full_text": False,
+                        "use_summary": False,
+                        "department": None,
+                    }
+                ],
+                "report": {
+                    "emails": ["destination@economia.gov.br"],
+                    "subject": "Teste do Ro-dou",
+                    "attach_csv": False,
+                    "discord_webhook": None,
+                    "slack_webhook": None,
+                    "skip_null": False,
+                    "hide_filters": False,
+                    "header_text": None,
+                    "footer_text": None,
+                    "no_results_found_text": "Nenhum dos termos pesquisados "
+                    "foi encontrado nesta consulta",
+                },
+            },
+        ),
     ],
 )
 def test_parse(filepath, result_tuple):
