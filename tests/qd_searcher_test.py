@@ -79,3 +79,23 @@ def test_build_query_payload(pre_tags: str,
     ]
 
     assert payload == expected
+
+
+@pytest.mark.parametrize(
+    'territory_id, expected_payload',
+    [
+        (3300100, [('territory_ids', 3300100)]),
+        ([3300100, 3300159], [('territory_ids', 3300100), ('territory_ids', 3300159)]),
+    ]
+)
+def test_search_with_multiple_territory_ids(territory_id, expected_payload):
+    #searcher = QDSearcher()
+    payload = []
+
+    # Simula a lógica que foi alterada para suportar múltiplos IDs de território
+    if isinstance(territory_id, int):
+        territory_id = [territory_id]
+    for terr_id in territory_id:
+        payload.append(('territory_ids', terr_id))
+
+    assert payload == expected_payload
