@@ -135,6 +135,9 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    pubtype: Optional[List[str]] = Field(
+        default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
+    )
 
 
 class ReportConfig(BaseModel):
