@@ -123,6 +123,7 @@ class INLABSHook(BaseHook):
             "name",
             "pubname",
             "artcategory",
+            "arttype",
             "identifica",
             "titulo",
             "subtitulo",
