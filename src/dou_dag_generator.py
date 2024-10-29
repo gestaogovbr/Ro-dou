@@ -280,6 +280,7 @@ class DouDigestDagGenerator:
         use_summary: Optional[bool],
         result_as_email: Optional[bool],
         department: List[str],
+        pubtype: List[str],
         **context,
     ) -> dict:
         """Performs the search in each source and merge the results"""
@@ -296,6 +297,7 @@ class DouDigestDagGenerator:
                 ignore_signature_match=ignore_signature_match,
                 force_rematch=force_rematch,
                 department=department,
+                pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
         elif "INLABS" in sources:
@@ -307,6 +309,7 @@ class DouDigestDagGenerator:
                 ignore_signature_match=ignore_signature_match,
                 full_text=full_text,
                 use_summary=use_summary,
+                pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
 
@@ -490,6 +493,7 @@ class DouDigestDagGenerator:
                             "full_text": subsearch.full_text,
                             "use_summary": subsearch.use_summary,
                             "department": subsearch.department,
+                            "pubtype": subsearch.pubtype,
                             "result_as_email": result_as_html(specs),
                         },
                     )

@@ -19,8 +19,8 @@ from utils.search_domains import SearchDate, Field, Section, calculate_from_date
 
 
 class DOUHook(BaseHook):
-    IN_WEB_BASE_URL = "https://www.in.gov.br/web/dou/-/"
-    IN_API_BASE_URL = "https://www.in.gov.br/consulta/-/buscar/dou"
+    IN_WEB_BASE_URL = "http://www.in.gov.br/web/dou/-/"
+    IN_API_BASE_URL = "http://www.in.gov.br/consulta/-/buscar/dou"
     SEC_DESCRIPTION = {
         Section.SECAO_1.value: "Seção 1",
         Section.SECAO_2.value: "Seção 2",
