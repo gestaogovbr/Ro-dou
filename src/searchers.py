@@ -429,6 +429,7 @@ class INLABSSearcher(BaseSearcher):
         ignore_signature_match: bool,
         full_text: bool,
         use_summary: bool,
+        pubtype: List[str],
         reference_date: datetime = datetime.now(),
     ) -> Dict:
         """
@@ -447,6 +448,7 @@ class INLABSSearcher(BaseSearcher):
                 signature content.
             full_text (bool): If trim result text content
             use_summary (bool): If exists, use summary as excerpt or full text
+            pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
                 search. Defaults to now.
 
@@ -457,7 +459,7 @@ class INLABSSearcher(BaseSearcher):
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
         search_terms = self._apply_filters(
-            search_terms, dou_sections, department, reference_date, search_date
+            search_terms, dou_sections, department, pubtype, reference_date, search_date
         )
 
         search_results = inlabs_hook.search_text(
@@ -489,11 +491,12 @@ class INLABSSearcher(BaseSearcher):
         search_terms: Dict,
         sections: List[str],
         department: List[str],
+        pubtype: List[str],
         reference_date: datetime,
         search_date: str,
     ):
-        """Apply `sections`, `departments` and `date` filters to the
-        search_terms dictionary."""
+        """Apply `sections`, `departments`, `pubtypes` and `date` filters
+        to the search_terms dictionary."""
 
         if "TODOS" in sections:
             search_terms["pubname"] = ["DO1", "DO2", "DO3"]
@@ -501,6 +504,8 @@ class INLABSSearcher(BaseSearcher):
             search_terms["pubname"] = self._parse_sections(sections)
         if department:
             search_terms["artcategory"] = department
+        if pubtype:
+            search_terms["arttype"] = pubtype
         publish_from = calculate_from_datetime(
             reference_date, SearchDate[search_date]
         ).strftime("%Y-%m-%d")
