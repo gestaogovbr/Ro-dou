@@ -343,6 +343,7 @@ class DouDigestDagGenerator:
         search_dict["result"] = result
         search_dict["header"] = header
         search_dict["department"] = department
+        search_dict["pubtype"] = pubtype
 
         return search_dict
 
