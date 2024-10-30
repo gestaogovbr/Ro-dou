@@ -155,6 +155,7 @@ class DOUSearcher(BaseSearcher):
         ignore_signature_match: bool,
         force_rematch: bool,
         department: List[str],
+        pubtype: List[str],
         reference_date: datetime,
     ):
         search_results = self._search_all_terms(
@@ -167,6 +168,7 @@ class DOUSearcher(BaseSearcher):
             ignore_signature_match,
             force_rematch,
             department,
+            pubtype
         )
         group_results = self._group_results(search_results, term_list, department)
 
@@ -183,6 +185,7 @@ class DOUSearcher(BaseSearcher):
         ignore_signature_match,
         force_rematch,
         department,
+        pubtype
     ) -> dict:
         search_results = {}
         for search_term in term_list:
@@ -211,6 +214,9 @@ class DOUSearcher(BaseSearcher):
             if department:
                 self._match_department(results, department)
                 # results = [r for r in results if any(item in r.get('hierarchyList') for item in department)]
+
+            if pubtype:
+                self._match_pubtype(results, pubtype)
 
             self._render_section_descriptions(results)
 
@@ -305,9 +311,18 @@ class DOUSearcher(BaseSearcher):
         """
         logging.info("Applying filter for department list")
         logging.info(department)
-        logging.info(results)
         for result in results[:]:
             if not any(dpt in result["hierarchyList"] for dpt in department):
+                results.remove(result)
+
+    def _match_pubtype(self, results: list, pubtype: list) -> list:
+        """Aplica o filtro nos resultados pela lista de tipos de publicações
+        no parâmetro 'pubtype' do YAML
+        """
+        logging.info("Applying filter for pubtype list")
+        logging.info(pubtype)
+        for result in results[:]:
+            if not any(pub in result["arttype"] for pub in pubtype):
                 results.remove(result)
 
     def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
