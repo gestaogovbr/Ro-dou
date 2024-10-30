@@ -140,6 +140,34 @@ def test_match_department(dou_searcher):
     dou_searcher._match_department(results, department)
     assert len(results) == 1
 
+def test_match_pubtype(dou_searcher):
+    pubtype = ["Edital"]
+    results = [
+        {
+            "section": "Seção 3",
+            "title": "EXTRATO DE COMPROMISSO",
+            "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+            "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+            "date": "02/09/2021",
+            "arttype": [
+                "Edital",
+                "Ata",
+                "Portaria",
+            ],
+        },
+        {
+            "section": "Seção 3",
+            "title": "EXTRATO DE COMPROMISSO",
+            "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+            "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+            "date": "02/09/2021",
+            "arttype": ["Portaria"],
+        },
+    ]
+    dou_searcher._match_pubtype(results, pubtype)
+    assert len(results) == 1
+
+
 
 @pytest.mark.parametrize(
     "pre_term_list, casted_term_list",

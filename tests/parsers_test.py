@@ -22,6 +22,12 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
             {
                 "id": "basic_example",
                 "description": "DAG de teste",
+                "schedule": None,
+                "dataset": None,
+                "skip_null": True,
+                "doc_md": None,
+                "tags": {"dou", "generated_dag"},
+                "owner": [],
                 "search": [
                     {
                         "terms": [
@@ -43,6 +49,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -51,13 +58,6 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                     "attach_csv": False,
                     "discord_webhook": None,
                     "slack_webhook": None,
-                    "schedule": None,
-                    "dataset": None,
-                    "description": "DAG de teste",
-                    "skip_null": True,
-                    "doc_md": None,
-                    "tags": {"dou", "generated_dag"},
-                    "owner": [],
                     "hide_filters": False,
                     "header_text": None,
                     "footer_text": None,
@@ -97,6 +97,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": True,
                         "use_summary": True,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -152,6 +153,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -195,6 +197,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -250,6 +253,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -296,6 +300,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "Ministério da Gestão e da Inovação em Serviços Públicos",
                             "Ministério da Defesa",
                         ],
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -339,6 +344,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": True,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -386,6 +392,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -432,6 +439,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     },
                     {
                         "terms": [
@@ -474,6 +482,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     },
                 ],
                 "report": {
@@ -520,6 +529,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "Ministério da Gestão e da Inovação em Serviços Públicos",
                             "Ministério da Defesa",
                         ],
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -563,6 +573,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -609,6 +620,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
+                        "pubtype": None,
                     }
                 ],
                 "report": {
@@ -618,6 +630,61 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                     "discord_webhook": None,
                     "slack_webhook": None,
                     "skip_null": False,
+                    "hide_filters": False,
+                    "header_text": None,
+                    "footer_text": None,
+                    "no_results_found_text": "Nenhum dos termos pesquisados "
+                    "foi encontrado nesta consulta",
+                },
+            },
+        ),
+        (
+            "pubtype_example.yaml",
+            {
+                "id": "pubtype_example",
+                "description": "DAG de teste (filtro por tipo de publicação)",
+                "schedule": None,
+                "dataset": None,
+                "doc_md": None,
+                "tags": {"dou", "generated_dag"},
+                "owner": [],
+                "search": [
+                    {
+                        "terms": [
+                            "programa",
+                        ],
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "dou_sections": ["TODOS"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": False,
+                        "full_text": False,
+                        "use_summary": False,
+                        "department": None,
+                        "pubtype": [
+                            "Ato",
+                            "Portaria",
+                            "Edital",
+                            "Extrato",
+                            "Ratificação",
+                            "Resolução",
+                            "Retificação",
+                            "Protocolo"
+                            ],
+                    }
+                ],
+                "report": {
+                    "emails": ["destination@economia.gov.br"],
+                    "subject": "Teste do Ro-dou",
+                    "attach_csv": False,
+                    "discord_webhook": None,
+                    "slack_webhook": None,
+                    "skip_null": True,
                     "hide_filters": False,
                     "header_text": None,
                     "footer_text": None,
