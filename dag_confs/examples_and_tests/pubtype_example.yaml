@@ -3,7 +3,7 @@ dag:
   description: DAG de teste (filtro por tipo de publicação)
   search:
     sources:
-      - INLABS
+      - DOU
     terms:
       - programa
     pubtype:
@@ -17,5 +17,5 @@ dag:
       - Protocolo
   report:
     emails:
-      - destination@economia.gov.r
+      - destination@economia.gov.br
     subject: "Teste do Ro-dou"
