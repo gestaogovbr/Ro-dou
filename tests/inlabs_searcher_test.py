@@ -7,18 +7,20 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "search_terms, sections, department, reference_date, search_date, filters_applyed",
+    "search_terms, sections, department, pubtype, reference_date, search_date, filters_applyed",
     [
         (
             {"texto": ["a", "b"]},
             ["SECAO_2"],
             ["Ministério"],
+            ["Edital"],
             datetime.now(),
             "DIA",
             {
                 "texto": ["a", "b"],
                 "pubname": ["DO2"],
                 "artcategory": ["Ministério"],
+                "arttype": ["Edital"],
                 "pubdate": [
                     datetime.now().strftime("%Y-%m-%d"),
                     datetime.now().strftime("%Y-%m-%d"),
@@ -32,13 +34,14 @@ def test_apply_filters(
     search_terms,
     sections,
     department,
+    pubtype,
     reference_date,
     search_date,
     filters_applyed,
 ):
     assert (
         inlabs_searcher._apply_filters(
-            search_terms, sections, department, reference_date, search_date
+            search_terms, sections, department, pubtype, reference_date, search_date
         )
         == filters_applyed
     )
