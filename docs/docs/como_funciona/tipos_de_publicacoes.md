@@ -1,0 +1,230 @@
+## Tipos de publicações (parâmetro pubtype)
+- Ação Direta de Inconstitucionalidade e Ação Declaratória de Constitucionalidade
+- Acórdão
+- Acordo Coletivo de Trabalho
+- Ajuste
+- Alvará
+- Aresto
+- Ata
+- Ato
+- Ato Complementar
+- Ato Concessório
+- Ato Declaratório
+- Ato Declaratório Conjunto
+- Ato Normativo
+- Ato Regimental
+- Ato Regulamentar
+- Auto de Infração
+- Autorização
+- Aviso
+- Aviso aos Acionistas
+- Aviso de Adiamento
+- Aviso de Adjudicação
+- Aviso de Alienação
+- Aviso de Alteração
+- Aviso de Alteração de Resultado de Habilitação
+- Aviso de Anulação
+- Aviso de Audiência Pública
+- Aviso de Cadastramento
+- Aviso de Cancelamento
+- Aviso de Cancelamento de Termo Aditivo
+- Aviso de Chamamento Público
+- Aviso de Coleta de Preços
+- Aviso de Consulta Pública
+- Aviso de Convalidação
+- Aviso de Credenciamento
+- Aviso de Dispensa de Licitação
+- Aviso de Eleição
+- Aviso de Extravio
+- Aviso de Fato Relevante
+- Aviso de Habilitação
+- Aviso de Homologação
+- Aviso de Homologação e Adjudicação
+- Aviso de Índice Técnico
+- Aviso de Inexigibilidade de Licitação
+- Aviso de Julgamento
+- Aviso de Licença
+- Aviso de Licitação
+- Aviso de Licitação-Concorrência
+- Aviso de Licitação-Convite
+- Aviso de Licitação Deserta
+- Aviso de Licitação-Leilão
+- Aviso de Licitação-Pregão
+- Aviso de Licitação-RDC Eletrônico
+- Aviso de Licitação-RDC Presencial
+- Aviso de Licitação-Registro de Preços
+- Aviso de Licitação-Tomada de Preços
+- Aviso de Nota Técnica
+- Aviso de Padronização
+- Aviso de Penalidade
+- Aviso de Preços Registrados
+- Aviso de Pré-Qualificação
+- Aviso de Processo Seletivo
+- Aviso de Proposta Comercial
+- Aviso de Proposta Técnica
+- Aviso de Prorrogação
+- Aviso de Reabertura de Prazo
+- Aviso de Registro de Chapas
+- Aviso de Registro de Diplomas
+- Aviso de Registro de Preços
+- Aviso de Relação de Compras
+- Aviso de Rescisão
+- Aviso de Retificação
+- Aviso de Revogação
+- Aviso de Seleção
+- Aviso de Serviço e Compra
+- Aviso de Sorteio
+- Aviso de Suspensão
+- Aviso de Tomada de Subsídios
+- Balancete
+- Balancete Financeiro
+- Balancete Patrimonial e Financeiro
+- Balanço Patrimonial
+- Balanço Social
+- Certidão
+- Circular
+- Comunicado
+- Consulta Pública
+- Contrato de Gestão
+- Convênio
+- Decisão
+- Decreto de Pessoal
+- Decreto Legislativo
+- Decreto não numerado
+- Decreto numerado
+- Deliberação
+- Demonstração Contábil
+- Despacho
+- Despacho Interministerial
+- Edital
+- Edital da Justiça Gratuita (Art. 32 Portaria 268/2009-IN)
+- Edital de Citação
+- Edital de Concurso Público
+- Edital de Convocação
+- Edital de Credenciamento
+- Edital de Intimação
+- Edital de Leilão
+- Edital de Notificação
+- Edital de Processo Seletivo
+- Edital de Vestibular
+- Emenda
+- Emenda Constitucional
+- Estatuto
+- Extrato
+- Extrato da Ata
+- Extrato de Acordo de Cooperação
+- Extrato de Acordo de Cooperação Federativa
+- Extrato de Acordo de Cooperação Técnica
+- Extrato de Adesão
+- Extrato de Ajuste
+- Extrato de Apostilamento
+- Extrato de Autorização de Fornecimento de Material
+- Extrato de Autorização de Serviço
+- Extrato de Autorização de Uso
+- Extrato de Carta Contrato
+- Extrato de Carta Reversal
+- Extrato de Cessão
+- Extrato de Cessão de Uso
+- Extrato de Comodato
+- Extrato de Compromisso
+- Extrato de Concessão de Uso
+- Extrato de Contrato
+- Extrato de Convênio
+- Extrato de Cooperação Mútua
+- Extrato de Credenciamento
+- Extrato de Denúncia
+- Extrato de Depósito
+- Extrato de Dispensa de Chamamento Público
+- Extrato de Dispensa de Licitação
+- Extrato de Distrato
+- Extrato de Doação
+- Extrato de Escritura de Compra e Venda
+- Extrato de Extinção (Lei nº 8.745 - contratação temporária)
+- Extrato de Fornecimento
+- Extrato de Inexigibilidade de Licitação
+- Extrato de Instrumento Convocatório
+- Extrato de Instrumentos Contratuais
+- Extrato de Memorando de Entendimento
+- Extrato de Nota de Empenho
+- Extrato de Ordem de Compra
+- Extrato de Ordem de Execução de Serviço
+- Extrato de Ordem de Fornecimento
+- Extrato de Parceria
+- Extrato de Parecer Técnico
+- Extrato de Permissão de Uso
+- Extrato de Permuta
+- Extrato de Prorrogação de Ofício
+- Extrato de Protocolo de Cooperação
+- Extrato de Protocolo de Intenção
+- Extrato de Recolhimento
+- Extrato de Reconhecimento
+- Extrato de Reconhecimento de Dívida
+- Extrato de Registro de Preços
+- Extrato de Rerratificação
+- Extrato de Rescisão
+- Extrato de Rescisão Contratual
+- Extrato de Resilição
+- Extrato de Sub-rogação
+- Extrato de Termo Aditivo
+- Extrato de Termo de Ajustamento de Conduta
+- Extrato de Termo de Cooperação Técnica
+- Extrato de Termo de Entrega
+- Extrato de Termo de Execução de Projeto
+- Extrato de Termo de Execução Descentralizada
+- Extrato de Termo de Fomento
+- Extrato de Termo de Ocupação de Imóvel
+- Extrato de Termo de Parceria
+- Extrato de Transferência de Posse
+- Extrato Prévio
+- Fato Relevante
+- Instrução
+- Instrução Normativa
+- Instrução Normativa Conjunta
+- Lei
+- Lei Complementar
+- Lista de Antiguidade
+- Medida Provisória
+- Memorando de Entendimento
+- Mensagem
+- Norma Complementar
+- Ofício circular
+- Ordem de Serviço
+- Orientação Normativa
+- Pacto
+- Parecer Normativo
+- Pauta
+- Portaria
+- Portaria Conjunta
+- Portaria Intergovernamental
+- Portaria Interministerial
+- Processo Disciplinar
+- Proposta Orçamentária
+- Protocolo
+- Protocolo de Intenções
+- Provimento
+- Ratificação
+- Recomendação
+- Recurso Disciplinar
+- Relatórios
+- Republicação
+- Resolução
+- Resolução do Senado Federal
+- Resultado de Análise
+- Resultado de Avaliação Técnica
+- Resultado de Cadastramento
+- Resultado de Concurso Público
+- Resultado de Eleição
+- Resultado de Habilitação
+- Resultado de Índice Técnico
+- Resultado de Julgamento
+- Resultado de Julgamento de Licitação
+- Resultado de Leilão
+- Resultado de Proposta Técnica
+- Resultado de Qualificação
+- Retificação
+- Retificação (de Edital)
+- Solução de Consulta
+- Súmula
+- Súmula Administrativa
+- Termo de Autorização
+- Termo de Liberação de Operação
