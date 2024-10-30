@@ -282,3 +282,31 @@ dag:
       - destination@gestao.gov.br
     subject: "Teste do Ro-dou"
 ```
+
+### Exemplo 12
+Esta configuração filtra os resultados por tipos de publicações selecionadas.
+Disponível para as pesquisas no DOU e INLABS.
+
+```yaml
+dag:
+  id: pubtype_example
+  description: DAG de teste (filtro por tipo de publicação)
+  search:
+    sources:
+      - DOU
+    terms:
+      - programa
+    pubtype:
+      - Ato
+      - Portaria
+      - Edital
+      - Extrato
+      - Ratificação
+      - Resolução
+      - Retificação
+      - Protocolo
+  report:
+    emails:
+      - destination@gestao.gov.br
+    subject: "Teste do Ro-dou"
+```
