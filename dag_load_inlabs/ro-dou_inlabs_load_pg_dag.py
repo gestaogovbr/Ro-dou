@@ -20,11 +20,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 # Constants
 
 DEST_DIR = "download_inlabs"
-#XXX update here
 DEST_CONN_ID = "inlabs_db"
-#XXX connection to https://inlabs.in.gov.br/
 INLABS_CONN_ID = "inlabs_portal"
-#XXX remember to create schema `dou_inlabs` on db
 STG_TABLE = "dou_inlabs.article_raw"
 
 
@@ -143,6 +140,7 @@ def load_inlabs():
         files_exists = _download_files()
         _unzip_files()
 
+
         return files_exists
 
     @task
@@ -225,7 +223,7 @@ def load_inlabs():
         if execution_date.day == prev_execution_date.day:
             logging.info ("Não é a primeira execução do dia")
             logging.info ("Triggering dataset edicao_extra")
-            return "trigger_dataset_edicao_extra"
+            return "trigger_dataset_inlabs_edicao_extra"
         else:
             logging.info ("Primeira execução do dia")
             logging.info ("Triggering dataset e DAGs do INLABS")
@@ -247,29 +245,13 @@ def load_inlabs():
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
         logging.info("Directory %s removed.", dest_path)
 
-    # @task_group(group_id='datasets')
-    # def trigger_datasets():
-    #     @task.run_if(lambda context: context["task_instance"].execution_date.hour == 15)
-    #     @task(outlets=[Dataset("inlabs")])
-    #     def trigger_dataset_edicao_normal():
-    #         logging.info("Disparando DAGs do INLABS")
-
-    #     @task.run_if(lambda context: context["task_instance"].execution_date.hour > 15)
-    #     @task(outlets=[Dataset("inlabs_edicao_extra")])
-    #     def trigger_dataset_edicao_extra(**kwargs):
-    #         logging.info(context["task_instance"])
-    #         logging.info("Atualizando o Dataset de Edição Extra")
-
-    #     trigger_dataset_edicao_normal(), trigger_dataset_edicao_extra()
-
-
-    ## Orchestration
+     ## Orchestration
     trigger_date = get_date()
     download_n_unzip_files(trigger_date) >> \
     load_data(trigger_date) >> check_loaded_data >> \
+    remove_directory() >> \
     check_if_first_run_of_day() >> \
-    [trigger_dataset_inlabs_edicao_extra(),trigger_dataset_inlabs()] >> \
-    remove_directory()
+    [trigger_dataset_inlabs_edicao_extra(),trigger_dataset_inlabs()]
 
 
 load_inlabs()
