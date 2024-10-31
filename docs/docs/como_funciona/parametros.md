@@ -22,6 +22,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **use_summary**: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **ignore_signature_match**: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search**: Busca somente o termo exato. Valores: True ou False. Default: True.
+- **pubtype**: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).
 - **sources**: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS.
 - **terms**: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca.
 - **territory_id**: Lista de identificadores do id do município. Necessário para buscar no Querido Diário.
