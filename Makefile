@@ -1,5 +1,12 @@
 .PHONY: run
-run: setup-containers create-example-variable
+run: \
+setup-containers \
+create-example-variable \
+create-path-tmp-variable \
+create-inlabs-db \
+create-inlabs-db-connection \
+create-inlabs-portal-connection \
+activate-inlabs-load-dag
 
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans
@@ -21,6 +28,78 @@ create-example-variable:
 			\"value\": \"LGPD\nlei geral de proteção de dados\nacesso à informação\" \
 			}' > /dev/null; \
 		fi"
+
+create-path-tmp-variable:
+	@echo "Creating 'path_tmp' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/path_tmp' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"path_tmp\", \
+			\"value\": \"/tmp\" \
+			}' > /dev/null; \
+		fi"
+
+create-inlabs-db:
+	@docker exec -e PGPASSWORD=airflow ro-dou-postgres-1 sh -c "psql -q -U airflow -f /sql/init-db.sql > /dev/null"
+
+create-inlabs-db-connection:
+	@echo "Creating 'inlabs_db' Airflow connection"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/connections/inlabs_db' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/connections' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"connection_id\": \"inlabs_db\", \
+			\"conn_type\": \"postgres\", \
+			\"schema\": \"inlabs\", \
+			\"host\": \"ro-dou-postgres-1\", \
+			\"login\": \"airflow\", \
+			\"password\": \"airflow\", \
+			\"port\": 5432 \
+			}' > /dev/null; \
+		fi"
+
+create-inlabs-portal-connection:
+	@echo "Creating 'inlabs_portal' Airflow connection"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/connections/inlabs_portal' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/connections' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"connection_id\": \"inlabs_portal\", \
+			\"conn_type\": \"http\", \
+			\"description\": \"Credencial para acesso no Portal do INLabs\", \
+			\"host\": \"https://inlabs.in.gov.br/\", \
+			\"login\": \"user@email.com\", \
+			\"password\": \"password\" \
+			}' > /dev/null; \
+		fi"
+
+activate-inlabs-load-dag:
+	@echo "Activating 'dou_inlabs_load_pg' Airflow DAG"
+	@docker exec airflow-webserver sh -c \
+		"curl -s -X 'PATCH' \
+			'http://localhost:8080/api/v1/dags/ro-dou_inlabs_load_pg' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"is_paused\": false \
+			}' > /dev/null;"
 
 .PHONY: down
 down:
