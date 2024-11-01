@@ -1,5 +1,6 @@
 .PHONY: run
 run: \
+create-logs-dir \
 setup-containers \
 create-example-variable \
 create-path-tmp-variable \
@@ -7,6 +8,9 @@ create-inlabs-db \
 create-inlabs-db-connection \
 create-inlabs-portal-connection \
 activate-inlabs-load-dag
+
+create-logs-dir:
+	mkdir -p ./airflow-logs -m a=rwx
 
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans
@@ -46,6 +50,7 @@ create-path-tmp-variable:
 		fi"
 
 create-inlabs-db:
+	@echo "Creating 'inlabs' database"
 	@docker exec -e PGPASSWORD=airflow ro-dou-postgres-1 sh -c "psql -q -U airflow -f /sql/init-db.sql > /dev/null"
 
 create-inlabs-db-connection:
