@@ -10,7 +10,7 @@ create-inlabs-portal-connection \
 activate-inlabs-load-dag
 
 create-logs-dir:
-	mkdir -p ./airflow-logs -m a=rwx
+	mkdir -p ./mnt/airflow-logs -m a=rwx
 
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans
