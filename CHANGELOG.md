@@ -1,6 +1,24 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.3.0] - 2024-11-12
+## What's Changed
+* Permitir busca no Querido Diário para um grupo de municípios by @slfabio in https://github.com/gestaogovbr/Ro-dou/pull/148
+A partir desta mudança, é permitido informar uma lista de municípios para buscas no Querido Diário.
+
+* Cria novo parâmetro de filtro por tipo de publicação by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/154
+O parâmetro pubtype permite filtrar publicações tanto no DOU quanto no INLABS com base no tipo (Decreto, Lei, Ata, etc.).
+
+* Melhorias no deployment local by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/156
+
+### 🚀 Outros
+* Update CHANGELOG.md for 0.2.4 by @github-actions in https://github.com/gestaogovbr/Ro-dou/pull/145
+
+## New Contributors
+* @slfabio made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/148
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.2.4...0.2.5
+
 ## [0.2.4] - 2024-09-10
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
