@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/oxsecurity/megalinter
+    rev: v8.3.0 # Git tag specifying the hook, not mega-linter-runner, version
+    hooks:
+      - id: megalinter-incremental # Faster, less thorough
+        stages:
+          - pre-commit
+      - id: megalinter-full # Slower, more thorough
+        stages:
+          - pre-push
