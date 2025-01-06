@@ -19,6 +19,7 @@ import json
 
 import pandas as pd
 from airflow import DAG, Dataset
+from airflow.models.param import Param
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
@@ -439,7 +440,7 @@ class DouDigestDagGenerator:
             description=specs.description,
             doc_md=doc_md,
             catchup=False,
-            params={"trigger_date": "2022-01-02T12:00"},
+            params={"trigger_date": Param("2022-01-02T12:00", type="string", format="date")},
             tags=list(specs.tags),
         )
 
