@@ -78,6 +78,7 @@
         - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
         - ./tests:/opt/airflow/tests # for test purpose
         - ./schemas:/opt/airflow/schemas # for test purpose
+      user: "${AIRFLOW_UID:-50000}:0"
       depends_on:
         postgres:
           condition: service_healthy
