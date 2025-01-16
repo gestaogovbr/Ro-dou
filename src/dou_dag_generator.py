@@ -12,7 +12,7 @@ import logging
 import os
 import sys
 import textwrap
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional, Union
 from functools import reduce
 import json
@@ -438,7 +438,7 @@ class DouDigestDagGenerator:
             catchup=False,
             params={
                 "trigger_date": Param(
-                    default="2022-01-02", type="string", format="date"
+                    default=date.today().isoformat(), type="string", format="date"
                 )
             },
             tags=list(specs.tags),
