@@ -1,6 +1,17 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.3.1] - 2025-01-16
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Remove JSON schemas, as it is no longer needed by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/159
+* Usar validação de data e UI de calendário nos parâmetros das DAGs by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/162
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.3.0...0.3.1
+
 
 ## [0.3.1] - 2025-01-16
 ## What's Changed
