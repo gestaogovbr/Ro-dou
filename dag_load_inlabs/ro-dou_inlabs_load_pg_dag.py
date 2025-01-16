@@ -6,10 +6,11 @@ import os
 import sys
 import subprocess
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from airflow import Dataset
 from airflow.decorators import dag, task
+from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
@@ -44,7 +45,11 @@ default_args = {
     catchup=False,
     description=__doc__,
     max_active_runs=1,
-    params={"trigger_date": "YYYY-MM-DD"},
+    params={
+        "trigger_date": Param(
+            default=date.today().isoformat(), type="string", format="date"
+        )
+    },
     tags=["ro-dou", "inlabs"],
 )
 def load_inlabs():
