@@ -4,6 +4,7 @@ As principais mudanças realizadas no repositório do [Ro-dou](https://github.co
 
 ## [0.3.1] - 2025-01-16
 ## What's Changed
+* Remove JSON schemas, as it is no longer needed by @augusto-herrmann in https://github.com/gestaogovbr/Ro-dou/pull/159
 * Usar validação de data e UI de calendário nos parâmetros das DAGs in https://github.com/gestaogovbr/Ro-dou/pull/162
 
 ## [0.3.0] - 2024-11-12
