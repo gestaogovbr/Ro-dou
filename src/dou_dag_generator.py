@@ -58,7 +58,6 @@ def merge_results(*dicts: SearchResult) -> SearchResult:
 
             value2 = dict2.get(key)
 
-
             if isinstance(value1, dict) and isinstance(value2, dict):
                 # If both values are dictionaries, merge them recursively
                 merged[key] = merge_results(value1, value2)
@@ -91,7 +90,7 @@ def merge_results(*dicts: SearchResult) -> SearchResult:
 
 def result_as_html(specs: DAGConfig) -> bool:
     """Só utiliza resultado HTML apenas para email"""
-    return bool(not(specs.report.discord or specs.report.slack))
+    return bool(not (specs.report.discord or specs.report.slack))
 
 
 class DouDigestDagGenerator:
@@ -355,18 +354,19 @@ class DouDigestDagGenerator:
         """
         search_results = []
         for counter in range(1, num_searches + 1):
-            search_results.append(context["ti"].xcom_pull(
-                task_ids=f'exec_searchs.exec_search_{counter}'))
+            search_results.append(
+                context["ti"].xcom_pull(task_ids=f"exec_searchs.exec_search_{counter}")
+            )
 
         return search_results
-
 
     def has_matches(self, num_searches: int, skip_null: bool, **context) -> str:
         """Check if search has matches and return to skip notification or not"""
 
         if skip_null:
-            search_results = self.get_xcom_pull_tasks(num_searches=num_searches,
-                                                      **context)
+            search_results = self.get_xcom_pull_tasks(
+                num_searches=num_searches, **context
+            )
 
             skip_notification = True
 
@@ -399,15 +399,11 @@ class DouDigestDagGenerator:
 
         return terms_df.to_json(orient="columns")
 
-    def send_notification(self,
-                          num_searches: int,
-                          specs: DAGConfig,
-                          report_date: str,
-                          **context) -> str:
-        """Send user notification using class Notifier
-        """
-        search_report = self.get_xcom_pull_tasks(num_searches=num_searches,
-                                                    **context)
+    def send_notification(
+        self, num_searches: int, specs: DAGConfig, report_date: str, **context
+    ) -> str:
+        """Send user notification using class Notifier"""
+        search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
 
         notifier = Notifier(specs)
 
@@ -440,7 +436,9 @@ class DouDigestDagGenerator:
             description=specs.description,
             doc_md=doc_md,
             catchup=False,
-            params={"trigger_date": Param("2022-01-02T12:00", type="string", format="date")},
+            params={
+                "trigger_date": Param("2022-01-02T12:00", type="string", format="date")
+            },
             tags=list(specs.tags),
         )
 
