@@ -437,7 +437,9 @@ class DouDigestDagGenerator:
             doc_md=doc_md,
             catchup=False,
             params={
-                "trigger_date": Param("2022-01-02T12:00", type="string", format="date")
+                "trigger_date": Param(
+                    default="2022-01-02", type="string", format="date"
+                )
             },
             tags=list(specs.tags),
         )
