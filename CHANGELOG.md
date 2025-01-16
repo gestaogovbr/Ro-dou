@@ -1,7 +1,13 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+
+## [0.3.1] - 2025-01-16
+## What's Changed
+* Usar validação de data e UI de calendário nos parâmetros das DAGs in https://github.com/gestaogovbr/Ro-dou/pull/162
+
 ## [0.3.0] - 2024-11-12
+
 ## What's Changed
 * Permitir busca no Querido Diário para um grupo de municípios by @slfabio in https://github.com/gestaogovbr/Ro-dou/pull/148
 A partir desta mudança, é permitido informar uma lista de municípios para buscas no Querido Diário.
