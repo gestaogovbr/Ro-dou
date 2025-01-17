@@ -33,7 +33,8 @@ Agora, faremos um segundo teste: o clipping **terms_from_variable**, seguindo os
 
 Leia a seção **Configurando em Produção** para instalar o Ro-dou utilizando um provedor SMTP real que enviará os e-mails para os destinatários verdadeiros.
 
-**Observação:** Para utilizar o `source: - INLABS`, é necessário criar a conexão `inlabs_db` no Apache Airflow, apontando para o banco `Postgres` que está carregado com os dados do inlabs. Você poderá encontrar aqui um exemplo de como carregar um banco com os dados do inlabs: [`ro-dou_inlabs_load_pg_dag.py`](https://github.com/gestaogovbr/Ro-dou/blob/main/dag_load_inlabs/ro-dou_inlabs_load_pg_dag.py).
+**Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
+que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
 Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por meio do seguinte comando:
 

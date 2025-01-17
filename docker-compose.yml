@@ -73,9 +73,12 @@
 
       volumes:
         - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
+        - ./mnt/airflow-logs:/opt/airflow/logs
         - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
+        - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
         - ./tests:/opt/airflow/tests # for test purpose
         - ./schemas:/opt/airflow/schemas # for test purpose
+      user: "${AIRFLOW_UID:-50000}:0"
       depends_on:
         postgres:
           condition: service_healthy
@@ -89,6 +92,7 @@
           POSTGRES_DB: airflow
         volumes:
           - ./mnt/pgdata:/var/lib/postgresql/data
+          - ./dag_load_inlabs/sql/:/sql
         healthcheck:
           test: ["CMD", "pg_isready", "-U", "airflow"]
           interval: 5s

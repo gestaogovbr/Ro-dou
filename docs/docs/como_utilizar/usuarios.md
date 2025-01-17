@@ -9,10 +9,12 @@ Para as unidades do Ministério da Gestão e da Inovação em Serviços Público
 * texto do assunto do e-mail que conterá o relatório do Ro-DOU;
 * lista de termos (palavras-chaves) para a pesquisa, separadas linha a linha;
 * seção ou seções do DOU que deverá(ão) ser pesquisada(s);
+* lista de unidade(s) a serem filtradas na busca de cada seção, se necessário;
+* lista de tipo de publicações a serem filtrados na busca de cada seção, se necessário;
 * inclusão ou exclusão da edição extra e/ou suplementar do DOU na pesquisa;
 * necessidade ou dispensa de que um arquivo de planilha .CSV seja anexado ao e-mail com os resultados;
 * interesse em receber o e-mail, mesmo se nenhum resultado da pesquisa no DOU for encontrado para um dia específico;
-* horário e dias da semana para realização da pesquisa e envio do relatório (por padrão, ocorre às 9h da manhã, de segunda-feira a sexta-feira); e
+* horário e dias da semana para realização da pesquisa e envio do relatório (por padrão, ocorre às 9h da manhã, de segunda-feira a sexta-feira);
 * lista com os endereços de e-mail  que receberão o relatório do Ro-DOU.
 
 
