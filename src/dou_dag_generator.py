@@ -161,22 +161,17 @@ class DouDigestDagGenerator:
 
             **Configuração da dag definida no arquivo `{config_file}`**:
 
-            <dl>
+
             """
         )
         for key, value in config.items():
-            doc_md = doc_md + f"<dt>{key}</dt>"
-            if isinstance(value, list) or isinstance(value, set):
-                doc_md = doc_md + (
-                    "<dd>\n\n"
-                    + " * "
-                    + "\n * ".join(str(item) for item in value)
-                    + "\n</dd>"
-                )
+            doc_md += f"\n**{key.replace('_', ' ').capitalize()}**\n"
+
+            if isinstance(value, (list, set)):
+                doc_md += "\n" + "\n".join(f"- {str(item)}" for item in value) + "\n"
             else:
-                doc_md = doc_md + f"<dd>{str(value)}</dd>"
-            doc_md = doc_md + "\n"
-        doc_md = doc_md + "</dl>\n"
+                doc_md += "\n" + f"- {str(value)}\n" + "\n"
+                
         return doc_md
 
     @staticmethod
