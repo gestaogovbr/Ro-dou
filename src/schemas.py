@@ -141,6 +141,16 @@ class SearchConfig(BaseModel):
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
+    excerpt_size: Optional[int] = Field(
+        default=None, 
+        description="Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. "
+        "(Funcionalidade disponível apenas no Querido Diário)"
+    )
+    number_of_excerpts: Optional[int] = Field(
+        default=None, 
+        description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
+        "(Funcionalidade disponível apenas no Querido Diário)"
+    )
 
 
 class ReportConfig(BaseModel):

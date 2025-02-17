@@ -64,12 +64,14 @@ def test_build_query_payload(pre_tags: str,
                              post_tags: str):
     payload = _build_query_payload(
         search_term='paralelepípedo',
+        is_exact_search=True,
         reference_date=datetime(2023, 2, 9),
+        territory_id=None,
     )
     expected = [
         ('size', 100),
         ('excerpt_size', 250),
-        ('sort_by', 'descending_date'),
+        ('sort_by', 'relevance'),
         ('pre_tags', pre_tags),
         ('post_tags', post_tags),
         ('number_of_excerpts', 3),
@@ -80,22 +82,115 @@ def test_build_query_payload(pre_tags: str,
 
     assert payload == expected
 
-
 @pytest.mark.parametrize(
     'territory_id, expected_payload',
     [
-        (3300100, [('territory_ids', 3300100)]),
-        ([3300100, 3300159], [('territory_ids', 3300100), ('territory_ids', 3300159)]),
+        (
+            None, 
+            [
+                ('size', 100),
+                ('excerpt_size', 250),
+                ('sort_by', 'relevance'),
+                ('pre_tags',  "<%%>"),
+                ('post_tags',  "</%%>"),
+                ('number_of_excerpts', 3),
+                ('published_since', '2023-02-09'),
+                ('published_until', '2023-02-09'),
+                ('querystring', '"paralelepípedo"')
+            ]
+        ),
+        (
+            3303302, 
+            [
+                ('size', 1),
+                ('excerpt_size', 250),
+                ('sort_by', 'relevance'),
+                ('pre_tags',  "<%%>"),
+                ('post_tags',  "</%%>"),
+                ('number_of_excerpts', 3),
+                ('published_since', '2023-02-09'),
+                ('published_until', '2023-02-09'),
+                ('querystring', '"paralelepípedo"'),
+                ('territory_ids', 3303302)
+            ]
+        ),
+        (
+            [3303302, 3303303], 
+            [
+                ('size', 2),
+                ('excerpt_size', 250),
+                ('sort_by', 'relevance'),
+                ('pre_tags',  "<%%>"),
+                ('post_tags',  "</%%>"),
+                ('number_of_excerpts', 3),
+                ('published_since', '2023-02-09'),
+                ('published_until', '2023-02-09'),
+                ('querystring', '"paralelepípedo"'),
+                ('territory_ids', 3303302),
+                ('territory_ids', 3303303)
+            ]
+        ),
     ]
 )
-def test_search_with_multiple_territory_ids(territory_id, expected_payload):
-    #searcher = QDSearcher()
-    payload = []
-
-    # Simula a lógica que foi alterada para suportar múltiplos IDs de território
-    if isinstance(territory_id, int):
-        territory_id = [territory_id]
-    for terr_id in territory_id:
-        payload.append(('territory_ids', terr_id))
-
+def test_build_query_payload_territory_id_and_size(territory_id, expected_payload):
+    payload = _build_query_payload(
+        search_term='paralelepípedo',
+        is_exact_search=True,
+        reference_date=datetime(2023, 2, 9),
+        territory_id=territory_id
+    )
+    
     assert payload == expected_payload
+
+@pytest.mark.parametrize(
+    'excerpt_size, number_of_excerpts, expected_payload',
+    [
+        (
+            500, 
+            5, 
+            [
+                ('size', 100),
+                ('excerpt_size', 500),
+                ('sort_by', 'relevance'),
+                ('pre_tags',  "<%%>"),
+                ('post_tags',  "</%%>"),
+                ('number_of_excerpts', 5),
+                ('published_since', '2023-02-09'),
+                ('published_until', '2023-02-09'),
+                ('querystring', '"paralelepípedo"')
+            ]
+        )
+    ]
+)
+def test_build_query_payload_excerpt_params(excerpt_size, number_of_excerpts, expected_payload):
+    payload = _build_query_payload(
+        search_term='paralelepípedo',
+        is_exact_search=True,
+        reference_date=datetime(2023, 2, 9),
+        territory_id=None,
+        excerpt_size=excerpt_size,
+        number_of_excerpts=number_of_excerpts
+    )
+    
+    assert payload == expected_payload
+
+@pytest.mark.parametrize(
+    'is_exact_search, expected_search_term',
+    [
+        (True, '"paralelepípedo"'),
+        (False, 'paralelepípedo')
+    ]
+)
+def test_search_with_is_exact_search(is_exact_search, expected_search_term):
+    
+    payload = _build_query_payload(
+        search_term='paralelepípedo',
+        is_exact_search=is_exact_search,
+        reference_date=datetime(2023, 2, 9),
+        territory_id=None,
+        excerpt_size=250,
+        number_of_excerpts=3
+    )
+    querystring = payload[-1][1]
+    
+    assert querystring == expected_search_term

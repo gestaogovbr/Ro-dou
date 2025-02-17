@@ -3,12 +3,17 @@ dag:
   description: DAG de teste
   search:
     sources:
-    - QD
+      - QD
     territory_id: 3106200
     terms:
-    - pandemia
-    - dados pessoais
-    - prefeitura
+      - pandemia
+      - prefeitura
+      - '"dados pessoais"'
+      - '"Software+valor"~100'
+      - '"\"Alimentação escolar\"+valor"~100'
+    is_exact_search: False
+    number_of_excerpts: 5
+    excerpt_size: 500
   report:
     emails:
       - destination@economia.gov.br

@@ -134,9 +134,14 @@ dag:
     - QD
     territory_id: 3106200 # Belo Horizonte
     terms:
-    - pandemia
-    - dados pessoais
-    - prefeitura
+      - pandemia
+      - prefeitura
+      - '"dados pessoais"'
+      - '"Software+valor"~100'
+      - '"\"Alimentação escolar\"+valor"~100'
+    is_exact_search: False
+    number_of_excerpts: 5
+    excerpt_size: 500
   report:
     emails:
       - destination@gestao.gov.br

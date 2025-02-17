@@ -14,8 +14,10 @@ dag:
     terms:
       - LGPD
       - RIO DE JANEIRO
-    force_rematch: On
-    ignore_signature_match: On
+      - DADOS PESSOAIS
+    is_exact_search: True
+    number_of_excerpts: 5
+    excerpt_size: 500
   report:
     emails:
       - destination@economia.gov.br
