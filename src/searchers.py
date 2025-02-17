@@ -352,16 +352,12 @@ class QDSearcher(BaseSearcher):
         self,
         territory_id,
         term_list,
-        dou_sections: List[str],
-        search_date,
-        field,
         is_exact_search: bool,
-        ignore_signature_match: bool,
-        force_rematch: bool,
         reference_date: datetime,
+        excerpt_size: int,
+        number_of_excerpts: int,
         result_as_email: bool = True,
     ):
-        force_rematch = True if force_rematch is None else force_rematch
         term_list = self._cast_term_list(term_list)
         tailored_date = reference_date - timedelta(days=1)
         search_results = {}
@@ -369,8 +365,10 @@ class QDSearcher(BaseSearcher):
             results = self._search_term(
                 territory_id=territory_id,
                 search_term=search_term,
+                is_exact_search=is_exact_search,
                 reference_date=tailored_date,
-                force_rematch=force_rematch,
+                excerpt_size=excerpt_size,
+                number_of_excerpts=number_of_excerpts,
                 result_as_email=result_as_email,
             )
             if results:
@@ -383,16 +381,20 @@ class QDSearcher(BaseSearcher):
         self,
         territory_id,
         search_term,
+        is_exact_search,
         reference_date,
-        force_rematch: bool,
+        excerpt_size,
+        number_of_excerpts,
         result_as_email: bool = True,
     ) -> list:
-        payload = _build_query_payload(search_term, reference_date)
-
-        if territory_id:
-            if isinstance(territory_id, int): territory_id = [territory_id]
-            for terr_id in territory_id:
-                payload.append(("territory_ids", terr_id))
+        payload = _build_query_payload(
+            search_term, 
+            is_exact_search,
+            reference_date,
+            territory_id,
+            excerpt_size, 
+            number_of_excerpts
+        )
 
         req_result = requests.get(self.API_BASE_URL, params=payload)
 
@@ -424,18 +426,39 @@ class QDSearcher(BaseSearcher):
         }
 
 
-def _build_query_payload(search_term: str, reference_date: datetime) -> List[tuple]:
-    return [
-        ("size", 100),
-        ("excerpt_size", 250),
-        ("sort_by", "descending_date"),
+def _build_query_payload(
+    search_term: str, 
+    is_exact_search: bool,
+    reference_date: datetime,
+    territory_id, 
+    excerpt_size: int = 250, 
+    number_of_excerpts: int = 3
+) -> List[tuple]:
+    if is_exact_search:
+        search_term = f'"{search_term}"'
+    
+    size = 100
+    payload_territory_id = []
+    if territory_id:
+        if isinstance(territory_id, int): territory_id = [territory_id]
+        for terr_id in territory_id:
+            payload_territory_id.append(("territory_ids", terr_id))
+        # Como a busca é realizada sempre em um única data, 
+        # no resultado haverá no máximo 1 edição por município
+        size = len(territory_id)
+
+    payload =  [
+        ("size", size),
+        ("excerpt_size", excerpt_size),
+        ("sort_by", "relevance"),
         ("pre_tags", "<%%>"),
         ("post_tags", "</%%>"),
-        ("number_of_excerpts", 3),
+        ("number_of_excerpts", number_of_excerpts),
         ("published_since", reference_date.strftime("%Y-%m-%d")),
         ("published_until", reference_date.strftime("%Y-%m-%d")),
-        ("querystring", f'"{search_term}"'),
+        ("querystring", search_term),
     ]
+    return payload + payload_territory_id
 
 
 class INLABSSearcher(BaseSearcher):

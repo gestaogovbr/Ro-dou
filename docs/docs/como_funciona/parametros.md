@@ -27,6 +27,8 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **sources**: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS.
 - **terms**: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca.
 - **territory_id**: Lista de identificadores do id do município. Necessário para buscar no Querido Diário.
+- **excerpt_size**: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário)
+- **number_of_excerpts**: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário)
 
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.
