@@ -276,6 +276,8 @@ class DouDigestDagGenerator:
         result_as_email: Optional[bool],
         department: List[str],
         pubtype: List[str],
+        excerpt_size: Optional[int],
+        number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
         """Performs the search in each source and merge the results"""
@@ -312,13 +314,10 @@ class DouDigestDagGenerator:
             qd_result = self.searchers["QD"].exec_search(
                 territory_id=territory_id,
                 term_list=term_list,
-                dou_sections=dou_sections,
-                search_date=search_date,
-                field=field,
                 is_exact_search=is_exact_search,
-                ignore_signature_match=ignore_signature_match,
-                force_rematch=force_rematch,
                 reference_date=get_trigger_date(context, local_time=True),
+                excerpt_size=excerpt_size,
+                number_of_excerpts=number_of_excerpts,
                 result_as_email=result_as_email,
             )
 
@@ -491,6 +490,8 @@ class DouDigestDagGenerator:
                             "use_summary": subsearch.use_summary,
                             "department": subsearch.department,
                             "pubtype": subsearch.pubtype,
+                            "excerpt_size": subsearch.excerpt_size,
+                            "number_of_excerpts": subsearch.number_of_excerpts,
                             "result_as_email": result_as_html(specs),
                         },
                     )

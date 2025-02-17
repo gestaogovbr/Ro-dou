@@ -605,6 +605,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "terms": [
                             "LGPD",
                             "RIO DE JANEIRO",
+                            "DADOS PESSOAIS"
                         ],
                         "header": "Teste com múltiplos territory_id",
                         "sources": ["QD"],
@@ -615,12 +616,14 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "search_date": "DIA",
                         "field": "TUDO",
                         "is_exact_search": True,
-                        "ignore_signature_match": True,
-                        "force_rematch": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": False,
                         "full_text": False,
                         "use_summary": False,
                         "department": None,
                         "pubtype": None,
+                        "number_of_excerpts": 5,
+                        "excerpt_size": 500,
                     }
                 ],
                 "report": {
