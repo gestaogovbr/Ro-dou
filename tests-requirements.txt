@@ -9,6 +9,6 @@ ijson==3.0.4
 openpyxl==3.0.7
 jsonschema==4.21.1
 PyYAML==6.0.1
-requests==2.31.0
+requests==2.32.2
 html2text==2024.2.26
 markdown==3.6.0
