@@ -171,7 +171,7 @@ class DouDigestDagGenerator:
                 doc_md += "\n" + "\n".join(f"- {str(item)}" for item in value) + "\n"
             else:
                 doc_md += "\n" + f"- {str(value)}\n" + "\n"
-                
+
         return doc_md
 
     @staticmethod
@@ -275,6 +275,7 @@ class DouDigestDagGenerator:
         use_summary: Optional[bool],
         result_as_email: Optional[bool],
         department: List[str],
+        department_ignore: List[str],
         pubtype: List[str],
         **context,
     ) -> dict:
@@ -301,6 +302,7 @@ class DouDigestDagGenerator:
                 dou_sections=dou_sections,
                 search_date=search_date,
                 department=department,
+                department_ignore=department_ignore,
                 ignore_signature_match=ignore_signature_match,
                 full_text=full_text,
                 use_summary=use_summary,
@@ -338,6 +340,7 @@ class DouDigestDagGenerator:
         search_dict["result"] = result
         search_dict["header"] = header
         search_dict["department"] = department
+        search_dict["department_ignore"] = department_ignore
         search_dict["pubtype"] = pubtype
 
         return search_dict
@@ -490,6 +493,7 @@ class DouDigestDagGenerator:
                             "full_text": subsearch.full_text,
                             "use_summary": subsearch.use_summary,
                             "department": subsearch.department,
+                            "department_ignore": subsearch.department_ignore,
                             "pubtype": subsearch.pubtype,
                             "result_as_email": result_as_html(specs),
                         },
