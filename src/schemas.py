@@ -99,6 +99,9 @@ class SearchConfig(BaseModel):
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )
+    department_ignore: Optional[List[str]] = Field(
+        default=None, description="Lista de departamentos a serem ignorados na pesquisa"
+    )
     terms: Union[List[str], FetchTermsConfig] = Field(
         description="Lista de termos de pesquisa ou uma forma de buscá-los"
     )
