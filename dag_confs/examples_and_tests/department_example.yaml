@@ -7,6 +7,8 @@ dag:
     department:
       - Ministério da Gestão e da Inovação em Serviços Públicos
       - Ministério da Defesa
+    departments_ignore:
+      - Ministério da Educação
   report:
     emails:
       - destination@economia.gov.br
