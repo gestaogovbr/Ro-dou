@@ -441,6 +441,7 @@ class INLABSSearcher(BaseSearcher):
         dou_sections: List[str],
         search_date: str,
         department: List[str],
+        department_ignore: List[str],
         ignore_signature_match: bool,
         full_text: bool,
         use_summary: bool,
@@ -459,6 +460,7 @@ class INLABSSearcher(BaseSearcher):
             search_date (str): Date interval filter.
                 search_date examples: DIA, SEMANA, MES, ANO
             department (List[str]): List of departments to filter the search.
+            department_ignore (List[str]): List of departments to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
             full_text (bool): If trim result text content
@@ -474,7 +476,7 @@ class INLABSSearcher(BaseSearcher):
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
         search_terms = self._apply_filters(
-            search_terms, dou_sections, department, pubtype, reference_date, search_date
+            search_terms, dou_sections, department, department_ignore, pubtype, reference_date, search_date
         )
 
         search_results = inlabs_hook.search_text(
@@ -506,6 +508,7 @@ class INLABSSearcher(BaseSearcher):
         search_terms: Dict,
         sections: List[str],
         department: List[str],
+        department_ignore: List[str],
         pubtype: List[str],
         reference_date: datetime,
         search_date: str,
@@ -519,6 +522,8 @@ class INLABSSearcher(BaseSearcher):
             search_terms["pubname"] = self._parse_sections(sections)
         if department:
             search_terms["artcategory"] = department
+        if department_ignore:
+            search_terms["artcategory_ignore"] = department_ignore
         if pubtype:
             search_terms["arttype"] = pubtype
         publish_from = calculate_from_datetime(

@@ -92,7 +92,6 @@ class INLABSHook(BaseHook):
         )
         # Remove the words that suceeds the delimitator !
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
-
         return (
             self.TextDictHandler().transform_search_results(
                 all_results, filtered_text_terms, ignore_signature_match, full_text, use_summary
@@ -123,6 +122,7 @@ class INLABSHook(BaseHook):
             "name",
             "pubname",
             "artcategory",
+            "artcategory_ignore",
             "arttype",
             "identifica",
             "titulo",
@@ -193,6 +193,15 @@ class INLABSHook(BaseHook):
                             rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
 
                 key_conditions = " OR ".join(key_conditions)
+
+            elif key == 'artcategory_ignore':
+                key_conditions = " AND ".join(
+                    [
+                        rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                        for value in values
+                    ]
+                )
+
             else:
                 key_conditions = " OR ".join(
                     [
@@ -277,7 +286,8 @@ class INLABSHook(BaseHook):
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
             # a publication.
-            df.dropna(subset=["identifica"], inplace=True)
+            # df.dropna(subset=["identifica"], inplace=True)
+
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
