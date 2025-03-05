@@ -293,6 +293,7 @@ class DouDigestDagGenerator:
                 ignore_signature_match=ignore_signature_match,
                 force_rematch=force_rematch,
                 department=department,
+                department_ignore=department_ignore,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
