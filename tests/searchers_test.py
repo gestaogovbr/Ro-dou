@@ -113,6 +113,7 @@ def test_really_matched(dou_searcher, search_term, abstract):
 
 def test_match_department(dou_searcher):
     department = ["Ministério da Defesa"]
+    department_ignore = ["Ministério da Defesa/Comando da Marinha"]
     results = [
         {
             "section": "Seção 3",
@@ -127,6 +128,7 @@ def test_match_department(dou_searcher):
                 "6ª Região Militar",
                 "28º Batalhão de Caçadores",
             ],
+            "hierarchyStr": "Ministério da Defesa/Comando do Exército/Comando Militar do Nordeste/6ª Região Militar/28º Batalhão de Caçadores",
         },
         {
             "section": "Seção 3",
@@ -135,9 +137,24 @@ def test_match_department(dou_searcher):
             "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
             "date": "02/09/2021",
             "hierarchyList": ["Ministério dos Povos Indígenas"],
+            "hierarchyStr": "Ministério dos Povos Indígenas",
+        },
+        {
+            "section": "Seção 3",
+            "title": "EXTRATO DE COMPROMISSO",
+            "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+            "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+            "date": "02/09/2021",
+            "hierarchyList": [
+                "Ministério da Defesa",
+                "Comando da Marinha",
+                "Diretoria-Geral do Pessoal da Marinha",
+                "Diretoria de Ensino",
+            ],
+            "hierarchyStr": "Ministério da Defesa/Comando da Marinha",
         },
     ]
-    dou_searcher._match_department(results, department)
+    dou_searcher._match_department(results, department, department_ignore)
     assert len(results) == 1
 
 def test_match_pubtype(dou_searcher):
