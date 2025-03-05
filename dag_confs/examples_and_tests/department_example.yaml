@@ -2,8 +2,6 @@ dag:
   id: department_example
   description: DAG de teste (filtro por departamento)
   search:
-    sources:
-      - DOU
     terms:
       - dados abertos
     department:
