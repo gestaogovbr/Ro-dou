@@ -1,6 +1,16 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.4.0] - 2025-03-05
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Create new parameter department_ignore by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/174
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.3.2...0.4.0
+
 ## [0.3.2] - 2025-01-31
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
