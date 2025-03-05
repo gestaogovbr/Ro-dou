@@ -155,6 +155,7 @@ class DOUSearcher(BaseSearcher):
         ignore_signature_match: bool,
         force_rematch: bool,
         department: List[str],
+        department_ignore: List[str],
         pubtype: List[str],
         reference_date: datetime,
     ):
@@ -168,6 +169,7 @@ class DOUSearcher(BaseSearcher):
             ignore_signature_match,
             force_rematch,
             department,
+            department_ignore,
             pubtype
         )
         group_results = self._group_results(search_results, term_list, department)
@@ -185,6 +187,7 @@ class DOUSearcher(BaseSearcher):
         ignore_signature_match,
         force_rematch,
         department,
+        department_ignore,
         pubtype
     ) -> dict:
         search_results = {}
@@ -211,8 +214,8 @@ class DOUSearcher(BaseSearcher):
                     if self._really_matched(search_term, r.get("abstract"))
                 ]
 
-            if department:
-                self._match_department(results, department)
+            if department or department_ignore:
+                self._match_department(results, department, department_ignore)
                 # results = [r for r in results if any(item in r.get('hierarchyList') for item in department)]
 
             if pubtype:
@@ -305,16 +308,24 @@ class DOUSearcher(BaseSearcher):
             )
         )
 
-    def _match_department(self, results: list, department: list) -> list:
+    def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
         """Aplica o filtro nos resultados pela lista de unidades informada
         no parâmetro 'department' do YAML
         """
-        logging.info("Applying filter for department list")
-        logging.info(department)
+        if department:
+            logging.info("Applying filter for department list")
+            logging.info(department)
+        if department_ignore:
+            logging.info("Applying filter for department_ignore list")
+            logging.info(department_ignore)
         for result in results[:]:
-            if not any(dpt in result["hierarchyList"] for dpt in department):
-                results.remove(result)
-
+            if department is not None:
+                if not any(dpt in result["hierarchyList"] for dpt in department):
+                    results.remove(result)
+            if department_ignore is not None:
+                if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
+                    print (result)
+                    results.remove(result)
     def _match_pubtype(self, results: list, pubtype: list) -> list:
         """Aplica o filtro nos resultados pela lista de tipos de publicações
         no parâmetro 'pubtype' do YAML
