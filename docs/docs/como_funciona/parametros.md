@@ -15,6 +15,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 * **search**: Pode ser uma ou uma lista de pesquisas.
 - **date**: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA
 - **department**: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.
+- **department_ignore**: Lista de unidades e subordinadas a serem desconsideradas na busca. O nome deve ser idêntico ao da publicação.
 - **dou_sections**: Lista de seções do DOU onde a busca deverá ser realizada. Valores aceitos: SECAO_1, SECAO_2, SECAO_3, EDICAO_EXTRA, EDICAO_SUPLEMENTAR, TODOS.
 - **field**: Campos dos quais os termos devem ser pesquisados. Valores: TUDO, TITULO, CONTEUDO. Default: TUDO
 - **force_rematch**: Indica que a busca deve ser forçada, mesmo que já tenha sido feita anteriormente. Valores: True ou False.
