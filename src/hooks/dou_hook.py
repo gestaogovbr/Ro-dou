@@ -158,6 +158,7 @@ class DOUHook(BaseHook):
                     item["id"] = content["classPK"]
                     item["display_date_sortable"] = content["displayDateSortable"]
                     item["hierarchyList"] = content["hierarchyList"]
+                    item["hierarchyStr"] = content["hierarchyStr"]
                     item["arttype"] = content["artType"]
 
                     all_results.append(item)
