@@ -92,7 +92,7 @@ class EmailSender(ISender):
                 blocks.append(f"<h1>{search['header']}</h1>")
 
             if not self.report_config.hide_filters:
-                if search["department"] or search["pubtype"]:
+                if search["department"] or search["department_ignore"] or search["pubtype"]:
                     blocks.append(
                         """<p class="secao-marker">Filtrando resultados somente para:</p>"""
                     )
@@ -102,6 +102,14 @@ class EmailSender(ISender):
                         for dpt in search["department"]:
                             blocks.append(f"<li><small>{dpt}</small></li>")
                         blocks.append("</ul>")
+
+                    if search["department_ignore"]:
+                        blocks.append("<small>Desconsiderar Unidades (e subordinadas):</small>")
+                        blocks.append("<ul>")
+                        for dpt in search["department_ignore"]:
+                            blocks.append(f"<li><small>{dpt}</small></li>")
+                        blocks.append("</ul>")
+
 
                     if search["pubtype"]:
                         blocks.append("<small>Tipos de publicações:</small>")
