@@ -324,7 +324,6 @@ class DOUSearcher(BaseSearcher):
                     results.remove(result)
             if department_ignore is not None:
                 if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
-                    print (result)
                     results.remove(result)
     def _match_pubtype(self, results: list, pubtype: list) -> list:
         """Aplica o filtro nos resultados pela lista de tipos de publicações
