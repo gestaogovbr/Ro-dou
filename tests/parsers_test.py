@@ -300,6 +300,9 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "Ministério da Gestão e da Inovação em Serviços Públicos",
                             "Ministério da Defesa",
                         ],
+                        "department_ignore": [
+                            "Ministério da Defesa/Comando da Marinha",
+                        ],
                         "pubtype": None,
                     }
                 ],
