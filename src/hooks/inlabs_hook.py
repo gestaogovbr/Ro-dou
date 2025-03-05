@@ -197,7 +197,7 @@ class INLABSHook(BaseHook):
             elif key == 'artcategory_ignore':
                 key_conditions = " AND ".join(
                     [
-                        rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                        rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
                         for value in values
                     ]
                 )
