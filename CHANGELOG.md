@@ -1,6 +1,22 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.5.0] - 2025-03-11
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Adiciona novos parâmetros para o QD by @slfabio in https://github.com/gestaogovbr/Ro-dou/pull/172
+**excerpt_size:** Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário)
+**number_of_excerpts:** Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário)
+**is_exact_search** Permite realizar buscas avançados no Querido Diário quando False
+* Update tests-requirements.txt by @gustavosantosio in https://github.com/gestaogovbr/Ro-dou/pull/173
+
+## New Contributors
+* @gustavosantosio made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/173
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.4.0...0.5.0
+
 ## [0.4.0] - 2025-03-05
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
