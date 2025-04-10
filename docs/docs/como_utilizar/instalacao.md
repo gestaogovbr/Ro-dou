@@ -19,7 +19,7 @@ Passo a passo:
     [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/)
 
 
-1. Clonar o repositório do código no Github
+2. Clonar o repositório do código no Github
 [https://github.com/gestaogovbr/Ro-dou](https://github.com/gestaogovbr/Ro-dou). Abra o terminal e execute os comandos abaixo:
 
 ```bash
