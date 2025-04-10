@@ -155,40 +155,28 @@
 <p>Clonar o repositório do código no Github
 <a href="https://github.com/gestaogovbr/Ro-dou">https://github.com/gestaogovbr/Ro-dou</a>. Abra o terminal e execute os comandos abaixo:</p>
 </li>
-</ol>
 <pre><code class="language-bash">git clone https://github.com/gestaogovbr/Ro-dou
 cd Ro-Dou
 </code></pre>
-<ol>
 <li>O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:</li>
-</ol>
 <pre><code class="language-bash">make run
 </code></pre>
 <p>Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.</p>
-<ol>
 <li>
 <p>Verificar se o serviço do Airflow, no qual o Ro-DOU depende, está acessível via navegador, acessando:</p>
 <p><a href="http://localhost:8080/">http://localhost:8080/</a></p>
 </li>
-</ol>
 <p>O Apache Airflow, que também é usado para rodar o Ro-DOU, pode demorar alguns minutos para se configurar na primeira vez. Para se autenticar e acessar o Apache Airflow, entre no link e utilize login <code>airflow</code> e senha <code>airflow</code>.</p>
-<ol>
 <li>Ativar a DAG de clipping:</li>
-</ol>
 <p>Na tela inicial do Airflow, são fornecidos clippings de exemplo. A partir dos arquivos YAML (.yaml) do diretório <code>dag_confs/</code>, é possível manipular e customizar as pesquisas de clipping desejadas nos diários oficiais. Dentro dos arquivos YAML, é possível, por exemplo, definir palavras-chave de busca e um endereço de e-mail para recebimento de uma mensagem com os resultados da busca no(s) diário(s) oficial(is).</p>
 <p>Para executar qualquer DAG do Airflow, é necessário ligá-la. Inicialmente, todas as DAGs ficam pausadas por padrão. Sugerimos começar testando o clipping <strong>all_parameters_example</strong>. Utilize o botão <em>toggle</em> para ligá-lo. Após ativá-lo, o Airflow executará a DAG uma única vez. Clique no <a href="http://localhost:8080/tree?dag_id=all_parameters_example">nome da DAG</a>
 para visualizar o detalhe da execução.</p>
 <p>Você observará que, tanto na visualização em árvore (<strong>Tree</strong>) como na visualização em Grafo (<strong>Graph</strong>) dentro do Apache Airflow, é possível constatar se houve algum resultado encontrado na API da Imprensa Nacional para os termos e demais parâmetros deste clipping. Se a tarefa chamada <strong>"send_report"</strong> estiver na cor verde, significa que foi encontrado um resultado e que uma mensagem de e-mail foi enviada para o endereço configurado no arquivo YAML.</p>
-<ol>
 <li>Visualizar clipping:</li>
-</ol>
 <p>Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/. Este é um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação. <strong><em>Voilà!</em></strong>.</p>
-<ol>
 <li>Opcional: Configurando o INLABS como fonte de dados:</li>
-</ol>
 <p><strong>Observação:</strong> Para utilizar o <code>source: - INLABS</code>, é necessário alterar a conexão <code>inlabs_portal</code> no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal <a href="https://inlabs.in.gov.br/acessar.php">INLABS</a>. A DAG
 que realiza o download dos arquivos do INLABS é a <strong>ro-dou_inlabs_load_pg</strong>.</p>
-<ol>
 <li>Desligando o ambiente:</li>
 </ol>
 <p>Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por meio do seguinte comando:</p>
@@ -223,11 +211,9 @@ para editar o arquivo <code>docker-compose.yml</code>, substituindo as variávei
 <li>
 <p>O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:</p>
 </li>
-</ol>
 <pre><code class="language-bash">make run
 </code></pre>
 <p>Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.</p>
-<ol>
 <li>Opcional: Configurando o INLABS como fonte de dados:</li>
 </ol>
 <p><strong>Observação:</strong> Para utilizar o <code>source: - INLABS</code>, é necessário alterar a conexão <code>inlabs_portal</code> no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal <a href="https://inlabs.in.gov.br/acessar.php">INLABS</a>. A DAG
