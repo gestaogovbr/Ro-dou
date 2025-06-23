@@ -79,7 +79,8 @@ create-inlabs-db-connection:
 		fi"
 
 create-inlabs-portal-connection:
-	@echo "Creating 'inlabs_portal' Airflow connection"
+	@echo "Force Creating 'inlabs_portal' Airflow connection"
+	@docker exec airflow-webserver airflow connections delete inlabs_portal || true
 	@docker exec airflow-webserver airflow connections add inlabs_portal \
 		--conn-type http \
 		--conn-host "$(INLABS_PORTAL_HOST)" \

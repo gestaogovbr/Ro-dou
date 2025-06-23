@@ -28,11 +28,7 @@ class EmailSender(ISender):
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
         self.search_report = ""
-        self.watermark = """
-            <p><small>Esta pesquisa foi realizada automaticamente pelo
-            <a href="https://gestaogovbr.github.io/Ro-dou/">Ro-DOU</a>
-            </small></p>
-        """
+        self.watermark = ""
 
     def send(self, search_report: list, report_date: str):
         """Builds the email content, the CSV if applies, and send it"""
@@ -127,7 +123,7 @@ class EmailSender(ISender):
                         if group != "single_group":
                             blocks.append("\n")
                             blocks.append(f"**Grupo: {group}**")
-                            blocks.append("\n\n")
+                            blocks.append("\n")
 
                     for term, term_results in search_results.items():
                         blocks.append("\n")
@@ -158,7 +154,7 @@ class EmailSender(ISender):
                                 else:
                                     item_html = f"""
                                         ### [{result['title']}]({result['href']})
-                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
+                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br>"""
                                     blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")

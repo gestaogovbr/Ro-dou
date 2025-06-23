@@ -1,5 +1,5 @@
 dag:
-  id: anpd_diario-inlabs
+  id: anpd_diario_dou
   description: DAG ANPD|CNPD simples diário.
   tags:
     - anpd
@@ -9,12 +9,12 @@ dag:
     - luciano.psilva
   schedule: 0 7 * * MON-FRI
   search:
-    - header: Pesquisa ANPD no DOU - Teste de Implantação
+    - header: Pesquisa ANPD no DOU - Teste de Implantação - DOU
       terms:
-        - anpd | "autoridade nacional de proteção de dados" | "AUTORIDADE NACIONAL DE PROTEÇÃO DE DADOS"
-        - 'AUTORIDADE NACIONAL DE PROTEÇÃO DE DADOS'
+        - anpd
+        - 'autoridade nacional de proteção de dados'
       sources:
-        - INLABS
+        - DOU
       field: TUDO
       is_exact_search: False
       ignore_signature_match: True
@@ -27,9 +27,10 @@ dag:
 
     - header: Pesquisa CNPD no DOU
       terms:
-        - cnpd | "conselho nacional de proteção de dados"
+        - cnpd
+        - 'conselho nacional de proteção de dados'
       sources:
-        - INLABS
+        - DOU
       field: TUDO
       is_exact_search: False
       ignore_signature_match: True
@@ -43,13 +44,7 @@ dag:
   report:
     emails:
       - luciano.psilva@anpd.gov.br
-      - igor.moreira@anpd.gov.br
-      - mariane.melo@anpd.gov.br
-      - diego.santana@anpd.gov.br
-      - ronaldo.martins@anpd.gov.br
-      - gustavo.lima@anpd.gov.br
-      - daniel.chaves@anpd.gov.br
-      - gabriella.goliveira@anpd.gov.br
+      - lucianoedipo@gmail.com
 
     attach_csv: False
     subject: Clipping diário ANPD Ro-DOU

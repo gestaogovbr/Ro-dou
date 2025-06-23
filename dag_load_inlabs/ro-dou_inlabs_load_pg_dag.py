@@ -31,7 +31,7 @@ STG_TABLE = "dou_inlabs.article_raw"
 default_args = {
     # XXX update here
     "owner": "luciano.psilva",
-    "start_date": datetime(2025, 1, 1),
+    "start_date": datetime(2024, 5, 1),
     "depends_on_past": False,
     "retries": 2,
     "retry_delay": timedelta(minutes=5),
@@ -41,7 +41,7 @@ default_args = {
 @dag(
     dag_id="ro-dou_inlabs_load_pg",
     default_args=default_args,
-    schedule="00 15,23 * * *",
+    schedule="0 6,23 * * *",
     catchup=False,
     description=__doc__,
     max_active_runs=1,
