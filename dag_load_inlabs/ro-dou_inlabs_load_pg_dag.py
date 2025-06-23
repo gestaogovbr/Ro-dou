@@ -30,8 +30,8 @@ STG_TABLE = "dou_inlabs.article_raw"
 
 default_args = {
     # XXX update here
-    "owner": "your-name",
-    "start_date": datetime(2024, 4, 1),
+    "owner": "luciano.psilva",
+    "start_date": datetime(2025, 1, 1),
     "depends_on_past": False,
     "retries": 2,
     "retry_delay": timedelta(minutes=5),

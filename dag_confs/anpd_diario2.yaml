@@ -1,0 +1,30 @@
+dag:
+  id: anpd_diario
+  description: DAG ANPD simples diário.
+  tags:
+    - anpd
+    - dou
+  owner:
+    - luciano.psilva
+  schedule: 0 7 * * MON-FRI
+  search:
+    header: Pesquisa no DOU sobre ANPD
+    terms:
+      - anpd
+      - autoridade nacional de proteção de dados
+      - CNPD
+      - Conselho Nacional de Proteção de Dados
+    field: TUDO
+    is_exact_search: True
+    ignore_signature_match: True
+    force_rematch: True
+    date: DIA
+    dou_sections:
+      - TODOS
+    full_text: False
+    use_summary: True
+  report:
+    emails:
+      - luciano.psilva@anpd.gov.br
+    attach_csv: False
+    subject: Clipping diário ANPD Ro-DOU
