@@ -315,3 +315,140 @@ dag:
       - destination@gestao.gov.br
     subject: "Teste do Ro-dou"
 ```
+
+### Exemplo 13
+Esta dag recebe e lista dados de múltiplos territórios, utilizando informações pessoais e de localidade, seguindo a norma padrão LGPD.
+
+```yaml
+dag:
+  id: qd_list_territory_id_example
+  description: DAG de teste com múltiplos territory_id
+  schedule: 0 8 * * MON-FRI
+  search:
+    header: "Teste com múltiplos territory_id"
+    territory_id:
+      - 3300100
+      - 3300159
+      - 3300209
+      - 3305703
+    sources:
+      - QD
+    terms:
+      - LGPD
+      - RIO DE JANEIRO
+      - DADOS PESSOAIS
+    is_exact_search: True
+    number_of_excerpts: 5
+    excerpt_size: 500
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
+    skip_null: False
+```
+
+### Exemplo 14
+Esta configuração realiza a organização de caracteres especiais, implicando que todos caracteres que forem de cunho especial devem estar entre aspas("").
+
+```yaml
+dag:
+  id: terms_from_db_example
+  description: DAG de teste
+  search:
+    terms:
+      from_db_select:
+        sql: >
+          SELECT 'cloroquina' as TERMO, 'Ações inefetivas' as GRUPO
+          UNION SELECT 'ivermectina' as TERMO, 'Ações inefetivas' as GRUPO
+          UNION SELECT 'vacina contra covid' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO
+          UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO
+        conn_id: example_database_conn
+    date: MES
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "[String] com caracteres especiais deve estar entre aspas"
+```
+
+### Exemplo 15
+Esta dag coleta e realiza pesquisas de dados do inlabs.
+
+```yaml
+dag:
+  id: inlabs_example
+  description: DAG de teste
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  dataset: inlabs
+  owner:
+    - cdata
+  search:
+    sources:
+    - INLABS
+    terms:
+      - tecnologia
+      - informação
+    use_summary: True
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+```
+
+### Exemplo 16
+Esta dag realiza pesquisas avançadas de dados no inlabs.
+
+```yaml
+dag:
+  id: inlabs_advanced_search_example
+  description: DAG de teste
+  tags:
+    - inlabs
+  dataset: inlabs
+  owner:
+    - cdata
+  search:
+    sources:
+    - INLABS
+    terms:
+    - designar & ( MGI | MINISTÉRIO FAZENDA)
+    - instituto & federal ! paraná
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+```
+
+### Exemplo 17
+Esta dag é utilizada para ocultar filtros de pesquisa de texto.
+
+```yaml
+dag:
+  id: hide_filters_example
+  description: DAG de teste
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  search:
+    header: HEADER TEXT
+    sources:
+    - INLABS
+    terms:
+    - tecnologia
+    - informação
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+      - Ministério da Defesa
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"
+    hide_filters: True
+```
