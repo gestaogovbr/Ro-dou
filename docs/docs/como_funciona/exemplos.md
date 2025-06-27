@@ -317,7 +317,7 @@ dag:
 ```
 
 ### Exemplo 13
-Esta dag recebe e lista dados de múltiplos territórios, utilizando informações pessoais e de localidade, seguindo a norma padrão LGPD.
+Esta dag recebe e lista dados de múltiplos territórios para busca no Querido Diário.
 
 ```yaml
 dag:
@@ -348,7 +348,7 @@ dag:
 ```
 
 ### Exemplo 14
-Esta configuração realiza a organização de caracteres especiais, implicando que todos caracteres que forem de cunho especial devem estar entre aspas("").
+Realiza as busca de termos a partir de uma fonte de um banco SGBD externo, possibilitando assim que os termos de buscas sejam dinâmicos.
 
 ```yaml
 dag:
@@ -401,7 +401,7 @@ dag:
 ```
 
 ### Exemplo 16
-Esta dag realiza pesquisas avançadas de dados no inlabs.
+Esta dag realiza pesquisas com parâmetros de busca avançados quando a fonte é INLABS.
 
 ```yaml
 dag:
@@ -426,7 +426,7 @@ dag:
 ```
 
 ### Exemplo 17
-Esta dag é utilizada para ocultar filtros de pesquisa de texto.
+Esta dag é utilizada para ocultar filtros de pesquisa de texto e outros metadados.
 
 ```yaml
 dag:
