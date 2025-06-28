@@ -67,101 +67,65 @@ class EmailSender(ISender):
                 mime_charset="utf-8",
             )
 
-    def generate_email_content(self) -> str:
-        """Generate HTML content to be sent by email based on
-        search_report dictionary
-        """
+def generate_email_content(self) -> str:
+    """Generate HTML content to be sent by email based on search_report dictionary"""
+    current_directory = os.path.dirname(__file__)
+    parent_directory = os.path.dirname(current_directory)
+    file_path = os.path.join(parent_directory, "report_style.css")
 
-        current_directory = os.path.dirname(__file__)
-        parent_directory = os.path.dirname(current_directory)
-        file_path = os.path.join(parent_directory, "report_style.css")
+    with open(file_path, "r", encoding="utf-8") as f:
+        blocks = [f"<style>\n{f.read()}</style>"]
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            blocks = [f"<style>\n{f.read()}</style>"]
+    if self.report_config.header_text:
+        blocks.append(self.report_config.header_text)
 
-        if self.report_config.header_text:
-            blocks.append(self.report_config.header_text)
+    already_included_ids = set()
 
-        for search in self.search_report:
+    for search in self.search_report:
+        if search["header"]:
+            blocks.append(f"<h1>{search['header']}</h1>")
 
-            if search["header"]:
-                blocks.append(f"<h1>{search['header']}</h1>")
+        # filtros
+        if not self.report_config.hide_filters:
+            if search["department"] or search["department_ignore"] or search["pubtype"]:
+                blocks.append("<p class='secao-marker'>Filtrando resultados somente para:</p>")
+                # repete a lista de unidades, ignores e pubtype aqui
 
-            if not self.report_config.hide_filters:
-                if search["department"] or search["department_ignore"] or search["pubtype"]:
-                    blocks.append(
-                        """<p class="secao-marker">Filtrando resultados somente para:</p>"""
-                    )
-                    if search["department"]:
-                        blocks.append("<small>Unidades:</small>")
-                        blocks.append("<ul>")
-                        for dpt in search["department"]:
-                            blocks.append(f"<li><small>{dpt}</small></li>")
-                        blocks.append("</ul>")
+        for group, search_results in search["result"].items():
+            if not search_results:
+                blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
+            else:
+                if not self.report_config.hide_filters and group != "single_group":
+                    blocks.append(f"<p><strong>Grupo: {group}</strong></p>")
 
-                    if search["department_ignore"]:
-                        blocks.append("<small>Desconsiderar Unidades (e subordinadas):</small>")
-                        blocks.append("<ul>")
-                        for dpt in search["department_ignore"]:
-                            blocks.append(f"<li><small>{dpt}</small></li>")
-                        blocks.append("</ul>")
-
-
-                    if search["pubtype"]:
-                        blocks.append("<small>Tipos de publicações:</small>")
-                        blocks.append("<ul>")
-                        for pub in search["pubtype"]:
-                            blocks.append(f"<li><small>{pub}</small></li>")
-                        blocks.append("</ul>")
-
-            for group, search_results in search["result"].items():
-
-                if not search_results:
-                    blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
-                else:
+                for term, term_results in search_results.items():
                     if not self.report_config.hide_filters:
-                        if group != "single_group":
-                            blocks.append("\n")
-                            blocks.append(f"**Grupo: {group}**")
-                            blocks.append("\n")
+                        blocks.append(f"<p><em># Resultados para: {term}</em></p>")
 
-                    for term, term_results in search_results.items():
-                        blocks.append("\n")
-                        if not self.report_config.hide_filters:
-                            blocks.append(f"* # Resultados para: {term}")
+                    for department, results in term_results.items():
+                        if not self.report_config.hide_filters and department != "single_department":
+                            blocks.append(f"<p><strong>{department}</strong></p>")
 
-                        for department, results in term_results.items():
+                        for result in results:
+                            result_id = result.get("id")
+                            if result_id in already_included_ids:
+                                continue
+                            already_included_ids.add(result_id)
 
-                            if (
-                                not self.report_config.hide_filters
-                                and department != "single_department"
-                            ):
-                                blocks.append(f"**{department}**")
+                            sec_desc = result["section"]
+                            item_html = f"""
+                                <p class="secao-marker">{sec_desc}</p>
+                                <h3><a href="{result['href']}">{result['title']}</a></h3>
+                                <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
+                                <p class='date-marker'>{result['date']}</p>"""
+                            blocks.append(textwrap.dedent(item_html))
 
-                            for result in results:
-                                if not self.report_config.hide_filters:
-                                    sec_desc = result["section"]
-                                    item_html = f"""
-                                        <p class="secao-marker">{sec_desc}</p>
-                                        ### [{result['title']}]({result['href']})
-                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
-                                        <p class='date-marker'>{result['date']}</p>"""
-                                    blocks.append(
-                                        textwrap.indent(
-                                            textwrap.dedent(item_html), " " * 4
-                                        )
-                                    )
-                                else:
-                                    item_html = f"""
-                                        ### [{result['title']}]({result['href']})
-                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br>"""
-                                    blocks.append(textwrap.dedent(item_html))
+    blocks.append("<hr />")
+    if self.report_config.footer_text:
+        blocks.append(self.report_config.footer_text)
 
-        blocks.append("---")
-        if self.report_config.footer_text:
-            blocks.append(self.report_config.footer_text)
+    return markdown.markdown("\n".join(blocks))
 
-        return markdown.markdown("\n".join(blocks))
 
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
