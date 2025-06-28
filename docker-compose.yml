@@ -1,3 +1,5 @@
+version: '3.9'
+
 x-airflow-common: &airflow-common
   build:
     context: .
@@ -13,7 +15,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
     AIRFLOW__SMTP__SMTP_HOST: '${AIRFLOW__SMTP__SMTP_HOST}'
-    AIRFLOW__SMTP__SMTP_MAIL_FROM: 'noreply@anpd.gov.br' #'Clipping Diário ANPD <noreply@anpd.gov.br>'
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: 'noreply@anpd.gov.br'
     AIRFLOW__SMTP__SMTP_PORT: '${AIRFLOW__SMTP__SMTP_PORT}'
     AIRFLOW__SMTP__SMTP_STARTTLS: '${AIRFLOW__SMTP__SMTP_STARTTLS}'
     AIRFLOW__SMTP__SMTP_USER: '${AIRFLOW__SMTP__SMTP_USER}'
@@ -36,10 +38,9 @@ x-airflow-common: &airflow-common
     RO_DOU__DAG_CONF_DIR: '${RO_DOU_DAG_CONF_DIR}'
 
   volumes:
-    - ./src:/opt/airflow/dags/ro_dou_src
+    - ./src:/opt/airflow/dags
+    - ./dag_confs:/opt/airflow/dag_confs
     - ./mnt/airflow-logs:/opt/airflow/logs
-    - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
-    - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
     - ./tests:/opt/airflow/tests
     - ./schemas:/opt/airflow/schemas
   user: '${AIRFLOW_UID:-50000}:0'

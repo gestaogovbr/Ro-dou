@@ -67,130 +67,130 @@ class EmailSender(ISender):
                 mime_charset="utf-8",
             )
 
-def generate_email_content(self) -> str:
-    """Generate HTML content to be sent by email based on search_report dictionary"""
-    current_directory = os.path.dirname(__file__)
-    parent_directory = os.path.dirname(current_directory)
-    file_path = os.path.join(parent_directory, "report_style.css")
+    def generate_email_content(self) -> str:
+        """Generate HTML content to be sent by email based on search_report dictionary"""
+        current_directory = os.path.dirname(__file__)
+        parent_directory = os.path.dirname(current_directory)
+        file_path = os.path.join(parent_directory, "report_style.css")
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        blocks = [f"<style>\n{f.read()}</style>"]
+        with open(file_path, "r", encoding="utf-8") as f:
+            blocks = [f"<style>\n{f.read()}</style>"]
 
-    if self.report_config.header_text:
-        blocks.append(self.report_config.header_text)
+        if self.report_config.header_text:
+            blocks.append(self.report_config.header_text)
 
-    already_included_ids = set()
+        already_included_ids = set()
 
-    for search in self.search_report:
-        if search["header"]:
-            blocks.append(f"<h1>{search['header']}</h1>")
+        for search in self.search_report:
+            if search["header"]:
+                blocks.append(f"<h1>{search['header']}</h1>")
 
-        # filtros
-        if not self.report_config.hide_filters:
-            if search["department"] or search["department_ignore"] or search["pubtype"]:
-                blocks.append("<p class='secao-marker'>Filtrando resultados somente para:</p>")
-                # repete a lista de unidades, ignores e pubtype aqui
+            # filtros
+            if not self.report_config.hide_filters:
+                if search["department"] or search["department_ignore"] or search["pubtype"]:
+                    blocks.append("<p class='secao-marker'>Filtrando resultados somente para:</p>")
+                    # repete a lista de unidades, ignores e pubtype aqui
 
-        for group, search_results in search["result"].items():
-            if not search_results:
-                blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
+            for group, search_results in search["result"].items():
+                if not search_results:
+                    blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
+                else:
+                    if not self.report_config.hide_filters and group != "single_group":
+                        blocks.append(f"<p><strong>Grupo: {group}</strong></p>")
+
+                    for term, term_results in search_results.items():
+                        if not self.report_config.hide_filters:
+                            blocks.append(f"<p><em># Resultados para: {term}</em></p>")
+
+                        for department, results in term_results.items():
+                            if not self.report_config.hide_filters and department != "single_department":
+                                blocks.append(f"<p><strong>{department}</strong></p>")
+
+                            for result in results:
+                                result_id = result.get("id")
+                                if result_id in already_included_ids:
+                                    continue
+                                already_included_ids.add(result_id)
+
+                                sec_desc = result["section"]
+                                item_html = f"""
+                                    <p class="secao-marker">{sec_desc}</p>
+                                    <h3><a href="{result['href']}">{result['title']}</a></h3>
+                                    <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
+                                    <p class='date-marker'>{result['date']}</p>"""
+                                blocks.append(textwrap.dedent(item_html))
+
+        blocks.append("<hr />")
+        if self.report_config.footer_text:
+            blocks.append(self.report_config.footer_text)
+
+        return markdown.markdown("\n".join(blocks))
+
+
+        def get_csv_tempfile(self) -> NamedTemporaryFile:
+            temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
+            self.convert_report_to_dataframe().to_csv(temp_file, index=False)
+            return temp_file
+
+        def convert_report_to_dataframe(self) -> pd.DataFrame:
+            df = pd.DataFrame(self.convert_report_dict_to_tuple_list())
+            df.columns = [
+                "Consulta",
+                "Grupo",
+                "Termo de pesquisa",
+                "Unidade",
+                "Seção",
+                "URL",
+                "Título",
+                "Resumo",
+                "Data",
+            ]
+            del_header = True
+            del_single_group = True
+            del_single_department = True
+
+            for search in self.search_report:
+                if search["header"] is not None:
+                    del_header = False
+
+                for group, search_result in search["result"].items():
+                    if group != "single_group":
+                        del_single_group = False
+                    for _, term_results in search_result.items():
+                        for dpt,_ in term_results.items():
+                            if dpt != "single_department":
+                                del_single_department = False
+
+            # Drop empty or default columns
+            if del_header:
+                del df["Consulta"]
+
+            if del_single_group:
+                del df["Grupo"]
             else:
-                if not self.report_config.hide_filters and group != "single_group":
-                    blocks.append(f"<p><strong>Grupo: {group}</strong></p>")
+                # Replace single_group with blank
+                df["Grupo"] = df["Grupo"].replace("single_group", "")
 
-                for term, term_results in search_results.items():
-                    if not self.report_config.hide_filters:
-                        blocks.append(f"<p><em># Resultados para: {term}</em></p>")
+            if del_single_department:
+                del df["Unidade"]
+            else:
+                # Replace single_group with blank
+                df["Unidade"] = df["Unidade"].replace("single_department", "")
 
-                    for department, results in term_results.items():
-                        if not self.report_config.hide_filters and department != "single_department":
-                            blocks.append(f"<p><strong>{department}</strong></p>")
+            return df
 
-                        for result in results:
-                            result_id = result.get("id")
-                            if result_id in already_included_ids:
-                                continue
-                            already_included_ids.add(result_id)
-
-                            sec_desc = result["section"]
-                            item_html = f"""
-                                <p class="secao-marker">{sec_desc}</p>
-                                <h3><a href="{result['href']}">{result['title']}</a></h3>
-                                <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
-                                <p class='date-marker'>{result['date']}</p>"""
-                            blocks.append(textwrap.dedent(item_html))
-
-    blocks.append("<hr />")
-    if self.report_config.footer_text:
-        blocks.append(self.report_config.footer_text)
-
-    return markdown.markdown("\n".join(blocks))
-
-
-    def get_csv_tempfile(self) -> NamedTemporaryFile:
-        temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
-        self.convert_report_to_dataframe().to_csv(temp_file, index=False)
-        return temp_file
-
-    def convert_report_to_dataframe(self) -> pd.DataFrame:
-        df = pd.DataFrame(self.convert_report_dict_to_tuple_list())
-        df.columns = [
-            "Consulta",
-            "Grupo",
-            "Termo de pesquisa",
-            "Unidade",
-            "Seção",
-            "URL",
-            "Título",
-            "Resumo",
-            "Data",
-        ]
-        del_header = True
-        del_single_group = True
-        del_single_department = True
-
-        for search in self.search_report:
-            if search["header"] is not None:
-                del_header = False
-
-            for group, search_result in search["result"].items():
-                if group != "single_group":
-                    del_single_group = False
-                for _, term_results in search_result.items():
-                    for dpt,_ in term_results.items():
-                        if dpt != "single_department":
-                            del_single_department = False
-
-        # Drop empty or default columns
-        if del_header:
-            del df["Consulta"]
-
-        if del_single_group:
-            del df["Grupo"]
-        else:
-            # Replace single_group with blank
-            df["Grupo"] = df["Grupo"].replace("single_group", "")
-
-        if del_single_department:
-            del df["Unidade"]
-        else:
-            # Replace single_group with blank
-            df["Unidade"] = df["Unidade"].replace("single_department", "")
-
-        return df
-
-    def convert_report_dict_to_tuple_list(self) -> list:
-        tuple_list = []
-        for search in self.search_report:
-            header = search["header"] if search["header"] else None
-            for group, results in search["result"].items():
-                for term, departments in results.items():
-                    for department, dpt_matches in departments.items():
-                        for match in dpt_matches:
-                            tuple_list.append(
-                                repack_match(header, group, term, department, match)
-                            )
-        return tuple_list
+        def convert_report_dict_to_tuple_list(self) -> list:
+            tuple_list = []
+            for search in self.search_report:
+                header = search["header"] if search["header"] else None
+                for group, results in search["result"].items():
+                    for term, departments in results.items():
+                        for department, dpt_matches in departments.items():
+                            for match in dpt_matches:
+                                tuple_list.append(
+                                    repack_match(header, group, term, department, match)
+                                )
+            return tuple_list
 
 
 def repack_match(
