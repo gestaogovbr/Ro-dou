@@ -3,8 +3,8 @@ dag:
   description: DAG ANPD|CNPD simples diário.
   tags:
     - anpd
-    - inlabs
-    - diario
+    - dou
+    - teste
   owner:
     - luciano.psilva
   schedule: 0 7 * * MON-FRI
@@ -44,15 +44,6 @@ dag:
   report:
     emails:
       - luciano.psilva@anpd.gov.br
-      - igor.moreira@anpd.gov.br
-      - mariane.melo@anpd.gov.br
-      - diego.santana@anpd.gov.br
-      - ronaldo.martins@anpd.gov.br
-      - gustavo.lima@anpd.gov.br
-      - daniel.chaves@anpd.gov.br
-      - gabriella.goliveira@anpd.gov.br
-
-
     attach_csv: False
     subject: Clipping diário ANPD Ro-DOU - Teste-DOU
     skip_null: False

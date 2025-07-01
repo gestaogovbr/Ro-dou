@@ -1,0 +1,137 @@
+dag:
+  id: anpd_diario_dou_prod
+  description: DAG ANPD|CNPD simples diário no DOU.
+  tags:
+    - anpd
+    - dou
+    - prod
+  owner:
+    - luciano.psilva
+  schedule: 0 7 * * MON-FRI
+  search:
+    - header: Menção da ANPD/CNPD no DOU-Diário Oficial da União
+      terms:
+        - anpd
+        - 'autoridade nacional de proteção de dados'
+        - cnpd
+        - 'conselho nacional de proteção de dados'
+      sources:
+        - DOU
+      field: TUDO
+      is_exact_search: False
+      ignore_signature_match: True
+      force_rematch: True
+      date: DIA
+      dou_sections:
+        - TODOS
+      full_text: False
+      use_summary: True
+  report:
+    emails:
+      - luciano.psilva@anpd.gov.br
+    attach_csv: False
+    subject: Clipping diário ANPD Ro-DOU
+    skip_null: False
+    hide_filters: True
+    header_text: |
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+      <tr>
+      <td align="center">
+      <table align="center" width="640" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="vertical-align: middle; padding-right: 8px;">
+            <img src="https://www.gov.br/anpd/pt-br/anpd-rodou-340x111.png" alt="Logotipo ANPD" width="240" style="display: block;" />
+          </td>
+          <td style="vertical-align: middle;">
+            <h2 style="margin: 0; font-size: 18px; color: #004b76;">Autoridade Nacional de Proteção de Dados</h2>
+            <small style="color: #555;">Clipping diário de publicações oficiais da ANPD e CNPD no DOU</small>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+      </table>
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 640px; margin: auto;">
+      <tr>
+      <td style="padding: 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+          <tr>
+            <td align="center" style="padding-bottom: 20px;">
+              <img src="https://www.gov.br/anpd/pt-br/anpd-rodou-340x111.png" alt="Logotipo ANPD" width="240" style="display: block;" />
+            </td>
+          </tr>
+        </table>
+        <h2 style="color: #004b76; font-size: 20px; text-align: center;">COMUNICADO AOS COLABORADORES DA ANPD</h2>
+        <p>Prezados(as) colegas,</p>
+        <p>
+          Informamos que iniciamos nesta semana o funcionamento do serviço <strong>Ro-DOU</strong> na ANPD.
+          Trata-se de um sistema automatizado que realiza buscas diárias no <strong>Diário Oficial da União (DOU)</strong>
+          por menções à <strong>Autoridade Nacional de Proteção de Dados (ANPD)</strong> e ao
+          <strong>Conselho Nacional de Proteção de Dados Pessoais e da Privacidade (CNPD)</strong>,
+          enviando um clipping consolidado por e-mail aos destinatários cadastrados.
+        </p>
+        <h3 style="color: #004b76;">🗓 Período de teste</h3>
+        <p>
+          Nas <strong>duas primeiras semanas</strong>, este serviço estará em fase de implantação e monitoramento.
+          Durante este período, podem ocorrer ajustes e variações nos relatórios gerados.
+        </p>
+        <h3 style="color: #d9534f;">🚨 Atenção</h3>
+        <p>
+          Caso identifique qualquer comportamento estranho, como recebimento de mensagens duplicadas,
+          inconsistências nos resultados ou suspeitas de segurança, solicitamos que informe imediatamente para:
+          <br />
+          <a href="mailto:desenvolvimento@anpd.gov.br" style="color: #004b76;">desenvolvimento@anpd.gov.br</a>
+        </p>
+        <p>
+          A operação desta ferramenta é conduzida pela <strong>DDSS/CGTI/ANPD</strong>,
+          utilizando o software livre <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank" style="color: #004b76;">Ro-DOU</a>,
+          adaptado para atender às necessidades da ANPD.
+        </p>
+        <p>Contamos com a colaboração de todos para o sucesso desta iniciativa que visa aprimorar o acompanhamento institucional das publicações oficiais envolvendo a ANPD e o CNPD.</p>
+        <p>Atenciosamente,<br/>
+        <strong>Coordenação-Geral de Tecnologia da Informação (CGTI/ANPD)</strong></p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
+       </td>
+      </tr>
+      </table>
+    footer_text: |
+      <hr />
+      <p style="font-size: 12px; color: #777; text-align: center;">
+        Esta pesquisa foi realizada automaticamente pela ferramenta
+        <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank">Ro-DOU</a>,
+        adaptada e operada pela DDSS/CGTI/ANPD.
+        <br/>
+        Para mais informações, acesse:
+        <a href="https://www.gov.br/anpd" target="_blank">gov.br/anpd</a> |
+        <a href="https://anpdgov.sharepoint.com" target="_blank">intranet.anpd</a> |
+        <a href="mailto:desenvolvimento@anpd.gov.br">desenvolvimento@anpd.gov.br</a>
+      </p>                            
+    no_results_found_text: |
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+      <tr>
+      <td align="center">
+      <table align="center" width="640" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="vertical-align: middle; padding-right: 8px;">
+            <img src="https://www.gov.br/anpd/pt-br/anpd-rodou-340x111.png" alt="Logotipo ANPD" width="240" style="display: block;" />
+          </td>
+          <td style="vertical-align: middle;">
+            <h2 style="margin: 0; font-size: 18px; color: #004b76;">Autoridade Nacional de Proteção de Dados</h2>
+            <small style="color: #555;">Clipping diário de publicações oficiais da ANPD e CNPD no DOU</small>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+      </table>
+      <hr />
+      <br />
+      <br />
+      <h3 style="text-align: center; color: #d9534f;">Nenhum resultado encontrado</h3>
+      <br />
+      <hr />
+      <p style="font-size: 12px; color: #777; text-align: center;">
+      Esta pesquisa foi realizada automaticamente pela ferramenta
+      <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank">Ro-DOU</a>,
+      adaptada e operada pela DDSS/CGTI/ANPD. - <a href="https://www.gov.br/anpd" target="_blank">https://www.gov.br/anpd</a>
+      </p>
