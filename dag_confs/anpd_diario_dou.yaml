@@ -43,7 +43,7 @@ dag:
 
   report:
     emails:
-      - luciano.psilva@anpd.gov.br
+      - lucianoedipo@gmail.com
     attach_csv: False
     subject: Clipping diário ANPD Ro-DOU - Teste-DOU
     skip_null: False

@@ -51,42 +51,7 @@ dag:
       </td>
       </tr>
       </table>
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 640px; margin: auto;">
-      <tr>
-      <td style="padding: 20px;">
-        <h2 style="color: #004b76; font-size: 20px; text-align: center;">COMUNICADO AOS COLABORADORES DA ANPD</h2>
-        <p>Prezados(as) colegas,</p>
-        <p>
-          Iniciaremos nesta semana o funcionamento do serviço <strong>Ro-DOU</strong> na ANPD.
-          Trata-se de um sistema automatizado que realiza buscas diárias no <strong>Diário Oficial da União (DOU)</strong>
-          por menções à <strong>Autoridade Nacional de Proteção de Dados (ANPD)</strong> e ao
-          <strong>Conselho Nacional de Proteção de Dados Pessoais e da Privacidade (CNPD)</strong>,
-          enviando um resumo (clipping) consolidado por e-mail aos colaboradores.
-        </p>
-        <h3 style="color: #004b76;">🗓 Período de teste</h3>
-        <p>
-          Nas <strong>duas primeiras semanas</strong>, este serviço estará em fase de implantação e monitoramento.
-          Durante este período, podem ocorrer ajustes e variações nos relatórios gerados.
-        </p>
-        <h3 style="color: #d9534f;">🚨 Atenção</h3>
-        <p>
-          Caso identifique qualquer comportamento estranho, como recebimento de mensagens duplicadas,
-          inconsistências nos resultados ou suspeitas de segurança, solicitamos que informe imediatamente para:
-          <br />
-          <a href="mailto:desenvolvimento@anpd.gov.br" style="color: #004b76;">desenvolvimento@anpd.gov.br</a>
-        </p>
-        <p>
-          A operação desta ferramenta é conduzida pela <strong>DDSS/CGTI/ANPD</strong>,
-          utilizando o software livre <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank" style="color: #004b76;">Ro-DOU</a>, disponibilizado pelo
-          <strong>Ministério da Gestão e da Inovação em Serviços Públicos (MGI)</strong>,
-          e <strong>adaptado</strong> para atender às necessidades da ANPD.
-        <p>Contamos com a colaboração de todos para o sucesso desta iniciativa que visa aprimorar o acompanhamento institucional das publicações oficiais envolvendo a ANPD e o CNPD.</p>
-        <p>Atenciosamente,<br/>
-        <strong>Coordenação-Geral de Tecnologia da Informação (CGTI/ANPD)</strong></p>
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
-       </td>
-      </tr>
-      </table>
+        
     footer_text: |
       <hr />
       <p style="font-size: 12px; color: #777; text-align: center;">
