@@ -1,0 +1,15 @@
+dag:
+  id: department_example
+  description: DAG de teste (filtro por departamento)
+  search:
+    terms:
+      - dados abertos
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+      - Ministério da Defesa
+    department_ignore:
+      - Ministério da Defesa/Comando da Marinha
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
