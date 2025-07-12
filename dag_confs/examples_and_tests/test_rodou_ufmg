@@ -1,15 +1,12 @@
 dag:
-  id: department_example
+  id: teste_rodou_ufmg
   description: DAG de teste (filtro por departamento)
   search:
     terms:
-      - dados abertos
+      - nomear
     department:
-      - Ministério da Gestão e da Inovação em Serviços Públicos
-      - Ministério da Defesa
-    department_ignore:
-      - Ministério da Defesa/Comando da Marinha
+      - Universidade Federal de Minas Gerais        
   report:
     emails:
-      - destination@economia.gov.br
+      - fabriciomadureira90@gmail.com
     subject: "Teste do Ro-dou"
