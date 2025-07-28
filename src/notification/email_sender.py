@@ -12,8 +12,12 @@ from airflow.utils.email import send_email
 
 # TODO fix this
 # Add parent folder to sys.path in order to be able to import
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
+
+# Add parent directory to sys.path
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# parent_dir = os.path.dirname(current_dir)
+
 sys.path.insert(0, parent_dir)
 
 from notification.isender import ISender
