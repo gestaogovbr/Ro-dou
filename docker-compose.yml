@@ -36,103 +36,102 @@
 #
 # Feel free to modify this file to suit your needs.
 ---
-    x-airflow-common:
-      &airflow-common
-      build:
-        context: .
-      environment:
-        &airflow-common-env
-        AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
-        AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-        AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
-        AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
-        AIRFLOW__CORE__EXECUTOR: LocalExecutor
-        AIRFLOW__CORE__FERNET_KEY: 'Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw='
-        AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-        AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-        AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
-        AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
-        AIRFLOW__SMTP__SMTP_HOST: smtp4dev
-        AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@economia.gov.br
-        AIRFLOW__SMTP__SMTP_PORT: 25
-        AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
-        # AIRFLOW__SMTP__SMTP_USER:
-        # AIRFLOW__SMTP__SMTP_PASSWORD:
-        AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
-        AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-        AIRFLOW__WEBSERVER__WORKERS: 1
+x-airflow-common: &airflow-common
+  build:
+    context: .
+  environment: &airflow-common-env
+    AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__FERNET_KEY: 'Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw='
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
+    AIRFLOW__SMTP__SMTP_HOST: smtp4dev
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@economia.gov.br
+    AIRFLOW__SMTP__SMTP_PORT: 25
+    AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
+    # AIRFLOW__SMTP__SMTP_USER:
+    # AIRFLOW__SMTP__SMTP_PASSWORD:
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
+    AIRFLOW__WEBSERVER__SECRET_KEY: '42'
+    AIRFLOW__WEBSERVER__WORKERS: 1
 
-        _AIRFLOW_DB_UPGRADE: 'true'
-        _AIRFLOW_WWW_USER_CREATE: 'true'
-        _AIRFLOW_WWW_USER_USERNAME: airflow
-        _AIRFLOW_WWW_USER_PASSWORD: airflow
+    _AIRFLOW_DB_UPGRADE: 'true'
+    _AIRFLOW_WWW_USER_CREATE: 'true'
+    _AIRFLOW_WWW_USER_USERNAME: airflow
+    _AIRFLOW_WWW_USER_PASSWORD: airflow
 
-        AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
+    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
 
-        RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
+    RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
 
-      volumes:
-        - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
-        - ./mnt/airflow-logs:/opt/airflow/logs
-        - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
-        - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
-        - ./tests:/opt/airflow/tests # for test purpose
-        - ./schemas:/opt/airflow/schemas # for test purpose
-      user: "${AIRFLOW_UID:-50000}:0"
-      depends_on:
-        postgres:
-          condition: service_healthy
+  volumes:
+    - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
+    - ./mnt/airflow-logs:/opt/airflow/logs
+    - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
+    - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
+    - ./tests:/opt/airflow/tests # for test purpose
+    - ./schemas:/opt/airflow/schemas # for test purpose
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    postgres:
+      condition: service_healthy
 
-    services:
-      postgres:
-        image: postgres:13
-        environment:
-          POSTGRES_USER: airflow
-          POSTGRES_PASSWORD: airflow
-          POSTGRES_DB: airflow
-        volumes:
-          - ./mnt/pgdata:/var/lib/postgresql/data
-          - ./dag_load_inlabs/sql/:/sql
-        healthcheck:
-          test: ["CMD", "pg_isready", "-U", "airflow"]
-          interval: 5s
-          retries: 5
-        restart: always
-
-      airflow-webserver:
-        <<: *airflow-common
-        container_name: airflow-webserver
-        command: webserver
-        ports:
-          - 8080:8080
-        healthcheck:
-          test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-          interval: 10s
-          timeout: 10s
-          retries: 5
-        restart: always
-
-      airflow-scheduler:
-        <<: *airflow-common
-        container_name: airflow-scheduler
-        command: scheduler
-        restart: always
-
-      smtp4dev:
-        image: rnwood/smtp4dev:v3
-        restart: always
-        ports:
-          - '5001:80'
-          - '25:25' # Change the number before : to the port the SMTP server should be accessible on
-          - '143:143' # Change the number before : to the port the IMAP server should be accessible on
-        volumes:
-            - smtp4dev-data:/smtp4dev
-        environment:
-          - ServerOptions__HostName=smtp4dev
-
-      # selenium:
-      #     image: ghcr.io/gestaogovbr/selenium:ro-dou
-      #     volumes:
-      #       - /dev/shm:/dev/shm
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - 5432:5432
     volumes:
-      smtp4dev-data:
+      - ./mnt/pgdata:/var/lib/postgresql/data
+      - ./dag_load_inlabs/sql/:/sql
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "airflow" ]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    command: webserver
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    command: scheduler
+    restart: always
+
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    restart: always
+    ports:
+      - '5001:80'
+      - '25:25' # Change the number before : to the port the SMTP server should be accessible on
+      - '143:143' # Change the number before : to the port the IMAP server should be accessible on
+    volumes:
+      - smtp4dev-data:/smtp4dev
+    environment:
+      - ServerOptions__HostName=smtp4dev
+# selenium:
+#     image: ghcr.io/gestaogovbr/selenium:ro-dou
+#     volumes:
+#       - /dev/shm:/dev/shm
+volumes:
+  smtp4dev-data:
