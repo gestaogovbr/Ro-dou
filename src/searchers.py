@@ -115,10 +115,8 @@ class BaseSearcher(ABC):
         return search_results
 
     def _really_matched(self, search_term: str, abstract: str) -> bool:
-        """Verifica se o termo encontrado pela API realmente é igual ao
-        termo de busca. Esta função é útil para filtrar resultados
-        retornardos pela API mas que são resultados aproximados e não
-        exatos.
+        """Verify if the term returned from the API matches the search terms.
+        This function is useful for filtering API results to include only close matches, not exact matches.
         """
         whole_match = self._clean_html(abstract).replace("... ", "")
         norm_whole_match = self._normalize(whole_match)
@@ -275,16 +273,14 @@ class DOUSearcher(BaseSearcher):
                 retry += 1
 
     def _is_signature(self, search_term: str, abstract: str) -> bool:
-        """Verifica se o `search_term` (geralmente usado para busca por
-        nome de pessoas) está presente na assinatura. Para isso se
-        utiliza de um "bug" da API que, para estes casos, retorna o
-        `abstract` iniciando com a assinatura do documento, o que não
-        ocorre quando o match acontece em outras partes do documento.
-        Dessa forma esta função checa se isso ocorreu e é utilizada para
-        filtrar os resultados presentes no relatório final. Também
-        resolve os casos em que o nome da pessoa é parte de nome maior.
-        Por exemplo o nome 'ANTONIO DE OLIVEIRA' é parte do nome 'JOSÉ
-        ANTONIO DE OLIVEIRA MATOS'
+        """This function checks if the search_term (usually used to search for people's names)
+        is present in the signature. To achieve this, the function takes advantage of a "bug" in the API.
+        In such cases, the value returns as abstract and begins with the document signature.
+        This does not happen when the match occurs in other parts of the document.
+        With this approach, the function checks if this situation occurs
+        and is used to filter results present in the final document.
+        This function corrects cases where a person's name forms a larger part of another name.
+        For example, the name 'ANTONIO DE OLIVEIRA' is part of the name 'JOSÉ ANTONIO DE OLIVEIRA MATOS'.
         """
         clean_abstract = self._clean_html(abstract)
         start_name, match_name = self._get_prior_and_matched_name(abstract)
@@ -294,23 +290,23 @@ class DOUSearcher(BaseSearcher):
         norm_term = self._normalize(search_term)
 
         return (
-            # Considera assinatura apenas se aparecem com uppercase
+            # Approve the signature only if it contains uppercase letters.
             (start_name + match_name).isupper()
             and
-            # Resolve os casos '`ANTONIO DE OLIVEIRA`' e
+            # Correct the cases '`ANTONIO DE OLIVEIRA`' and
             # '`ANTONIO DE OLIVEIRA` MATOS'
             (
                 norm_abstract.startswith(norm_term)
                 or
-                # Resolve os casos 'JOSÉ `ANTONIO DE OLIVEIRA`' e
+                # Correct the cases 'JOSÉ `ANTONIO DE OLIVEIRA`' and
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
                 norm_abstract_without_start_name.startswith(norm_term)
             )
         )
 
     def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
-        """Aplica o filtro nos resultados pela lista de unidades informada
-        no parâmetro 'department' do YAML
+        """Apply the filter to the results returned from the units
+        listed in the 'department' parameter in the YAML.
         """
         if department:
             logging.info("Applying filter for department list")
@@ -326,8 +322,8 @@ class DOUSearcher(BaseSearcher):
                 if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
                     results.remove(result)
     def _match_pubtype(self, results: list, pubtype: list) -> list:
-        """Aplica o filtro nos resultados pela lista de tipos de publicações
-        no parâmetro 'pubtype' do YAML
+        """Apply the filter to the results returned from the publications type listed
+        in the 'pubtype' parameter in the YAML.
         """
         logging.info("Applying filter for pubtype list")
         logging.info(pubtype)
@@ -443,8 +439,8 @@ def _build_query_payload(
         if isinstance(territory_id, int): territory_id = [territory_id]
         for terr_id in territory_id:
             payload_territory_id.append(("territory_ids", terr_id))
-        # Como a busca é realizada sempre em um única data, 
-        # no resultado haverá no máximo 1 edição por município
+        # The search filter is applied using only a date,
+        # and the result returns a maximum of one edition per country(township).
         size = len(territory_id)
 
     payload =  [
