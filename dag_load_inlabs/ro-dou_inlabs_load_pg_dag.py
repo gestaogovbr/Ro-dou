@@ -16,8 +16,6 @@ from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 from airflow.operators.python import BranchPythonOperator
 
-from dag_load_inlabs.sql.inlabs_load_pg import create_tabelas_article
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Constants
@@ -192,10 +190,7 @@ def load_inlabs():
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
-                )
-            if not table_exists[0]:
-                hook.run(create_tabelas_article)
-
+                )            
         df = _read_files()
         hook = PostgresHook(DEST_CONN_ID)
         _clean_db(hook)

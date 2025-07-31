@@ -1,0 +1,141 @@
+dag:
+  id: busca_termos_ascom_mgi_inlabs
+  description: Realiza busca no DOU dos termos da ASCOM do MGI.
+  dataset: inlabs
+  tags:
+    - ascom
+    - inlabs
+  owner:
+    - cdata
+  search:
+    - header: Seção 1 - Atos do Poder Executivo
+      sources:
+        - INLABS
+      terms:
+        - Dweck
+        - Mori
+        - Stuchi
+        - Leonel
+        - Cardoso
+        - Feijoo
+        - Gaetani
+        - Mascarenhas
+        - Cilair
+        - Mônica
+        - Patrícia
+        - Coeli
+        - Adauto
+        - Pojo
+        - CPNU
+        - Imóvel | Imóveis
+      dou_sections:
+        - SECAO_1
+        - EDICAO_EXTRA
+        - EDICAO_SUPLEMENTAR
+      department:
+        - Presidência da República
+        - Atos do Poder Executivo
+        - Ministério da Gestão e da Inovação em Serviços Públicos
+      pubtype:
+        - Ato
+        - Ato Complementar
+        - Ato Concessório
+        - Ato Declaratório
+        - Ato Declaratório Conjunto
+        - Ato Normativo
+        - Ato Regimental
+        - Ato Regulamentar
+        - Decreto não numerado
+        - Decreto numerado
+        - Lei
+        - Lei Complementar
+        - Medida Provisória
+        - Portaria
+        - Portaria Conjunta
+        - Portaria Intergovernamental
+        - Portaria Interministerial
+        - Retificação
+      force_rematch: True
+      ignore_signature_match: False
+      use_summary: True
+    - header: Seção 2 - Atos do Poder Executivo
+      sources:
+        - INLABS
+      terms:
+        - CEEXT
+      dou_sections:
+        - SECAO_2
+        - EDICAO_EXTRA
+        - EDICAO_SUPLEMENTAR
+      department:
+        - Ministério da Gestão e da Inovação em Serviços Públicos
+      pubtype:
+        - Portaria
+      force_rematch: True
+      ignore_signature_match: False
+      use_summary: True
+    - header: Seção 3 - Atos do Poder Executivo
+      sources:
+        - INLABS
+      terms:
+        - Dweck
+        - Mori
+        - Imóvel da Gente
+        - Stuchi
+        - Leonel
+        - Cardoso
+        - Feijoo
+        - Gaetani
+        - Mascarenhas
+        - Cilair
+        - Mônica
+        - Patrícia
+        - Coeli
+        - Adauto
+        - Pojo
+        - CPNU
+        - Imóvel | Imóveis
+      dou_sections:
+        - SECAO_3
+        - EDICAO_EXTRA
+        - EDICAO_SUPLEMENTAR
+      department:
+        - Ministério da Gestão e da Inovação em Serviços Públicos
+      pubtype:
+        - Aviso de Audiência Pública
+        - Edital
+        - Edital de Concurso Público
+        - Edital de Convocação
+      force_rematch: True
+      ignored_signature_match: False
+      use_summary: True
+  report:
+    emails:
+      - ascom.gestao@gestao.gov.br
+      - imprensa.gestao@gestao.gov.br
+      - aede.cadaxa@gestao.gov.br
+      - renata.ribas@gestao.gov.br
+      - denise.neumann@gestao.gov.br
+      - adelle.batista@gestao.gov.br
+      - grazielle.machado@gestao.gov.br
+      - patricia.mesquita@gestao.gov.br
+      - jhonathan.pereira@gestao.gov.br
+      - fabiana.conte@gestao.gov.br
+      - juliana.pinto@gestao.gov.br
+      - laura.veras@gestao.gov.br
+      - joao-n.sousa@gestao.gov.br
+      - ana-beatriz.rosa@gestao.gov.br
+      - fernando.mallmann@gestao.gov.br
+      - mateus.neto@gestao.gov.br
+      - augusto.herrmann@gestao.gov.br
+      - ro-dou-suporte@gestao.gov.br
+    subject: "[Ro-DOU] Publicação de Atos Normativos e Movimentações do DOU para o MGI"
+    attach_csv: True
+    skip_null: False
+    hide_filters: False
+    header_text: |
+      <p>Prezadas servidoras e prezados servidores,</p>
+      <p>Informamos os atos publicados no DOU de hoje, de interesse da
+      ASCOM/MGI.</p>
+    no_results_found_text: |
+      Nesta seção, não há ato publicado de interesse direto da ASCOM/MGI
