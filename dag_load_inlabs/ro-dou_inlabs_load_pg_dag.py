@@ -190,8 +190,7 @@ def load_inlabs():
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
-                )
-
+                )            
         df = _read_files()
         hook = PostgresHook(DEST_CONN_ID)
         _clean_db(hook)
