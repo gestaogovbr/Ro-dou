@@ -1,9 +1,7 @@
-CREATE DATABASE inlabs;
-
-\c inlabs
-
-CREATE SCHEMA IF NOT EXISTS dou_inlabs;
-
+"""
+SQL usados para criar a tabela article_raw.
+"""
+create_tabelas_article = """
 CREATE TABLE IF NOT EXISTS dou_inlabs.article_raw (
     id BIGINT PRIMARY KEY,
     name TEXT,
@@ -33,3 +31,5 @@ CREATE TABLE IF NOT EXISTS dou_inlabs.article_raw (
     texto TEXT,
     assina TEXT
   )
+  """
+  
