@@ -33,7 +33,7 @@ class EmailSender(ISender):
         self.report_config = report_config
         self.search_report = ""
         self.watermark = """
-            <footer class="footer">
+            <div class="footer">
                 <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
                     <img src="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou/ro-dou/@@govbr.institucional.banner/b27393f0-d00b-4459-8c99-f4f084eb2432/@@images/ecce877d-c42d-4ab6-ad9b-d24073ab5063.png"
                     alt="Ro-DOU" width="250">
@@ -41,7 +41,7 @@ class EmailSender(ISender):
                 <small>Esta pesquisa foi realizada automaticamente pelo
                     <a href="https://gestaogovbr.github.io/Ro-dou/">&copy; Ro-DOU</a>
                 </small>
-            </footer>
+            </div>
         """
 
     def send(self, search_report: list, report_date: str):
