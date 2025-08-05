@@ -4,7 +4,7 @@
 
 Para as unidades do Ministério da Gestão e da Inovação em Serviços Públicos que desejem solicitar a utilização de clippings via Ro-DOU, a Secretaria de Gestão e Inovação do MGI está disponível para auxiliá-las a configurar o serviço.
 
-É preciso que a unidade interessada encaminhe as seguintes informações para o endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br):
+É preciso que a unidade interessada encaminhe as seguintes informações para o endereço [ro-dou-suporte@gestao.gov.br](mailto:ro-dou-suporte@gestao.gov.br):
 
 * texto do assunto do e-mail que conterá o relatório do Ro-DOU;
 * lista de termos (palavras-chaves) para a pesquisa, separadas linha a linha;
@@ -25,4 +25,4 @@ Os termos de pesquisa devem ser registrados no Git ou em uma tabela no banco de 
 
 ### Usuários externos (de fora do MGI)
 
-Usuários de órgãos públicos que não sejam unidades do Ministério da Gestão e da Inovação em Serviços Públicos poderão enviar dúvidas ou comentários ao endereço [seges.cginf@gestao.gov.br](mailto:seges.cginf@gestao.gov.br).
+Usuários de órgãos públicos que não sejam unidades do Ministério da Gestão e da Inovação em Serviços Públicos poderão enviar dúvidas ou comentários ao endereço [ro-dou-suporte@gestao.gov.br](mailto:ro-dou-suporte@gestao.gov.br).
