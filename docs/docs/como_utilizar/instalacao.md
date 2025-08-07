@@ -1,5 +1,7 @@
 ## Instalação e configuração
 
+**⚠️Observação:** Caso esteja utilizando Windows, lembre-se de ter o WSL instalado e configurado. Caso não saiba como fazer isso, veja abaixo: [como instalar e configurar o WSL](instalacao_wsl_windows)
+
 ### Configurando o ambiente local (desenvolvimento)
 
 #### Requisitos
