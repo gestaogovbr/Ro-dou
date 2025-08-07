@@ -1,6 +1,7 @@
 ## Instalação e configuração
 
-**⚠️Observação:** Caso esteja utilizando Windows, lembre-se de ter o WSL instalado e configurado. Caso não saiba como fazer isso, veja abaixo: [como instalar e configurar o WSL](instalacao_wsl_windows)
+**⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com oa passos de instalação.
+Veja aqui: [como instalar e configurar o WSL](instalacao_wsl_windows)
 
 ### Configurando o ambiente local (desenvolvimento)
 
