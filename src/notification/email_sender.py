@@ -151,15 +151,18 @@ class EmailSender(ISender):
                             if (
                                 not self.report_config.hide_filters
                                 and department != "single_department"
-                            ):
-                                blocks.append(f"**{department}**")
+                            ):                            
+                                blocks.append(f"**{department}**") 
 
                             for result in results:
                                 if not self.report_config.hide_filters:
                                     sec_desc = result["section"]
+                                    title = result["title"]
+                                    if not result["title"]:
+                                        title = "Documento sem título"
                                     item_html = f"""
-                                        <p class="secao-marker">{sec_desc}</p>
-                                        ### [{result['title']}]({result['href']})
+                                        <p class="secao-marker">{sec_desc}</p>                                         
+                                         ### [{title}]({result['href']})
                                         <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
                                         <p class='date-marker'>{result['date']}</p>"""
                                     blocks.append(
