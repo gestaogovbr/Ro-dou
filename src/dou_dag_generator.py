@@ -89,7 +89,7 @@ def merge_results(*dicts: SearchResult) -> SearchResult:
 
 
 def result_as_html(specs: DAGConfig) -> bool:
-    """Use HTML results only for emails"""
+    """Só utiliza resultado HTML apenas para email"""
     return bool(not (specs.report.discord or specs.report.slack))
 
 
@@ -187,10 +187,11 @@ class DouDigestDagGenerator:
         return _hash
 
     def _get_safe_schedule(self, specs: DAGConfig, default_schedule: str) -> str:
-        """Return a new value of `schedule`, randomazing the
-        execution minute accorgind to `dag_id`, if the dag use the
-        schedule standard. Apply a function of hash to string
-        dag_id to return a value between 0 and 60, wich defines the execution minute.
+        """Retorna um novo valor de `schedule` randomizando o
+        minuto de execução baseado no `dag_id`, caso a dag utilize o
+        schedule padrão. Aplica uma função de hash na string
+        dag_id que retorna valor entre 0 e 60 que define o minuto de
+        execução.
         """
 
         schedule = default_schedule
@@ -203,10 +204,10 @@ class DouDigestDagGenerator:
     def _update_schedule_with_dataset(
         self, dataset: str, schedule: str, is_default_schedule: bool
     ) -> Union[Dataset, DatasetOrTimeSchedule]:
-        """If a dataset is provide, the schedule will be update
-        to make execution conditional on the Dataset or
+        """Caso informado um dataset o schedule é alterado
+        para ser condicionado a execução por Dataset ou
         DatasetOrTimeSchedule
-        (if the value of schedule is specified in the YAML information).
+        (caso o valor de schedule esteja informado no YAML).
         """
         if not is_default_schedule:
             return DatasetOrTimeSchedule(
@@ -220,8 +221,8 @@ class DouDigestDagGenerator:
     def _update_schedule(
         self, specs: DAGConfig
     ) -> Union[str, Union[Dataset, DatasetOrTimeSchedule]]:
-        """The DAG will update the value of schedule to
-        the default value or to a Dataset, if that option is specified.
+        """Atualiza o valor do schedule para o
+        valor default ou para Dataset, se for o caso.
         """
         schedule = specs.schedule
 

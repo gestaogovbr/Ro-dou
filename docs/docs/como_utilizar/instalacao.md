@@ -1,5 +1,10 @@
 ## Instalação e configuração
 
+**⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com oa passos de instalação, certifique-se também de habilitar o [docker no WSL](https://learn.microsoft.com/pt-br/windows/wsl/tutorials/wsl-containers)
+
+* [Como instalar e configurar o WSL](instalacao_wsl_windows)
+* [Como habilitar no docker no WSL](habilitacao_docker_no_wsl.md)
+
 ### Configurando o ambiente local (desenvolvimento)
 
 #### Requisitos

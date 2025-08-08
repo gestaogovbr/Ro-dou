@@ -33,9 +33,15 @@ class EmailSender(ISender):
         self.report_config = report_config
         self.search_report = ""
         self.watermark = """
-            <p><small>Esta pesquisa foi realizada automaticamente pelo
-            <a href="https://gestaogovbr.github.io/Ro-dou/">Ro-DOU</a>
-            </small></p>
+            <div class="footer">
+                <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
+                    <img src="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou/ro-dou/@@govbr.institucional.banner/b27393f0-d00b-4459-8c99-f4f084eb2432/@@images/ecce877d-c42d-4ab6-ad9b-d24073ab5063.png"
+                    alt="Ro-DOU" width="250">
+                </a>
+                <small>Esta pesquisa foi realizada automaticamente pelo
+                    <a href="https://gestaogovbr.github.io/Ro-dou/">&copy; Ro-DOU</a>
+                </small>
+            </div>
         """
 
     def send(self, search_report: list, report_date: str):
@@ -82,6 +88,8 @@ class EmailSender(ISender):
 
         current_directory = os.path.dirname(__file__)
         parent_directory = os.path.dirname(current_directory)
+
+        # File with email styling
         file_path = os.path.join(parent_directory, "report_style.css")
 
         with open(file_path, "r", encoding="utf-8") as f:
@@ -93,7 +101,7 @@ class EmailSender(ISender):
         for search in self.search_report:
 
             if search["header"]:
-                blocks.append(f"<h1>{search['header']}</h1>")
+                blocks.append(f"<h2>{search['header']}</h2>")
 
             if not self.report_config.hide_filters:
                 if search["department"] or search["department_ignore"] or search["pubtype"]:
