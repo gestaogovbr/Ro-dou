@@ -92,6 +92,7 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
         .get(
             "trigger_date", # Either a manual trigger with the variable specified,
             None # or a manual trigger where the variable is not specified.
+        )
     ) if context["dag_run"] and context["dag_run"].conf else None # This is a scheduled execution of the dag+
 
     if context["dag_run"].external_trigger:
