@@ -1,4 +1,3 @@
-
 """
 Dynamic DAG generator with YAML config system to create DAG which
 searches terms in the Gazzete [Diário Oficial da União-DOU] and send it

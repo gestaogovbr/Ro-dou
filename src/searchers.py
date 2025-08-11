@@ -295,19 +295,19 @@ class DOUSearcher(BaseSearcher):
             # Approve the signature only if it contains uppercase letters.
             (start_name + match_name).isupper()
             and
-            # Correct the cases '`ANTONIO DE OLIVEIRA`' and
+            # Fix the cases '`ANTONIO DE OLIVEIRA`' and
             # '`ANTONIO DE OLIVEIRA` MATOS'
             (
                 norm_abstract.startswith(norm_term)
                 or
-                # Correct the cases 'JOSÉ `ANTONIO DE OLIVEIRA`' and
+                # Fix the cases 'JOSÉ `ANTONIO DE OLIVEIRA`' and
                 # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
                 norm_abstract_without_start_name.startswith(norm_term)
             )
         )
 
     def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
-        """Apply the filter to the results returned from the units
+        """Applies the filter to the results returned by the units
         listed in the 'department' parameter in the YAML.
         """
         if department:
@@ -324,7 +324,7 @@ class DOUSearcher(BaseSearcher):
                 if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
                     results.remove(result)
     def _match_pubtype(self, results: list, pubtype: list) -> list:
-        """Apply the filter to the results returned from the publications type listed
+        """Applies the filter to the results returned by the publications type listed
         in the 'pubtype' parameter in the YAML.
         """
         logging.info("Applying filter for pubtype list")

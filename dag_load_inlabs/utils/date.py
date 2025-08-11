@@ -59,49 +59,50 @@ def get_reference_date(context: dict) -> datetime:
     return reference_date
 
 def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
-    """ Calcula a data de disparo da execução da DAG.
+    """ Calculate the start date of the DAG execution.
 
-        Caso seja uma execução agendada, será data_interval_end,
-        que no Airflow é a data esperada em que a DAG seja executada
-        (é igual a logical_date + o schedule).
+        If the execution is a scheduled execution,
+        the data_interval_end will be activated.In Airflow,
+        this represents the predetermined date when the DAG is executed.
+        (It is equivalent to the logical_date plus the schedule interval).
 
-        Caso seja feita ativação manual (trigger DAG), poderá ser
-        passado o parâmetro trigger_date no JSON de configuração.
-        Nesse caso, valerá esta. O parâmetro deve ser passado no
-        formato ISO (ex.: 2021-01-02T12:00):
+        If the manual activation is performed (triggering the DAG),
+        the parameter trigger_date can be activated in the JSON configurations.
+        In this approach, the parameter must be provided in ISO
+        format (ex.: 2021-01-02T12:00):
 
         {
             "trigger_date": "2021-01-02T12:00"
         }
 
-        Caso seja feita a ativação manual (trigger DAG) sem passar
-        esse parâmetro, será considerada a logical_date, que
-        no caso é a data em que foi realizado o trigger (data atual).
+        If manual activation has been performed (triggering the DAG)
+        and the parameter is not provided, the trigger will be identified
+        as a logical_date. In this case, the date will be
+        the current date and time when the trigger is executed (actualy date).
 
-        Caso o parâmetro local_time seja True, nos casos de execução
-        agendada ou manual sem configuração será considerado o
-        datetime convertido para o fuso horário setado para o
-        ambiente do Airflow. Por padrão o parâmetro é False,
-        considerando o horário UTC.
+        If the local_time parameter is set to True, in both scheduled and manual
+        executions where the configurations are not specified,
+        the datetime can be converted to the timezone set in Airflow.
+        By default, the local_time parameter is set to False,
+        and the analysis is performed using the UTC timezone.
     """
 
     trigger_date_conf: str = (
         context["dag_run"].conf
         .get(
-            "trigger_date", # trigger manual, especificando a variável
-            None # ou com trigger manual, mas sem especificar variável
-        )
-    ) if context["dag_run"] and context["dag_run"].conf else None # execução agendada da dag+
+            "trigger_date", # Either a manual trigger with the variable specified,
+            None # or a manual trigger where the variable is not specified.
+    ) if context["dag_run"] and context["dag_run"].conf else None # This is a scheduled execution of the dag+
 
     if context["dag_run"].external_trigger:
-        if trigger_date_conf: # execução manual com configuração
+        if trigger_date_conf: # manual execution with configuration specified
             trigger_date: datetime = datetime.fromisoformat(trigger_date_conf)
-        else: # execução manual sem configuração
+        else: # manual execution without configuration specified
             trigger_date: datetime = context["logical_date"]
             if local_time is True:
                 trigger_date = trigger_date.in_timezone(AIRFLOW_TIMEZONE)
 
-    else: # execução agendada
+    else: # scheduled execution
         trigger_date: datetime = context["data_interval_end"]
         if local_time is True:
             trigger_date = trigger_date.in_timezone(AIRFLOW_TIMEZONE)
@@ -109,21 +110,21 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
     return trigger_date
 
 def last_day_of_month(the_date: date):
-    """ Retorna o último dia do mês.
+    """ Returns the final day of the current month.
     """
-    # obs.: não existe timedelta(months=1), timedelta só vai até days
+    # obs.: timedelta does not support months as an argument; it returns values based on days.
     return (
         the_date + relativedelta(months=+1)
     ).replace(day=1) - timedelta(days=1)
 
 def last_day_of_last_month(the_date: date):
-    """ Retorna o último dia do mês anterior.
+    """ Returns the final day of the month preceding the current one.
     """
     return the_date.replace(day=1) - timedelta(days=1)
 
-# usa a mesma lógica que get_reference_date
+# Uses the same logic as "get_reference_date" to calculate the DAG's execution start date.
 
-# apenas para compor os templates abaixo, não usar em dags
+# used to complete the following templates, don't use in dags!
 base_template_reference_date = '''
 {% if dag_run.conf["reference_date"] is defined %}
     {% set the_date = macros.datetime.fromisoformat(dag_run.conf["reference_date"]) %}
@@ -136,7 +137,7 @@ base_template_reference_date = '''
 {% endif %}
 '''
 
-# para ser usado em dags
+# to be used in dags
 template_reference_date = remove_template_indentation(
     base_template_reference_date +
     '{{ the_date.isoformat() }}'
@@ -182,7 +183,8 @@ template_ano_mes_referencia_anterior = (
     '{{ last_day_of_last_month_reference_date.strftime("%Y%m") }}'
 )
 
-# para ser usado em templates. Tem a mesma lógica que get_trigger_date
+# to be used in templates. Uses the same logic as "get_trigger_date"
+# to calculate the DAG's execution start date.
 base_template_trigger_date = '''
 {% if dag_run.external_trigger is defined and dag_run.external_trigger %}
     {% if dag_run.conf is defined %}
@@ -219,7 +221,7 @@ template_last_day_of_last_month = remove_template_indentation(
 '''
 )
 
-# para ser usado em dags
+# to be used in dags
 template_trigger_date = remove_template_indentation(
     base_template_trigger_date +
     '{{ the_date.isoformat() }}'

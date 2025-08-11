@@ -1,5 +1,3 @@
-
-
 """Common use functions for manipulating dates and times.
 """
 
@@ -52,9 +50,9 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
     ) if context["dag_run"] and context["dag_run"].conf else None # It's a predeterminated excution of the dag+
 
     if context["dag_run"].external_trigger:
-        if trigger_date_conf: # manual execution if the configuration is specified
+        if trigger_date_conf: # triggers manual execution when the configuration is specified
             trigger_date: datetime = datetime.fromisoformat(trigger_date_conf)
-        else: # manual execution if the configuration is not specified
+        else: # triggers manual execution when the configuration is not specified.
             trigger_date: datetime = context["logical_date"]
             if local_time is True:
                 trigger_date = trigger_date.in_timezone(AIRFLOW_TIMEZONE)
