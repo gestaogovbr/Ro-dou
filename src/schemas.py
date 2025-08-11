@@ -17,7 +17,7 @@ library.
 import textwrap
 from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
 
 class DBSelect(BaseModel):
@@ -102,8 +102,10 @@ class SearchConfig(BaseModel):
     department_ignore: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos a serem ignorados na pesquisa"
     )
-    terms: Union[List[str], FetchTermsConfig] = Field(
-        description="Lista de termos de pesquisa ou uma forma de buscá-los"
+    terms: Optional[Union[List[str], FetchTermsConfig]] = Field(
+        default=None,
+        description="Lista de termos de pesquisa ou uma forma de buscá-los. "
+        "Opcional quando há filtros de department ou pubtype definidos"
     )
     field: Optional[str] = Field(
         default="TUDO",
@@ -151,6 +153,20 @@ class SearchConfig(BaseModel):
         description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
         "(Funcionalidade disponível apenas no Querido Diário)"
     )
+
+    @model_validator(mode='after')
+    def validate_search_criteria(self):
+        """Validate that at least one search criterion is provided."""
+        has_terms = self.terms is not None
+        has_department = self.department is not None and len(self.department) > 0
+        has_pubtype = self.pubtype is not None and len(self.pubtype) > 0
+        
+        if not (has_terms or has_department or has_pubtype):
+            raise ValueError(
+                "Pelo menos um critério de busca deve ser fornecido: "
+                "terms, department ou pubtype"
+            )
+        return self
 
 
 class ReportConfig(BaseModel):

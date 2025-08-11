@@ -459,7 +459,10 @@ class DouDigestDagGenerator:
                     term_list = []
                     # is it a directly defined list of terms or is it a
                     # configuration for fetching terms from a data source?
-                    if isinstance(subsearch.terms, list):
+                    if subsearch.terms is None:
+                        # No specific terms - will search all publications with filters
+                        term_list = None
+                    elif isinstance(subsearch.terms, list):
                         term_list = subsearch.terms
                     elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
