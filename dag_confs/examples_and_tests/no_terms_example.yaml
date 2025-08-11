@@ -1,0 +1,18 @@
+dag:
+  id: no_terms_example
+  description: DAG de exemplo - busca sem termos específicos (apenas por departamento e tipo)
+  search:
+    # Não define 'terms' - busca todas as publicações que atendam aos filtros
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+    pubtype:
+      - Portaria
+      - Resolução
+    dou_sections:
+      - SECAO_1
+    date: DIA
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Ro-dou - Todas as publicações do MGI (Portarias e Resoluções)"
+    skip_null: true
