@@ -2,8 +2,6 @@ dag:
   id: no_terms_example
   description: DAG de teste sem termos definidos
   search:
-    sources:
-    - INLABS
     department:
       - Ministério da Gestão e da Inovação em Serviços Públicos
     pubtype:
