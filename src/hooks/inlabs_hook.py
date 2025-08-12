@@ -147,70 +147,71 @@ class INLABSHook(BaseHook):
         for key, values in filtered_dict.items():
 
             if key == 'texto':
-                key_conditions = []
+                if any(values):
+                    key_conditions = []
+                    for term in values:
+                        if any(operator in term for operator in term_operators):
+                            operator_str = ''.join(term_operators)
+                            # split the string based on the operators
+                            sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
+                            # remove blank items
+                            sub_terms = [sub_term for sub_term in sub_terms if sub_term.strip()]
 
-                for term in values:
-                    if any(operator in term for operator in term_operators):
-                        operator_str = ''.join(term_operators)
-                        # split the string based on the operators
-                        sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
-                        # remove blank items
-                        sub_terms = [sub_term for sub_term in sub_terms if sub_term.strip()]
+                            sub_conditions = []
+                            # If the previous operator in the string is different from '!', the ilike is inclusive
+                            like_positive = True
+                            for sub_term in sub_terms:
 
-                        sub_conditions = []
-                        # If the previous operator in the string is different from '!', the ilike is inclusive
-                        like_positive = True
-                        for sub_term in sub_terms:
+                                if sub_term in term_operators:
+                                    if sub_term in {'&', '!'}:
+                                        # If the previous operator in the string is equal to '!',
+                                        # the ilike is exlusive
+                                        like_positive = sub_term != "!"
+                                        # If the previous operator in the string is '&' or '!', the operator is 'OR'
+                                        operator = ' AND '
+                                    # If the previous operator in the string is '|', the operator is 'OR'
+                                    elif sub_term == '|':
+                                        like_positive = True
+                                        operator = ' OR '
+                                    elif sub_term in {'(', ')'}:
+                                        like_positive = True
+                                        operator = sub_term
+                                    sub_conditions.append(operator)
+                                else:
+                                    sub_conditions.append(
+                                        rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
+                                        )
 
-                            if sub_term in term_operators:
-                                if sub_term in {'&', '!'}:
-                                    # If the previous operator in the string is equal to '!',
-                                    # the ilike is exlusive
-                                    like_positive = sub_term != "!"
-                                    # If the previous operator in the string is '&' or '!', the operator is 'OR'
-                                    operator = ' AND '
-                                # If the previous operator in the string is '|', the operator is 'OR'
-                                elif sub_term == '|':
-                                    like_positive = True
-                                    operator = ' OR '
-                                elif sub_term in {'(', ')'}:
-                                    like_positive = True
-                                    operator = sub_term
-                                sub_conditions.append(operator)
-                            else:
-                                sub_conditions.append(
-                                    rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
-                                    )
+                            statement = ''.join(sub_conditions)
 
-                        statement = ''.join(sub_conditions)
+                            # Add the parentheses-enclosed statement to key_conditions
+                            key_conditions.append("(" + statement + ")")
 
-                        # Add the parentheses-enclosed statement to key_conditions
-                        key_conditions.append("(" + statement + ")")
+                        else:
+                            # If there isn't operator in the string
+                            key_conditions.append(
+                                rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
 
-                    else:
-                        # If there isn't operator in the string
-                        key_conditions.append(
-                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
-
-                key_conditions = " OR ".join(key_conditions)
+                    conditions.append(" OR ".join(key_conditions))
 
             elif key == 'artcategory_ignore':
-                key_conditions = " AND ".join(
-                    [
-                        rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
-                        for value in values
-                    ]
+                conditions.append(
+                        " AND ".join(
+                        [
+                            rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
+                            for value in values
+                        ]
+                    )
                 )
 
             else:
-                key_conditions = " OR ".join(
-                    [
-                        rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
-                        for value in values
-                    ]
+                conditions.append(" OR ".join(
+                        [
+                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                            for value in values
+                        ]
+                    )
                 )
-
-            conditions.append(f"({key_conditions})")
 
         if conditions:
             query = f"{query} AND {' AND '.join(conditions)}"
@@ -291,26 +292,32 @@ class INLABSHook(BaseHook):
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
-            df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
-            df["matches_assina"] = df.apply(
-                lambda row: self._normalize(row["matches"])
-                in self._normalize(row["assina"]),
-                axis=1,
-            )
-            df["count_assina"] = df.apply(
-                lambda row: (
-                    row["texto"].count(row["assina"])
-                    if row["assina"] is not None
-                    else 0
-                ),
-                axis=1,
-            )
-            df["texto"] = df.apply(
-                lambda row: self._highlight_terms(
-                    row["matches"].split(", "), row["texto"]
-                ),
-                axis=1,
-            )
+            if any(text_terms):
+                df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                df["matches_assina"] = df.apply(
+                    lambda row: self._normalize(row["matches"])
+                    in self._normalize(row["assina"]),
+                    axis=1,
+                )
+                df["texto"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        row["matches"].split(", "), row["texto"]
+                    ),
+                    axis=1,
+                    )
+                df["count_assina"] = df.apply(
+                    lambda row: (
+                        row["texto"].count(row["assina"])
+                        if row["assina"] is not None
+                        else 0
+                    ),
+                    axis=1,
+                )
+                if ignore_signature_match:
+                    df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
+            else:
+                df["matches"] = ""
+
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
 
@@ -319,8 +326,6 @@ class INLABSHook(BaseHook):
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
             df["display_date_sortable"] = None
 
-            if ignore_signature_match:
-                df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
 
             cols_rename = {
                 "pubname": "section",
