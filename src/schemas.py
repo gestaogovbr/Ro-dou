@@ -144,12 +144,12 @@ class SearchConfig(BaseModel):
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
     excerpt_size: Optional[int] = Field(
-        default=None, 
+        default=None,
         description="Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. "
         "(Funcionalidade disponível apenas no Querido Diário)"
     )
     number_of_excerpts: Optional[int] = Field(
-        default=None, 
+        default=None,
         description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
         "(Funcionalidade disponível apenas no Querido Diário)"
     )
@@ -157,11 +157,8 @@ class SearchConfig(BaseModel):
     @model_validator(mode='after')
     def validate_search_criteria(self):
         """Validate that at least one search criterion is provided."""
-        has_terms = self.terms is not None
-        has_department = self.department is not None and len(self.department) > 0
-        has_pubtype = self.pubtype is not None and len(self.pubtype) > 0
-        
-        if not (has_terms or has_department or has_pubtype):
+
+        if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
                 "Pelo menos um critério de busca deve ser fornecido: "
                 "terms, department ou pubtype"
