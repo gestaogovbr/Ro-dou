@@ -193,29 +193,29 @@ class DOUSearcher(BaseSearcher):
         pubtype
     ) -> dict:
         search_results = {}
-        
+
         # Se não há termos específicos, busca por tudo (*) para aplicar filtros
         if not term_list:
-            logging.info("No specific terms provided, searching for all publications to apply filters")
+            logging.info("No specific terms provided, searching all")
             term_list = ["*"]
-        
+
         for search_term in term_list:
             logging.info("Starting search for term: %s", search_term)
-            
+
             # Para busca sem termos específicos, usar busca ampla
-            actual_search_term = search_term if search_term != "*" else ""
-            
+            search_term = "" if search_term == "*" else search_term
+
             results = self._search_text_with_retry(
-                search_term=actual_search_term,
+                search_term=search_term,
                 sections=[Section[s] for s in dou_sections],
                 reference_date=trigger_date,
                 search_date=SearchDate[search_date],
                 field=Field[field],
                 is_exact_search=is_exact_search,
             )
-            
+
             # Para busca sem termos específicos, pular verificações de match
-            if search_term != "*":
+            if search_term != "":
                 if ignore_signature_match:
                     results = [
                         r
@@ -241,7 +241,7 @@ class DOUSearcher(BaseSearcher):
 
             if results:
                 # Para busca sem termos, usar "all_publications" como chave
-                result_key = "all_publications" if search_term == "*" else search_term
+                result_key = "all_publications" if search_term == "" else search_term
                 search_results[result_key] = results
 
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
@@ -377,19 +377,19 @@ class QDSearcher(BaseSearcher):
         term_list = self._cast_term_list(term_list)
         tailored_date = reference_date - timedelta(days=1)
         search_results = {}
-        
+
         # Se não há termos específicos, busca por tudo (*) para filtrar por território
         if not term_list:
             logging.info("No specific terms provided, searching all publications for territory")
             term_list = ["*"]
-        
+
         for search_term in term_list:
             # Para busca sem termos específicos, usar busca ampla
-            actual_search_term = search_term if search_term != "*" else ""
-            
+            search_term = "" if search_term == "*" else search_term
+
             results = self._search_term(
                 territory_id=territory_id,
-                search_term=actual_search_term,
+                search_term=search_term,
                 is_exact_search=is_exact_search,
                 reference_date=tailored_date,
                 excerpt_size=excerpt_size,
@@ -398,7 +398,7 @@ class QDSearcher(BaseSearcher):
             )
             if results:
                 # Para busca sem termos, usar "all_publications" como chave
-                result_key = "all_publications" if search_term == "*" else search_term
+                result_key = "all_publications" if search_term == "" else search_term
                 search_results[result_key] = results
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
@@ -415,11 +415,11 @@ class QDSearcher(BaseSearcher):
         result_as_email: bool = True,
     ) -> list:
         payload = _build_query_payload(
-            search_term, 
+            search_term,
             is_exact_search,
             reference_date,
             territory_id,
-            excerpt_size, 
+            excerpt_size,
             number_of_excerpts
         )
 
@@ -454,23 +454,23 @@ class QDSearcher(BaseSearcher):
 
 
 def _build_query_payload(
-    search_term: str, 
+    search_term: str,
     is_exact_search: bool,
     reference_date: datetime,
-    territory_id, 
-    excerpt_size: int = 250, 
+    territory_id,
+    excerpt_size: int = 250,
     number_of_excerpts: int = 3
 ) -> List[tuple]:
     if is_exact_search:
         search_term = f'"{search_term}"'
-    
+
     size = 100
     payload_territory_id = []
     if territory_id:
         if isinstance(territory_id, int): territory_id = [territory_id]
         for terr_id in territory_id:
             payload_territory_id.append(("territory_ids", terr_id))
-        # Como a busca é realizada sempre em um única data, 
+        # Como a busca é realizada sempre em um única data,
         # no resultado haverá no máximo 1 edição por município
         size = len(territory_id)
 
@@ -559,7 +559,7 @@ class INLABSSearcher(BaseSearcher):
         Returns:
             Dict: Formatted as {"texto": List of terms}
         """
-        
+
         if terms is None:
             # Busca sem termos específicos - busca por tudo
             return {"texto": [""]}
