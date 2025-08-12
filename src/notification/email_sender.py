@@ -162,7 +162,7 @@ class EmailSender(ISender):
                                         title = "Documento sem título"
                                     item_html = f"""
                                         <p class="secao-marker">{sec_desc}</p>                                         
-                                         ### [{title}]({result['href']})
+                                         [{title}]({result['href']})
                                         <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
                                         <p class='date-marker'>{result['date']}</p>"""
                                     blocks.append(
@@ -172,7 +172,7 @@ class EmailSender(ISender):
                                     )
                                 else:
                                     item_html = f"""
-                                        ### [{result['title']}]({result['href']})
+                                        [{result['title']}]({result['href']})
                                         <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
                                     blocks.append(textwrap.dedent(item_html))
 
