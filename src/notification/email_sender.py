@@ -171,8 +171,11 @@ class EmailSender(ISender):
                                         )
                                     )
                                 else:
+                                    title = result["title"]
+                                    if not result["title"]:
+                                        title = "Documento sem título"
                                     item_html = f"""
-                                        [{result['title']}]({result['href']})
+                                        [{title}]({result['href']})
                                         <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
                                     blocks.append(textwrap.dedent(item_html))
 
