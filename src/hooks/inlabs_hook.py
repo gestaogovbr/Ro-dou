@@ -192,25 +192,30 @@ class INLABSHook(BaseHook):
                             key_conditions.append(
                                 rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
 
-                    conditions.append(" OR ".join(key_conditions))
+                    conditions.append("(" + " OR ".join(key_conditions) + ")")
 
             elif key == 'artcategory_ignore':
                 conditions.append(
+                        "(" +
                         " AND ".join(
                         [
                             rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
                             for value in values
                         ]
-                    )
+                        ) +
+                        ")"
                 )
 
             else:
-                conditions.append(" OR ".join(
+                conditions.append(
+                    "(" +
+                    " OR ".join(
                         [
                             rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
                             for value in values
                         ]
-                    )
+                    ) +
+                    ")"
                 )
 
         if conditions:
