@@ -551,7 +551,7 @@ class INLABSSearcher(BaseSearcher):
             Dict: Formatted as {"texto": List of terms}
         """
 
-        if terms is None:
+        if not terms:
             # Busca sem termos específicos - busca por tudo
             return {"texto": [""]}
         elif isinstance(terms, List):
