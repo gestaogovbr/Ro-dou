@@ -378,14 +378,7 @@ class QDSearcher(BaseSearcher):
         tailored_date = reference_date - timedelta(days=1)
         search_results = {}
 
-        # Se não há termos específicos, busca por tudo (*) para filtrar por território
-        if not term_list:
-            logging.info("No specific terms provided, searching all publications for territory")
-            term_list = ["*"]
-
         for search_term in term_list:
-            # Para busca sem termos específicos, usar busca ampla
-            search_term = "" if search_term == "*" else search_term
 
             results = self._search_term(
                 territory_id=territory_id,
@@ -397,9 +390,7 @@ class QDSearcher(BaseSearcher):
                 result_as_email=result_as_email,
             )
             if results:
-                # Para busca sem termos, usar "all_publications" como chave
-                result_key = "all_publications" if search_term == "" else search_term
-                search_results[result_key] = results
+                search_results[search_term] = results
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
         return self._group_results(search_results, term_list)
