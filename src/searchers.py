@@ -461,8 +461,8 @@ def _build_query_payload(
         if isinstance(territory_id, int): territory_id = [territory_id]
         for terr_id in territory_id:
             payload_territory_id.append(("territory_ids", terr_id))
-        # Como a busca é realizada sempre em um única data,
-        # no resultado haverá no máximo 1 edição por município
+        # The search filter is applied using only a date,
+        # and the result returns a maximum of one edition per country(township).
         size = len(territory_id)
 
     payload =  [
