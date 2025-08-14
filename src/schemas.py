@@ -157,6 +157,10 @@ class SearchConfig(BaseModel):
     @model_validator(mode='after')
     def validate_search_criteria(self):
         """Validate that at least one search criterion is provided."""
+        if not self.terms and "QD" in self.sources:
+            raise ValueError(
+                "Os termos de pesquisa são obrigatórios quando a fonte QD é selecionada. "
+            )
 
         if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
