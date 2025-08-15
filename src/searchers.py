@@ -1,5 +1,3 @@
-
-
 """Abstract and concrete classes to perform terms searchs.
 """
 
@@ -194,7 +192,7 @@ class DOUSearcher(BaseSearcher):
     ) -> dict:
         search_results = {}
 
-        # Se não há termos específicos, busca por tudo (*) para aplicar filtros
+        # if no terms are specified, the search filter will search for all terms (*) to apply the filters
         if not term_list:
             logging.info("No specific terms provided, searching all")
             term_list = ["*"]
@@ -202,7 +200,7 @@ class DOUSearcher(BaseSearcher):
         for search_term in term_list:
             logging.info("Starting search for term: %s", search_term)
 
-            # Para busca sem termos específicos, usar busca ampla
+            # To perform a search without specifying terms, use the broad search function
             search_term = "" if search_term == "*" else search_term
 
             results = self._search_text_with_retry(
@@ -214,7 +212,7 @@ class DOUSearcher(BaseSearcher):
                 is_exact_search=is_exact_search,
             )
 
-            # Para busca sem termos específicos, pular verificações de match
+            # In cases where no terms are specified, skip the matching checks
             if search_term != "":
                 if ignore_signature_match:
                     results = [
@@ -240,7 +238,7 @@ class DOUSearcher(BaseSearcher):
             self._add_standard_highlight_formatting(results)
 
             if results:
-                # Para busca sem termos, usar "all_publications" como chave
+                # To execute a search without terms, use the key "all_publications"
                 result_key = "all_publications" if search_term == "" else search_term
                 search_results[result_key] = results
 
