@@ -144,7 +144,10 @@ class EmailSender(ISender):
                     for term, term_results in search_results.items():
                         blocks.append("\n")
                         if not self.report_config.hide_filters:
-                            blocks.append(f"* # Resultados para: {term}")
+                            if term != "all_publications":
+                                blocks.append(f"* # Resultados para: {term}")
+                            else:
+                                blocks.append("* ## Publicações: ")
 
                         for department, results in term_results.items():
 

@@ -45,6 +45,23 @@ def test_generate_sql_with_search_operators(inlabs_hook, data_in, query_out):
 
 
 @pytest.mark.parametrize(
+    "data_in, query_out",
+    [
+        (
+            {
+                "pubname": ["DO1"],
+                "arttype": ["Portaria", "Resolução"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y')) AND (dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yPortaria\\y') OR dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yResolução\\y'))",
+        ),
+    ],
+)
+def test_generate_sql_no_terms(inlabs_hook, data_in, query_out):
+    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
+
+
+@pytest.mark.parametrize(
     "data_in, data_out",
     [
         (
@@ -429,6 +446,53 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
             },
             True,
             True,
+        ),
+        # No terms
+        (
+            [],
+            pd.DataFrame(
+                [
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 1,
+                        "assina": "Pessoa 1",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação 1",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                        Phasellus venenatis auctor mauris. Integer id neque quis urna
+                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+                        viverra finibus a et magna. Pellentesque vel elementum
+                        mauris, id semper tellus. Vivamus convallis lacinia ex sed
+                        fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
+                        facilisis posuere elit. Proin consectetur tinc
+                        """,
+                        "titulo": "None",
+                    },
+                ]
+            ),
+            {
+                "": [
+                    {
+                        "section": "DOU - Seção 1",
+                        "title": "Título da Publicação 1",
+                        "href": "http://xxx.gov.br/",
+                        "abstract": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tinc (...)",
+                        "date": "15/03/2024",
+                        "id": 1,
+                        "display_date_sortable": None,
+                        "hierarchyList": "Texto exemplo art_category",
+                    }
+                ],
+            },
+            False,
+            False,
         ),
     ],
 )
