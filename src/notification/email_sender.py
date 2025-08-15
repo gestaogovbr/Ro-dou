@@ -154,8 +154,8 @@ class EmailSender(ISender):
                             if (
                                 not self.report_config.hide_filters
                                 and department != "single_department"
-                            ):                            
-                                blocks.append(f"**{department}**") 
+                            ):
+                                blocks.append(f"**{department}**")
 
                             for result in results:
                                 if not self.report_config.hide_filters:
@@ -164,8 +164,8 @@ class EmailSender(ISender):
                                     if not result["title"]:
                                         title = "Documento sem título"
                                     item_html = f"""
-                                        <p class="secao-marker">{sec_desc}</p>                                         
-                                         [{title}]({result['href']})
+                                        <p class="secao-marker">{sec_desc}</p>
+                                        <h3>[{title}]({result['href']})</h3>
                                         <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
                                         <p class='date-marker'>{result['date']}</p>"""
                                     blocks.append(
@@ -176,7 +176,7 @@ class EmailSender(ISender):
                                 else:
                                     item_html = f"""
                                         [{result['title']}]({result['href']})
-                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p><br><br>"""
+                                        <p style='text-align:justify' class='abstract-marker'><h3>{result['abstract']}</h3></p><br><br>"""
                                     blocks.append(textwrap.dedent(item_html))
 
         blocks.append("---")
