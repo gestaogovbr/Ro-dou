@@ -1,40 +1,56 @@
+version: "3.9"
+
 x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: docker/airflow-common.Dockerfile
   environment: &airflow-common-env
-    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__DEFAULT_TIMEZONE: '${AIRFLOW_TIMEZONE}'
-    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
-    AIRFLOW__CORE__EXECUTOR: '${AIRFLOW_EXECUTOR}'
-    AIRFLOW__CORE__FERNET_KEY: '${AIRFLOW_FERNET_KEY}'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}'
-    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
-    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
-    AIRFLOW__SMTP__SMTP_HOST: '${AIRFLOW__SMTP__SMTP_HOST}'
-    AIRFLOW__SMTP__SMTP_MAIL_FROM: '${AIRFLOW__SMTP__SMTP_MAIL_FROM}'
-    AIRFLOW__SMTP__SMTP_PORT: '${AIRFLOW__SMTP__SMTP_PORT}'
-    AIRFLOW__SMTP__SMTP_STARTTLS: '${AIRFLOW__SMTP__SMTP_STARTTLS}'
-    AIRFLOW__SMTP__SMTP_USER: '${AIRFLOW__SMTP__SMTP_USER}'
-    AIRFLOW__SMTP__SMTP_PASSWORD: '${AIRFLOW__SMTP__SMTP_PASSWORD}'
-    AIRFLOW__SMTP__SMTP_SSL: '${AIRFLOW__SMTP__SMTP_SSL}'
-    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: '${AIRFLOW_TIMEZONE}'
-    AIRFLOW__WEBSERVER__SECRET_KEY: '${AIRFLOW_SECRET_KEY}'
-    AIRFLOW__WEBSERVER__WORKERS: '${AIRFLOW_WORKERS}'
-    AIRFLOW__LOGGING__LOG_SERVE_ADDRESS: '0.0.0.0:8793'
-    AIRFLOW__LOGGING__BASE_LOG_FOLDER: '/opt/airflow/logs'
-    AIRFLOW__LOGGING__REMOTE_LOGGING: 'false'
+    # Auth: API + sessão (UI)
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
 
-    _AIRFLOW_DB_MIGRATE: 'true'
-    _AIRFLOW_WWW_USER_CREATE: 'true'
-    _AIRFLOW_WWW_USER_USERNAME: '${AIRFLOW_USER}'
-    _AIRFLOW_WWW_USER_PASSWORD: '${AIRFLOW_PASSWORD}'
+    # Core
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: "${AIRFLOW_TIMEZONE}"
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
+    AIRFLOW__CORE__EXECUTOR: "${AIRFLOW_EXECUTOR}"
+    AIRFLOW__CORE__FERNET_KEY: "${AIRFLOW_FERNET_KEY}"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 
-    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}'
+    # Database (Airflow >=2.7 usa a seção DATABASE)
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 
-    RO_DOU__DAG_CONF_DIR: '${RO_DOU_DAG_CONF_DIR}'
+    # E-mail
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
+    AIRFLOW__SMTP__SMTP_HOST: "${AIRFLOW__SMTP__SMTP_HOST}"
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: "${AIRFLOW__SMTP__SMTP_MAIL_FROM}"
+    AIRFLOW__SMTP__SMTP_PORT: "${AIRFLOW__SMTP__SMTP_PORT}"
+    AIRFLOW__SMTP__SMTP_STARTTLS: "${AIRFLOW__SMTP__SMTP_STARTTLS}"
+    AIRFLOW__SMTP__SMTP_USER: "${AIRFLOW__SMTP__SMTP_USER}"
+    AIRFLOW__SMTP__SMTP_PASSWORD: "${AIRFLOW__SMTP__SMTP_PASSWORD}"
+    AIRFLOW__SMTP__SMTP_SSL: "${AIRFLOW__SMTP__SMTP_SSL}"
+
+    # Webserver
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "${AIRFLOW_TIMEZONE}"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_SECRET_KEY}"
+    AIRFLOW__WEBSERVER__WORKERS: "${AIRFLOW_WORKERS}"
+
+    # Logging
+    AIRFLOW__LOGGING__LOG_SERVE_ADDRESS: "0.0.0.0:8793"
+    AIRFLOW__LOGGING__BASE_LOG_FOLDER: "/opt/airflow/logs"
+    AIRFLOW__LOGGING__REMOTE_LOGGING: "false"
+
+    # Bootstrap (usar a flag nova de migração)
+    _AIRFLOW_DB_MIGRATE: "true"
+    _AIRFLOW_WWW_USER_CREATE: "true"
+    _AIRFLOW_WWW_USER_USERNAME: "${AIRFLOW_USER}"
+    _AIRFLOW_WWW_USER_PASSWORD: "${AIRFLOW_PASSWORD}"
+
+    # Conn de exemplo (mantida)
+    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+
+    # Diretório de confs das DAGs Ro-DOU (mantido)
+    RO_DOU__DAG_CONF_DIR: "${RO_DOU_DAG_CONF_DIR}"
 
   volumes:
     - ./src:/opt/airflow/dags
@@ -42,7 +58,7 @@ x-airflow-common: &airflow-common
     - ./mnt/airflow-logs:/opt/airflow/logs
     - ./tests:/opt/airflow/tests
     - ./schemas:/opt/airflow/schemas
-  user: '${AIRFLOW_UID:-50000}:0'
+  user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
       condition: service_healthy
@@ -58,7 +74,7 @@ services:
       - ./mnt/pgdata:/var/lib/postgresql/data
       - ./dag_load_inlabs/sql/:/sql
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER}']
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
       retries: 5
     restart: always
@@ -68,9 +84,9 @@ services:
     container_name: airflow-webserver
     command: webserver
     ports:
-      - '8080:8080'
+      - "8080:8080"
     healthcheck:
-      test: ['CMD', 'curl', '--fail', 'http://localhost:8080/health']
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 10s
       timeout: 10s
       retries: 5

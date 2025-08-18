@@ -1,5 +1,5 @@
 """
-Hook para realizar operações de consultas à API do Diário Oficial da União.
+API Hooks for querying the Official Gazette (Diário Oficial da União)
 """
 import sys
 import os
@@ -44,8 +44,8 @@ class DOUHook(BaseHook):
 
     def _get_query_str(self, term, field, is_exact_search):
         """
-        Adiciona aspas duplas no inicio e no fim de cada termo para o
-        caso de eles serem formados por mais de uma palavra
+        For terms with more than one word,
+        add double quotes at the beginning and end
         """
         if is_exact_search:
             term = f'"{term}"'
