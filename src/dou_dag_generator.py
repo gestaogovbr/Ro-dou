@@ -24,11 +24,15 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
-from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from airflow.timetables.datasets import DatasetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
+
+try:
+    from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+except Exception:  # ModuleNotFoundError, etc.
+    MsSqlHook = None
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
@@ -384,6 +388,8 @@ class DouDigestDagGenerator:
         """
         conn_type = BaseHook.get_connection(conn_id).conn_type
         if conn_type == "mssql":
+            if MsSqlHook is None:
+                raise RuntimeError("MsSqlHook indisponível: instale 'apache-airflow-providers-microsoft-mssql' para usar recursos MSSQL.")
             db_hook = MsSqlHook(conn_id)
         elif conn_type in ("postgresql", "postgres"):
             db_hook = PostgresHook(conn_id)

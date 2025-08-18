@@ -51,6 +51,8 @@ x-airflow-common: &airflow-common
 
     # Diretório de confs das DAGs Ro-DOU (mantido)
     RO_DOU__DAG_CONF_DIR: "${RO_DOU_DAG_CONF_DIR}"
+    REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
 
   volumes:
     - ./src:/opt/airflow/dags
