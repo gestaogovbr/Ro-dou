@@ -3,14 +3,20 @@ export $(shell sed 's/=.*//' .env)
 
 .PHONY: run
 run: \
+build-images \
 create-logs-dir \
 setup-containers \
+wait-web \
 create-example-variable \
 create-path-tmp-variable \
 create-inlabs-db \
 create-inlabs-db-connection \
 create-inlabs-portal-connection \
 activate-inlabs-load-dag
+
+.PHONY: build-images
+build-images:
+	docker compose -p ro-dou build airflow-webserver airflow-scheduler
 
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
@@ -19,22 +25,14 @@ setup-containers:
 	docker compose -p ro-dou up -d
 
 create-example-variable:
-	@echo 'Waiting for Airflow API to start ...'
-	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
 	@echo "Creating 'termos_exemplo_variavel' Airflow variable"
 	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/termos_exemplo_variavel' --user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" > /dev/null; \
-		then \
-			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
-			-H 'accept: application/json' \
-			-H 'Content-Type: application/json' \
-			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
-			-d '{ \
-			\"key\": \"termos_exemplo_variavel\", \
-			\"value\": \"LGPD\nlei geral de proteção de dados\nacesso à informação\" \
-			}' > /dev/null; \
-		fi"
+		"curl -f -s -LI 'http://localhost:8080/api/v1/variables/termos_exemplo_variavel' --user '$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)' >/dev/null \
+		|| curl -s -X POST 'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' -H 'Content-Type: application/json' \
+			--user '$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)' \
+			-d '{\"key\":\"termos_exemplo_variavel\",\"value\":\"LGPD\nlei geral de proteção de dados\nacesso à informação\"}' >/dev/null"
+
 
 create-path-tmp-variable:
 	@echo "Creating 'path_tmp' Airflow variable"
@@ -55,7 +53,7 @@ create-path-tmp-variable:
 create-inlabs-db:
 	@echo "Creating 'inlabs' database"
 	@docker exec -e PGPASSWORD=$(POSTGRES_PASSWORD) ro-dou-postgres-1 \
-	psql --username=$(POSTGRES_USER) --dbname=$(POSTGRES_DB) --file=/sql/init-db.sql > /dev/null
+		psql --username=$(POSTGRES_USER) --dbname=$(POSTGRES_DB) --file=/sql/init-db.sql > /dev/null
 
 create-inlabs-db-connection:
 	@echo "Creating 'inlabs_db' Airflow connection"
@@ -99,6 +97,10 @@ activate-inlabs-load-dag:
 			-d '{ \
 			\"is_paused\": false \
 			}' > /dev/null;"
+.PHONY: redeploy
+redeploy: build-images
+	docker compose -p ro-dou up -d --no-deps airflow-webserver airflow-scheduler
+	$(MAKE) smoke-test
 
 .PHONY: down
 down:
@@ -106,4 +108,20 @@ down:
 
 .PHONY: tests
 tests:
+	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+
+.PHONY: smoke-test
+smoke-test:
+	@docker exec airflow-webserver bash -lc "python -c 'import requests; print(\"webserver https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+	@docker exec airflow-scheduler bash -lc "python -c 'import requests; print(\"scheduler https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+
+.PHONY: wait-web
+wait-web:
+	@echo "Waiting for airflow-webserver (health=healthy) ..."
+	@for i in $$(seq 1 60); do \
+	  state=$$(docker inspect --format='{{.State.Health.Status}}' airflow-webserver 2>/dev/null || echo "starting"); \
+	  if [ "$$state" = "healthy" ]; then echo "airflow-webserver is healthy"; exit 0; fi; \
+	  sleep 3; \
+	done; \
+	echo "Timeout waiting for airflow-webserver health=healthy"; exit 1
