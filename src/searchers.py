@@ -548,7 +548,7 @@ class INLABSSearcher(BaseSearcher):
         """
 
         if not terms:
-            # Busca sem termos específicos - busca por tudo
+            #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
