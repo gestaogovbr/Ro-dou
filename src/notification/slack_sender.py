@@ -44,7 +44,7 @@ class SlackSender(ISender):
                             self.no_results_found_text
                         )
                     else:
-                        if not self.hide_filters:
+                        if not self.hide_filters and term != "all_publications":
                             self._add_header(f"Termo: {term}")
 
                         for department, results in term_results.items():

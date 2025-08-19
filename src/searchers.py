@@ -1,5 +1,3 @@
-
-
 """Abstract and concrete classes to perform terms searchs.
 """
 
@@ -41,6 +39,8 @@ class BaseSearcher(ABC):
         then its necessary to convert it back to dataframe and return
         the first column. Otherwise the `pre_term_list` is returned.
         """
+        if pre_term_list is None:
+            return []
         return (
             pre_term_list
             if isinstance(pre_term_list, list)
@@ -191,8 +191,18 @@ class DOUSearcher(BaseSearcher):
         pubtype
     ) -> dict:
         search_results = {}
+
+        # if no terms are specified, the search filter will search for all terms (*) to apply the filters
+        if not term_list:
+            logging.info("No specific terms provided, searching all")
+            term_list = ["*"]
+
         for search_term in term_list:
             logging.info("Starting search for term: %s", search_term)
+
+            # To perform a search without specifying terms, use the broad search function
+            search_term = "" if search_term == "*" else search_term
+
             results = self._search_text_with_retry(
                 search_term=search_term,
                 sections=[Section[s] for s in dou_sections],
@@ -201,22 +211,24 @@ class DOUSearcher(BaseSearcher):
                 field=Field[field],
                 is_exact_search=is_exact_search,
             )
-            if ignore_signature_match:
-                results = [
-                    r
-                    for r in results
-                    if not self._is_signature(search_term, r.get("abstract"))
-                ]
-            if force_rematch:
-                results = [
-                    r
-                    for r in results
-                    if self._really_matched(search_term, r.get("abstract"))
-                ]
+
+            # In cases where no terms are specified, skip the matching checks
+            if search_term != "":
+                if ignore_signature_match:
+                    results = [
+                        r
+                        for r in results
+                        if not self._is_signature(search_term, r.get("abstract"))
+                    ]
+                if force_rematch:
+                    results = [
+                        r
+                        for r in results
+                        if self._really_matched(search_term, r.get("abstract"))
+                    ]
 
             if department or department_ignore:
                 self._match_department(results, department, department_ignore)
-                # results = [r for r in results if any(item in r.get('hierarchyList') for item in department)]
 
             if pubtype:
                 self._match_pubtype(results, pubtype)
@@ -226,7 +238,9 @@ class DOUSearcher(BaseSearcher):
             self._add_standard_highlight_formatting(results)
 
             if results:
-                search_results[search_term] = results
+                # To execute a search without terms, use the key "all_publications"
+                result_key = "all_publications" if search_term == "" else search_term
+                search_results[result_key] = results
 
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
@@ -359,7 +373,9 @@ class QDSearcher(BaseSearcher):
         term_list = self._cast_term_list(term_list)
         tailored_date = reference_date - timedelta(days=1)
         search_results = {}
+
         for search_term in term_list:
+
             results = self._search_term(
                 territory_id=territory_id,
                 search_term=search_term,
@@ -526,11 +542,15 @@ class INLABSSearcher(BaseSearcher):
                 String formatted as dictionary when comes from a database
                 query
                 List when comes from `terms` key of the .yaml
+                None when no specific terms are provided
         Returns:
             Dict: Formatted as {"texto": List of terms}
         """
 
-        if isinstance(terms, List):
+        if not terms:
+            # Busca sem termos específicos - busca por tudo
+            return {"texto": [""]}
+        elif isinstance(terms, List):
             return {"texto": terms}
         return {"texto": self._split_sql_terms(json.loads(terms))}
 

@@ -699,6 +699,54 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 },
             },
         ),
+        (
+            "no_terms_example.yaml",
+            {
+                "id": "no_terms_example",
+                "description": "DAG de teste sem termos definidos",
+                "schedule": None,
+                "dataset": None,
+                "doc_md": None,
+                "tags": {"dou", "generated_dag"},
+                "owner": [],
+                "search": [
+                    {
+                        "header": None,
+                        "sources": ["DOU"],
+                        "sql": None,
+                        "conn_id": None,
+                        "dou_sections": ["SECAO_1"],
+                        "search_date": "DIA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": False,
+                        "full_text": False,
+                        "use_summary": False,
+                        "department": [
+                            "Ministério da Gestão e da Inovação em Serviços Públicos",
+                        ],
+                        "pubtype": [
+                            "Portaria",
+                            "Resolução",
+                            ],
+                    }
+                ],
+                "report": {
+                    "emails": ["destination@economia.gov.br"],
+                    "subject": "Teste do Ro-dou - Todas as Portarias e Resoluções do MGI",
+                    "attach_csv": False,
+                    "discord_webhook": None,
+                    "slack_webhook": None,
+                    "skip_null": True,
+                    "hide_filters": False,
+                    "header_text": None,
+                    "footer_text": None,
+                    "no_results_found_text": "Nenhum dos termos pesquisados "
+                    "foi encontrado nesta consulta",
+                },
+            },
+        ),
     ],
 )
 def test_parse(filepath, result_tuple):
