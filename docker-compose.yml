@@ -1,5 +1,3 @@
-version: '3.9'
-
 # NOTE for contributors: this compose file is used by downstream deployments and by
 # local development. It intentionally reads configuration from environment
 # variables. For upstream PRs between organizations we avoid hard-coding
