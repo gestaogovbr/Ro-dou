@@ -21,6 +21,8 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)
 
 from notification.isender import ISender
+from notification.templateManager import TemplateManager
+
 from schemas import ReportConfig
 
 
@@ -32,17 +34,7 @@ class EmailSender(ISender):
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
         self.search_report = ""
-        self.watermark = """
-            <div class="footer">
-                <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
-                    <img src="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou/ro-dou/@@govbr.institucional.banner/b27393f0-d00b-4459-8c99-f4f084eb2432/@@images/ecce877d-c42d-4ab6-ad9b-d24073ab5063.png"
-                    alt="Ro-DOU" width="250">
-                </a>
-                <small>Esta pesquisa foi realizada automaticamente pelo
-                    <a href="https://gestaogovbr.github.io/Ro-dou/">&copy; Ro-DOU</a>
-                </small>
-            </div>
-        """
+        self.watermark = ""
 
     def send(self, search_report: list, report_date: str):
         """Builds the email content, the CSV if applies, and send it"""
@@ -54,15 +46,13 @@ class EmailSender(ISender):
             if items:
                 skip_notification = False
             else:
-                content = self.report_config.no_results_found_text
+                content = self.generate_email_content()
 
         if skip_notification:
             if self.report_config.skip_null:
                 return "skip_notification"
         else:
             content = self.generate_email_content()
-
-        content += self.watermark
 
         if self.report_config.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
@@ -89,101 +79,95 @@ class EmailSender(ISender):
         current_directory = os.path.dirname(__file__)
         parent_directory = os.path.dirname(current_directory)
 
-        # File with email styling
-        file_path = os.path.join(parent_directory, "report_style.css")
-
-        with open(file_path, "r", encoding="utf-8") as f:
-            blocks = [f"<style>\n{f.read()}</style>"]
-
-        if self.report_config.header_text:
-            blocks.append(self.report_config.header_text)
+        # Inicializar o gerenciador de templates
+        tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
 
         for search in self.search_report:
+            header_title = ""
 
             if search["header"]:
-                blocks.append(f"<h2>{search['header']}</h2>")
+                header_title = search["header"]
+
+            filters = {}
 
             if not self.report_config.hide_filters:
                 if search["department"] or search["department_ignore"] or search["pubtype"]:
-                    blocks.append(
-                        """<p class="secao-marker">Filtrando resultados somente para:</p>"""
-                    )
+
+                    filters = {"title": "Filtros Aplicados na Pesquisa:"}
                     if search["department"]:
-                        blocks.append("<small>Unidades:</small>")
-                        blocks.append("<ul>")
-                        for dpt in search["department"]:
-                            blocks.append(f"<li><small>{dpt}</small></li>")
-                        blocks.append("</ul>")
+                        filters["included_units"]={"title":"Unidades Incluídas:", "items": [f"{dpt}" for dpt in search["department"]]}
 
                     if search["department_ignore"]:
-                        blocks.append("<small>Desconsiderar Unidades (e subordinadas):</small>")
-                        blocks.append("<ul>")
-                        for dpt in search["department_ignore"]:
-                            blocks.append(f"<li><small>{dpt}</small></li>")
-                        blocks.append("</ul>")
-
+                        filters["excluded_units"]={"title":"Unidades Ignoradas:", "items": [f"{dpt}" for dpt in search["department_ignore"]]}
 
                     if search["pubtype"]:
-                        blocks.append("<small>Tipos de publicações:</small>")
-                        blocks.append("<ul>")
-                        for pub in search["pubtype"]:
-                            blocks.append(f"<li><small>{pub}</small></li>")
-                        blocks.append("</ul>")
+                        filters["publication_types"]={"title":"Tipos de Publicações:", "items": [f"{pub}" for pub in search["pubtype"]]}
+
+            filters = {"filters": filters}
+            results_data = []
 
             for group, search_results in search["result"].items():
+                term_data = {
+                    "search_terms": {
+                        "terms": [],
+                        "items": []
+                    }
+                }
 
-                if not search_results:
-                    blocks.append(f"<p>{self.report_config.no_results_found_text}.</p>")
-                else:
+                if not self.report_config.hide_filters:
+                    if group != "single_group":
+                        term_data["search_terms"]["terms"].append(f"{group}")
+
+                for term, term_results in search_results.items():
                     if not self.report_config.hide_filters:
-                        if group != "single_group":
-                            blocks.append("\n")
-                            blocks.append(f"**Grupo: {group}**")
-                            blocks.append("\n\n")
+                        term_data["search_terms"]["terms"].append(f"{term}")
 
-                    for term, term_results in search_results.items():
-                        blocks.append("\n")
-                        if not self.report_config.hide_filters:
-                            if term != "all_publications":
-                                blocks.append(f"* # Resultados para: {term}")
+                    for department, results in term_results.items():
+
+                        if (
+                            not self.report_config.hide_filters
+                            and department != "single_department"
+                        ):
+                            term_data["search_terms"]["terms"].append(f"{department}")
+
+                        for result in results:
+
+                            if not self.report_config.hide_filters:
+                                sec_desc = result["section"]
+                                title = result["title"]
+                                if not result["title"]:
+                                    title = "Documento sem título"
+
+                                term_data["search_terms"]["items"].append({
+                                    "section": sec_desc,
+                                    "title": title,
+                                    "url": result["href"],
+                                    "url_new_tab": True,
+                                    "abstract": result["abstract"],
+                                    "date": result["date"]
+                                })
                             else:
-                                blocks.append("* ## Publicações: ")
+                                title = result["title"]
+                                if not result["title"]:
+                                    title = "Documento sem título"
 
-                        for department, results in term_results.items():
+                                term_data["search_terms"]["items"].append({
+                                    "section": sec_desc,
+                                    "title": title,
+                                    "url": result["href"],
+                                    "url_new_tab": True,
+                                    "abstract": result["abstract"],
+                                    "date": result["date"]
+                                })
+                results_data.append(term_data)
 
-                            if (
-                                not self.report_config.hide_filters
-                                and department != "single_department"
-                            ):
-                                blocks.append(f"**{department}**")
-
-                            for result in results:
-                                if not self.report_config.hide_filters:
-                                    sec_desc = result["section"]
-                                    title = result["title"]
-                                    if not result["title"]:
-                                        title = "Documento sem título"
-                                    item_html = f"""
-                                        <p class="secao-marker">{sec_desc}</p>
-                                        <h3>[{title}]({result['href']})</h3>
-                                        <p style='text-align:justify' class='abstract-marker'>{result['abstract']}</p>
-                                        <p class='date-marker'>{result['date']}</p>"""
-                                    blocks.append(
-                                        textwrap.indent(
-                                            textwrap.dedent(item_html), " " * 4
-                                        )
-                                    )
-                                else:
-                                    item_html = f"""
-                                        [{result['title']}]({result['href']})
-                                        <p style='text-align:justify' class='abstract-marker'><h3>{result['abstract']}</h3></p><br><br>"""
-                                    blocks.append(textwrap.dedent(item_html))
-
-        blocks.append("---")
-        if self.report_config.footer_text:
-            blocks.append(self.report_config.footer_text)
-
-        return markdown.markdown("\n".join(blocks))
+        return tm.renderizar('dou_template.html',
+                                filters=filters,
+                                results=results_data,
+                                header_title=header_title,
+                                header_text=self.report_config.header_text or None,
+                                footer_text=self.report_config.footer_text or None
+                            )
 
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
