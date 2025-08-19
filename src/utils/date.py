@@ -4,7 +4,8 @@
 import os
 from datetime import datetime
 
-AIRFLOW_TIMEZONE = os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE")
+# Provide a sensible default (UTC) when the Airflow timezone env var is not set
+AIRFLOW_TIMEZONE = os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE") or "UTC"
 
 def remove_template_indentation(text: str) -> str:
     """Remove indentation in template strings.
