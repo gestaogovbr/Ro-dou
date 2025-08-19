@@ -178,6 +178,10 @@ class ReportConfig(BaseModel):
         description="Se deve pular a notificação de resultados nulos/vazios. "
         "Default: True.",
     )
+    page_title: Optional[str] = Field(
+        default=None, 
+        description="Título da página do relatório que é enviado por e-mail"
+    )
     hide_filters: Optional[bool] = Field(
         default=False,
         description="Se deve ocultar os filtros aplicados no relatório."
@@ -189,11 +193,6 @@ class ReportConfig(BaseModel):
     footer_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no rodapé do relatório"
     )
-    no_results_found_text: Optional[str] = Field(
-        default="Nenhum dos termos pesquisados foi encontrado nesta consulta",
-        description="Texto a ser exibido quando não há resultados",
-    )
-
 
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""

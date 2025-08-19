@@ -54,8 +54,6 @@ class ISender(ABC):
                             .replace('<%%>', open_tag) \
                             .replace('</%%>', close_tag)
 
-        print (reports)
-
         return reports
 
 

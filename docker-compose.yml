@@ -56,6 +56,16 @@ x-airflow-common: &airflow-common
     AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
     # AIRFLOW__SMTP__SMTP_USER:
     # AIRFLOW__SMTP__SMTP_PASSWORD:
+
+    # Habilitar a API REST
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+
+    # Ou para desabilitar autenticação (NÃO recomendado em produção)
+    #AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.deny_all
+
+    # Para permitir acesso sem autenticação (desenvolvimento apenas)
+    #AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.default
+
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
     AIRFLOW__WEBSERVER__SECRET_KEY: '42'
     AIRFLOW__WEBSERVER__WORKERS: 1
