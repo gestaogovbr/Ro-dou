@@ -29,7 +29,7 @@ from schemas import ReportConfig
 class EmailSender(ISender):
     """Prepare and send e-mails with the reports."""
 
-    highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
+    # highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
 
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
@@ -166,7 +166,8 @@ class EmailSender(ISender):
                                 results=results_data,
                                 header_title=header_title,
                                 header_text=self.report_config.header_text or None,
-                                footer_text=self.report_config.footer_text or None
+                                footer_text=self.report_config.footer_text or None,
+                                no_results_message=self.report_config.no_results_found_text or None
                             )
     
     def get_csv_tempfile(self) -> NamedTemporaryFile:
