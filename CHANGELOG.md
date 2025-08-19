@@ -1,6 +1,26 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.6.0] - 2025-08-15
+## What's Changed 
+* Adicionar suporte a busca sem termos específicos no Ro-DOU by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/200
+* Cria a tabela article_raw automaticamente ao iniciar o container by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/187
+* Adiciona documentação sobre instalação no WSL by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/195
+### 🚀 Outros
+* Atualiza exemplos.md by @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/181
+* Atualizar a versão do Postgres by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/186
+* Atualização e tradução dos textos para o inglês por @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/188
+* Personaliza o rodapé do e-mail com a logo do Ro-dou by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/192
+* Atualiza email de contato by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/193
+* Remove o título "None" quando a publicação não contém título by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/196
+
+
+## New Contributors
+* @Ian070508 made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/181
+* @Heitorh3 made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/186
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.5.0...0.6.0
+
 ## [0.5.0] - 2025-03-11
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

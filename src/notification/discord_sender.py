@@ -38,7 +38,8 @@ class DiscordSender(ISender):
                                 f"**{self.no_results_found_text}**"
                             )
                         else:
-                            self.send_text(f"**Resultados para: {term}**")
+                            if term != "all_publications":
+                                self.send_text(f"**Resultados para: {term}**")
 
                             for department, results in term_results.items():
                                 if not self.hide_filters and department != 'single_department':

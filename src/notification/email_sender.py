@@ -169,7 +169,7 @@ class EmailSender(ISender):
                                 footer_text=self.report_config.footer_text or None,
                                 no_results_message=self.report_config.no_results_found_text or None
                             )
-    
+                       
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
         self.convert_report_to_dataframe().to_csv(temp_file, index=False)

@@ -452,3 +452,27 @@ dag:
     subject: "Teste do Ro-dou"
     hide_filters: True
 ```
+
+### Exemplo 18
+Esta dag é utilizada quando nenhum termo é definido (obrigatório informar tipo de
+publicação ou órgão/unidade).
+
+```yaml
+dag:
+  id: no_terms_example
+  description: DAG de teste sem termos definidos
+  search:
+    sources:
+    - INLABS
+    department:
+      - Ministério da Gestão e da Inovação em Serviços Públicos
+    pubtype:
+      - Portaria
+      - Resolução
+    dou_sections:
+      - SECAO_1
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou - Todas as Portarias e Resoluções do MGI"
+```

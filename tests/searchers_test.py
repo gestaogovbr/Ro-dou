@@ -248,7 +248,7 @@ def assert_grouped_term_dept_result(grouped_result):
     assert len(grouped_result["EPPGG"]["ANTONIO DE OLIVEIRA"]["single_department"]) == 3
 
 
-# TODO incluir teste com search_results vazio
+# TODO include a test case where "search_results" is empty
 def test_group_by_term_group(dou_searcher, search_results, term_n_group):
     grouped_result = dou_searcher._group_by_term_group(search_results, term_n_group)
     assert_grouped_term_result(grouped_result)
