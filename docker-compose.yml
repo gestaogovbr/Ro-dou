@@ -40,8 +40,8 @@ x-airflow-common: &airflow-common
 
     # Core
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    # Timezone: default to UTC when not provided
-    AIRFLOW__CORE__DEFAULT_TIMEZONE: '${AIRFLOW_TIMEZONE:-UTC}'
+    # Timezone: default to America/Sao_Paulo when not provided
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: '${AIRFLOW_TIMEZONE:-America/Sao_Paulo}'
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
     # Executor: fallback to LocalExecutor for safe local runs
     AIRFLOW__CORE__EXECUTOR: '${AIRFLOW_EXECUTOR:-LocalExecutor}'
@@ -138,3 +138,22 @@ services:
     container_name: airflow-scheduler
     command: scheduler
     restart: always
+
+  smtp4dev:
+  image: rnwood/smtp4dev:v3
+  profiles: ["dev"]
+    restart: always
+    ports:
+      - '5001:80'
+      - '25:25' # Change the number before : to the port the SMTP server should be accessible on
+      - '143:143' # Change the number before : to the port the IMAP server should be accessible on
+    volumes:
+      - smtp4dev-data:/smtp4dev
+    environment:
+      - ServerOptions__HostName=smtp4dev
+# selenium:
+#     image: ghcr.io/gestaogovbr/selenium:ro-dou
+#     volumes:
+#       - /dev/shm:/dev/shm
+volumes:
+  smtp4dev-data:

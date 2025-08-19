@@ -12,6 +12,11 @@ PROJECT ?= $(if $(COMPOSE_PROJECT_NAME),$(COMPOSE_PROJECT_NAME),ro-dou)
 # Timeout (seconds) for wait-web loop; can be overridden in environment
 WAIT_WEB_TIMEOUT ?= 60
 
+# Profile usado para serviços opcionais de desenvolvimento (ex.: smtp4dev)
+# Defina DEV_PROFILE= (vazio) para desabilitar por padrão
+DEV_PROFILE ?= dev
+DEV_PROFILE_ARG := $(if $(DEV_PROFILE),--profile $(DEV_PROFILE),)
+
 # Ensure docker is installed early
 ifeq (, $(shell command -v docker)) 
 $(error "docker não encontrado. Instale o Docker e tente novamente.")
@@ -55,17 +60,17 @@ run: \
 
 .PHONY: build-images
 build-images:
-	$(COMPOSE) -p $(PROJECT) build airflow-webserver airflow-scheduler
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) build airflow-webserver airflow-scheduler
 
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
 
 setup-containers:
-	$(COMPOSE) -p $(PROJECT) up -d
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) up -d
 
 create-example-variable:
 	@echo "Creating 'termos_exemplo_variavel' Airflow variable"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver sh -c \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c \
 		"curl -f -s -LI 'http://localhost:8080/api/v1/variables/termos_exemplo_variavel' --user '$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)' >/dev/null \
 		|| curl -s -X POST 'http://localhost:8080/api/v1/variables' \
 			-H 'accept: application/json' -H 'Content-Type: application/json' \
@@ -74,7 +79,7 @@ create-example-variable:
 
 create-path-tmp-variable:
 	@echo "Creating 'path_tmp' Airflow variable"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver sh -c \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/path_tmp' --user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -90,12 +95,12 @@ create-path-tmp-variable:
 
 create-inlabs-db:
 	@echo "Creating 'inlabs' database"
-	@$(COMPOSE) -p $(PROJECT) exec -T -e PGPASSWORD=$(POSTGRES_PASSWORD) postgres \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T -e PGPASSWORD=$(POSTGRES_PASSWORD) postgres \
 		psql --username=$(POSTGRES_USER) --dbname=$(POSTGRES_DB) --file=/sql/init-db.sql > /dev/null
 
 create-inlabs-db-connection:
 	@echo "Creating 'inlabs_db' Airflow connection"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver sh -c \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/connections/inlabs_db' --user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -116,8 +121,8 @@ create-inlabs-db-connection:
 
 create-inlabs-portal-connection:
 	@echo "Force Creating 'inlabs_portal' Airflow connection"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver airflow connections delete inlabs_portal || true
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver airflow connections add inlabs_portal \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver airflow connections delete inlabs_portal || true
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver airflow connections add inlabs_portal \
 		--conn-type http \
 		--conn-host "$(INLABS_PORTAL_HOST)" \
 		--conn-login "$(INLABS_PORTAL_LOGIN)" \
@@ -126,7 +131,7 @@ create-inlabs-portal-connection:
 
 activate-inlabs-load-dag:
 	@echo "Activating 'ro-dou_inlabs_load_pg' Airflow DAG"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver sh -c \
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c \
 		"curl -s -X 'PATCH' \
 			'http://localhost:8080/api/v1/dags/ro-dou_inlabs_load_pg' \
 			-H 'accept: application/json' \
@@ -138,18 +143,19 @@ activate-inlabs-load-dag:
 
 .PHONY: redeploy
 
+
 redeploy: build-images
-	$(COMPOSE) -p $(PROJECT) up -d --no-deps airflow-webserver airflow-scheduler
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) up -d --no-deps airflow-webserver airflow-scheduler
 	$(MAKE) smoke-test
 
 .PHONY: tests
 tests:
-	$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
 .PHONY: smoke-test
 smoke-test:
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-webserver bash -lc "python -c 'import requests; print(\"webserver https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
-	@$(COMPOSE) -p $(PROJECT) exec -T airflow-scheduler bash -lc "python -c 'import requests; print(\"scheduler https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver bash -lc "python -c 'import requests; print(\"webserver https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+	@$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-scheduler bash -lc "python -c 'import requests; print(\"scheduler https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
 
 .PHONY: wait-web
 wait-web:
@@ -161,6 +167,27 @@ wait-web:
 	done; \
 	echo "Timeout waiting for airflow-webserver health=healthy"; exit 1
 
+.PHONY: dev-up dev-down smtp4dev-up smtp4dev-down smtp4dev-stop smtp4dev-rm
+
+dev-up:
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) up -d
+
+dev-down:
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) down
+
+# Start only the smtp4dev service (profile controlled by DEV_PROFILE)
+smtp4dev-up:
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) up -d smtp4dev
+
+# Stop and remove the smtp4dev service
+smtp4dev-down: smtp4dev-stop smtp4dev-rm
+
+smtp4dev-stop:
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) stop smtp4dev || true
+
+smtp4dev-rm:
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) rm -f smtp4dev || true
+
 .PHONY: down
 down:
-	$(COMPOSE) -p $(PROJECT) down
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) down
