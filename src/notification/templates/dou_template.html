@@ -213,6 +213,7 @@
       font-size: 12px;
       color: #6c757d;
       padding: 30px;
+      margin-top: 5px;
       background-color: #f8f9fa;
       border-top: 1px solid #e9ecef;
     }
@@ -280,7 +281,7 @@
     </header>
 
     <div class="content">
-      {% if filters %}
+      {% if filters.filters|default({})|length > 0 %}
       <section class="filters-section">
         <div class="filter-title">{{ filters.title | default('Filtros Aplicados na Pesquisa') }}</div>
         {% for key, value in filters.items() %}
@@ -319,7 +320,8 @@
       {% endif %}
 
       <section class="results-section">
-        {% if results %}
+        {% if results[0].search_terms.get('terms', [])|length > 0 or results[0].search_terms.get('items', [])|length > 0
+        %}
         {% for result_group in results %}
         <div class="result-item">
           <div class="result-header" title="{{ result_group.search_terms.terms | join(', ') }}">
@@ -347,26 +349,27 @@
         {% endfor %}
         {% else %}
         <div class="no-results">
-          <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa especificados.')
-            }}</p>
+          <p>
+            {{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
+            especificados.')}}
+          </p>
         </div>
         {% endif %}
       </section>
     </div>
-
-    <div class="footer">
-      {% if footer %}
-      <div>{{ footer.text | safe }}</div>
-      {% endif %}
-      <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
-        <img
-          src="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou/ro-dou/@@govbr.institucional.banner/b27393f0-d00b-4459-8c99-f4f084eb2432/@@images/ecce877d-c42d-4ab6-ad9b-d24073ab5063.png"
-          alt="Ro-DOU" width="200">
-      </a>
-      <small>Esta pesquisa foi realizada automaticamente pelo
-        <a href="https://gestaogovbr.github.io/Ro-dou/">&copy; Ro-DOU</a>
-      </small>
-    </div>
+  </div>
+  <div class="footer">
+    {% if footer %}
+    <div>{{ footer | safe }}</div>
+    {% endif %}
+    <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
+      <img
+        src="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou/ro-dou/@@govbr.institucional.banner/b27393f0-d00b-4459-8c99-f4f084eb2432/@@images/ecce877d-c42d-4ab6-ad9b-d24073ab5063.png"
+        alt="Ro-DOU" width="200">
+    </a>
+    <small>Esta pesquisa foi realizada automaticamente pelo
+      <a href="https://gestaogovbr.github.io/Ro-dou/">&copy; Ro-DOU</a>
+    </small>
   </div>
 </body>
 

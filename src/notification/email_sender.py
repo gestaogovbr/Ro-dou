@@ -29,7 +29,7 @@ from schemas import ReportConfig
 class EmailSender(ISender):
     """Prepare and send e-mails with the reports."""
 
-    # highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
+    highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
 
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
@@ -87,7 +87,7 @@ class EmailSender(ISender):
 
             if search["header"]:
                 header_title = search["header"]
-
+      
             filters = {}
 
             if not self.report_config.hide_filters:
@@ -105,7 +105,7 @@ class EmailSender(ISender):
             
             filters = {"filters": filters}
             results_data = []
-     
+            
             for group, search_results in search["result"].items():
                 term_data = {
                     "search_terms": {
@@ -116,12 +116,12 @@ class EmailSender(ISender):
 
                 if not self.report_config.hide_filters:
                     if group != "single_group":
-                        term_data["search_terms"]["terms"].append(f"{group}")
+                        term_data["search_terms"]["terms"].append(f"{group}")                    
 
                 for term, term_results in search_results.items():
                     if not self.report_config.hide_filters:
                         term_data["search_terms"]["terms"].append(f"{term}")                            
-
+                    
                     for department, results in term_results.items():
 
                         if (
@@ -129,9 +129,9 @@ class EmailSender(ISender):
                             and department != "single_department"
                         ):
                             term_data["search_terms"]["terms"].append(f"{department}") 
-
+                        # print(f"Processing results for term: {term} in department: {department}")
                         for result in results:
-
+                            # print(f"Result: {result}")
                             if not self.report_config.hide_filters:
                                 sec_desc = result["section"]
                                 title = result["title"]
@@ -147,6 +147,7 @@ class EmailSender(ISender):
                                     "date": result["date"]
                                 })
                             else:
+                                sec_desc = result["section"]
                                 title = result["title"]
                                 if not result["title"]:
                                     title = "Documento sem título"
@@ -158,15 +159,14 @@ class EmailSender(ISender):
                                     "url_new_tab": True,
                                     "abstract": result["abstract"],
                                     "date": result["date"]
-                                })                                    
-                results_data.append(term_data)
-
+                                })                        
+                results_data.append(term_data)        
         return tm.renderizar('dou_template.html',
                                 filters=filters,
                                 results=results_data,
                                 header_title=header_title,
                                 header_text=self.report_config.header_text or None,
-                                footer_text=self.report_config.footer_text or None,
+                                footer=self.report_config.footer_text or None,
                                 no_results_message=self.report_config.no_results_found_text or None
                             )
                        
