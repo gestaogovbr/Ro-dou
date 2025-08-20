@@ -1,5 +1,4 @@
-"""Module for sending emails.
-"""
+"""Module for sending emails."""
 
 import os
 import sys
@@ -34,7 +33,7 @@ class EmailSender(ISender):
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
         self.search_report = ""
-        self.watermark = ""       
+        self.watermark = ""
 
     def send(self, search_report: list, report_date: str):
         """Builds the email content, the CSV if applies, and send it"""
@@ -81,76 +80,103 @@ class EmailSender(ISender):
 
         # Inicializar o gerenciador de templates
         tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
-       
         for search in self.search_report:
             header_title = ""
 
             if search["header"]:
                 header_title = search["header"]
-      
+
             filters = {}
 
             if not self.report_config.hide_filters:
-                if search["department"] or search["department_ignore"] or search["pubtype"]:
-
+                if (
+                    search["department"]
+                    or search["department_ignore"]
+                    or search["pubtype"]
+                ):
                     filters = {"title": "Filtros Aplicados na Pesquisa:"}
                     if search["department"]:
-                        filters["included_units"]={"title":"Unidades Incluídas:", "items": [f"{dpt}" for dpt in search["department"]]}
+                        filters["included_units"] = {
+                            "title": "Unidades Incluídas:",
+                            "items": [f"{dpt}" for dpt in search["department"]],
+                        }
 
                     if search["department_ignore"]:
-                        filters["excluded_units"]={"title":"Unidades Ignoradas:", "items": [f"{dpt}" for dpt in search["department_ignore"]]}
+                        filters["excluded_units"] = {
+                            "title": "Unidades Ignoradas:",
+                            "items": [f"{dpt}" for dpt in search["department_ignore"]],
+                        }
 
                     if search["pubtype"]:
-                        filters["publication_types"]={"title":"Tipos de Publicações:", "items": [f"{pub}" for pub in search["pubtype"]]}
-            
+                        filters["publication_types"] = {
+                            "title": "Tipos de Publicações:",
+                            "items": [f"{pub}" for pub in search["pubtype"]],
+                        }
+
             filters = {"filters": filters}
             results_data = []
-            
+
             for group, search_results in search["result"].items():
-                term_data = {
-                    "search_terms": {
-                        "terms": [],
-                        "items": []
-                    }                    
-                }
+                term_data = {"search_terms": {"terms": [], "items": []}}
 
                 if not self.report_config.hide_filters:
                     if group != "single_group":
-                        term_data["search_terms"]["terms"].append(f"{group}")                    
+                        term_data["search_terms"]["terms"].append(f"{group}")
 
                 for term, term_results in search_results.items():
                     if not self.report_config.hide_filters:
-                        term_data["search_terms"]["terms"].append(f"{term}")                            
-                    
-                    for department, results in term_results.items():
+                        term_data["search_terms"]["terms"].append(f"{term}")
 
+                    for department, results in term_results.items():
                         if (
                             not self.report_config.hide_filters
                             and department != "single_department"
                         ):
-                            term_data["search_terms"]["terms"].append(f"{department}") 
-                        # print(f"Processing results for term: {term} in department: {department}")
+                            term_data["search_terms"]["terms"].append(f"{department}")
+
                         for result in results:
-                            # print(f"Result: {result}")
                             if not self.report_config.hide_filters:
                                 sec_desc = result["section"]
                                 title = result["title"]
                                 if not result["title"]:
                                     title = "Documento sem título"
 
-                                term_data["search_terms"]["items"].append({
-                                    "section": sec_desc,
-                                    "title": title,
-                                    "url": result["href"],
-                                    "url_new_tab": True,
-                                    "abstract": result["abstract"],
-                                    "date": result["date"]
-                                })
+                                term_data["search_terms"]["items"].append(
+                                    {
+                                        "section": sec_desc,
+                                        "title": title,
+                                        "url": result["href"],
+                                        "url_new_tab": True,
+                                        "abstract": result["abstract"],
+                                        "date": result["date"],
+                                    }
+                                )
                             else:
-                                sec_desc = result["section"]
                                 title = result["title"]
+                                sec_desc = result["section"]
                                 if not result["title"]:
                                     title = "Documento sem título"
+
+                                term_data["search_terms"]["items"].append(
+                                    {
+                                        "section": sec_desc,
+                                        "title": title,
+                                        "url": result["href"],
+                                        "url_new_tab": True,
+                                        "abstract": result["abstract"],
+                                        "date": result["date"],
+                                    }
+                                )
+                results_data.append(term_data)
+
+        return tm.renderizar(
+            "dou_template.html",
+            filters=filters,
+            results=results_data,
+            header_title=header_title,
+            header_text=self.report_config.header_text or None,
+            footer_text=self.report_config.footer_text or None,
+        )
 
                                 term_data["search_terms"]["items"].append({
                                     "section": sec_desc,
@@ -200,7 +226,7 @@ class EmailSender(ISender):
                 if group != "single_group":
                     del_single_group = False
                 for _, term_results in search_result.items():
-                    for dpt,_ in term_results.items():
+                    for dpt, _ in term_results.items():
                         if dpt != "single_department":
                             del_single_department = False
 

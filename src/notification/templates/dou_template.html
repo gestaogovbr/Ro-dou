@@ -155,8 +155,9 @@
       margin-bottom: 10px;
       display: inline-block;
       background-color: #e3f2fd;
-      padding: 4px 8px;
-      border-radius: 4px;
+      <<<<<<< HEAD padding: 4px 8px;
+      =======padding: 4px 0px;
+      >>>>>>>1f54e50040a3b6e5563ae259711781a89d79d6c3 border-radius: 4px;
     }
 
     .document-link {
@@ -180,8 +181,9 @@
 
     .abstract {
       background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 6px;
+      <<<<<<< HEAD padding: 15px;
+      =======padding: 15px 0;
+      >>>>>>>1f54e50040a3b6e5563ae259711781a89d79d6c3 border-radius: 6px;
       margin: 15px 0;
       text-align: justify;
       font-size: 16px;
@@ -281,7 +283,7 @@
     </header>
 
     <div class="content">
-      {% if filters.filters|default({})|length > 0 %}
+      {% if filters.filters|default({})|length> 0 %}
       <section class="filters-section">
         <div class="filter-title">{{ filters.title | default('Filtros Aplicados na Pesquisa') }}</div>
         {% for key, value in filters.items() %}
@@ -320,7 +322,8 @@
       {% endif %}
 
       <section class="results-section">
-        {% if results[0].search_terms.get('terms', [])|length > 0 or results[0].search_terms.get('items', [])|length > 0
+        {% if results[0].search_terms.get('terms', [])|length> 0 or results[0].search_terms.get('items',
+        [])|length > 0
         %}
         {% for result_group in results %}
         <div class="result-item">
@@ -349,10 +352,9 @@
         {% endfor %}
         {% else %}
         <div class="no-results">
-          <p>
-            {{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
-            especificados.')}}
-          </p>
+          <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
+            especificados.')
+            }}</p>
         </div>
         {% endif %}
       </section>

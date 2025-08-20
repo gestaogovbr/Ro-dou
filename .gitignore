@@ -54,6 +54,7 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+CLAUDE.md
 
 # Django stuff:
 *.log
@@ -139,3 +140,5 @@ test_notrack/
 dags/airflow-mantainance/db-bkp
 **/mnt/pgdata/
 **/mnt/airflow-logs
+**/dag_confs/
+**/dag_load_inlabs/
