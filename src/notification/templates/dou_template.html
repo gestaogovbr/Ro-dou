@@ -279,7 +279,6 @@
     <header class="header">
       <h1>{{ header_title | safe | default('Pesquisa no Diário Oficial da União')}}</h1>
     </header>
-
     <div class="content">
       {% if filters.filters|default({})|length> 0 %}
       <section class="filters-section">

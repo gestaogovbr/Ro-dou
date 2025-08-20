@@ -175,26 +175,9 @@ class EmailSender(ISender):
             results=results_data,
             header_title=header_title,
             header_text=self.report_config.header_text or None,
-            footer_text=self.report_config.footer_text or None,
+            footer=self.report_config.footer_text or None,
+            no_results_message=self.report_config.no_results_found_text or None
         )
-
-                                term_data["search_terms"]["items"].append({
-                                    "section": sec_desc,
-                                    "title": title,
-                                    "url": result["href"],
-                                    "url_new_tab": True,
-                                    "abstract": result["abstract"],
-                                    "date": result["date"]
-                                })                        
-                results_data.append(term_data)        
-        return tm.renderizar('dou_template.html',
-                                filters=filters,
-                                results=results_data,
-                                header_title=header_title,
-                                header_text=self.report_config.header_text or None,
-                                footer=self.report_config.footer_text or None,
-                                no_results_message=self.report_config.no_results_found_text or None
-                            )
                        
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
