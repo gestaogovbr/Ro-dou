@@ -1,0 +1,8 @@
+# impede diffs de permissão em texto
+*.md -text
+*.yml -text
+*.yaml -text
+*.json -text
+*.py -text
+*.css -text
+*.txt -text
