@@ -38,6 +38,10 @@
       overflow: hidden;
     }
 
+    .container+.container {
+      margin-top: 20px;
+    }
+
     .header {
       background: linear-gradient(135deg, #06acff, #0056b3);
       color: white;
@@ -275,10 +279,8 @@
   {% if header_text %}
   <span class="head_text">{{ header_text | safe }}</span>
   {% endif %}
+
   <div class="container">
-    <header class="header">
-      <h1>{{ header_title | safe | default('Pesquisa no Diário Oficial da União')}}</h1>
-    </header>
     <div class="content">
       {% if filters.filters|default({})|length> 0 %}
       <section class="filters-section">
@@ -319,18 +321,29 @@
       {% endif %}
 
       <section class="results-section">
-        {% if results[0].search_terms.get('terms', [])|length> 0 or results[0].search_terms.get('items',
-        [])|length > 0
+        {% if results[0].search_terms.get('terms', [])|length > 0 or results[0].search_terms.get('items',[])|length > 0
         %}
         {% for result_group in results %}
         <div class="result-item">
+          {%if hide_filters == false %}
           <div class="result-header" title="{{ result_group.search_terms.terms | join(', ') }}">
+            {%if result_group.search_terms.group %}
+            <span>Grupo: </span>{{result_group.search_terms.group}}
+            {%else%}
             {{ result_group.search_terms.terms | join(', ') }}
+            {%endif%}
           </div>
+          {%endif%}
           <div class="result-body">
             {% if result_group.search_terms.get('items') %}
             {% for document in result_group.search_terms['items'] %}
-            <div class="section-marker">{{ document.section }}</div>
+            <h2>{{ document.header_title | safe}}</h2>
+            {% if not document.get('section') %}
+            <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
+              especificados.')
+              }}</p>
+            {% else %}
+            <div class="section-marker">{{ document.section | safe}}</div>
             <a href="{{ document.url }}" class="document-link" {% if document.url_new_tab %}target="_blank" {% endif %}>
               {{ document.title }}
             </a>
@@ -338,7 +351,7 @@
               {{ document.abstract | safe }}
             </div>
             <div class="date">{{ document.date }}</div>
-
+            {% endif %}
             {% if not loop.last %}
             <hr class="separator">
             {% endif %}
@@ -357,6 +370,7 @@
       </section>
     </div>
   </div>
+
   <div class="footer">
     {% if footer %}
     <div>{{ footer | safe }}</div>
