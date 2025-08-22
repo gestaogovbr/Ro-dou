@@ -278,13 +278,19 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search=is_exact_search,
                 )
             except:
+                import requests
+                # If the underlying error is SSL related, don't retry — likely permanent
+                exc_type, exc_value, _ = sys.exc_info()
+                if isinstance(exc_value, requests.exceptions.SSLError):
+                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, exc_value)
+                    raise
+
                 if retry > max_retries:
                     logging.error("Error - Max retries reached")
-                    raise Exception
-                logging.info("Attemp %s of %s: ", retry, max_retries)
-                logging.info(
-                    "Sleeping for 30 seconds before retry " "dou_hook.search_text()."
-                )
+                    raise
+
+                logging.info("Attempt %s of %s for term '%s'", retry, max_retries, search_term)
+                logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
                 time.sleep(30)
                 retry += 1
 
@@ -548,7 +554,7 @@ class INLABSSearcher(BaseSearcher):
         """
 
         if not terms:
-            # Busca sem termos específicos - busca por tudo
+            #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
