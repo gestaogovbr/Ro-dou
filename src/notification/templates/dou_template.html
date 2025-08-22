@@ -159,8 +159,12 @@
       margin-bottom: 10px;
       display: inline-block;
       background-color: #e3f2fd;
-      padding: 4px 0px;
+      padding: 4px 10px;
       border-radius: 4px;
+    }
+
+    .group-marker {
+      margin: 0 4px 0 0;
     }
 
     .document-link {
@@ -327,11 +331,7 @@
         <div class="result-item">
           {%if hide_filters == false %}
           <div class="result-header" title="{{ result_group.search_terms.terms | join(', ') }}">
-            {%if result_group.search_terms.group %}
-            <span>Grupo: </span>{{result_group.search_terms.group}}
-            {%else%}
             {{ result_group.search_terms.terms | join(', ') }}
-            {%endif%}
           </div>
           {%endif%}
           <div class="result-body">
@@ -343,6 +343,9 @@
               especificados.')
               }}</p>
             {% else %}
+            {%if result_group.search_terms.group %}
+            <span class="group-marker">Grupo: </span>{{result_group.search_terms.group | safe}}
+            {%endif%}
             <div class="section-marker">{{ document.section | safe}}</div>
             <a href="{{ document.url }}" class="document-link" {% if document.url_new_tab %}target="_blank" {% endif %}>
               {{ document.title }}
