@@ -58,6 +58,30 @@ Você observará que, tanto na visualização em árvore (**Tree**) como na visu
 
 Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/. Este é um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação. **_Voilà!_**.
 
+### Configuração SMTP e uso rápido para testes
+
+As configurações sensíveis (SMTP, senhas, chaves) devem ser definidas em um arquivo `.env` na raiz do projeto, seguindo o modelo em `.env.example`. Evite editar `docker-compose.yml` diretamente para inserir segredos.
+
+Se precisar testar envio de e‑mails localmente, há um serviço de desenvolvimento opcional (`smtp4dev`). Ele é apenas para testes; não é necessário para executar o sistema. Para ativá‑lo rapidamente use um dos comandos abaixo:
+
+```bash
+# via Makefile helper
+make smtp4dev-up
+
+# ou diretamente com docker compose (opcional)
+docker compose --profile dev up -d smtp4dev
+```
+
+No `.env` local (copiado de `.env.example`) você pode apontar:
+
+```ini
+#AIRFLOW__SMTP__SMTP_HOST=smtp4dev
+#AIRFLOW__SMTP__SMTP_PORT=25
+#AIRFLOW__SMTP__SMTP_MAIL_FROM='airflow@example.local'
+```
+
+Em produção, defina as mesmas variáveis apontando para o servidor SMTP real e não ative o profile `dev`.
+
 7. Opcional: Configurando o INLABS como fonte de dados:
 
 **Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
@@ -91,10 +115,9 @@ cd Ro-Dou
 ```
 Para utilizar o Ro-DOU em ambiente de produção, é necessário que o servidor tenha disponível um serviço SMTP que será utilizado pelo Apache Airflow para envio de mensagens de e-mail pela Internet, ou configurar um webhook com Slack ou Discord. Siga os seguintes passos:
 
-2. Utilize as credenciais do serviço SMTP (host, usuário, senha, porta etc.)
-para editar o arquivo `docker-compose.yml`, substituindo as variáveis referentes ao serviço SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
+2. Em produção, forneça as credenciais do serviço SMTP definindo as variáveis correspondentes em um arquivo `.env` (veja `.env.example`) ou no ambiente do servidor. Evite editar `docker-compose.yml` diretamente para inserir segredos.
 
-3. Ao final do arquivo `docker-compose.yml`, remova as linhas que declaram o serviço **smtp4dev**, uma vez que ele não será mais necessário.
+3. O serviço `smtp4dev` é opcional e apenas para testes locais; em produção mantenha-o desabilitado (não use o profile `dev`).
 
 4. O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:
 
