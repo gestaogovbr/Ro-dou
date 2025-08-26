@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-upgrade-db
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: upgrade-db
+          image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+          command:
+            - bash
+            - -c
+            - |
+              airflow db upgrade &&
+              airflow users create \
+                --username admin \
+                --firstname Admin \
+                --lastname User \
+                --role Admin \
+                --email admin@example.com \
+                --password admin

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+        - name: airflow-scheduler
+          image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+          command: ["airflow", "scheduler"]
+          envFrom:
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+            - name: dags-src
+              mountPath: /opt/airflow/dags/ro_dou_src
+            - name: dag-confs
+              mountPath: /opt/airflow/dags/ro_dou/dag_confs
+            - name: dag-load-inlabs
+              mountPath: /opt/airflow/dags/dag_load_inlabs
+      volumes:
+        - name: airflow-logs
+          emptyDir: {}
+        - name: dags-src
+          emptyDir: {}
+        - name: dag-confs
+          emptyDir: {}
+        - name: dag-load-inlabs
+          emptyDir: {}
