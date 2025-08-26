@@ -161,7 +161,9 @@ redeploy: build-images
 
 .PHONY: tests
 tests:
-	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+	# Ensure the project code mounted at /opt/airflow/dags is on PYTHONPATH so
+	# imports like `dags.ro_dou_src` resolve when pytest changes CWD to /opt/airflow/tests
+	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) exec -T airflow-webserver sh -c "cd /opt/airflow/tests/ && PYTHONPATH=/opt/airflow/dags python -m pytest -vvv --color=yes"
 
 .PHONY: smoke-test
 smoke-test:

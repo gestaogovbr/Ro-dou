@@ -45,6 +45,8 @@ RUN if [ "${INSTALL_SECTIGO_R36}" = "true" ]; then \
 # 3) Copia e instala as dependências Python do projeto
 #    (o build context é o diretório raiz do repo; copie daqui)
 COPY --chown=airflow:root requirements.txt /requirements.txt
+# Optional test requirements: installed only when present to keep production images lean
+COPY --chown=airflow:root tests-requirements.txt /tests-requirements.txt
 
 # Evita warnings do pip quando rodar como root durante o build
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_ROOT_USER_ACTION=ignore
@@ -60,6 +62,10 @@ RUN set -eux; \
         if python -m pip install --no-cache-dir -U pip --timeout 120 && \
            python -m pip install --no-cache-dir -U certifi --timeout 120 && \
            python -m pip install --no-cache-dir -r /requirements.txt --timeout 120; then \
+            # If tests-requirements.txt exists, install it too (provides pytest and friends)
+            if [ -f /tests-requirements.txt ]; then \
+                python -m pip install --no-cache-dir -r /tests-requirements.txt --timeout 120 || true; \
+            fi; \
             echo "pip install succeeded on attempt $attempt"; \
             break; \
         fi; \
