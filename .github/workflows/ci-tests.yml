@@ -29,8 +29,19 @@ jobs:
         # Copy .env.example to .env so Makefile include .env won't fail in CI
         cp Ro-dou/.env.example Ro-dou/.env || true
 
+    - name: Build images for CI (ensure tests and deps are installed)
+      run: |
+        cd Ro-dou
+        # Force rebuild of airflow images so tests-requirements (pytest) are installed
+        docker compose build airflow-webserver airflow-scheduler
+
     - name: Run docker-compose
       run: cd Ro-dou && make run
 
-    - name: run tests
-      run: cd Ro-dou && make tests
+    - name: Run tests (explicit PYTHONPATH)
+      run: |
+        cd Ro-dou
+        # Run tests inside the airflow-webserver container and ensure the project
+        # code mounted at /opt/airflow/dags is on PYTHONPATH so imports like
+        # `dags.ro_dou_src` resolve. Include nested dags path to be resilient.
+        docker compose --profile dev -p ro-dou exec -T airflow-webserver sh -c "cd /opt/airflow/tests && PYTHONPATH=/opt/airflow/dags:/opt/airflow/dags/dags python -m pytest -vvv --color=yes"
