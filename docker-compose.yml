@@ -52,7 +52,7 @@ x-airflow-common: &airflow-common
     # Database (Airflow >=2.7 usa a seção DATABASE)
     # Database connection: provide safe non-secret fallbacks; prefer setting
     # POSTGRES_PASSWORD via .env in CI or deploy target.
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
 
     # E-mail
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
@@ -85,7 +85,7 @@ x-airflow-common: &airflow-common
     _AIRFLOW_WWW_USER_PASSWORD: '${AIRFLOW_PASSWORD:-admin}'
 
     # Conn de exemplo (mantida)
-    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: 'postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
+    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: 'postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
 
     # Diretório de confs das DAGs Ro-DOU (mantido)
     # Directory with Ro-DOU DAG configs; defaults to the repo's dag_confs/
@@ -111,8 +111,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Use POSTGRES_DATA_VOLUME to allow switching between host bind and named volume
+    # e.g. POSTGRES_DATA_VOLUME=./mnt/pgdata  -> ./mnt/pgdata:/var/lib/postgresql/data
+    # or  POSTGRES_DATA_VOLUME=rodou_pgdata  -> rodou_pgdata:/var/lib/postgresql/data
     volumes:
-      - ./mnt/pgdata:/var/lib/postgresql/data
+      - ${POSTGRES_DATA_VOLUME:-./mnt/pgdata}:/var/lib/postgresql/data
       - ./dag_load_inlabs/sql/:/sql
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER}']
@@ -140,8 +143,8 @@ services:
     restart: always
 
   smtp4dev:
-  image: rnwood/smtp4dev:v3
-  profiles: ["dev"]
+    image: rnwood/smtp4dev:v3
+    profiles: ["dev"]
     restart: always
     ports:
       - '5001:80'

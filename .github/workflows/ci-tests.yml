@@ -24,6 +24,11 @@ jobs:
       with:
         path: Ro-dou
 
+    - name: Create .env for CI from example
+      run: |
+        # Copy .env.example to .env so Makefile include .env won't fail in CI
+        cp Ro-dou/.env.example Ro-dou/.env || true
+
     - name: Run docker-compose
       run: cd Ro-dou && make run
 

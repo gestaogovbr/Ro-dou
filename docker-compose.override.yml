@@ -1,0 +1,42 @@
+###################################################################
+# docker-compose.override.yml
+#
+# Purpose:
+# This override switches the Postgres data bind-mount (./mnt/pgdata)
+# to a Docker named volume (rodou_pgdata). It's included to help
+# contributors running the project on Windows (Docker Desktop) when the
+# repository is stored on an NTFS drive (e.g. G:\...). On NTFS the
+# Postgres container cannot change ownership/permissions on the host
+# directory (chmod/chown fail), causing initdb to abort with
+# "Operation not permitted" and the container to become unhealthy.
+#
+# Behavior:
+# - When this file is present and the override active, Compose will
+#   mount the named volume into /var/lib/postgresql/data, avoiding
+#   NTFS permission issues and allowing Postgres to initialize.
+# - CI runners (GitHub Actions) run on Linux and normally do not need
+#   this override. Keeping the file in the repo is safe and helps
+#   Windows developers run the project without manual overrides.
+#
+# How to use / revert:
+# - To enable the override (default here), keep this file as-is.
+# - To test the original bind-mount behavior (or if you prefer to
+#   manage host data yourself), remove or rename this file and the
+#   Compose run will use the host path ./mnt/pgdata again.
+# - You can also create a local-only override on your machine instead
+#   of committing this file.
+#
+# Security / data notes:
+# - The named volume will store DB data managed by Docker. Back up if
+#   you need to preserve it between runs.
+# - This file only affects local developer runs; it does not change
+#   production deployment settings.
+#
+services:
+  postgres:
+    volumes:
+      - rodou_pgdata:/var/lib/postgresql/data
+
+volumes:
+  rodou_pgdata:
+###################################################################

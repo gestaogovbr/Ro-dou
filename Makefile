@@ -40,6 +40,17 @@ ifeq (, $(shell command -v docker))
 $(error "docker não encontrado. Instale o Docker e tente novamente.")
 endif
 
+# Automatically choose Postgres data volume strategy:
+# - If running under WSL with repo mounted under /mnt (Windows), default to a named volume
+#   to avoid NTFS permission issues (chown/chmod failing on host bind mounts).
+# - Otherwise, use the host path ./mnt/pgdata as before.
+ifdef WSL_DISTRO_NAME
+POSTGRES_DATA_VOLUME ?= rodou_pgdata
+else
+POSTGRES_DATA_VOLUME ?= ./mnt/pgdata
+endif
+export POSTGRES_DATA_VOLUME
+
 .PHONY: help
 help:
 	@echo "Usage: make <target>"
