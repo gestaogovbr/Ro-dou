@@ -220,12 +220,31 @@ dag:
     - expressão cultural
     - política cultural
   report:
-    report:
     slack:
       webhook: https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9
 ```
-
 ### Exemplo 10
+Esta configuração possibilita o envio de notificações através de múltiplos canais.
+O Ro-DOU emprega a biblioteca [Apprise](https://github.com/caronc/apprise) para realizar o envio de notificações. Por meio dela, é possível estabelecer integração com diversos meios de comunicação.
+O serviceId segue o mesmo padrão utilizado pelo Apprise, podendo ser ```slack``` ou ```slack://```
+
+```yaml
+dag:
+  id: apprise_example
+  description: Envia notificações para canal Slack com apprise
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    notification:
+      serviceId: slack ou slack://
+      webhookId: XXXXXXX
+      webhookToken: YYYYYYYYYY
+```
+
+### Exemplo 11
 Esta configuração filtra os resultados por órgão/unidade selecionados.
 Por enquanto disponível apenas para as pesquisas no DOU.
 
@@ -245,7 +264,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 11
+### Exemplo 12
 Esta configuração permite múltiplas buscas utilizando o mesmo arquivo.
 O Ro-dou permite numa mesma busca juntar resultados do DOU e Querido Diário.
 
@@ -288,7 +307,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 12
+### Exemplo 13
 Esta configuração filtra os resultados por tipos de publicações selecionadas.
 Disponível para as pesquisas no DOU e INLABS.
 
@@ -316,7 +335,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 13
+### Exemplo 14
 Esta dag recebe e lista dados de múltiplos territórios para busca no Querido Diário.
 
 ```yaml
@@ -347,7 +366,7 @@ dag:
     skip_null: False
 ```
 
-### Exemplo 14
+### Exemplo 15
 Realiza as busca de termos a partir de uma fonte de um banco SGBD externo, possibilitando assim que os termos de buscas sejam dinâmicos.
 
 ```yaml
@@ -373,7 +392,7 @@ dag:
     subject: "[String] com caracteres especiais deve estar entre aspas"
 ```
 
-### Exemplo 15
+### Exemplo 16
 Esta dag coleta e realiza pesquisas de dados do inlabs.
 
 ```yaml
@@ -400,7 +419,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 16
+### Exemplo 17
 Esta dag realiza pesquisas com parâmetros de busca avançados quando a fonte é INLABS.
 
 ```yaml
@@ -425,7 +444,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 17
+### Exemplo 18
 Esta dag é utilizada para ocultar filtros de pesquisa de texto e outros metadados.
 
 ```yaml
@@ -453,7 +472,7 @@ dag:
     hide_filters: True
 ```
 
-### Exemplo 18
+### Exemplo 19
 Esta dag é utilizada quando nenhum termo é definido (obrigatório informar tipo de
 publicação ou órgão/unidade).
 
