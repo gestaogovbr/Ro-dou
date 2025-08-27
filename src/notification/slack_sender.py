@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 
 import requests
+import apprise
 from notification.isender import ISender
 
 from schemas import ReportConfig
@@ -22,6 +23,7 @@ class SlackSender(ISender):
         self.header_text = report_config.header_text
         self.footer_text = report_config.footer_text
         self.no_results_found_text = report_config.no_results_found_text
+        self.apobj = apprise.Apprise()
 
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Slack"""
@@ -101,11 +103,69 @@ class SlackSender(ISender):
             {"type": "divider"},
         ]
 
+    def _convert_dou_data_to_apprise(self, data):
+        """
+        Converte dados do DOU para formato texto simples do Apprise
+        """
+
+        message_parts = []
+        blocks = data.get('blocks', [])
+        
+        current_publication = {}
+        
+        for block in blocks:
+            block_type = block.get('type')
+            
+            if block_type == 'header':
+                # Headers são títulos/seções
+                text = block['text']['text']
+                message_parts.append(f"📋 *{text}*")
+                message_parts.append("")
+                
+            elif block_type == 'section':
+                text_content = block.get('text', {}).get('text')
+                
+                # Pular blocos com texto None
+                if text_content is None:
+                    continue
+                    
+                # Se tem accessory (botão), é a última parte de uma publicação
+                if 'accessory' in block and block['accessory'].get('type') == 'button':
+                    # É a data + botão, última parte da publicação
+                    date_text = text_content
+                    button_url = block['accessory']['url']
+                    
+                    message_parts.append(date_text)
+                    message_parts.append(f"🔗 {button_url}")
+                    
+                else:
+                    # É título ou abstract de publicação
+                    if text_content.strip():
+                        # Se parece com título (mais curto, sem "(...)")
+                        if len(text_content) < 100 and not text_content.startswith('(...)'):
+                            message_parts.append(f"📄 *{text_content.strip()}*")
+                        else:
+                            # É abstract
+                            # Limitar tamanho para não ficar muito longo
+                            if len(text_content) > 400:
+                                text_content = text_content[:400] + "..."
+                            message_parts.append(text_content)
+                            
+            elif block_type == 'divider':
+                # Separador entre publicações
+                message_parts.append("─" * 50)
+                message_parts.append("")
+        
+        return '\n'.join(message_parts)
+
     def _flush(self):
         for i in range(0, len(self.blocks), 50):
             data = {"blocks": self.blocks[i : i + 50]}
-            result = requests.post(self.webhook_url, json=data)
-            result.raise_for_status()
+            self.apobj.add(self.webhook_url)           
+            message = self._convert_dou_data_to_apprise(data)
+            title = self._remove_html_tags(self.header_text)
+            self.apobj.notify(body=message if message else self.no_results_found_text, title= title if title else "Nova Notificação")
+
 
 
 WEEKDAYS_EN_TO_PT = [

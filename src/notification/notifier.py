@@ -14,6 +14,7 @@ from notification.discord_sender import DiscordSender
 from notification.email_sender import EmailSender
 from notification.isender import ISender
 from notification.slack_sender import SlackSender
+from notification.notification_sender import NotificationSender
 from parsers import DAGConfig
 
 
@@ -32,6 +33,8 @@ class Notifier:
             self.senders.append(DiscordSender(specs.report))
         if specs.report.slack:
             self.senders.append(SlackSender(specs.report))
+        if specs.report.notification:
+            self.senders.append(NotificationSender(specs.report))
 
 
     def send_notification(self, search_report: str, report_date: str):

@@ -7,7 +7,7 @@ from notification.isender import ISender
 from schemas import ReportConfig
 
 
-class DiscordSender(ISender):
+class NotificationSender(ISender):
     highlight_tags = ("__", "__")
 
     def __init__(self, report_config: ReportConfig) -> None:
@@ -19,7 +19,7 @@ class DiscordSender(ISender):
         self.apobj = apprise.Apprise()
 
     def send(self, search_report: list, report_date: str = None):
-        """Parse the content, and send message to Discord"""
+        """Parse the content, and send message to client"""
         if self.header_text:
             header_text = self._remove_html_tags(self.header_text)
             self.send_text(header_text)
@@ -53,7 +53,7 @@ class DiscordSender(ISender):
             footer_text = self._remove_html_tags(self.footer_text)
             self.send_text(footer_text)
 
-    def send_text(self, content):
+    def send_text(self, content):      
         self.send_data({"content": content})
 
     def send_embeds(self, items):
@@ -73,70 +73,50 @@ class DiscordSender(ISender):
     def _convert_dou_data_to_apprise(self, data):
         """
         Converte dados do DOU para formato texto simples do Apprise
-        """
-        
+        """      
+
         message_parts = []
-        blocks = data.get('blocks', [])
-        
-        current_publication = {}
-        
-        for block in blocks:
-            block_type = block.get('type')
-            
-            if block_type == 'header':
-                # Headers são títulos/seções
-                text = block['text']['text']
-                message_parts.append(f"📋 *{text}*")
-                message_parts.append("")
+        embeds = data.get('embeds', [])
+
+        if embeds:
+            for block in embeds:
+                title = block.get('title')
+
+                if title:
+                    message_parts.append(f"📋 *{title}*")
+                    message_parts.append("")
                 
-            elif block_type == 'section':
-                text_content = block.get('text', {}).get('text')
-                
-                # Pular blocos com texto None
-                if text_content is None:
-                    continue
-                    
-                # Se tem accessory (botão), é a última parte de uma publicação
-                if 'accessory' in block and block['accessory'].get('type') == 'button':
-                    # É a data + botão, última parte da publicação
-                    date_text = text_content
-                    button_url = block['accessory']['url']
-                    
-                    message_parts.append(date_text)
+                if block.get('description'):
+                    message_parts.append(block.get('description'))
+
+                if block.get('url'):
+                    button_url = block.get('url')
                     message_parts.append(f"🔗 {button_url}")
-                    
-                else:
-                    # É título ou abstract de publicação
-                    if text_content.strip():
-                        # Se parece com título (mais curto, sem "(...)")
-                        if len(text_content) < 100 and not text_content.startswith('(...)'):
-                            message_parts.append(f"📄 *{text_content.strip()}*")
-                        else:
-                            # É abstract
-                            # Limitar tamanho para não ficar muito longo
-                            if len(text_content) > 400:
-                                text_content = text_content[:400] + "..."
-                            message_parts.append(text_content)
-                            
-            elif block_type == 'divider':
-                # Separador entre publicações
-                message_parts.append("─" * 50)
-                message_parts.append("")
-        
+                    message_parts.append("")
+
+        if data.get('content'):
+            message_parts.append(data.get('content'))
+            message_parts.append("")
+
         return '\n'.join(message_parts)
 
     def send_data(self, data):
-        data["username"] = "Querido Prisma (rodou)"
-        
-        url = f"{self.notification['serviceId']}://{self.notification['webhookId']}/{self.notification['webhookToken']}"        
-        self.apobj.add(url)        
-        message = self._convert_dou_data_to_apprise(data)        
+        serviceId = self._remove_tag_from_serviceId(self.notification['serviceId'])        
+        url = f"{serviceId}://{self.notification['webhookId']}/{self.notification['webhookToken']}"        
+        self.apobj.add(url)               
+        message = self._convert_dou_data_to_apprise(data)           
         title = self._remove_html_tags(self.header_text)
-        self.apobj.notify(body=message if message else self.no_results_found_text, title= title if title else "Nova Notificação")
-     
+
+        self.apobj.notify(
+            body=message, 
+            title=title if title else "Nova Notificação")
+
+    def _remove_tag_from_serviceId(self, text):
+        padrao = r"://"
+        if re.search(padrao, text):
+            text = re.sub(padrao, "", text)
+        return text
 
     def _remove_html_tags(self, text):
-        # Define a regular expression pattern to match HTML tags
         clean = re.compile('<.*?>')
-        # Substitute HTML tags with an empty string
         return re.sub(clean, '', text)

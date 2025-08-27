@@ -8,7 +8,8 @@ import textwrap
 
 import markdown
 import pandas as pd
-from airflow.utils.email import send_email
+
+from airflow.configuration import conf
 
 # TODO fix this
 # Add parent folder to sys.path in order to be able to import
@@ -20,6 +21,8 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 sys.path.insert(0, parent_dir)
 
+import apprise
+
 from notification.isender import ISender
 from schemas import ReportConfig
 
@@ -30,7 +33,8 @@ class EmailSender(ISender):
     highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
 
     def __init__(self, report_config: ReportConfig) -> None:
-        self.report_config = report_config
+        self.report_config = report_config        
+        self.apobj = apprise.Apprise()
         self.search_report = ""
         self.watermark = """
             <div class="footer">
@@ -63,22 +67,42 @@ class EmailSender(ISender):
             content = self.generate_email_content()
 
         content += self.watermark
+        
+        smtp_host = conf.get('smtp', 'smtp_host')
+        smtp_port = conf.get('smtp', 'smtp_port', fallback='587')
+        smtp_user = conf.get('smtp', 'smtp_user', fallback='')
+        smtp_password = conf.get('smtp', 'smtp_password', fallback='')
+        smtp_mail_from = conf.get('smtp', 'smtp_mail_from')
+        smtp_starttls = conf.getboolean('smtp', 'smtp_starttls', fallback=True)
+        smtp_ssl = conf.getboolean('smtp', 'smtp_ssl', fallback=False)
 
+        url = f"mailto://{smtp_user}:{smtp_password}@{smtp_host}:{smtp_port}"
+
+        params = []
+        params.append(f"from={smtp_mail_from}")
+        params.append(f"cc={self.report_config.emails}")
+
+        if smtp_starttls and not smtp_ssl:
+            params.append("secure=yes")
+        elif not smtp_ssl and not smtp_starttls:
+            params.append("secure=no")
+        
+        if params:
+            url += "?" + "&".join(params)
+            
+        self.apobj.add(url, tag='ro-dou')
+        
         if self.report_config.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
-                send_email(
-                    to=self.report_config.emails,
-                    subject=full_subject,
-                    files=[csv_file.name],
-                    html_content=content,
-                    mime_charset="utf-8",
-                )
+                self.apobj.notify(
+                    body=content,
+                    title=full_subject,
+                    attach=csv_file.name
+                )               
         else:
-            send_email(
-                to=self.report_config.emails,
-                subject=full_subject,
-                html_content=content,
-                mime_charset="utf-8",
+            self.apobj.notify(
+                body=content,
+                title=full_subject
             )
 
     def generate_email_content(self) -> str:
