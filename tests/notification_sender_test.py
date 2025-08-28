@@ -113,14 +113,14 @@ class TestNotificationSenderDataConversion:
         
         result = sender._convert_dou_data_to_apprise(data)
        
-        expected = """📋 *Test Title*
+        expected = """*Test Title*
                 Test Description
-                🔗 https://example.com
+                   https://example.com
 
-                📋 *Another Title*
+                  *Another Title*
 
                 Another Description
-                🔗 https://another.com
+                  https://another.com
 
                 """
         assert len(result.split('\n')) == len(expected.split('\n'))
@@ -145,7 +145,7 @@ class TestNotificationSenderDataConversion:
         }
         
         result = sender._convert_dou_data_to_apprise(data)
-        expected = "📋 *Only Title*\n"
+        expected = "*Only Title*\n"
         assert result == expected
 
     def test_convert_dou_data_to_apprise_empty_data(self, mock_report_config):
