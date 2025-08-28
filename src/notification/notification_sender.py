@@ -172,5 +172,9 @@ class NotificationSender(ISender):
         return text
 
     def _remove_html_tags(self, text):
-        clean = re.compile('<.*?>')
-        return re.sub(clean, '', text)
+        if not text or not isinstance(text, str):
+            return text
+
+        # Remove todas as tags HTML
+        text = re.sub(r'<[^>]+>', '', text)
+        return text     
