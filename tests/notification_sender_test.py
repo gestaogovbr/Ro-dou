@@ -145,7 +145,7 @@ class TestNotificationSenderDataConversion:
         }
         
         result = sender._convert_dou_data_to_apprise(data)
-        expected = "*Only Title*\n"
+        expected = "📋 *Only Title*\n"
         assert result == expected
 
     def test_convert_dou_data_to_apprise_empty_data(self, mock_report_config):
