@@ -9,28 +9,6 @@ from pytest_mock import MockerFixture
 
 from dags.ro_dou_src.notification.email_sender import EmailSender
 
-results = [
-    {
-        "section": "Seção 3",
-        "title": "EXTRATO DE COMPROMISSO",
-        "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
-        "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
-        "date": "02/09/2021",
-        "arttype": [
-            "Edital",
-            "Ata",
-            "Portaria",
-        ],
-    },
-    {
-        "section": "Seção 3",
-        "title": "EXTRATO DE COMPROMISSO",
-        "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
-        "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
-        "date": "02/09/2021",
-        "arttype": ["Portaria"],
-    },
-]
   
 @pytest.fixture
 def mock_report_config():
@@ -108,3 +86,37 @@ class TestEmailSenderProcessing:
         assert footer_p is not None
         assert footer_p.text == 'Test Footer'
         assert date_p is not None
+
+    def test_get_csv_tempfile(self, mock_report_config):
+        sender = EmailSender(mock_report_config)
+        sender.search_report = [
+            {
+                "header": "Seção 3",
+                "department": ["Departamento A"],
+                "department_ignore": ["Departamento B"],
+                "pubtype": ["Tipo 1", "Tipo 2"],
+                "result": {
+                    "group_1": {
+                        "term_1": {
+                            "Department A": [
+                                {
+                                    "section": "Seção 3",
+                                    "title": "EXTRATO DE COMPROMISSO",
+                                    "href": "https://www.in.gov.br/web/dou/-/extrato-de-compromisso-342504508",
+                                    "abstract": "ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...",
+                                    "date": "02/09/2021",
+                                    "arttype": [
+                                        "Edital",
+                                        "Ata",
+                                        "Portaria",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+        ]
+        csv_file = sender.get_csv_tempfile()
+        assert csv_file is not None
+        assert csv_file.name.endswith('.csv')
