@@ -13,3 +13,4 @@ requests==2.32.2
 html2text==2024.2.26
 markdown==3.6.0
 apprise==1.9.4
+beautifulsoup4==4.12.2
