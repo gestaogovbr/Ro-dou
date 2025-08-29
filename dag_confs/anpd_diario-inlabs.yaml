@@ -1,0 +1,111 @@
+dag:
+  id: anpd_diario-inlabs
+  description: DAG ANPD|CNPD simples diário.
+  tags:
+    - anpd
+    - inlabs
+    - diario
+  owner:
+    - luciano.psilva
+  schedule: 0 7 * * MON-FRI
+  search:
+    - header: Pesquisa ANPD no DOU - Teste de Implantação
+      terms:
+        - anpd | "autoridade nacional de proteção de dados" | "AUTORIDADE NACIONAL DE PROTEÇÃO DE DADOS"
+        - 'AUTORIDADE NACIONAL DE PROTEÇÃO DE DADOS'
+      sources:
+        - INLABS
+      field: TUDO
+      is_exact_search: False
+      ignore_signature_match: True
+      force_rematch: True
+      date: DIA
+      dou_sections:
+        - TODOS
+      full_text: False
+      use_summary: True
+
+    - header: Pesquisa CNPD no DOU
+      terms:
+        - cnpd | "conselho nacional de proteção de dados"
+      sources:
+        - INLABS
+      field: TUDO
+      is_exact_search: False
+      ignore_signature_match: True
+      force_rematch: True
+      date: DIA
+      dou_sections:
+        - TODOS
+      full_text: False
+      use_summary: True
+
+  report:
+    emails:
+      - luciano.psilva@anpd.gov.br
+      - igor.moreira@anpd.gov.br
+      - mariane.melo@anpd.gov.br
+      - diego.santana@anpd.gov.br
+      - ronaldo.martins@anpd.gov.br
+      - gustavo.lima@anpd.gov.br
+      - daniel.chaves@anpd.gov.br
+      - gabriella.goliveira@anpd.gov.br
+
+    attach_csv: False
+    subject: Clipping diário ANPD Ro-DOU - - Teste-INLABS
+    skip_null: False
+    hide_filters: True
+    header_text: |
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+      <tr>
+      <td align="center">
+      <table align="center" width="640" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="vertical-align: middle; padding-right: 8px;">
+            <img src="https://www.gov.br/anpd/pt-br/anpd-rodou-340x111.png" alt="Logotipo ANPD" width="240" style="display: block;" />
+          </td>
+          <td style="vertical-align: middle;">
+            <h2 style="margin: 0; font-size: 18px; color: #004b76;">Autoridade Nacional de Proteção de Dados</h2>
+            <small style="color: #555;">Clipping diário de publicações oficiais da ANPD e CNPD no DOU</small>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+      </table>
+    footer_text: |
+      <hr />
+      <p style="font-size: 12px; color: #777; text-align: center;">
+      Esta pesquisa foi realizada automaticamente pela ferramenta
+      <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank">Ro-DOU</a>,
+      adaptada e operada pela DDSS/CGTI/ANPD. - <a href="https://www.gov.br/anpd" target="_blank">https://www.gov.br/anpd</a>
+      </p>
+    no_results_found_text: |
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+      <tr>
+      <td align="center">
+      <table align="center" width="640" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="vertical-align: middle; padding-right: 8px;">
+            <img src="https://www.gov.br/anpd/pt-br/anpd-rodou-340x111.png" alt="Logotipo ANPD" width="240" style="display: block;" />
+          </td>
+          <td style="vertical-align: middle;">
+            <h2 style="margin: 0; font-size: 18px; color: #004b76;">Autoridade Nacional de Proteção de Dados</h2>
+            <small style="color: #555;">Clipping diário de publicações oficiais da ANPD e CNPD no DOU</small>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+      </table>
+      <hr />
+      <br />
+      <br />
+      <h3 style="text-align: center; color: #d9534f;">Nenhum resultado encontrado</h3>
+      <br />
+      <hr />
+      <p style="font-size: 12px; color: #777; text-align: center;">
+      Esta pesquisa foi realizada automaticamente pela ferramenta
+      <a href="https://gestaogovbr.github.io/Ro-dou/" target="_blank">Ro-DOU</a>,
+      adaptada e operada pela DDSS/CGTI/ANPD. - <a href="https://www.gov.br/anpd" target="_blank">https://www.gov.br/anpd</a>
+      </p>

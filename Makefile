@@ -98,6 +98,7 @@ create-path-tmp-variable:
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
+			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
 			-d '{ \
 			"key": "path_tmp", \
 			"value": "$(AIRFLOW_TMP_DIR)" \
@@ -118,6 +119,7 @@ create-inlabs-db-connection:
 			'http://localhost:8080/api/v1/connections' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
+			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
 			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
 			-d '{ \
 			"connection_id": "inlabs_db", \
@@ -148,9 +150,14 @@ activate-inlabs-load-dag:
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
+			--user \"$(AIRFLOW_USER):$(AIRFLOW_PASSWORD)\" \
 			-d '{ \
 			"is_paused": false \
 			}' > /dev/null;"
+.PHONY: redeploy
+redeploy: build-images
+	docker compose -p ro-dou up -d --no-deps airflow-webserver airflow-scheduler
+	$(MAKE) smoke-test
 
 .PHONY: redeploy
 
@@ -207,3 +214,18 @@ smtp4dev-rm:
 .PHONY: down
 down:
 	$(COMPOSE) $(DEV_PROFILE_ARG) -p $(PROJECT) down
+
+.PHONY: smoke-test
+smoke-test:
+	@docker exec airflow-webserver bash -lc "python -c 'import requests; print(\"webserver https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+	@docker exec airflow-scheduler bash -lc "python -c 'import requests; print(\"scheduler https://www.in.gov.br ->\", requests.get(\"https://www.in.gov.br\", timeout=10).status_code)'"
+
+.PHONY: wait-web
+wait-web:
+	@echo "Waiting for airflow-webserver (health=healthy) ..."
+	@for i in $$(seq 1 60); do \
+	  state=$$(docker inspect --format='{{.State.Health.Status}}' airflow-webserver 2>/dev/null || echo "starting"); \
+	  if [ "$$state" = "healthy" ]; then echo "airflow-webserver is healthy"; exit 0; fi; \
+	  sleep 3; \
+	done; \
+	echo "Timeout waiting for airflow-webserver health=healthy"; exit 1

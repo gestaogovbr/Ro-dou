@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 # Basic Airflow cluster configuration (CeleryExecutor) — notas rápidas
 # WARNING: configuração para desenvolvimento/local apenas. Não usar em produção.
 #
@@ -31,65 +32,68 @@
 # Para contribuidores: evite hard-coding de valores específicos de ambiente.
 # Prefira atrasos compatíveis com upstream e documente defaults em `.env.example`.
 
+# NOTE: Top-level `version:` key is intentionally omitted because the
+# Compose spec version field is deprecated in newer Compose implementations.
+
 x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: docker/airflow-common.Dockerfile
   environment: &airflow-common-env # Auth: API + sessão (UI)
-    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
 
     # Core
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
     # Timezone: default to America/Sao_Paulo when not provided
-    AIRFLOW__CORE__DEFAULT_TIMEZONE: '${AIRFLOW_TIMEZONE:-America/Sao_Paulo}'
-    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: "${AIRFLOW_TIMEZONE:-America/Sao_Paulo}"
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
     # Executor: fallback to LocalExecutor for safe local runs
-    AIRFLOW__CORE__EXECUTOR: '${AIRFLOW_EXECUTOR:-LocalExecutor}'
+    AIRFLOW__CORE__EXECUTOR: "${AIRFLOW_EXECUTOR:-LocalExecutor}"
     # Fernet key: leave empty by default (do NOT commit a real key)
-    AIRFLOW__CORE__FERNET_KEY: '${AIRFLOW_FERNET_KEY:-}'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__FERNET_KEY: "${AIRFLOW_FERNET_KEY:-}"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 
     # Database (Airflow >=2.7 usa a seção DATABASE)
     # Database connection: provide safe non-secret fallbacks; prefer setting
     # POSTGRES_PASSWORD via .env in CI or deploy target.
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}"
 
     # E-mail
-    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
-    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
     # SMTP: leave empty by default; set these in .env for proper e-mail support
-    AIRFLOW__SMTP__SMTP_HOST: '${AIRFLOW__SMTP__SMTP_HOST:-}'
-    AIRFLOW__SMTP__SMTP_MAIL_FROM: '${AIRFLOW__SMTP__SMTP_MAIL_FROM:-}'
-    AIRFLOW__SMTP__SMTP_PORT: '${AIRFLOW__SMTP__SMTP_PORT:-}'
-    AIRFLOW__SMTP__SMTP_STARTTLS: '${AIRFLOW__SMTP__SMTP_STARTTLS:-}'
-    AIRFLOW__SMTP__SMTP_USER: '${AIRFLOW__SMTP__SMTP_USER:-}'
-    AIRFLOW__SMTP__SMTP_PASSWORD: '${AIRFLOW__SMTP__SMTP_PASSWORD:-}'
-    AIRFLOW__SMTP__SMTP_SSL: '${AIRFLOW__SMTP__SMTP_SSL:-}'
+    AIRFLOW__SMTP__SMTP_HOST: "${AIRFLOW__SMTP__SMTP_HOST:-}"
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: "${AIRFLOW__SMTP__SMTP_MAIL_FROM:-}"
+    AIRFLOW__SMTP__SMTP_PORT: "${AIRFLOW__SMTP__SMTP_PORT:-}"
+    AIRFLOW__SMTP__SMTP_STARTTLS: "${AIRFLOW__SMTP__SMTP_STARTTLS:-}"
+    AIRFLOW__SMTP__SMTP_USER: "${AIRFLOW__SMTP__SMTP_USER:-}"
+    AIRFLOW__SMTP__SMTP_PASSWORD: "${AIRFLOW__SMTP__SMTP_PASSWORD:-}"
+    AIRFLOW__SMTP__SMTP_SSL: "${AIRFLOW__SMTP__SMTP_SSL:-}"
 
     # Webserver
-    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: '${AIRFLOW_TIMEZONE:-UTC}'
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "${AIRFLOW_TIMEZONE:-UTC}"
     # Webserver secret: REQUIRED for production; leave empty for local/dev
-    AIRFLOW__WEBSERVER__SECRET_KEY: '${AIRFLOW_SECRET_KEY:-}'
-    AIRFLOW__WEBSERVER__WORKERS: '${AIRFLOW_WORKERS:-2}'
+    AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_SECRET_KEY:-}"
+    AIRFLOW__WEBSERVER__WORKERS: "${AIRFLOW_WORKERS:-2}"
 
     # Logging
-    AIRFLOW__LOGGING__LOG_SERVE_ADDRESS: '0.0.0.0:8793'
-    AIRFLOW__LOGGING__BASE_LOG_FOLDER: '/opt/airflow/logs'
-    AIRFLOW__LOGGING__REMOTE_LOGGING: 'false'
+    AIRFLOW__LOGGING__LOG_SERVE_ADDRESS: "0.0.0.0:8793"
+    AIRFLOW__LOGGING__BASE_LOG_FOLDER: "/opt/airflow/logs"
+    AIRFLOW__LOGGING__REMOTE_LOGGING: "false"
 
     # Bootstrap (usar a flag nova de migração)
-    _AIRFLOW_DB_MIGRATE: 'true'
-    _AIRFLOW_WWW_USER_CREATE: 'true'
+    _AIRFLOW_DB_MIGRATE: "true"
+    _AIRFLOW_WWW_USER_CREATE: "true"
     # Admin user for quick local bootstrap. For production provide secure creds
-    _AIRFLOW_WWW_USER_USERNAME: '${AIRFLOW_USER:-admin}'
-    _AIRFLOW_WWW_USER_PASSWORD: '${AIRFLOW_PASSWORD:-admin}'
+    _AIRFLOW_WWW_USER_USERNAME: "${AIRFLOW_USER:-admin}"
+    _AIRFLOW_WWW_USER_PASSWORD: "${AIRFLOW_PASSWORD:-admin}"
 
     # Conn de exemplo (mantida)
-    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: 'postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}'
+    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: "postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-<fallback-airflow-password>}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-airflow}"
 
     # Diretório de confs das DAGs Ro-DOU (mantido)
     # Directory with Ro-DOU DAG configs; defaults to the repo's dag_confs/
-    RO_DOU__DAG_CONF_DIR: '${RO_DOU_DAG_CONF_DIR:-dag_confs}'
+    RO_DOU__DAG_CONF_DIR: "${RO_DOU_DAG_CONF_DIR:-dag_confs}"
     REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
     SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
 
@@ -99,26 +103,23 @@ x-airflow-common: &airflow-common
     - ./mnt/airflow-logs:/opt/airflow/logs
     - ./tests:/opt/airflow/tests
     - ./schemas:/opt/airflow/schemas
-  user: '${AIRFLOW_UID:-50000}:0'
+  user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
       condition: service_healthy
 
 services:
   postgres:
-    image: postgres:17.5-alpine
+    image: postgres:13
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # Use POSTGRES_DATA_VOLUME to allow switching between host bind and named volume
-    # e.g. POSTGRES_DATA_VOLUME=./mnt/pgdata  -> ./mnt/pgdata:/var/lib/postgresql/data
-    # or  POSTGRES_DATA_VOLUME=rodou_pgdata  -> rodou_pgdata:/var/lib/postgresql/data
     volumes:
       - ${POSTGRES_DATA_VOLUME:-./mnt/pgdata}:/var/lib/postgresql/data
       - ./dag_load_inlabs/sql/:/sql
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER}']
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-airflow}"]
       interval: 5s
       retries: 5
     restart: always
@@ -128,9 +129,9 @@ services:
     container_name: airflow-webserver
     command: webserver
     ports:
-      - '8080:8080'
+      - "8080:8080"
     healthcheck:
-      test: ['CMD', 'curl', '--fail', 'http://localhost:8080/health']
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -147,16 +148,13 @@ services:
     profiles: ["dev"]
     restart: always
     ports:
-      - '5001:80'
-      - '25:25' # Change the number before : to the port the SMTP server should be accessible on
-      - '143:143' # Change the number before : to the port the IMAP server should be accessible on
+      - "5001:80"
+      - "25:25"
+      - "143:143"
     volumes:
       - smtp4dev-data:/smtp4dev
     environment:
       - ServerOptions__HostName=smtp4dev
-# selenium:
-#     image: ghcr.io/gestaogovbr/selenium:ro-dou
-#     volumes:
-#       - /dev/shm:/dev/shm
+
 volumes:
   smtp4dev-data:
