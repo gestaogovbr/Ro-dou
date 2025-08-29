@@ -179,6 +179,9 @@ class ReportConfig(BaseModel):
     discord: Optional[dict] = Field(
         default=None, description="Configuração do webhook do Discord para relatórios"
     )
+    notification: Optional[dict] = Field(
+        default=None, description="Configuração dos métodos de notificação para relatórios"
+    )
     emails: Optional[List[EmailStr]] = Field(
         default=None, description="Lista de endereços de e-mail para enviar o relatório"
     )
