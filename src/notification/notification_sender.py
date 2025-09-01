@@ -17,7 +17,8 @@ class NotificationSender(ISender):
         self.footer_text = report_config.footer_text
         self.no_results_found_text = report_config.no_results_found_text
         self.apobj = apprise.Apprise()
-    
+        self.message = ""
+
     def send(self, search_report: list, report_date: str = None):
         """
         Parse the content and send message to client.
@@ -29,17 +30,12 @@ class NotificationSender(ISender):
         # Send header if exists
         if self.header_text:
             header_text = self._remove_html_tags(self.header_text)
-            self.send_text(header_text)
+            self.message += header_text + "\n"
         
         # Process each search in the report
         for search in search_report:
             self._process_search_section(search)
         
-        # Send footer if exists
-        if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
-            self.send_text(footer_text)
-
     def _process_search_section(self, search: dict):
         """
         Process a single search section.
@@ -49,7 +45,7 @@ class NotificationSender(ISender):
         """
         # Send section header
         if search.get("header"):
-            self.send_text(f'**{search["header"]}**')
+            self.message += f'**{search["header"]}**' + "\n"
         
         # Process all groups in this search
         for group_name, search_results in search.get("result", {}).items():
@@ -81,12 +77,14 @@ class NotificationSender(ISender):
         """
         if not self.hide_filters:
             if not term_results:
-                self.send_text(f"**{self.no_results_found_text}**")
+                self.message += f'**{search["header"]}**' + "\n"
+                self.message += f"**{self.no_results_found_text}**"
+                self.send_text(self.message)
                 return
             
             # Send term header if not the default term
             if term != "all_publications":
-                self.send_text(f"**Resultados para: {term}**")
+                self.message += f"**Resultados para: {term}**\n"               
         
         # Process results by department
         for department, results in term_results.items():
@@ -102,68 +100,39 @@ class NotificationSender(ISender):
         """
         # Send department name if not hiding filters and not default department
         if not self.hide_filters and department != 'single_department':
-            self.send_text(department)
-        
+            self.message += f"**Departamento: {department}**\n"           
+
         # Send the actual results
         self.send_embeds(results)
 
-    def send_text(self, content):      
+    def send_text(self, content):           
+        if self.footer_text:
+            footer_text = self._remove_html_tags(self.footer_text)
+            content += footer_text + "\n"
+             
         self.send_data({"content": content})
 
-    def send_embeds(self, items):
-        self.send_data(
-            {
-                "embeds": [
-                    {
-                        "title": item["title"],
-                        "description": item["abstract"],
-                        "url": item["href"],
-                    }
-                    for item in items
-                ]
-            }
+    def send_embeds(self, items):         
+
+        self.message += "\n".join(
+            [
+                f"*📁 {item['section']}*\n*📋 {item['title']}*\n{item['abstract']}\n 🔗 {item['href']}\n 📅 {item['date']}\n"
+                for item in items
+            ]
         )
 
-    def _convert_dou_data_to_apprise(self, data):
-        """
-        Converte dados do DOU para formato texto simples do Apprise
-        """      
+        if self.footer_text:
+            footer_text = self._remove_html_tags(self.footer_text)
+            self.message += footer_text + "\n"
 
-        message_parts = []
-        embeds = data.get('embeds', [])
-
-        if embeds:
-            for block in embeds:
-                title = block.get('title')
-
-                if title:
-                    message_parts.append(f"📋 *{title}*")
-                    message_parts.append("")
-                
-                if block.get('description'):
-                    message_parts.append(block.get('description'))
-
-                if block.get('url'):
-                    button_url = block.get('url')
-                    message_parts.append(f"🔗 {button_url}")
-                    message_parts.append("")
-
-        if data.get('content'):
-            message_parts.append(data.get('content'))
-            message_parts.append("")
-
-        return '\n'.join(message_parts)
-
+        self.send_data(self.message)
+       
     def send_data(self, data):
         serviceId = self._remove_tag_from_serviceId(self.notification['serviceId'])        
         url = f"{serviceId}://{self.notification['webhookId']}/{self.notification['webhookToken']}"        
         self.apobj.add(url)               
-        message = self._convert_dou_data_to_apprise(data)           
-        title = self._remove_html_tags(self.header_text)
 
-        self.apobj.notify(
-            body=message, 
-            title=title if title else "Nova Notificação")
+        self.apobj.notify(body=data)
 
     def _remove_tag_from_serviceId(self, text):
         padrao = r"://"
