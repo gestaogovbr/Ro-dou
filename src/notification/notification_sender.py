@@ -27,6 +27,10 @@ class NotificationSender(ISender):
             search_report: List of search results containing headers and results
             report_date: Optional date for the report (currently unused)
         """
+        # Check if search_report is empty
+        if not search_report:
+            return
+
         # Send header if exists
         if self.header_text:
             header_text = self._remove_html_tags(self.header_text)
@@ -74,10 +78,10 @@ class NotificationSender(ISender):
         Args:
             term: Search term
             term_results: Dictionary of department results
-        """
+        """        
         if not self.hide_filters:
-            if not term_results:
-                self.message += f'**{search["header"]}**' + "\n"
+            if not term_results:                
+                # self.message += f'**{search["header"]}**' + "\n"
                 self.message += f"**{self.no_results_found_text}**"
                 self.send_text(self.message)
                 return
