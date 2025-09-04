@@ -200,6 +200,9 @@ class ReportConfig(BaseModel):
         description="Se deve ocultar os filtros aplicados no relatório."
         "Default: False.",
     )
+    text_length: Optional[int] = Field(
+        default=400, description="Tamanho do texto que será retornado na mensagem"
+    )
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
     )

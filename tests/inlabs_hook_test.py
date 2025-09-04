@@ -174,6 +174,11 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
@@ -184,13 +189,17 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             """,
             # texto_out
             (
-                """(...) cing elit.
+                """(...) . Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
-            facilisis posue (...)"""
+            facilisis posuere elit. Proin consectetur tincidunt urna.
+            Cras tincidunt nunc vestibulum velit pellentesque facilisis.
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""
             ),
         ),
     ],
@@ -199,6 +208,44 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
     print(inlabs_hook.TextDictHandler()._trim_text(texto_in))
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in) == texto_out
 
+@pytest.mark.parametrize(
+    "texto_in, texto_out",
+    [
+        (  # texto_in
+            """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
+            dolore magnam aliquam quaerat voluptatem.
+            """,
+            # texto_out
+            (
+                """(...) Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            adipisci velit, sed quia non numquam eius modi (...)"""
+            ),        
+        ),
+    ],
+)
+
+def test_trim_text_length(inlabs_hook, texto_in, texto_out): 
+    # print(inlabs_hook.TextDictHandler()._trim_text(texto_in, 450))     
+    assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 450) == texto_out
 
 @pytest.mark.parametrize(
     "df_in, dict_out",

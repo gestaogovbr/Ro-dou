@@ -33,6 +33,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.
 - **discord_webhook**: URL de Webhook para integração com o Discord.
+- **text_length**: Tamanho do texto que será enviado na mensagem. O padrão é 400.
 - **emails**: Lista de emails dos destinatários.
 - **footer_text**: Texto em HTML do rodapé do relatório.
 - **header_text**: Texto em HTML de cabeçalho do relatório.
