@@ -10,7 +10,7 @@ import html2text
 
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
+from typing import Optional
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -268,6 +268,7 @@ class INLABSHook(BaseHook):
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
+            text_length: Optional[int] = None,
             use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -281,6 +282,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
+                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -325,6 +327,10 @@ class INLABSHook(BaseHook):
 
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
+            
+            if text_length is not None:
+                # df["texto"] = df["texto"].apply(self._trim_text, text_length=text_length)
+                df["texto"] = df["texto"].apply(lambda x: self._trim_text(x, text_length))
 
             if use_summary:
                 # If use_summary replace texto value by summary value
@@ -450,17 +456,34 @@ class INLABSHook(BaseHook):
             return highlighted_text
 
         @staticmethod
-        def _trim_text(text: str) -> str:
-            """Get a len(x) string and returns len(400) keeping `<%%>`
-            at the center.
+        def _trim_text(text: str, text_length: int = 400) -> str:
+            """Truncates text while keeping the `<%%>` marker centered when present.
+    
+                If the text contains the `<%%>` marker, the function preserves this marker
+                in the center and keeps a specific number of characters before and after it.
+                Otherwise, it truncates the text from the beginning.
+                
+                Args:
+                    text (str): Text to be truncated
+                    text_length (int, optional): Number of characters to keep on each side of 
+                                        the `<%%>` marker.
+                
+                Returns:
+                    str: Truncated text with "(...)" indicating removed parts
+                    
+                Examples:
+                    - With marker: "(...) last_N_chars<%%>first_N_chars (...)"
+                    - Without marker: "first_N_chars (...)"
             """
 
             parts = text.split("<%%>", 1)
-            return (
-                "(...) " + parts[0][-200:] + "<%%>" + parts[1][:200] + " (...)"
-                if len(parts) > 1
-                else text[:400] + " (...)"
-            )
+
+            if len(parts) > 1:
+                before = parts[0][-text_length:].lstrip()
+                after = parts[1][:text_length].rstrip()
+                return f"(...) {before}<%%>{after} (...)"
+            else:
+                return f"{text[:text_length].rstrip()} (...)"
 
         @staticmethod
         def _group_to_dict(df: pd.DataFrame, group_column: str, cols: list) -> dict:
