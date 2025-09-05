@@ -55,6 +55,7 @@ class INLABSHook(BaseHook):
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
+        text_length: Optional[int],
         use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
@@ -67,6 +68,7 @@ class INLABSHook(BaseHook):
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
             full_text (bool): If trim result text content
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
             conn_id (str): DOU Database Airflow conn id
 
@@ -94,7 +96,7 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results, filtered_text_terms, ignore_signature_match, full_text, use_summary
+                all_results, filtered_text_terms, ignore_signature_match, full_text, text_length, use_summary
             )
             if not all_results.empty
             else {}
@@ -475,7 +477,7 @@ class INLABSHook(BaseHook):
                     - Without marker: "first_N_chars (...)"
             """
 
-            parts = text.split("<%%>", 1)
+            parts = text.split("<%%>", 1)    
             if text_length is False or text_length is None or text_length <= 0:
                 text_length = 400
 

@@ -20,6 +20,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **field**: Campos dos quais os termos devem ser pesquisados. Valores: TUDO, TITULO, CONTEUDO. Default: TUDO
 - **force_rematch**: Indica que a busca deve ser forçada, mesmo que já tenha sido feita anteriormente. Valores: True ou False.
 - **full_text**: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **text_length**: Tamanho do texto que será enviado na mensagem. O padrão é 400.
 - **use_summary**: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **ignore_signature_match**: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search**: Busca somente o termo exato. Valores: True ou False. Default: True.
@@ -33,7 +34,6 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.
 - **discord_webhook**: URL de Webhook para integração com o Discord.
-- **text_length**: Tamanho do texto que será enviado na mensagem. O padrão é 400.
 - **emails**: Lista de emails dos destinatários.
 - **footer_text**: Texto em HTML do rodapé do relatório.
 - **header_text**: Texto em HTML de cabeçalho do relatório.

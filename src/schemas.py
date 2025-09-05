@@ -134,6 +134,9 @@ class SearchConfig(BaseModel):
         "ao invés de um resumo. Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    text_length: Optional[int] = Field(
+        default=400, description="Tamanho do texto que será retornado na mensagem"
+    )
     use_summary: Optional[bool] = Field(
         default=False,
         description="Define se no relatório será exibido a ementa, se existir. "
@@ -199,10 +202,7 @@ class ReportConfig(BaseModel):
         default=False,
         description="Se deve ocultar os filtros aplicados no relatório."
         "Default: False.",
-    )
-    text_length: Optional[int] = Field(
-        default=400, description="Tamanho do texto que será retornado na mensagem"
-    )
+    )    
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
     )
