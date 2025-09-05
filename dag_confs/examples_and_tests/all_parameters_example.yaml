@@ -25,7 +25,7 @@ dag:
     full_text: True
     use_summary: True
   report:
-    text_length: 405
+    text_length: 400
     emails:
       - dest1@economia.gov.br
       - dest2@economia.gov.br
