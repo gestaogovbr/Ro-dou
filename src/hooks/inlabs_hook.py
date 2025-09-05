@@ -268,7 +268,7 @@ class INLABSHook(BaseHook):
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
-            text_length: Optional[int] = None,
+            text_length: Optional[int] = 400,
             use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -328,8 +328,7 @@ class INLABSHook(BaseHook):
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
             
-            if text_length is not None:
-                # df["texto"] = df["texto"].apply(self._trim_text, text_length=text_length)
+            if text_length is not None and text_length != 400:
                 df["texto"] = df["texto"].apply(lambda x: self._trim_text(x, text_length))
 
             if use_summary:
@@ -477,11 +476,35 @@ class INLABSHook(BaseHook):
             """
 
             parts = text.split("<%%>", 1)
+            if text_length is False or text_length is None or text_length <= 0:
+                text_length = 400
 
             if len(parts) > 1:
-                before = parts[0][-text_length:].lstrip()
-                after = parts[1][:text_length].rstrip()
-                return f"(...) {before}<%%>{after} (...)"
+                # Texto tem o marcador <%%>
+                before_full = parts[0]
+                after_full = parts[1]
+                
+                # Determina se precisa truncar cada parte
+                before_truncated = len(before_full) > text_length
+                after_truncated = len(after_full) > text_length
+                
+                # Processa a parte antes do marcador
+                if before_truncated:
+                    before = before_full[-text_length:]
+                    prefix = "(...) "
+                else:
+                    before = before_full
+                    prefix = ""
+                
+                # Processa a parte depois do marcador
+                if after_truncated:
+                    after = after_full[:text_length].rstrip()
+                    suffix = " (...)"
+                else:
+                    after = after_full
+                    suffix = ""
+                
+                return f"{prefix}{before}<%%>{after}{suffix}"
             else:
                 return f"{text[:text_length].rstrip()} (...)"
 
