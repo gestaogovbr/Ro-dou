@@ -31,7 +31,7 @@ from airflow.timetables.trigger import CronTriggerTimetable
 
 try:
     from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-except Exception:  # ModuleNotFoundError, etc.
+except ImportError:
     MsSqlHook = None
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
