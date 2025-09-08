@@ -19,26 +19,17 @@ spec:
           ports:
             - containerPort: 8080
           envFrom:
+            - secretRef:
+                name: airflow-secrets
             - configMapRef:
                 name: airflow-config
           volumeMounts:
             - name: airflow-logs
               mountPath: /opt/airflow/logs
-            - name: dags-src
-              mountPath: /opt/airflow/dags/ro_dou_src
-            - name: dag-confs
-              mountPath: /opt/airflow/dags/ro_dou/dag_confs
-            - name: dag-load-inlabs
-              mountPath: /opt/airflow/dags/dag_load_inlabs
       volumes:
         - name: airflow-logs
-          emptyDir: {}
-        - name: dags-src
-          emptyDir: {}
-        - name: dag-confs
-          emptyDir: {}
-        - name: dag-load-inlabs
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: airflow-rodou-logs-pvc
 ---
 apiVersion: v1
 kind: Service

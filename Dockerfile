@@ -4,11 +4,10 @@ USER root
 
 # Copy Ro-dou core files from the host Docker context
 COPY src /opt/airflow/dags/ro_dou_src
-COPY dag_confs /opt/airflow/dags/dag_confs
-COPY dag_load_inlabs /opt/airflow/dags/dag_load_inlabs
+COPY dag_confs/examples_and_tests /opt/airflow/dags/ro_dou/dag_confs
+COPY dag_load_inlabs /opt/airflow/dags/ro_dou/dag_load_inlabs
 
 RUN chown -R airflow /opt/airflow
-
 
 # Install additional Airflow dependencies
 USER airflow

@@ -21,3 +21,6 @@ spec:
                 --role Admin \
                 --email admin@example.com \
                 --password admin
+          envFrom:
+            - configMapRef:
+                name: airflow-config
