@@ -80,6 +80,7 @@ make down
 * Sistema operacional Linux ou Windows com WSL
 * Docker
 
+Para instalação em um cluster kubernetes, [clique aqui](instalacao_k8s.md)
 
 
 1. Clonar o repositório do código no Github

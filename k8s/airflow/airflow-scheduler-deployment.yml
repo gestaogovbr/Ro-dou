@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+        - name: airflow-scheduler
+          image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+          command: ["airflow", "scheduler"]
+          envFrom:
+            - secretRef:
+                name: airflow-secrets
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+      volumes:
+        - name: airflow-logs
+          persistentVolumeClaim:
+            claimName: airflow-rodou-logs-pvc
