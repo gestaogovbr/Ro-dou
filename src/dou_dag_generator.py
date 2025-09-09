@@ -24,11 +24,15 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
-from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from airflow.timetables.datasets import DatasetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
+
+try:
+    from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
+except ImportError:
+    MsSqlHook = None
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
@@ -271,6 +275,7 @@ class DouDigestDagGenerator:
         ignore_signature_match: Optional[bool],
         force_rematch: Optional[bool],
         full_text: Optional[bool],
+        text_length: Optional[int],
         use_summary: Optional[bool],
         result_as_email: Optional[bool],
         department: List[str],
@@ -307,6 +312,7 @@ class DouDigestDagGenerator:
                 department_ignore=department_ignore,
                 ignore_signature_match=ignore_signature_match,
                 full_text=full_text,
+                text_length=text_length,
                 use_summary=use_summary,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
@@ -384,6 +390,8 @@ class DouDigestDagGenerator:
         """
         conn_type = BaseHook.get_connection(conn_id).conn_type
         if conn_type == "mssql":
+            if MsSqlHook is None:
+                raise RuntimeError("MsSqlHook indisponível: instale 'apache-airflow-providers-microsoft-mssql' para usar recursos MSSQL.")
             db_hook = MsSqlHook(conn_id)
         elif conn_type in ("postgresql", "postgres"):
             db_hook = PostgresHook(conn_id)
@@ -493,6 +501,7 @@ class DouDigestDagGenerator:
                             "ignore_signature_match": subsearch.ignore_signature_match,
                             "force_rematch": subsearch.force_rematch,
                             "full_text": subsearch.full_text,
+                            "text_length": subsearch.text_length,
                             "use_summary": subsearch.use_summary,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,

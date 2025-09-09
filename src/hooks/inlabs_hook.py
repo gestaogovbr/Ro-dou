@@ -10,7 +10,7 @@ import html2text
 
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
+from typing import Optional
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -55,6 +55,7 @@ class INLABSHook(BaseHook):
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
+        text_length: Optional[int],
         use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
@@ -67,6 +68,7 @@ class INLABSHook(BaseHook):
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
             full_text (bool): If trim result text content
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
             conn_id (str): DOU Database Airflow conn id
 
@@ -94,7 +96,7 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results, filtered_text_terms, ignore_signature_match, full_text, use_summary
+                all_results, filtered_text_terms, ignore_signature_match, full_text, text_length, use_summary
             )
             if not all_results.empty
             else {}
@@ -268,6 +270,7 @@ class INLABSHook(BaseHook):
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
+            text_length: Optional[int] = 400,
             use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -281,6 +284,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
+                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -325,6 +329,9 @@ class INLABSHook(BaseHook):
 
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
+            
+            if text_length is not None and text_length != 400:
+                df["texto"] = df["texto"].apply(lambda x: self._trim_text(x, text_length))
 
             if use_summary:
                 # If use_summary replace texto value by summary value
@@ -450,17 +457,58 @@ class INLABSHook(BaseHook):
             return highlighted_text
 
         @staticmethod
-        def _trim_text(text: str) -> str:
-            """Get a len(x) string and returns len(400) keeping `<%%>`
-            at the center.
+        def _trim_text(text: str, text_length: int = 400) -> str:
+            """Truncates text while keeping the `<%%>` marker centered when present.
+    
+                If the text contains the `<%%>` marker, the function preserves this marker
+                in the center and keeps a specific number of characters before and after it.
+                Otherwise, it truncates the text from the beginning.
+                
+                Args:
+                    text (str): Text to be truncated
+                    text_length (int, optional): Number of characters to keep on each side of 
+                                        the `<%%>` marker.
+                
+                Returns:
+                    str: Truncated text with "(...)" indicating removed parts
+                    
+                Examples:
+                    - With marker: "(...) last_N_chars<%%>first_N_chars (...)"
+                    - Without marker: "first_N_chars (...)"
             """
 
-            parts = text.split("<%%>", 1)
-            return (
-                "(...) " + parts[0][-200:] + "<%%>" + parts[1][:200] + " (...)"
-                if len(parts) > 1
-                else text[:400] + " (...)"
-            )
+            parts = text.split("<%%>", 1)    
+            if text_length is False or text_length is None or text_length <= 0:
+                text_length = 400
+
+            if len(parts) > 1:
+                # Texto tem o marcador <%%>
+                before_full = parts[0]
+                after_full = parts[1]
+                
+                # Determina se precisa truncar cada parte
+                before_truncated = len(before_full) > text_length
+                after_truncated = len(after_full) > text_length
+                
+                # Processa a parte antes do marcador
+                if before_truncated:
+                    before = before_full[-text_length:]
+                    prefix = "(...) "
+                else:
+                    before = before_full
+                    prefix = ""
+                
+                # Processa a parte depois do marcador
+                if after_truncated:
+                    after = after_full[:text_length].rstrip()
+                    suffix = " (...)"
+                else:
+                    after = after_full
+                    suffix = ""
+                
+                return f"{prefix}{before}<%%>{after}{suffix}"
+            else:
+                return f"{text[:text_length].rstrip()} (...)"
 
         @staticmethod
         def _group_to_dict(df: pd.DataFrame, group_column: str, cols: list) -> dict:
