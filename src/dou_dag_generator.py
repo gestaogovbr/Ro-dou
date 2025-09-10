@@ -455,7 +455,6 @@ class DouDigestDagGenerator:
                 searches = specs.search
 
                 for counter, subsearch in enumerate(searches, 1):
-                    logging.info(f"Processing subsearch {counter}: {subsearch}")
                     # Verify if the terms were fetched from the database
                     terms_come_from_db: bool = isinstance(
                         subsearch.terms, FetchTermsConfig
