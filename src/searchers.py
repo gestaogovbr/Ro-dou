@@ -31,7 +31,6 @@ from utils.search_domains import (
     calculate_from_datetime,
 )
 
-
 class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile("<.*?>")
@@ -193,7 +192,7 @@ class DOUSearcher(BaseSearcher):
         pubtype
     ) -> dict:
         search_results = {}
-
+        logging.info(f"Starting search with terms: {term_list}")
         # if no terms are specified, the search filter will search for all terms (*) to apply the filters
         if not term_list:
             logging.info("No specific terms provided, searching all")
