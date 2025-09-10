@@ -14,6 +14,7 @@ from airflow.models import Variable
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from schemas import RoDouConfig, DAGConfig
 
+import logging
 
 class YAMLParser:
     """Parses YAML file and get the DAG parameters.
@@ -45,6 +46,8 @@ class YAMLParser:
         report = self._try_get(dag, "report")
         search = self._try_get(dag, "search")
 
+        print(f"Search params: {search}")
+        
         # Case the search is written in the old structure
         if not isinstance(search, list):
             search = [search]
@@ -126,13 +129,26 @@ class YAMLParser:
         terms = self._try_get(search, "terms")
         sql = None
         conn_id = None
+        
         if isinstance(terms, dict):
             if "from_airflow_variable" in terms:
-                var_value = Variable.get(terms.get("from_airflow_variable"))
+                # var_value = Variable.get(terms.get("from_airflow_variable"))
+                # try:
+                #     terms = json.loads(var_value)
+                # except (ValueError, SyntaxError):
+                #     terms = var_value.splitlines()
+                var_name = subsearch.terms.from_airflow_variable
+                from airflow.models import Variable
                 try:
-                    terms = json.loads(var_value)
-                except (ValueError, SyntaxError):
-                    terms = var_value.splitlines()
+                    var_value = Variable.get(var_name)
+                    if isinstance(var_value, list):
+                        term_list = json.loads(var_value)
+                    else:
+                        term_list = var_value.splitlines()
+                except (KeyError):
+                    raise KeyError(
+                        f"Airflow variable {var_name} not found."
+                    )
             elif "from_db_select" in terms:
                 from_db_select = terms.get("from_db_select")
                 terms = []
