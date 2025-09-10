@@ -138,7 +138,6 @@ class YAMLParser:
                 # except (ValueError, SyntaxError):
                 #     terms = var_value.splitlines()
                 var_name = subsearch.terms.from_airflow_variable
-                from airflow.models import Variable
                 try:
                     var_value = Variable.get(var_name)
                     if isinstance(var_value, list):
