@@ -6,7 +6,6 @@ from pytest_mock import MockerFixture
 
 WEBHOOK = "https://some-url.com/xxx"
 
-
 @pytest.fixture
 def mocked_specs():
     Specs = namedtuple(
