@@ -84,7 +84,6 @@ class EmailSender(ISender):
         for search in self.search_report:            
             headers_list = {}
             header_title = ""
-            no_results_message = ""
 
             if search["header"]:
                 header_title = search["header"]
@@ -123,7 +122,7 @@ class EmailSender(ISender):
                 term_data = {"search_terms": {"terms": [], "items": []}}                  
 
                 if not search_results:
-                   no_results_message = self.report_config.no_results_found_text                         
+                   no_result_message = self.report_config.no_results_found_text                         
                    term_data["search_terms"]["items"].append({"header_title": header_title})
 
                 else:
@@ -181,10 +180,8 @@ class EmailSender(ISender):
                                             "date": result["date"],
                                         }
                                     )
-                            # report_data.append(headers_list)
-                            # report_data.append(term_data)
                 report_data.append(term_data)
-        print(f"Report data final: {report_data}")
+                
         return tm.renderizar(
             "dou_template.html",
             filters=filters,
@@ -192,7 +189,7 @@ class EmailSender(ISender):
             hide_filters=self.report_config.hide_filters,       
             header_text=self.report_config.header_text or None,
             footer=self.report_config.footer_text or None,
-            no_results_message=no_results_message
+            no_results_message=no_result_message
         )
                        
     def get_csv_tempfile(self) -> NamedTemporaryFile:

@@ -342,9 +342,11 @@
             <h2>{{ document.header_title | safe }}</h2>
             {% endif %}
             {% if not document.get('section') %}
-            <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
-              especificados.')
-              }}</p>
+            {% if no_results_message is defined %}
+            <p>{{ no_results_message | safe}}</p>
+            {% else %}
+            <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
+            {% endif %}
             {% else %}
             {%if result_group.search_terms.group %}
             <span class="group-marker">Grupo: </span>{{result_group.search_terms.group | safe}}
