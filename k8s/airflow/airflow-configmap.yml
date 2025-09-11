@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  labels:
+    app: airflow
+data:
+  AIRFLOW__API__AUTH_BACKEND: "airflow.api.auth.backend.basic_auth"
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+  AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo"
+  AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
+  AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+  AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
+  AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
+  AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
+  AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "America/Sao_Paulo"
+  AIRFLOW__WEBSERVER__SECRET_KEY: "42"
+  AIRFLOW__WEBSERVER__WORKERS: "1"
+  _AIRFLOW_DB_UPGRADE: "true"
+  AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: "postgresql://airflow:airflow@postgres:5432/airflow"
+  RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
+  AIRFLOW_VAR_PATH_TMP: "/tmp"

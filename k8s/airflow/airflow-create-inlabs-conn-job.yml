@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-inlabs-portal-connection
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: create-inlabs-connection
+        image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+        command: ["bash", "-c"]
+        args:
+          - |
+            airflow connections add inlabs_portal \
+              --conn-type http \
+              --conn-host https://inlabs.in.gov.br/ \
+              --conn-login "$INLABS_PORTAL_LOGIN" \
+              --conn-password "$INLABS_PORTAL_PASSWORD" \
+              --conn-description "Credencial para acesso no Portal do INLabs"
+        envFrom:
+          - secretRef:
+              name: airflow-secrets
+          - configMapRef:
+              name: airflow-config
