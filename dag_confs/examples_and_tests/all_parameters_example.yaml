@@ -24,7 +24,8 @@ dag:
       - EDICAO_SUPLEMENTAR
     full_text: True
     use_summary: True
-  report:
+    text_length: 400
+  report:    
     emails:
       - dest1@economia.gov.br
       - dest2@economia.gov.br

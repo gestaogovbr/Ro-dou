@@ -17,6 +17,8 @@ import pandas as pd
 import requests
 from unidecode import unidecode
 
+from typing import Optional
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from hooks.dou_hook import DOUHook
@@ -278,13 +280,19 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search=is_exact_search,
                 )
             except:
+                import requests
+                # If the underlying error is SSL related, don't retry — likely permanent
+                exc_type, exc_value, _ = sys.exc_info()
+                if isinstance(exc_value, requests.exceptions.SSLError):
+                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, exc_value)
+                    raise
+
                 if retry > max_retries:
                     logging.error("Error - Max retries reached")
-                    raise Exception
-                logging.info("Attemp %s of %s: ", retry, max_retries)
-                logging.info(
-                    "Sleeping for 30 seconds before retry " "dou_hook.search_text()."
-                )
+                    raise
+
+                logging.info("Attempt %s of %s for term '%s'", retry, max_retries, search_term)
+                logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
                 time.sleep(30)
                 retry += 1
 
@@ -491,6 +499,7 @@ class INLABSSearcher(BaseSearcher):
         department_ignore: List[str],
         ignore_signature_match: bool,
         full_text: bool,
+        text_length: Optional[int],
         use_summary: bool,
         pubtype: List[str],
         reference_date: datetime = datetime.now(),
@@ -510,7 +519,8 @@ class INLABSSearcher(BaseSearcher):
             department_ignore (List[str]): List of departments to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
-            full_text (bool): If trim result text content
+            full_text (bool): If trim result text content 
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.           
             use_summary (bool): If exists, use summary as excerpt or full text
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -527,7 +537,7 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text, use_summary
+            search_terms, ignore_signature_match, full_text, text_length, use_summary
         )
 
         group_results = self._group_results(search_results, terms, department)
