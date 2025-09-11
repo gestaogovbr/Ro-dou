@@ -46,8 +46,6 @@ class YAMLParser:
         report = self._try_get(dag, "report")
         search = self._try_get(dag, "search")
 
-        print(f"Search params: {search}")
-        
         # Case the search is written in the old structure
         if not isinstance(search, list):
             search = [search]
