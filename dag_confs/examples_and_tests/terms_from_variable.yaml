@@ -1,6 +1,6 @@
 dag:
   id: terms_from_variable
-  description: DAG de exemplo com termos na Variável
+  description: DAG de exemplo com termos na Variável do Airflow
   search:
     date: SEMANA
     terms:
