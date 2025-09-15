@@ -135,7 +135,9 @@ class SearchConfig(BaseModel):
         "(Funcionalidade disponível apenas no INLABS)",
     )
     text_length: Optional[int] = Field(
-        default=400, description="Tamanho do texto que será retornado na mensagem"
+        default=400, 
+        description="Tamanho do texto que será retornado na mensagem."
+        "(Funcionalidade disponível apenas no INLABS)",
     )
     use_summary: Optional[bool] = Field(
         default=False,
@@ -164,7 +166,7 @@ class SearchConfig(BaseModel):
             raise ValueError(
                 "Os termos de pesquisa são obrigatórios quando a fonte QD é selecionada. "
             )
-
+        
         if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
                 "Pelo menos um critério de busca deve ser fornecido: "

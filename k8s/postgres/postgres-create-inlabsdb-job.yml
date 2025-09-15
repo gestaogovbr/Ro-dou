@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-inlabs-db
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: init-db
+        image: postgres:16
+        command: ["psql"]
+        args: ["-h", "postgres", "-U", "airflow", "-d", "postgres", "-f", "/init/init.sql"]
+        env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-password
+        volumeMounts:
+          - name: init-sql
+            mountPath: /init
+      volumes:
+        - name: init-sql
+          configMap:
+            name: inlabs-init-sql

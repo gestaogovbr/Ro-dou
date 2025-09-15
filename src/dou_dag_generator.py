@@ -31,7 +31,7 @@ from airflow.timetables.trigger import CronTriggerTimetable
 
 try:
     from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-except Exception:  # ModuleNotFoundError, etc.
+except ImportError:
     MsSqlHook = None
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
@@ -40,7 +40,6 @@ from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
-
 
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
@@ -456,11 +455,15 @@ class DouDigestDagGenerator:
                 searches = specs.search
 
                 for counter, subsearch in enumerate(searches, 1):
-
                     # Verify if the terms were fetched from the database
                     terms_come_from_db: bool = isinstance(
                         subsearch.terms, FetchTermsConfig
                     ) and getattr(subsearch.terms, "from_db_select", None)
+
+                    # Verify if the terms were fetched from airflow variable
+                    terms_come_from_airflow_variable: bool = isinstance(
+                        subsearch.terms, FetchTermsConfig
+                    ) and getattr(subsearch.terms, "from_airflow_variable", None)
 
                     # determine the terms list
                     term_list = []
@@ -471,6 +474,19 @@ class DouDigestDagGenerator:
                         term_list = None
                     elif isinstance(subsearch.terms, list):
                         term_list = subsearch.terms
+                    elif terms_come_from_airflow_variable:
+                        var_name = subsearch.terms.from_airflow_variable
+                        from airflow.models import Variable
+                        try:
+                            var_value = Variable.get(var_name)
+                            if isinstance(var_value, list):
+                                term_list = json.loads(var_value)
+                            else:
+                                term_list = var_value.splitlines()
+                        except (KeyError):
+                           raise KeyError(
+                               f"Airflow variable {var_name} not found."
+                           )
                     elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
                             task_id=f"select_terms_from_db_{counter}",
