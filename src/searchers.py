@@ -54,9 +54,9 @@ class BaseSearcher(ABC):
         if pre_term_list is None:
             return []
         elif isinstance(pre_term_list, list):
-            return pre_term_list
-        elif isinstance(pre_term_list, str):
-            return pre_term_list
+            return pre_term_list        
+        # elif isinstance(pre_term_list, str):
+        #     return pre_term_list
         else:
             return pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
@@ -580,7 +580,7 @@ class INLABSSearcher(BaseSearcher):
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
-        elif isinstance(terms, str):            
+        elif isinstance(terms, str) and terms.startswith("["):            
             return {"texto": ast.literal_eval(terms)}        
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
