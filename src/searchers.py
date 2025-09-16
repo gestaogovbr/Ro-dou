@@ -36,17 +36,35 @@ class BaseSearcher(ABC):
     CLEAN_HTML_RE = re.compile("<.*?>")
 
     def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
-        """If `pre_term_list` is a str (in the case it came from xcom)
-        then its necessary to convert it back to dataframe and return
-        the first column. Otherwise the `pre_term_list` is returned.
+        """Convert different term list formats to a standardized list.
+        
+        Handles the conversion of search terms from various sources:
+        - Returns empty list if input is None
+        - Returns list as-is if already a list
+        - Returns string as-is if it's a string
+        - Converts JSON string to list by reading as DataFrame and extracting first column
+        
+        Args:
+            pre_term_list: Search terms in various formats (list, str, JSON string, or None)
+            
+        Returns:
+            list: Standardized list of search terms, empty list if input is None
         """
+        
         if pre_term_list is None:
             return []
-        return (
-            pre_term_list
-            if isinstance(pre_term_list, list)
-            else pd.read_json(pre_term_list).iloc[:, 0].tolist()
-        )
+        elif isinstance(pre_term_list, list):
+            return pre_term_list
+        elif isinstance(pre_term_list, str):
+            return pre_term_list
+        else:
+            return pd.read_json(pre_term_list).iloc[:, 0].tolist()
+
+        # return (
+        #     pre_term_list
+        #     if isinstance(pre_term_list, list)
+        #     else pd.read_json(pre_term_list).iloc[:, 0].tolist()
+        # )
 
     def _group_results(
         self,
@@ -59,6 +77,7 @@ class BaseSearcher(ABC):
         from `select_terms_from_db` task and the sql_query returned a
         second column (used as the group name)
         """
+
         dpt_grouped_result = self._group_by_department(search_results, department)
 
         if isinstance(term_list, str) and len(ast.literal_eval(term_list).values()) > 1:
@@ -555,12 +574,14 @@ class INLABSSearcher(BaseSearcher):
         Returns:
             Dict: Formatted as {"texto": List of terms}
         """
-
+        
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
+        elif isinstance(terms, str):            
+            return {"texto": ast.literal_eval(terms)}        
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
@@ -598,7 +619,7 @@ class INLABSSearcher(BaseSearcher):
     def _split_sql_terms(terms: Dict) -> List:
         """Split SQL terms into a list, removing duplicates.
         Get only the values from the first key of the Dict."""
-
+        
         first_key = next(iter(terms))
         return list(set(terms[first_key].values()))
 
