@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 # add module path so we can import from other modules
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 from schemas import RoDouConfig
 
 YAMLS_DIR = "../dags/ro_dou/dag_confs"
@@ -108,4 +108,86 @@ def test_validate_no_terms(data):
         else:
             assert "Pelo menos um critério de busca deve ser fornecido" \
                 in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "field,invalid_value,error_message",
+    [
+        ("sources", ["INVALID_SOURCE"], "Invalid source 'INVALID_SOURCE'"),
+        ("date", "INVALID_DATE", "Invalid date 'INVALID_DATE'"),
+        ("dou_sections", ["INVALID_SECTION"], "Invalid DOU section 'INVALID_SECTION'"),
+        ("field", "INVALID_FIELD", "Invalid field 'INVALID_FIELD'"),
+        ("pubtype", ["INVALID_PUBTYPE"], "Invalid pubtype 'INVALID_PUBTYPE'"),
+    ],
+)
+def test_domain_validation_invalid_values(field, invalid_value, error_message):
+    """Test that invalid domain values are rejected by validation"""
+    base_config = {
+        "dag": {
+            "id": "test_dag",
+            "description": "Test DAG with invalid domain values",
+            "search": {
+                "terms": ["test_term"],
+            },
+            "report": {
+                "emails": ["test@example.com"],
+                "subject": "Test Subject",
+            },
+        }
+    }
+    
+    # Set the invalid field value
+    base_config["dag"]["search"][field] = invalid_value
+    
+    with pytest.raises(ValidationError) as exc_info:
+        RoDouConfig(**base_config)
+    
+    assert error_message in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "field,valid_values",
+    [
+        ("sources", ["DOU"]),
+        ("sources", ["QD"]),
+        ("sources", ["INLABS"]),
+        ("sources", ["DOU", "QD", "INLABS"]),
+        ("date", "DIA"),
+        ("date", "SEMANA"),
+        ("date", "MES"),
+        ("date", "ANO"),
+        ("dou_sections", ["SECAO_1"]),
+        ("dou_sections", ["SECAO_2", "SECAO_3"]),
+        ("dou_sections", ["TODOS"]),
+        ("dou_sections", ["EDICAO_EXTRA", "EDICAO_SUPLEMENTAR"]),
+        ("field", "TUDO"),
+        ("field", "TITULO"),
+        ("field", "CONTEUDO"),
+        ("pubtype", ["PORTARIA"]),
+        ("pubtype", ["DECRETO", "RESOLUÇÃO"]),
+        ("pubtype", ["ATO", "EDITAL", "EXTRATO"]),
+    ],
+)
+def test_domain_validation_valid_values(field, valid_values):
+    """Test that valid domain values are accepted by validation"""
+    base_config = {
+        "dag": {
+            "id": "test_dag",
+            "description": "Test DAG with valid domain values",
+            "search": {
+                "terms": ["test_term"],
+            },
+            "report": {
+                "emails": ["test@example.com"],
+                "subject": "Test Subject",
+            },
+        }
+    }
+    
+    # Set the valid field value
+    base_config["dag"]["search"][field] = valid_values
+    
+    # Should not raise any validation error
+    config = RoDouConfig(**base_config)
+    assert isinstance(config, RoDouConfig)
 
