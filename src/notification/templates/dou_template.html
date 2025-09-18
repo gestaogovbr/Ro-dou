@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +22,7 @@
         h3 {
             color: #545b61;
             font-size: 16px;
-         }
+        }
 
         .truncate {
             white-space: nowrap;
@@ -49,7 +50,7 @@
             overflow: hidden;
         }
 
-        .container + .container {
+        .container+.container {
             margin-top: 20px;
         }
 
@@ -324,98 +325,100 @@
                 </div>
 
                 {% for key, value in filters.items() %}
-                    {% if value.included_units %}
-                    <div class="filter-subtitle">
-                        {{ value.included_units.title | default('Filtrando resultados para:') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for unit in value.included_units['items'] %}
-                        <li>{{ unit }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
+                {% if value.included_units %}
+                <div class="filter-subtitle">
+                    {{ value.included_units.title | default('Filtrando resultados para:') }}
+                </div>
+                <ul class="filter-list">
+                    {% for unit in value.included_units['items'] %}
+                    <li>{{ unit }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
 
-                    {% if value.excluded_units %}
-                    <div class="filter-subtitle">
-                        {{ value.excluded_units.title | default('Desconsiderar Unidades (e subordinadas):') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for unit in value.excluded_units['items'] %}
-                        <li>{{ unit }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
+                {% if value.excluded_units %}
+                <div class="filter-subtitle">
+                    {{ value.excluded_units.title | default('Desconsiderar Unidades (e subordinadas):') }}
+                </div>
+                <ul class="filter-list">
+                    {% for unit in value.excluded_units['items'] %}
+                    <li>{{ unit }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
 
-                    {% if value.publication_types %}
-                    <div class="filter-subtitle">
-                        {{ value.publication_types.title | default('Tipos de publicações:') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for type in value.publication_types['items'] %}
-                        <li>{{ type }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
+                {% if value.publication_types %}
+                <div class="filter-subtitle">
+                    {{ value.publication_types.title | default('Tipos de publicações:') }}
+                </div>
+                <ul class="filter-list">
+                    {% for type in value.publication_types['items'] %}
+                    <li>{{ type }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
                 {% endfor %}
             </section>
             {% endif %}
 
             <!-- Seção de Resultados -->
             <section class="results-section">
-                {% if results[0].search_terms.get('terms', [])|length > 0 or results[0].search_terms.get('items',[])|length > 0 %}
-                    {% for result_group in results %}
-                      {% set title = result_group.search_terms.terms | join(', ') %}
-                      <!-- {% if loop.changed(result_group.search_terms.terms) %}
+                {% if results[0].search_terms.get('terms', [])|length > 0 or
+                results[0].search_terms.get('items',[])|length > 0 %}
+                {% for result_group in results %}
+                {% set title = result_group.search_terms.terms | join(', ') %}
+                <!-- {% if loop.changed(result_group.search_terms.terms) %}
                         {% set title = result_group.search_terms.terms | join(', ') %}
                       {% endif %} -->
-                      <!-- Agrupamento de resultados -->
-                      {% for document in result_group.search_terms['items'] %}
-                        {% if loop.changed(document.header_title) %}
-                          <div class="result-header">
-                              {{ document.header_title | safe }}
-                          </div>
+                <!-- Agrupamento de resultados -->
+                {% for document in result_group.search_terms['items'] %}
+                {% if loop.changed(document.header_title) %}
+                <div class="result-header">
+                    {{ document.header_title | safe }}
+                </div>
+                {% endif %}
+                <!-- Seção body -->
+                <div class="result-body">
+                    {% if loop.first %}
+                    <div class="group-marker">
+                        {% if result_group.search_terms.group %}
+                        Grupo: {{ result_group.search_terms.group | safe }}
                         {% endif %}
-                        <!-- Seção body -->
-                        <div class="result-body">
-                          {% if loop.first %}
-                          <div class="group-marker">
-                          {% if result_group.search_terms.group %}
-                            Grupo: {{ result_group.search_terms.group | safe }}
-                          {% endif %}
-                          </div>
-                            <h3>Resultados para: {{ title }}</h3>
-                          {% endif %}
-                          {% if not document.get('section') %}
-                            {% if no_results_message is defined %}
-                              <p>{{ no_results_message | safe }}</p>
-                            {% else %}
-                              <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
-                            {% endif %}
+                    </div>
+                    <h3>Resultados para: {{ title }}</h3>
+                    {% endif %}
+                    {% if not document.get('section') %}
+                    {% if no_results_message is defined %}
+                    <p>{{ no_results_message | safe }}</p>
+                    {% else %}
+                    <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
+                    {% endif %}
 
-                          {% else %}
-                              <div class="section-marker">{{ document.section | safe }}</div>
+                    {% else %}
+                    <div class="section-marker">{{ document.section | safe }}</div>
 
-                              <a href="{{ document.url }}" class="document-link"
-                                  {% if document.url_new_tab %}target="_blank"{% endif %}>
-                                  {{ document.title }}
-                              </a>
+                    <a href="{{ document.url }}" class="document-link" {% if document.url_new_tab %}target="_blank" {%
+                        endif %}>
+                        {{ document.title }}
+                    </a>
 
-                              <div class="abstract">
-                                  {{ document.abstract | safe }}
-                              </div>
+                    <div class="abstract">
+                        {{ document.abstract | safe }}
+                    </div>
 
-                              <div class="date">{{ document.date }}</div>
-                          {% endif %}
-                          {% if not loop.last %}
-                            <hr class="separator">
-                          {% endif %}
-                        </div>
-                      {% endfor %}
-                    {% endfor %}
+                    <div class="date">{{ document.date }}</div>
+                    {% endif %}
+                    {% if not loop.last %}
+                    <hr class="separator">
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endfor %}
                 {% else %}
-                  <div class="no-results">
-                      <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa especificados.') }}</p>
-                  </div>
+                <div class="no-results">
+                    <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa
+                        especificados.') }}</p>
+                </div>
                 {% endif %}
             </section>
         </div>
@@ -426,9 +429,9 @@
         {% if footer %}
         <div>{{ footer | safe }}</div>
         {% endif %}
-        
+
         <a href="https://www.gov.br/gestao/pt-br/assuntos/gestaoeinovacao/ro-dou">
             <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABDgAAACWCAYAAAA7STgCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAE/2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CiAgICAgICAgPHJkZjpSREYgeG1sbnM6cmRmPSdodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjJz4KCiAgICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICAgICAgICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogICAgICAgIDxkYzp0aXRsZT4KICAgICAgICA8cmRmOkFsdD4KICAgICAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkPDs3BpYSBkZSBTRUktdjQtYWxlcnRhIC0gNDwvcmRmOmxpPgogICAgICAgIDwvcmRmOkFsdD4KICAgICAgICA8L2RjOnRpdGxlPgogICAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgoKICAgICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogICAgICAgIHhtbG5zOkF0dHJpYj0naHR0cDovL25zLmF0dHJpYnV0aW9uLmNvbS9hZHMvMS4wLyc+CiAgICAgICAgPEF0dHJpYjpBZHM+CiAgICAgICAgPHJkZjpTZXE+CiAgICAgICAgPHJkZjpsaSByZGY6cGFyc2VUeXBlPSdSZXNvdXJjZSc+CiAgICAgICAgPEF0dHJpYjpDcmVhdGVkPjIwMjQtMDktMjU8L0F0dHJpYjpDcmVhdGVkPgogICAgICAgIDxBdHRyaWI6RXh0SWQ+NTZmNjAyZjQtOGFhYS00NTZhLWIxODUtYWNmYmExYjg3MzA5PC9BdHRyaWI6RXh0SWQ+CiAgICAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgICAgICA8L3JkZjpsaT4KICAgICAgICA8L3JkZjpTZXE+CiAgICAgICAgPC9BdHRyaWI6QWRzPgogICAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgoKICAgICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogICAgICAgIHhtbG5zOnBkZj0naHR0cDovL25zLmFkb2JlLmNvbS9wZGYvMS4zLyc+CiAgICAgICAgPHBkZjpBdXRob3I+TcO0bmljYSBIYXJhZGE8L3BkZjpBdXRob3I+CiAgICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CgogICAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgICAgICAgeG1sbnM6eG1wPSdodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvJz4KICAgICAgICA8eG1wOkNyZWF0b3JUb29sPkNhbnZhIChSZW5kZXJlcik8L3htcDpDcmVhdG9yVG9vbD4KICAgICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgICAgICAKICAgICAgICA8L3JkZjpSREY+CiAgICAgICAgPC94OnhtcG1ldGE+C5m/dAAANW5JREFUeJzs3X14XFWdB/Bv21hKxfNrAsjLcq41mQFx7vVlW7TbABlAZQZlVRBd8IU35TWhgCB2F2zKi4pvwLbsgisrBUTwDVbRBIo0WSwglOdB5waQTGq9xxUWpMO5W7GFQvePmUiYJjN3kslMJvl+nqcP9N5zz++Xycz03t8995xZICIiIiIiIiJqcLPqnQARERERERER0USxwEFEREREREREDY8FDiIiIiIiIiJqeCxwEBEREREREVHDY4GDiIiIiIiIiBoeCxxERERERERE1PBY4CAiIiIiIiKihscCBxERERERERE1PBY4iIiIiIiIiKjhscBBRERERERERA2PBQ4iIiIiIiIiangscBARERERERFRw2OBg4iIiIiIiIgaHgscRERERERERNTwWOAgIiIiIiIioobHAgcRERERERERNTwWOIiIiIiIiIio4bHAQUREREREREQNjwUOIiIiIiIiImp4LHAQERERERERUcNjgYOIiIiIiIiIGh4LHERERERERETU8FjgICIiIiIiIqKGxwIHERERERERETU8FjiIiIiIiIiIqOGxwEFEREREREREDY8FDiIiIiIiIiJqeCxwEBEREREREVHDY4GDiIiIiIiIiBoeCxxERERERERE1PBm1zsBIiIimmZiHbMQ65hT7zSIiIhoZmGBg4iIiKqnc92J6Op7EV1929G57qp6p0NEREQzB++uEBERUXXEOnZDuvsBAHMBALsvXAKgH9n+TfVMi4iIiGYGjuAgIiKi6ogl9wDQVLR1YR0yISIiohmIBQ4iIiIiIiIiangscBARERERERFRw2OBg4iIiIiIiIgaHgscRERERERERNTwWOAgIiIiIiIioobHAgcRERERERERNbxZ9U6AiIiIaiDWMQ+x5IeR7v4QgMUAYth5SddGsgnAY+jp7kW270fI9j9f74SIiIiovljgICIims5iHU1IdZ+KeLIbwN"
-            alt="Logo do DOU">
+                alt="Logo do DOU">
         </a>
     </div>
