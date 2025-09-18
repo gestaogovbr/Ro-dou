@@ -371,14 +371,19 @@
                       <!-- Agrupamento de resultados -->
                       {% for document in result_group.search_terms['items'] %}
                         {% if loop.changed(document.header_title) %}
-                          <div class="result-header" title="{{ document.header_title | safe }}">
+                          <div class="result-header">
                               {{ document.header_title | safe }}
                           </div>
                         {% endif %}
                         <!-- Seção body -->
                         <div class="result-body">
                           {% if loop.first %}
-                            <h3 class="truncate">{{ title }}</h3>
+                          <div class="group-marker">
+                          {% if result_group.search_terms.group %}
+                            Grupo: {{ result_group.search_terms.group | safe }}
+                          {% endif %}
+                          </div>
+                            <h3>Resultados para: {{ title }}</h3>
                           {% endif %}
                           {% if not document.get('section') %}
                             {% if no_results_message is defined %}
@@ -388,20 +393,17 @@
                             {% endif %}
 
                           {% else %}
-                            {% if result_group.search_terms.group %}
-                              <span class="group-marker">Grupo: </span>{{ result_group.search_terms.group | safe }}
-                            {% endif %}
                               <div class="section-marker">{{ document.section | safe }}</div>
-                                  
-                              <a href="{{ document.url }}" class="document-link" 
+
+                              <a href="{{ document.url }}" class="document-link"
                                   {% if document.url_new_tab %}target="_blank"{% endif %}>
                                   {{ document.title }}
                               </a>
-                                  
+
                               <div class="abstract">
                                   {{ document.abstract | safe }}
                               </div>
-                                  
+
                               <div class="date">{{ document.date }}</div>
                           {% endif %}
                           {% if not loop.last %}
