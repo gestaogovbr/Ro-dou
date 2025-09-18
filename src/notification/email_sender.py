@@ -81,9 +81,10 @@ class EmailSender(ISender):
         # Inicializar o gerenciador de templates
         tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
         report_data = []
-        for search in self.search_report:            
+        for search in self.search_report:
             headers_list = {}
             header_title = ""
+            no_result_message = self.report_config.no_results_found_text
 
             if search["header"]:
                 header_title = search["header"]
@@ -116,13 +117,12 @@ class EmailSender(ISender):
                         }
 
             filters = {"filters": filters}
-            results_data = []           
 
-            for group, search_results in search["result"].items():     
-                term_data = {"search_terms": {"terms": [], "items": []}}                  
+            for group, search_results in search["result"].items():
+                term_data = {"search_terms": {"terms": [], "items": []}}
 
                 if not search_results:
-                   no_result_message = self.report_config.no_results_found_text                         
+
                    term_data["search_terms"]["items"].append({"header_title": header_title})
 
                 else:
