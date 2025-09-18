@@ -15,6 +15,7 @@ dag:
       - Resolução
       - Retificação
       - Protocolo
+      - Decreto
   report:
     emails:
       - destination@economia.gov.br
