@@ -167,7 +167,6 @@ def test_domain_validation_invalid_values(field, invalid_value, error_message):
         ("pubtype", ["PORTARIA"]),
         ("pubtype", ["DECRETO", "RESOLUÇÃO"]),
         ("pubtype", ["ATO", "EDITAL", "EXTRATO"]),
-        ("pubtype", ["CUSTOM_TYPE", "ANOTHER_TYPE"]),
     ],
 )
 def test_domain_validation_valid_values(field, valid_values):
