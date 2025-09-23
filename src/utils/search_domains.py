@@ -57,7 +57,6 @@ class Field(Enum):
     TITULO = "title_pt_BR"
     CONTEUDO = "ddm__text__21040__texto_pt_BR"
 
-
 def calculate_from_datetime(publish_to_date: datetime, search_date: SearchDate):
     """
     Calculate parameter `publishFrom` to be passed to the API based
