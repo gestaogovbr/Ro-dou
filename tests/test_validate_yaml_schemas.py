@@ -117,7 +117,8 @@ def test_validate_no_terms(data):
         ("date", "INVALID_DATE", "Invalid date 'INVALID_DATE'"),
         ("dou_sections", ["INVALID_SECTION"], "Invalid DOU section 'INVALID_SECTION'"),
         ("field", "INVALID_FIELD", "Invalid field 'INVALID_FIELD'"),
-        ("pubtype", ["INVALID_PUBTYPE"], "Invalid pubtype 'INVALID_PUBTYPE'"),
+        ("pubtype", "INVALID_PUBTYPE", "Input should be a valid list"),
+        ("pubtype", [123, "valid_string"], "Input should be a valid string"),
     ],
 )
 def test_domain_validation_invalid_values(field, invalid_value, error_message):
@@ -166,6 +167,7 @@ def test_domain_validation_invalid_values(field, invalid_value, error_message):
         ("pubtype", ["PORTARIA"]),
         ("pubtype", ["DECRETO", "RESOLUÇÃO"]),
         ("pubtype", ["ATO", "EDITAL", "EXTRATO"]),
+        ("pubtype", ["CUSTOM_TYPE", "ANOTHER_TYPE"]),
     ],
 )
 def test_domain_validation_valid_values(field, valid_values):

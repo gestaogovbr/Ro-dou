@@ -194,8 +194,8 @@ class SearchConfig(BaseModel):
     @classmethod
     def validate_pubtype(cls, value):      
         if value is not None:
-            if not isinstance(value, list) and all(isinstance(item, str) for item in value):
-                raise ValueError(f"Invalid pubtype '{value}'. Must be of a: list of string")            
+            if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+                raise ValueError(f"Invalid pubtype '{value}'. Must be a list of strings")            
         return value
     excerpt_size: Optional[int] = Field(
         default=None,
