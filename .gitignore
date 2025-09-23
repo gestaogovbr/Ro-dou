@@ -139,3 +139,5 @@ test_notrack/
 dags/airflow-mantainance/db-bkp
 **/mnt/pgdata/
 **/mnt/airflow-logs
+**/dag_confs/
+CLAUDE.md

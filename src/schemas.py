@@ -21,7 +21,7 @@ from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from utils.search_domains import Section, SearchDate, Field as SearchFieldEnum, Pubtype
+from utils.search_domains import Section, SearchDate, Field as SearchFieldEnum
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
