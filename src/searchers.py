@@ -16,6 +16,7 @@ import string
 import pandas as pd
 import requests
 from unidecode import unidecode
+from bs4 import BeautifulSoup
 
 from typing import Optional
 
@@ -238,7 +239,7 @@ class DOUSearcher(BaseSearcher):
                     results = [
                         r
                         for r in results
-                        if not self._is_signature(search_term, r.get("abstract"))
+                        if not self._is_signature(search_term, r.get("abstract"), r.get("href"))
                     ]
                 if force_rematch:
                     results = [
@@ -314,7 +315,7 @@ class DOUSearcher(BaseSearcher):
                 time.sleep(30)
                 retry += 1
 
-    def _is_signature(self, search_term: str, abstract: str) -> bool:
+    def _is_signature(self, search_term: str, abstract: str, document_href: str = None) -> bool:
         """This function checks if the search_term (usually used to search for people's names)
         is present in the signature. To achieve this, the function takes advantage of a "bug" in the API.
         In such cases, the value returns as abstract and begins with the document signature.
@@ -323,6 +324,10 @@ class DOUSearcher(BaseSearcher):
         and is used to filter results present in the final document.
         This function corrects cases where a person's name forms a larger part of another name.
         For example, the name 'ANTONIO DE OLIVEIRA' is part of the name 'JOSÉ ANTONIO DE OLIVEIRA MATOS'.
+        
+        When the API returns an incorrect abstract (combining different parts of the document),
+        this method will fetch the full document to verify if the name at the beginning of the
+        abstract is actually the document signature or appears elsewhere in the content.
         """
         clean_abstract = self._clean_html(abstract)
         start_name, match_name = self._get_prior_and_matched_name(abstract)
@@ -331,7 +336,7 @@ class DOUSearcher(BaseSearcher):
         norm_abstract_without_start_name = norm_abstract[len(start_name) :]
         norm_term = self._normalize(search_term)
 
-        return (
+        basic_signature_check = (
             # Approve the signature only if it contains uppercase letters.
             (start_name + match_name).isupper()
             and
@@ -345,6 +350,79 @@ class DOUSearcher(BaseSearcher):
                 norm_abstract_without_start_name.startswith(norm_term)
             )
         )
+        
+        # If basic check indicates signature, but we have document href, verify with full document
+        if basic_signature_check and document_href:
+            return self._verify_signature_in_full_document(search_term, abstract, document_href)
+        
+        return basic_signature_check
+
+    def _verify_signature_in_full_document(self, search_term: str, abstract: str, document_href: str) -> bool:
+        """Verify if the search term appearing at the beginning of the abstract is actually
+        a signature by fetching and analyzing the full document content.
+        
+        Args:
+            search_term: The term being searched for
+            abstract: The abstract from the API result
+            document_href: URL to the full document
+            
+        Returns:
+            bool: True if the term is likely a signature, False otherwise
+        """
+        try:
+            # Fetch the full document
+            response = requests.get(document_href, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Extract the main content text from the document
+            # The DOU document content is typically in specific tags
+            content_divs = soup.find_all(['div', 'p'], class_=lambda x: x and ('text' in x.lower() or 'content' in x.lower()))
+            if not content_divs:
+                # Fallback: get all text content
+                full_text = soup.get_text()
+            else:
+                full_text = ' '.join([div.get_text() for div in content_divs])
+            
+            # Normalize the full document text
+            norm_full_text = self._normalize(full_text)
+            norm_term = self._normalize(search_term)
+            
+            # Check if the term appears in the document content (not just signature)
+            term_positions = []
+            start = 0
+            while True:
+                pos = norm_full_text.find(norm_term, start)
+                if pos == -1:
+                    break
+                term_positions.append(pos)
+                start = pos + 1
+            
+            # If the term appears multiple times or not at the very beginning, 
+            # it's likely not just a signature
+            if len(term_positions) > 1:
+                return False
+            
+            # If the term only appears once and it's at the very beginning,
+            # it's likely a signature
+            if len(term_positions) == 1 and term_positions[0] < 100:
+                return True
+                
+            # If term doesn't appear in full document, but appears in abstract,
+            # the abstract is probably corrupted (as described in the issue)
+            if len(term_positions) == 0:
+                logging.warning(f"Term '{search_term}' found in abstract but not in full document. "
+                              f"Document: {document_href}")
+                return False
+                
+            return False
+            
+        except Exception as e:
+            logging.warning(f"Failed to fetch full document for signature verification: {e}. "
+                          f"Falling back to basic signature check for document: {document_href}")
+            # Fallback to original logic if we can't fetch the document
+            return True
 
     def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
         """Applies the filter to the results returned by the units
