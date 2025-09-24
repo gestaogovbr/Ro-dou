@@ -52,7 +52,8 @@ As mensagens de commit devem seguir um padrão pré-definido, com prefixos como:
 - `fix:` para correções de bugs;
 - `docs:` para alterações na documentação;
 - `chore:` para mudanças relacionadas a workflows do github;
-- `refactor:` para melhorias no código que não alteram comportamento.
+- `refactor:` para melhorias no código e refatoração que não alteram o comportamento;
+- `test: ` para criação de novos testes ou melhorias nos testes já existentes.
 
 Cada mensagem de commit deve conter uma descrição clara, objetiva e sucinta da mudança implementada. Quando necessário, utilize a descrição estendida do commit para detalhar motivações, impactos e decisões técnicas importantes. Isso facilita o entendimento histórico das mudanças e contribui para uma base de código mais sustentável e auditável.
 
@@ -67,4 +68,3 @@ A colaboração neste repositório deve sempre ocorrer em um ambiente de respeit
 
 ### 📧 Contato
 Caso deseje expressar outros comentários, críticas, dúvidas ou sugestões, [contate-nos](contato.md).
-Footer
