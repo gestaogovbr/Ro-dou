@@ -82,7 +82,7 @@ class INLABSHook(BaseHook):
         main_search_queries = self._generate_sql(search_terms)
         hook.run(main_search_queries["create_extension"], autocommit=True)
         main_search_results = hook.get_pandas_df(main_search_queries["select"])
-
+       
         # Fetching results for yesterday extra search terms
         extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
         extra_search_queries = self._generate_sql(extra_search_terms)
