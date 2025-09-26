@@ -479,7 +479,6 @@ class DouDigestDagGenerator:
         default_args = {
             "owner": ",".join(specs.owner),
             "start_date": datetime(2021, 10, 18),
-            "bash_command":'echo "Tentando executar..." && exit 1',  # Simula falha
             "depends_on_past": False,
             "retries": 10,
             "retry_delay": timedelta(minutes=20),           
