@@ -40,6 +40,7 @@ from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
+from airflow.utils.email import send_email
 
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
@@ -122,6 +123,28 @@ class DouDigestDagGenerator:
             "QD": QDSearcher(),
             "INLABS": INLABSSearcher(),
         }
+
+    def _notify_email_on_failure(self, context):
+        """Function called when the task fails definitively"""
+        task_instance = context['task_instance']
+        dag_run = context['dag_run']
+        
+        to = os.environ.get('AIRFLOW__SMTP__SMTP_MAIL_FROM')
+        
+        send_email(
+            to=[to],
+            subject=f'Falha na DAG {dag_run.dag_id}',
+            html_content=f'''
+            <h3>Falha detectada</h3>
+            <p>Task: {task_instance.task_id}</p>
+            <p>Data de execução: {dag_run.execution_date.strftime("%d/%m/%Y")}</p>
+            <p>Log: {task_instance.log_url}</p>
+            '''
+        )
+
+    def _notify_slack_on_retry(self, context):
+        """Function called when task is re-executed"""
+        # Envio de notificação menos crítica para Slack    
         try:
             conn = BaseHook.get_connection(self.SLACK_CONN_ID)
             description = json.loads(conn.description)
@@ -132,17 +155,14 @@ class DouDigestDagGenerator:
                     "\n`DAG`  {{ ti.dag_id }}"
                     "\n`State`  {{ ti.state }}"
                     "\n`Task`  {{ ti.task_id }}"
-                    "\n`Execution`  {{ ti.execution_date }}"
+                    "\n`Execution`  {{ ti.execution_date.strftime('%d/%m/%Y') }}"
                     "\n`Log`  {{ ti.log_url }}"
+                    "\n`🔄 Retry na task` {{context['task_instance'].task_id}}"
                 ),
                 channel=description["channel"],
             )
         except Exception as e:
             logging.info("Connection to DAG run notifier not configured: %s", str(e))
-            slack_notifier = None
-
-        self.on_failure_callback = slack_notifier
-        self.on_retry_callback = None
 
     @staticmethod
     def prepare_doc_md(specs: DAGConfig, config_file: str) -> str:
@@ -413,23 +433,58 @@ class DouDigestDagGenerator:
 
         notifier.send_notification(search_report=search_report, report_date=report_date)
 
+    def _get_notification_handler(self, notification_type: str):
+        """Returns the appropriate notification handler based on type."""
+        handlers = {
+            'email_notification': self._notify_email_on_failure,
+            'slack_notification': self._notify_slack_on_retry,
+        }
+        return handlers.get(notification_type)
+
+    def change_retry_callback(self, specs: DAGConfig, context):
+        """Handle retry callback based on configuration."""
+        callback_type = specs.callbacks.on_retry_callback
+        
+        if not callback_type:
+            return None
+            
+        handler = self._get_notification_handler(callback_type)
+        if handler:
+            return handler(context)
+        
+        return None
+
+    def change_failure_callback(self, specs: DAGConfig, context):
+        """Handle failure callback based on configuration."""
+        callback_type = specs.callbacks.on_failure_callback
+        
+        if not callback_type:
+            return None
+            
+        handler = self._get_notification_handler(callback_type)
+        if handler:
+            return handler(context)
+        
+        return None
+
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
-
+        
         Depending on configuration it adds an extra prior task to query
         the term_list from a database
         """
         # Prepare the markdown documentation
-        doc_md = self.prepare_doc_md(specs, config_file) if specs.doc_md else None
+        doc_md = self.prepare_doc_md(specs, config_file) if specs.doc_md else None        
         # DAG parameters
         default_args = {
             "owner": ",".join(specs.owner),
             "start_date": datetime(2021, 10, 18),
+            "bash_command":'echo "Tentando executar..." && exit 1',  # Simula falha
             "depends_on_past": False,
             "retries": 10,
-            "retry_delay": timedelta(minutes=20),
-            "on_retry_callback": self.on_retry_callback,
-            "on_failure_callback": self.on_failure_callback,
+            "retry_delay": timedelta(minutes=20),           
+            "on_retry_callback": lambda context: self.change_retry_callback(specs, context),
+            "on_failure_callback": lambda context: self.change_failure_callback(specs, context),
         }
 
         schedule = self._update_schedule(specs)

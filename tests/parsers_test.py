@@ -73,6 +73,10 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": "0 8 * * MON-FRI",
                 "dataset": None,
                 "description": "DAG exemplo utilizando todos os demais parâmetros.",
+                "callbacks": {
+                    "on_retry_callback": "email_notification",
+                    "on_failure_callback": "slack_notification"
+                },
                 "doc_md": None,
                 "tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
                 "owner": ["pessoa 1", "pessoa 2"],
@@ -557,6 +561,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "dataset": None,
                 "description": "DAG de teste",
                 "doc_md": None,
+                "callbacks": None,
                 "tags": {"dou", "generated_dag"},
                 "owner": [],
                 "search": [
@@ -600,7 +605,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "description": "DAG de teste com múltiplos territory_id",
                 "schedule": '0 8 * * MON-FRI',
                 "dataset": None,
-                "doc_md": None,
+                "doc_md": None,                
                 "tags": {"dou", "generated_dag"},
                 "owner": [],
                 "search": [

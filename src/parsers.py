@@ -43,6 +43,7 @@ class YAMLParser:
         dag = self._try_get(dag_config_dict, "dag")
         dag_id = self._try_get(dag, "id")
         description = self._try_get(dag, "description")
+        callbacks = self._try_get(dag, "callbacks")
         report = self._try_get(dag, "report")
         search = self._try_get(dag, "search")
 
