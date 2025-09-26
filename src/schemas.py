@@ -216,7 +216,16 @@ class ReportConfig(BaseModel):
         description="Texto a ser exibido quando não há resultados",
     )
 
-
+class CallBacksConfig(BaseModel):
+    """Represents the configuration of the callback functions in the YAML file."""
+    on_retry_callback: Optional[str] = Field(
+        default="email_notification",
+        description="Função que é executada quando uma task é reexecutada após uma falha",
+    )
+    on_failure_callback: Optional[str] = Field(
+        default="slack_notification",
+        description="Função que é executada quando uma task falha definitivamente (após esgotar todas as tentativas)",
+    )
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -234,11 +243,23 @@ class DAGConfig(BaseModel):
     search: Union[List[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
+    callbacks: Union[CallBacksConfig, None] = Field(
+        default=None,
+        description="Seção para definição das funçãoes de callbacks"
+    )
     doc_md: Optional[str] = Field(default=None, description="description")
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
     )
+
+    @field_validator("callbacks")
+    def validate_callbacks(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return CallBacksConfig(**value)
+        return value
 
     @field_validator("search")
     @staticmethod
