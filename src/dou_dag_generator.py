@@ -138,7 +138,7 @@ class DouDigestDagGenerator:
             <h3>Falha detectada</h3>
             <p>Task: {task_instance.task_id}</p>
             <p>Data de execução: {dag_run.execution_date.strftime("%d/%m/%Y")}</p>
-            <p>Log: {task_instance.log_url}</p>
+            <p>Log: <a href="{task_instance.log_url}" target="_blank">Ver log completo</a></p>
             '''
         )
 
