@@ -130,9 +130,9 @@ class DouDigestDagGenerator:
         dag_run = context['dag_run']
         
         try:
-            to = os.environ['EMAIL_ADMIN']
+            to = os.environ['email_admin']
         except KeyError as e:
-            logging.warning("Variable 'EMAIL_ADMIN' not configured: %s", str(e))
+            logging.warning("Variable 'email_admin' not configured: %s", str(e))
         
         send_email(
             to=[to],

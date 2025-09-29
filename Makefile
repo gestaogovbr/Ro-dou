@@ -47,7 +47,7 @@ create-email-admim-variable:
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
 			-d '{ \
-			\"key\": \"EMAIL_ADMIN\", \
+			\"key\": \"email_admin\", \
 			\"value\": \"admim@rodou.gob.br\" \
 			}' > /dev/null; \
 		fi"
