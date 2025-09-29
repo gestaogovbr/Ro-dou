@@ -154,13 +154,13 @@ class DouDigestDagGenerator:
             slack_notifier = SlackNotifier(
                 slack_conn_id=self.SLACK_CONN_ID,
                 text=(
-                    ":bomb:"
-                    "\n`DAG`  {{ ti.dag_id }}"
-                    "\n`State`  {{ ti.state }}"
-                    "\n`Task`  {{ ti.task_id }}"
-                    "\n`Execution`  {{ ti.execution_date.strftime('%d/%m/%Y') }}"
-                    "\n`Log`  {{ ti.log_url }}"
-                    "\n`🔄 Retry na task` {{context['task_instance'].task_id}}"
+                    ":rotating_light: *Falha na execução da DAG!* :rotating_light:\n\n"
+                    "*DAG:*  {{ ti.dag_id }}\n"
+                    "*Estado:*  {{ ti.state }}\n"
+                    "*📋 Task:*  {{ ti.task_id }}\n"
+                    "*📅 Data de execução:*  {{ ti.execution_date.strftime('%d/%m/%Y %H:%M') }}\n"
+                    "*📁 Log:* <{{ ti.log_url }}|Ver log completo>\n"
+                    "*🔄 Tentativa de retry:* {{ context['task_instance'].try_number }}"
                 ),
                 channel=description["channel"],
             )
