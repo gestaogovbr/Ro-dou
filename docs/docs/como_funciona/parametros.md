@@ -13,7 +13,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
   Ambas aceitam os seguintes valores:
 
-  - **`email_notification`**: notifica por e-mail, utilizando o endereço definido no arquivo `docker-compose` na variável `AIRFLOW__SMTP__SMTP_MAIL_FROM`.  
+  - **`email_notification`**: notifica por e-mail, utilizando o endereço definido na variável `email_admin`. Essa variável é criando quando é executado o comando de contrução `make run`
   - **`slack_notification`**: envia notificações via Slack, utilizando as configurações disponíveis em *Connections*.   
 * **dataset**: Agendamento da DAG baseado na atualização de um Dataset do Airflow. Em conjunto com o schedule a execução é condicionada ao schedule e dataset.
 * **tags**: Tags para categorizar a DAG.
