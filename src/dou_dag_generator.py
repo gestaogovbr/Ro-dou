@@ -20,6 +20,7 @@ import json
 import pandas as pd
 from airflow import DAG, Dataset
 from airflow.models.param import Param
+from airflow.models import Variable
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
@@ -129,11 +130,11 @@ class DouDigestDagGenerator:
         task_instance = context['task_instance']
         dag_run = context['dag_run']
         
-        try:
-            to = os.environ['email_admin']
-        except KeyError as e:
-            logging.warning("Variable 'email_admin' not configured: %s", str(e))
-        
+        to = Variable.get('email_admin', default_var=None)
+        if not to:
+            logging.error("email_admin variable not found in Airflow. Skipping email notification.")
+            return
+            
         send_email(
             to=[to],
             subject=f'Falha na DAG {dag_run.dag_id}',
@@ -533,7 +534,6 @@ class DouDigestDagGenerator:
                         term_list = subsearch.terms
                     elif terms_come_from_airflow_variable:
                         var_name = subsearch.terms.from_airflow_variable
-                        from airflow.models import Variable
                         try:
                             var_value = Variable.get(var_name)
                             if isinstance(var_value, list):
