@@ -129,7 +129,10 @@ class DouDigestDagGenerator:
         task_instance = context['task_instance']
         dag_run = context['dag_run']
         
-        to = os.environ.get('AIRFLOW__SMTP__SMTP_MAIL_FROM')
+        try:
+            to = os.environ['EMAIL_ADMIN']
+        except KeyError as e:
+            logging.warning("Variable 'EMAIL_ADMIN' not configured: %s", str(e))
         
         send_email(
             to=[to],
