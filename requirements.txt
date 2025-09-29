@@ -2,3 +2,4 @@ pandas==2.1.4
 unidecode==1.2.0
 html2text==2024.2.26
 markdown==3.6.0
+apprise==1.9.4
