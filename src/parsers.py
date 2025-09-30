@@ -130,22 +130,18 @@ class YAMLParser:
         
         if isinstance(terms, dict):
             if "from_airflow_variable" in terms:
-                # var_value = Variable.get(terms.get("from_airflow_variable"))
+                term_list = terms.get("from_airflow_variable") 
+                # var_name = subsearch.terms.from_airflow_variable
                 # try:
-                #     terms = json.loads(var_value)
-                # except (ValueError, SyntaxError):
-                #     terms = var_value.splitlines()
-                var_name = subsearch.terms.from_airflow_variable
-                try:
-                    var_value = Variable.get(var_name)
-                    if isinstance(var_value, list):
-                        term_list = json.loads(var_value)
-                    else:
-                        term_list = var_value.splitlines()
-                except (KeyError):
-                    raise KeyError(
-                        f"Airflow variable {var_name} not found."
-                    )
+                #     var_value = Variable.get(var_name)
+                #     if isinstance(var_value, list):
+                #         term_list = json.loads(var_value)
+                #     else:
+                #         term_list = var_value.splitlines()
+                # except (KeyError):
+                #     raise KeyError(
+                #         f"Airflow variable {var_name} not found."
+                #     )                
             elif "from_db_select" in terms:
                 from_db_select = terms.get("from_db_select")
                 terms = []
