@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .github-icon {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: #333;
+      color: white;
+      padding: 10px;
+      border-radius: 50%;
+      text-decoration: none;
+      font-size: 20px;
+      transition: background 0.3s;
+    }
+    .github-icon:hover {
+      background: #555;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  {{ super() }}
+  <a href="https://github.com/gestaogovbr/Ro-dou" class="github-icon" target="_blank" title="GitHub Repository">
+    <i class="fab fa-github"></i>
+  </a>
+{% endblock %}

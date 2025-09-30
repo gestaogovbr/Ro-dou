@@ -30,6 +30,8 @@ nav:
     - Contato: outros/contato.md
   - CHANGELOG:
     - Changelog: changelog/changelog.md
-
+    
 theme:
-  name: 'readthedocs'
+  name: readthedocs
+  custom_dir: overrides
+  
