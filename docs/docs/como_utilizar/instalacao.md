@@ -13,7 +13,8 @@
 * 2Gb de espaço em disco
 * Sistema operacional Linux ou Windows com WSL
 
-O código-fonte está disponibilizado no [perfil do GitHub do Ministério da Gestão e da Inovação em Serviços Públicos](https://github.com/gestaogovbr/Ro-dou).
+O código-fonte está disponibilizado no <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> perfil do GitHub do Ministério da Gestão e da Inovação em Serviços Públicos.
+
 
 Neste título, fornecemos abaixo uma configuração demonstrativa para que você possa executar o Ro-DOU no seu computador.
 
