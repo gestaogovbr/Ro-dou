@@ -13,12 +13,15 @@ The main classes are:
 These models are used to validate the YAML files using the Pydantic
 library.
 """
-
+import sys
+import os
 import textwrap
 from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from utils.search_domains import Section, SearchDate, Field as SearchFieldEnum, Pubtype
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
@@ -60,6 +63,16 @@ class SearchConfig(BaseModel):
         description="Lista de fontes de dados para pesquisar (Querido Diário [QD], "
         "Diário Oficial da União [DOU], INLABS). Default: DOU.",
     )
+
+    @field_validator("sources")
+    @classmethod
+    def validate_sources(cls, fields):
+        if fields is not None:
+            valid_sources = {"DOU", "QD", "INLABS"}
+            for source in fields:
+                if source not in valid_sources:
+                    raise ValueError(f"Invalid source '{source}'. Must be one of: {', '.join(valid_sources)}")
+        return fields
     territory_id: Optional[Union[int, List[int]]] = Field(
         default=None,
         description="ID do território no Querido Diário para filtragem "
@@ -70,6 +83,15 @@ class SearchConfig(BaseModel):
         description="Intervalo de data para busca. Valores: DIA, SEMANA, "
         "MES, ANO. Default: DIA",
     )
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, field):
+        if field is not None:
+            valid_dates = {field.name for field in SearchDate}
+            if field not in valid_dates:
+                raise ValueError(f"Invalid date '{field}'. Must be one of: {', '.join(valid_dates)}")
+        return field
     dou_sections: Optional[List[str]] = Field(
         default=["TODOS"],
         description=textwrap.dedent(
@@ -96,6 +118,16 @@ class SearchConfig(BaseModel):
         """
         ),
     )
+
+    @field_validator("dou_sections")
+    @classmethod
+    def validate_dou_sections(cls, fields):
+        if fields is not None:
+            valid_sections = {dou.name for dou in Section}
+            for section in fields:
+                if section not in valid_sections:
+                    raise ValueError(f"Invalid DOU section '{section}'. Must be one of: {', '.join(valid_sections)}")
+        return fields
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )
@@ -112,6 +144,15 @@ class SearchConfig(BaseModel):
         description="Campos dos quais os termos devem ser pesquisados. "
         "Valores: TUDO, TITULO, CONTEUDO. Default: TUDO",
     )
+
+    @field_validator("field")
+    @classmethod
+    def validate_field(cls, field):        
+        if field is not None:
+            valid_fields = {field.name for field in SearchFieldEnum}
+            if field not in valid_fields:
+                raise ValueError(f"Invalid field '{field}'. Must be one of: {', '.join(valid_fields)}")
+        return field
     is_exact_search: Optional[bool] = Field(
         default=True,
         description="Busca somente o termo exato. Valores: True ou False. "
@@ -148,6 +189,16 @@ class SearchConfig(BaseModel):
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
+
+    @field_validator("pubtype")
+    @classmethod
+    def validate_pubtype(cls, value):      
+        if value is not None:
+            valid_pubtypes = {field.value.upper() for field in Pubtype}
+            for pubtype in value:
+                if pubtype.upper() not in valid_pubtypes:
+                    raise ValueError(f"Invalid pubtype '{pubtype}'. Must be one of: {', '.join(valid_pubtypes)}")
+        return value
     excerpt_size: Optional[int] = Field(
         default=None,
         description="Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. "

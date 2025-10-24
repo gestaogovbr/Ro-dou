@@ -680,7 +680,8 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "Ratificação",
                             "Resolução",
                             "Retificação",
-                            "Protocolo"
+                            "Protocolo",
+                            "Decreto"
                             ],
                     }
                 ],
