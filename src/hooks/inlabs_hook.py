@@ -387,7 +387,7 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
-        def _find_matches(self, text: str, keys: list) -> list:
+        def _find_matches(self, text: str, keys: list) -> str:
             """Find keys that match the text, considering normalization
             for matching and ensuring exact matches.
 
@@ -397,7 +397,7 @@ class INLABSHook(BaseHook):
                     It's assumed that keys are strings.
 
             Returns:
-                list: A sorted list of unique keys found in the text.
+                str: A comma-separated string of unique keys found in the text.
             """
 
             normalized_text = self._normalize(text)
