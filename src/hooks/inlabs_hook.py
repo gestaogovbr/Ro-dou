@@ -411,7 +411,7 @@ class INLABSHook(BaseHook):
                 )
             ]
 
-            return ", ".join(sorted(set(matches)))
+            return ", ".join(sorted(set(matches), key=str.lower))
 
         @staticmethod
         def _normalize(text: str) -> str:
