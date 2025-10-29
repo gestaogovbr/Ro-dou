@@ -574,14 +574,16 @@ class INLABSSearcher(BaseSearcher):
         Returns:
             Dict: Formatted as {"texto": List of terms}
         """
-        
+        logging.info(terms)
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
         elif isinstance(terms, str) and terms.startswith("["):            
-            return {"texto": ast.literal_eval(terms)}        
+            return {"texto": ast.literal_eval(terms)}   
+        elif isinstance(terms, dict):        
+            return {"texto": self._split_sql_terms(terms)}     
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
