@@ -752,6 +752,55 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 },
             },
         ),
+        (
+            "terms_from_variable.yaml",
+            {
+                "id": "terms_from_variable",
+                "description": "DAG de exemplo com termos na Variável",
+                "schedule": None,
+                "dataset": None,
+                "skip_null": True,
+                "doc_md": None,
+                "tags": {"dou", "generated_dag"},
+                "owner": [],
+                "search": [
+                    {
+                        "terms": {
+                            "from_airflow_variable": "termos_exemplo_variavel",
+                            "from_db_select": None,
+                        },
+                        "header": None,
+                        "sources": ["INLABS"],
+                        "sql": None,
+                        "conn_id": None,
+                        "territory_id": None,
+                        "dou_sections": ["TODOS"],
+                        "date": "SEMANA",
+                        "field": "TUDO",
+                        "is_exact_search": True,
+                        "ignore_signature_match": False,
+                        "force_rematch": False,
+                        "full_text": False,
+                        "use_summary": False,
+                        "department": None,
+                        "pubtype": None,
+                    }
+                ],
+                "report": {
+                    "emails": ["destination@economia.gov.br"],
+                    "subject": "Exemplo de termos na Variável",
+                    "attach_csv": True,
+                    "discord_webhook": None,
+                    "slack_webhook": None,
+                    "skip_null": True,
+                    "hide_filters": False,
+                    "header_text": None,
+                    "footer_text": None,
+                    "no_results_found_text": "Nenhum dos termos pesquisados "
+                    "foi encontrado nesta consulta",
+                },
+            },
+        ),
     ],
 )
 def test_parse(filepath, result_tuple):
