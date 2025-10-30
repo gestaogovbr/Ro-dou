@@ -152,7 +152,7 @@ class DouDigestDagGenerator:
         try:
             conn = BaseHook.get_connection(self.SLACK_CONN_ID)
             description = json.loads(conn.description)
-            slack_notifier = SlackNotifier(
+            SlackNotifier(
                 slack_conn_id=self.SLACK_CONN_ID,
                 text=(
                     ":rotating_light: *Falha na execução da DAG!* :rotating_light:\n\n"
