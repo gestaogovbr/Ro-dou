@@ -108,6 +108,7 @@ class SlackSender(ISender):
             result.raise_for_status()
 
 
+
 WEEKDAYS_EN_TO_PT = [
     ("Mon", "Seg"),
     ("Tue", "Ter"),
@@ -126,7 +127,9 @@ def _format_date(date_str: str) -> str:
 
 
 def _remove_html_tags(text):
-    # Define a regular expression pattern to match HTML tags
-    clean = re.compile("<.*?>")
-    # Substitute HTML tags with an empty string
-    return re.sub(clean, "", text)
+    if not text or not isinstance(text, str):
+        return text
+
+    # Remove todas as tags HTML
+    text = re.sub(r'<[^>]+>', '', text)
+    return text     
