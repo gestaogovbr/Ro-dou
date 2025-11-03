@@ -263,6 +263,26 @@ class DouDigestDagGenerator:
             dag_id = dag_specs.id
             globals()[dag_id] = self.create_dag(dag_specs, filepath)
 
+    def _parse_term_list(self,term_list):
+        """Converte term_list para lista, tratando aspas duplas extras."""
+        if not isinstance(term_list, str):
+            return term_list
+        
+        # Remove espaços
+        term_list = term_list.strip()
+        
+        # Tenta converter até 2 vezes (para casos de serialização dupla)
+        for _ in range(2):
+            if term_list.startswith(('[', '"[', "'[")):
+                try:
+                    term_list = ast.literal_eval(term_list)
+                    if isinstance(term_list, list):
+                        return term_list
+                except (ValueError, SyntaxError):
+                    break
+        
+        return term_list
+
     def perform_searches(
         self,
         header,
@@ -286,10 +306,7 @@ class DouDigestDagGenerator:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
-        """Performs the search in each source and merge the results"""
-        logging.info("Searching for: %s", term_list)
-        logging.info("Trigger date: %s", get_trigger_date(context, local_time=True))
-
+        """Performs the search in each source and merge the results"""        
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
                 term_list=term_list,
@@ -304,9 +321,10 @@ class DouDigestDagGenerator:
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
-        elif "INLABS" in sources:        
+        elif "INLABS" in sources:                         
+            terms = self._parse_term_list(term_list)
             inlabs_result = self.searchers["INLABS"].exec_search(
-                terms=term_list,
+                terms=terms,
                 dou_sections=dou_sections,
                 search_date=search_date,
                 department=department,
@@ -423,17 +441,24 @@ class DouDigestDagGenerator:
         
         try:
             var_value = Variable.get(var_name)
+            # Se já é uma lista, retorna direto
             if isinstance(var_value, list):
-                term_list = json.loads(var_value)
-            else:
-                term_list = ast.literal_eval(var_value) if var_value.startswith('[') else var_value.splitlines()
-            # else:
-            #     term_list = var_value.splitlines()
+                return var_value
+        
+            if isinstance(var_value, str):
+                if var_value.strip().startswith('['):
+                    return ast.literal_eval(var_value)
+                else:
+                    # Trata como texto separado por linhas
+                    return var_value.splitlines()                    
+            return term_list
+
         except (KeyError):
             raise KeyError(
                 f"Airflow variable {var_name} not found."
             )
-        return term_list
+        
+        
 
     def select_terms_from_db(self, sql: str, conn_id: str):
         """Queries the `sql` and return the list of terms that will be
@@ -509,7 +534,7 @@ class DouDigestDagGenerator:
 
                 searches = specs.search
 
-                for counter, subsearch in enumerate(searches, 1):
+                for counter, subsearch in enumerate(searches, 1):                   
                     # Verify if the terms were fetched from the database
                     terms_come_from_db: bool = isinstance(
                         subsearch.terms, FetchTermsConfig
@@ -541,17 +566,7 @@ class DouDigestDagGenerator:
                             + str(counter)
                             + "') }}"
                         )
-                        logging.info(f"term_list (from Airflow variable): {term_list}")
-                        # try:
-                        #     var_value = Variable.get(var_name)
-                        #     if isinstance(var_value, list):
-                        #         term_list = json.loads(var_value)
-                        #     else:
-                        #         term_list = var_value.splitlines()
-                        # except (KeyError):
-                        #    raise KeyError(
-                        #        f"Airflow variable {var_name} not found."
-                        #    )
+                        
                     elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
                             task_id=f"select_terms_from_db_{counter}",
