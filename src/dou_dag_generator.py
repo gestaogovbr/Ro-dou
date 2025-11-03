@@ -304,12 +304,9 @@ class DouDigestDagGenerator:
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
-        elif "INLABS" in sources:
-            # logging.info("INLABS searcher selected")
-            # logging.info(f"term_list: {term_list}")     
-            # logging.info(f"Type of term_list: {type(term_list)}")           
+        elif "INLABS" in sources:        
             inlabs_result = self.searchers["INLABS"].exec_search(
-                terms=ast.literal_eval(term_list) if isinstance(term_list, str) else term_list,
+                terms=term_list,
                 dou_sections=dou_sections,
                 search_date=search_date,
                 department=department,
@@ -458,7 +455,7 @@ class DouDigestDagGenerator:
         terms_df = db_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
         terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
-
+      
         return terms_df.to_json(orient="columns")
 
     def send_notification(
@@ -569,6 +566,7 @@ class DouDigestDagGenerator:
                             + str(counter)
                             + "') }}"
                         )
+                        logging.info(f"term_list (select terms from db): {term_list}")
                    
                     exec_search_task = PythonOperator(
                         task_id=f"exec_search_{counter}",
