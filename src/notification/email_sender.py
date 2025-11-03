@@ -3,9 +3,7 @@
 import os
 import sys
 from tempfile import NamedTemporaryFile
-import textwrap
 
-import markdown
 import pandas as pd
 from airflow.utils.email import send_email
 
@@ -45,13 +43,13 @@ class EmailSender(ISender):
             if items:
                 skip_notification = False
             else:
-                content = self.generate_email_content()
+                content = self._generate_email_content()
 
         if skip_notification:
             if self.report_config.skip_null:
                 return "skip_notification"
         else:
-            content = self.generate_email_content()
+            content = self._generate_email_content()
 
         if self.report_config.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
@@ -70,17 +68,16 @@ class EmailSender(ISender):
                 mime_charset="utf-8",
             )
 
-    def generate_email_content(self) -> str:
+    def _generate_email_content(self) -> str:
         """Generate HTML content to be sent by email based on
-        search_report dictionary
+            search_report dictionary
         """
 
         current_directory = os.path.dirname(__file__)
-        parent_directory = os.path.dirname(current_directory)
-
-        # Inicializar o gerenciador de templates
+        
         tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
         report_data = []
+        
         for search in self.search_report:
             headers_list = {}
             header_title = ""
@@ -90,40 +87,43 @@ class EmailSender(ISender):
                 header_title = search["header"]
                 headers_list["header"] = f"{header_title}"
 
-            filters = {}
+            # Criar filters para ESTE search específico
+            filters_content = {}
             if not self.report_config.hide_filters:
                 if (
                     search["department"]
                     or search["department_ignore"]
                     or search["pubtype"]
                 ):
-                    filters = {"title": "Filtros Aplicados na Pesquisa:"}
+                    filters_content = {"title": "Filtros Aplicados na Pesquisa:"}
+                    
                     if search["department"]:
-                        filters["included_units"] = {
+                        filters_content["included_units"] = {
                             "title": "Unidades Incluídas:",
                             "items": [f"{dpt}" for dpt in search["department"]],
                         }
 
                     if search["department_ignore"]:
-                        filters["excluded_units"] = {
+                        filters_content["excluded_units"] = {
                             "title": "Unidades Ignoradas:",
                             "items": [f"{dpt}" for dpt in search["department_ignore"]],
                         }
 
                     if search["pubtype"]:
-                        filters["publication_types"] = {
+                        filters_content["publication_types"] = {
                             "title": "Tipos de Publicações:",
                             "items": [f"{pub}" for pub in search["pubtype"]],
                         }
-
-            filters = {"filters": filters}
-
+        
             for group, search_results in search["result"].items():
-                term_data = {"search_terms": {"terms": [], "items": []}}
+                term_data = {
+                    "search_terms": {"terms": [], "items": []},
+                    "filters": filters_content,  # Filtros específicos desta seção
+                    "header_title": header_title  # Guardar o título do header
+                }
 
                 if not search_results:
-
-                   term_data["search_terms"]["items"].append({"header_title": header_title})
+                    term_data["search_terms"]["items"].append({"header_title": header_title})
 
                 else:
                     if not self.report_config.hide_filters:
@@ -145,46 +145,28 @@ class EmailSender(ISender):
                                 term_data["search_terms"]["terms"].append(f"{department}")
 
                             for result in results:    
+                                sec_desc = result["section"]
+                                title = result["title"]
+                                if not result["title"]:
+                                    title = "Documento sem título"
 
-                                if not self.report_config.hide_filters:
-                                    sec_desc = result["section"]
-                                    title = result["title"]
-                                    if not result["title"]:
-                                        title = "Documento sem título"
-
-                                    term_data["search_terms"]["items"].append(
-                                        {
-                                            "section": sec_desc,
-                                            "header_title": header_title,
-                                            "title": title,
-                                            "url": result["href"],
-                                            "url_new_tab": True,
-                                            "abstract": result["abstract"],
-                                            "date": result["date"],
-                                        }
-                                    )
-                                else:
-                                    title = result["title"]
-                                    sec_desc = result["section"]
-                                    if not result["title"]:
-                                        title = "Documento sem título"
-
-                                    term_data["search_terms"]["items"].append(
-                                        {
-                                            "section": sec_desc,
-                                            "header_title": header_title,
-                                            "title": title,
-                                            "url": result["href"],
-                                            "url_new_tab": True,
-                                            "abstract": result["abstract"],
-                                            "date": result["date"],
-                                        }
-                                    )
-                report_data.append(term_data)
+                                term_data["search_terms"]["items"].append(
+                                    {
+                                        "section": sec_desc,
+                                        "header_title": header_title,
+                                        "title": title,
+                                        "url": result["href"],
+                                        "url_new_tab": True,
+                                        "abstract": result["abstract"],
+                                        "date": result["date"],
+                                    }
+                                )
                 
+                report_data.append(term_data)
+
         return tm.renderizar(
             "dou_template.html",
-            filters=filters,
+            filters=filters_content,
             results=report_data,             
             hide_filters=self.report_config.hide_filters,       
             header_text=self.report_config.header_text or None,
