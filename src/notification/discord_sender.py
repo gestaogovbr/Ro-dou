@@ -9,8 +9,8 @@ from schemas import ReportConfig
 class DiscordSender(ISender):
     highlight_tags = ("__", "__")
 
-    def __init__(self, report_config: ReportConfig) -> None:
-        self.webhook_url = report_config.discord["webhook"]
+    def __init__(self, report_config: ReportConfig) -> None:  
+        self.webhook_url = report_config.discord["webhook"]     
         self.hide_filters = report_config.hide_filters
         self.header_text = report_config.header_text
         self.footer_text = report_config.footer_text
@@ -68,6 +68,7 @@ class DiscordSender(ISender):
             }
         )
 
+
     def send_data(self, data):
         data["username"] = "Querido Prisma (rodou)"
         result = requests.post(self.webhook_url, json=data)
@@ -77,4 +78,4 @@ class DiscordSender(ISender):
         # Define a regular expression pattern to match HTML tags
         clean = re.compile('<.*?>')
         # Substitute HTML tags with an empty string
-        return re.sub(clean, '', text)
+        return re.sub(clean, '', text)       
