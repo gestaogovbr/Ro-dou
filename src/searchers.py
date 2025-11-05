@@ -573,8 +573,7 @@ class INLABSSearcher(BaseSearcher):
                 None when no specific terms are provided
         Returns:
             Dict: Formatted as {"texto": List of terms}
-        """
-        logging.info(terms)
+        """       
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
