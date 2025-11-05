@@ -581,8 +581,7 @@ class DouDigestDagGenerator:
                             + str(counter)
                             + "') }}"
                         )
-                        logging.info(f"term_list (select terms from db): {term_list}")
-                   
+                                           
                     exec_search_task = PythonOperator(
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,
