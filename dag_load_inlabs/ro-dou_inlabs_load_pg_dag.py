@@ -103,6 +103,9 @@ def load_inlabs():
             files = [
                 tag.get("href") for tag in a_tags if tag.get("href").endswith(".zip")
             ]
+            logging.info("Files found: %s", files)
+            if not files:               
+                raise ValueError("No files found for this date: %s" % trigger_date)
             return files
 
         def _download_files():

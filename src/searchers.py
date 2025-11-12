@@ -620,7 +620,7 @@ class INLABSSearcher(BaseSearcher):
     def _split_sql_terms(terms: Dict) -> List:
         """Split SQL terms into a list, removing duplicates.
         Get only the values from the first key of the Dict."""
-        
+     
         first_key = next(iter(terms))
         return list(set(terms[first_key].values()))
 

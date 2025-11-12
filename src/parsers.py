@@ -153,6 +153,7 @@ class YAMLParser:
                     "uma lista de strings ou parâmetros do tipo "
                     "`from_airflow_variable` ou `from_db_select`."
                 )
+            
         return terms, sql, conn_id
 
     def _try_get(self, variable: dict, field, error_msg=None):
