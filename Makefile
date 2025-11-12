@@ -3,6 +3,7 @@ run: \
 create-logs-dir \
 setup-containers \
 create-example-variable \
+create-email-admim-variable \
 create-path-tmp-variable \
 create-inlabs-db \
 create-inlabs-db-connection \
@@ -30,6 +31,24 @@ create-example-variable:
 			-d '{ \
 			\"key\": \"termos_exemplo_variavel\", \
 			\"value\": \"LGPD\nlei geral de proteção de dados\nacesso à informação\" \
+			}' > /dev/null; \
+		fi"
+
+create-email-admim-variable:
+	@echo 'Waiting for Airflow API to start ...'
+	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
+	@echo "Creating 'email_admin_variavel' in Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/email_admin_variavel' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"email_admin\", \
+			\"value\": \"admim@rodou.gov.br\" \
 			}' > /dev/null; \
 		fi"
 
