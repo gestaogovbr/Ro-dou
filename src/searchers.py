@@ -384,7 +384,7 @@ class DOUSearcher(BaseSearcher):
 
 class QDSearcher(BaseSearcher):
 
-    API_BASE_URL = "https://queridodiario.ok.org.br/api/gazettes"
+    API_BASE_URL = "https://api.queridodiario.ok.org.br/gazettes"
 
     def exec_search(
         self,
@@ -437,7 +437,9 @@ class QDSearcher(BaseSearcher):
         )
 
         req_result = requests.get(self.API_BASE_URL, params=payload)
-
+        logging.info("QD API request URL: %s", req_result.url)
+        logging.info("QD API response status code: %s", req_result.status_code)
+        logging.info("QD API response content: %s", req_result.content)
         parsed_results = [
             self.parse_result(result, result_as_email)
             for result in json.loads(req_result.content)["gazettes"]
