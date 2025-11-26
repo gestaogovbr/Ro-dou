@@ -37,6 +37,7 @@ cd Ro-Dou
 ```bash
 make run
 ```
+**Observação:** Ao executar o comando, você verá uma mensagem confirmando a criação das variáveis de ambiente e das conexões. Caso não sejam criadas automaticamente, você pode executar cada função individualmente a partir do arquivo `Makefile`.
 
 Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
 
