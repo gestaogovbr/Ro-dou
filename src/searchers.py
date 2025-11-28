@@ -297,19 +297,27 @@ class DOUSearcher(BaseSearcher):
                     field=field,
                     is_exact_search=is_exact_search,
                 )
-            except:
+            except Exception as e:
                 import requests
                 # If the underlying error is SSL related, don't retry — likely permanent
-                exc_type, exc_value, _ = sys.exc_info()
-                if isinstance(exc_value, requests.exceptions.SSLError):
-                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, exc_value)
+                if isinstance(e, requests.exceptions.SSLError):
+                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, e)
                     raise
+
+                # If it's a ValueError from missing script tag, it may indicate API structure change
+                # Still retry in case it's temporary
+                if isinstance(e, ValueError):
+                    logging.warning("ValueError encountered for term '%s': %s", search_term, str(e))
 
                 if retry > max_retries:
-                    logging.error("Error - Max retries reached")
+                    logging.error(
+                        "Error - Max retries reached for term '%s'. Last error: %s",
+                        search_term,
+                        str(e)
+                    )
                     raise
 
-                logging.info("Attempt %s of %s for term '%s'", retry, max_retries, search_term)
+                logging.info("Attempt %s of %s for term '%s'. Error: %s", retry, max_retries, search_term, str(e))
                 logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
                 time.sleep(30)
                 retry += 1

@@ -102,6 +102,8 @@ class DOUHook(BaseHook):
             "sortType": "0",
             "s": [section.value for section in sections],
         }
+        #Verify payload content
+        logging.info("Payload content: %s", payload)
         page = self._request_page(payload=payload, with_retry=with_retry)
 
         soup = BeautifulSoup(page.content, "html.parser")
@@ -145,28 +147,41 @@ class DOUHook(BaseHook):
                     "newPage": page_num + 1,
                     "currentPage": page_num,
                 })
+               
                 page = self._request_page(payload=payload, with_retry=with_retry)
                 soup = BeautifulSoup(page.content, "html.parser")
 
-            script_tag = soup.find(
-                "script", id="_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params"
-            )
-            search_results = json.loads(script_tag.contents[0])["jsonArray"]
+                script_tag = soup.find(
+                    "script", id="_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params"
+                )
+               
+                if script_tag is None:
+                    logging.error(
+                        "Script tag with ID '_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params' not found in DOU response. "
+                        "The DOU API may have changed its structure."
+                    )
+                    logging.info("HTML content received: %s", page.content)
+                    raise ValueError(
+                        "Unable to find search results in DOU response."
+                        "The DOU API may have changed its structure."
+                    )
 
-            if search_results:
-                for content in search_results:
-                    item = {}
-                    item["section"] = content["pubName"].lower()
-                    item["title"] = content["title"]
-                    item["href"] = self.IN_WEB_BASE_URL + content["urlTitle"]
-                    item["abstract"] = content["content"]
-                    item["date"] = content["pubDate"]
-                    item["id"] = content["classPK"]
-                    item["display_date_sortable"] = content["displayDateSortable"]
-                    item["hierarchyList"] = content["hierarchyList"]
-                    item["hierarchyStr"] = content["hierarchyStr"]
-                    item["arttype"] = content["artType"]
+                search_results = json.loads(script_tag.contents[0])["jsonArray"]
 
-                    all_results.append(item)
+                if search_results:
+                    for content in search_results:
+                        item = {}
+                        item["section"] = content["pubName"].lower()
+                        item["title"] = content["title"]
+                        item["href"] = self.IN_WEB_BASE_URL + content["urlTitle"]
+                        item["abstract"] = content["content"]
+                        item["date"] = content["pubDate"]
+                        item["id"] = content["classPK"]
+                        item["display_date_sortable"] = content["displayDateSortable"]
+                        item["hierarchyList"] = content["hierarchyList"]
+                        item["hierarchyStr"] = content["hierarchyStr"]
+                        item["arttype"] = content["artType"]
+
+                        all_results.append(item)
 
         return all_results
