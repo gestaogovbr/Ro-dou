@@ -1,6 +1,31 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.7.0] - 2025-12-01
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Update CHANGELOG.md for 0.6.0 by @github-actions[bot] in https://github.com/gestaogovbr/Ro-dou/pull/202
+* Traduções RO-DOU by @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/203
+* feat: melhorar resiliência HTTP/SSL e tornar MSSQL opcional by @lucianoedipo in https://github.com/gestaogovbr/Ro-dou/pull/206
+* Feat add length of the text clipping inlabs by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/217
+* fix: resolving error when cutting message text in INLABS system by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/219
+* Create manifests for kubernetes deployment by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/220
+* Fix terms from airflow variable not working by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/221
+* AddToMenu by @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/223
+* docs: adiciona badge do GitHub e customiza template ReadTheDocs by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/232
+* feat: tornar o parser mais resiliente a entradas inválidas by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/224
+* Feat add teste loading dag by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/225
+* Fix case-insensitive sorting in _find_matches by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/233
+* fix: Melhora tratamento de erros na API do DOU by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/236
+* Add User Agent in requests by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/238
+
+## New Contributors
+* @lucianoedipo made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/206
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.6.0...0.7.0
+
 ## [0.6.0] - 2025-08-15
 ## What's Changed 
 * Adicionar suporte a busca sem termos específicos no Ro-DOU by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/200
