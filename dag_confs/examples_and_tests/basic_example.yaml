@@ -2,10 +2,13 @@ dag:
   id: basic_example
   description: DAG de teste
   search:
+    sources:
+      - DOU
     terms:
-    - dados abertos
-    - governo aberto
-    - lei de acesso à informação
+      - licitações públicas
+      - dados abertos
+      - governo aberto
+      - lei de acesso à informação
   report:
     emails:
       - destination@economia.gov.br
