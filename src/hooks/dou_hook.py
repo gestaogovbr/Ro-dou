@@ -58,11 +58,11 @@ class DOUHook(BaseHook):
     def _request_page(self, with_retry: bool, payload: dict):
         headers = {
             "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
+                "Ro-dou/0.7 (+https://github.com/gestaogovbr/Ro-dou)"
+                "Python/requests"
             ),
             "Accept": "application/json",
+            "Cache-Control": "no-cache",
         }
         try:
             return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
