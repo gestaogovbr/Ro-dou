@@ -45,6 +45,21 @@ make run
 
 Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
 
+Como observado na imagem, após executar o comando no terminal e efetura o build dos containers, ele também iniciará as conexões com os ambientes necessários automaticamente! No exemplo representado pela imagem esses exemplos e conexões já foram criados, e por isso o retorno das mensagens:
+
+```bash
+psql:/sql/init-db.sql:1: ERROR:  database "inlabs" already exists
+psql:/sql/init-db.sql:5: NOTICE:  schema "dou_inlabs" already exists, skipping
+psql:/sql/init-db.sql:35: NOTICE:  relation "article_raw" already exists, skipping
+```
+
+Ao ser executado pela primeira vez a mensagem retornada será:
+
+```bash
+Creating 'inlabs' database
+Creating 'dou_inlabs' schema
+```
+
 1. Verificar se o serviço do Airflow, no qual o Ro-DOU depende, está acessível via navegador, acessando:
 
     [http://localhost:8080/](http://localhost:8080/)
