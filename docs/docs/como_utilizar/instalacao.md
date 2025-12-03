@@ -45,7 +45,7 @@ make run
 
 Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
 
-Como observado na imagem, após executar o comando no terminal e efetura o build dos containers, ele também iniciará as conexões com os ambientes necessários automaticamente! No exemplo representado pela imagem esses exemplos e conexões já foram criados, e por isso o retorno das mensagens:
+Como observado na imagem, após executar o comando no terminal e efetura o build dos containers, ele também iniciará as conexões com os ambientes necessários automaticamente! No exemplo representado pela imagem, os containers e conexões já foram criados, e por isso o retorno das mensagens:
 
 ```bash
 psql:/sql/init-db.sql:1: ERROR:  database "inlabs" already exists
