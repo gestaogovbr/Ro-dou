@@ -75,8 +75,6 @@ class DOUHook(BaseHook):
             # If no retry requested, propagate to caller
             raise
 
-
-
     def search_text(
         self,
         search_term: str,
