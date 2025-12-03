@@ -57,10 +57,7 @@ class DOUHook(BaseHook):
 
     def _request_page(self, with_retry: bool, payload: dict):
         headers = {
-            "User-Agent": (
-                "Ro-dou/0.7 (+https://github.com/gestaogovbr/Ro-dou)"
-                "Python/requests"
-            ),
+            "User-Agent": "Mozilla/5.0 (compatible; Ro-DOU/0.7; +https://github.com/gestaogovbr/Ro-dou)",
             "Accept": "application/json",
             "Cache-Control": "no-cache",
         }
