@@ -38,8 +38,7 @@ cd Ro-Dou
 make run
 ```
 
-!['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/729329708b10c0e6298db5d9c9b5b6bcfd8a5f80/docs/img/Makerun.png)
-
+!['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/8edc3e3d567a4d2f182100db103316dc312fb241/docs/img/makerunwsl.png)
 
 
 **Observação:** Ao executar o comando, você verá uma mensagem confirmando a criação das variáveis de ambiente e das conexões. Caso não sejam criadas automaticamente, você pode executar cada função individualmente a partir do arquivo `Makefile`.
