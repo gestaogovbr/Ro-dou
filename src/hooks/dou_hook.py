@@ -60,9 +60,8 @@ class DOUHook(BaseHook):
         # Cabeçalhos melhorados
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; Ro-DOU/0.7; +https://github.com/gestaogovbr/Ro-dou)",
-            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept": "application/json",
             "Cache-Control": "no-cache",
-            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
         try:
@@ -98,8 +97,6 @@ class DOUHook(BaseHook):
                 time.sleep(30)
                 return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
        
-
-
 
 
 
