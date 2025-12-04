@@ -1,6 +1,30 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.7.0] - 2025-12-01
+
+## What's Changed 
+### Feat
+* Adiciona parâmetro de comprimento de texto INLABS by @Heitorh3 in #217
+### Hotfix
+* Adiciona User-Agent nas requisições da API do DOU by @edulauer in #238
+* fix: Melhora tratamento de erros na API do DOU by @Heitorh3 in #236
+* fix: resolving error when cutting message text in INLABS system by @Heitorh3 in #219
+* Fix terms from airflow variable not working by @Heitorh3 in #221
+* Fix case-insensitive sorting in _find_matches by @edulauer in #233
+### 🚀 Outros
+* Traduções RO-DOU by @Ian070508 in #203
+* feat: melhorar resiliência HTTP/SSL e tornar MSSQL opcional by @lucianoedipo in #206
+* Create manifests for kubernetes deployment by @edulauer in #220
+* docs: adiciona badge do GitHub e customiza template ReadTheDocs by @Heitorh3 in #232
+* feat: tornar o parser mais resiliente a entradas inválidas by @Heitorh3 in #224
+* Feat add teste loading dag by @Heitorh3 in #225
+
+New Contributors
+@lucianoedipo made their first contribution in #206
+Full Changelog: 0.6.0...0.7.0
+
+
 ## [0.6.0] - 2025-08-15
 ## What's Changed 
 * Adicionar suporte a busca sem termos específicos no Ro-DOU by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/200
@@ -53,6 +77,7 @@ As principais mudanças realizadas no repositório do [Ro-dou](https://github.co
 ## What's Changed
 ### 🚀 Outros
 * reform auto-generated DAG Docs by @salomaolopes in https://github.com/gestaogovbr/Ro-dou/pull/167
+
 
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.3.1...0.3.2
@@ -326,3 +351,4 @@ Esta alteração permite que os arquivos de configuração das DAGs (`dag_confs/
 * @nitaibezerra made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/4
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/commits/0.0.1
+

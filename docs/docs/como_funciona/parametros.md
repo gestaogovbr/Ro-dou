@@ -8,6 +8,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 * **doc_md**: Documentação em markdown da DAG para uma descrição mais completa.
 * **schedule**: Agendamento da periodicidade de execução da DAG. Padrão cron (0 8 * * MON-FRI)
 * **dataset**: Agendamento da DAG baseado na atualização de um Dataset do Airflow. Em conjunto com o schedule a execução é condicionada ao schedule e dataset.
+* **callback**: Responsáveis por notificar os responsáveis quando ocoore alguma falha no sistema clipping.
 * **tags**: Tags para categorizar a DAG.
 * **owner**: Responsável pela DAG.
 

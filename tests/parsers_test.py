@@ -73,6 +73,9 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": "0 8 * * MON-FRI",
                 "dataset": None,
                 "description": "DAG exemplo utilizando todos os demais parâmetros.",
+                "callback": {
+                    "on_failure_callback": ["admin@gov.br"]
+                },
                 "doc_md": None,
                 "tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
                 "owner": ["pessoa 1", "pessoa 2"],
@@ -556,6 +559,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": "0 8 * * MON-FRI",
                 "dataset": None,
                 "description": "DAG de teste",
+                "callback": None,
                 "doc_md": None,
                 "tags": {"dou", "generated_dag"},
                 "owner": [],

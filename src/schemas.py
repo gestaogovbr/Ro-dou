@@ -174,6 +174,11 @@ class SearchConfig(BaseModel):
             )
         return self
 
+class CallBacksConfig(BaseModel):
+    """Represents the configuration of the callback functions in the YAML file."""    
+    on_failure_callback: Optional[List[EmailStr]] = Field(
+        default=None, description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha"
+    )
 
 class ReportConfig(BaseModel):
     """Represents the report configuration in the YAML file."""
@@ -234,6 +239,10 @@ class DAGConfig(BaseModel):
     search: Union[List[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
+    callback: Union[CallBacksConfig, None] = Field(
+        default=None,
+        description="Seção para definição dos endereços de e-mail de notificação"
+    )
     doc_md: Optional[str] = Field(default=None, description="description")
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
@@ -252,6 +261,14 @@ class DAGConfig(BaseModel):
         if not isinstance(search_param, list):
             return [search_param]
         return search_param
+
+    @field_validator("callback")
+    def validate_callback(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return CallBacksConfig(**value)
+        return value
 
     @field_validator("tags")
     @staticmethod

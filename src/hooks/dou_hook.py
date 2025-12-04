@@ -56,8 +56,16 @@ class DOUHook(BaseHook):
             return f"{field.value}-{term}"
 
     def _request_page(self, with_retry: bool, payload: dict):
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/json",
+        }
         try:
-            return requests.get(self.IN_API_BASE_URL, params=payload, timeout=10)
+            return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
         except requests.exceptions.SSLError as e:
             # SSL errors are unlikely to be fixed by retrying; propagate immediately
             logging.error("SSL error when requesting DOU API: %s", e)
@@ -66,9 +74,10 @@ class DOUHook(BaseHook):
             if with_retry:
                 logging.info("Sleep for 30 seconds before retry requests.get().")
                 time.sleep(30)
-                return requests.get(self.IN_API_BASE_URL, params=payload, timeout=10)
+                return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
             # If no retry requested, propagate to caller
             raise
+
 
 
     def search_text(
@@ -102,6 +111,8 @@ class DOUHook(BaseHook):
             "sortType": "0",
             "s": [section.value for section in sections],
         }
+        #Verify payload content
+        logging.info("Payload content: %s", payload)
         page = self._request_page(payload=payload, with_retry=with_retry)
 
         soup = BeautifulSoup(page.content, "html.parser")
@@ -145,12 +156,25 @@ class DOUHook(BaseHook):
                     "newPage": page_num + 1,
                     "currentPage": page_num,
                 })
+
                 page = self._request_page(payload=payload, with_retry=with_retry)
                 soup = BeautifulSoup(page.content, "html.parser")
 
             script_tag = soup.find(
                 "script", id="_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params"
             )
+
+            if script_tag is None:
+                logging.error(
+                    "Script tag with ID '_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params' not found in DOU response. "
+                    "The DOU API may have changed its structure."
+                )
+                logging.info("HTML content received: %s", page.content)
+                raise ValueError(
+                    "Unable to find search results in DOU response."
+                    "The DOU API may have changed its structure."
+                )
+
             search_results = json.loads(script_tag.contents[0])["jsonArray"]
 
             if search_results:

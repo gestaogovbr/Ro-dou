@@ -40,6 +40,7 @@ from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
+from airflow.utils.email import send_email
 
 from airflow.models import Variable
 
@@ -123,28 +124,88 @@ class DouDigestDagGenerator:
             "DOU": DOUSearcher(),
             "QD": QDSearcher(),
             "INLABS": INLABSSearcher(),
-        }
-        try:
-            conn = BaseHook.get_connection(self.SLACK_CONN_ID)
-            description = json.loads(conn.description)
-            slack_notifier = SlackNotifier(
-                slack_conn_id=self.SLACK_CONN_ID,
-                text=(
-                    ":bomb:"
-                    "\n`DAG`  {{ ti.dag_id }}"
-                    "\n`State`  {{ ti.state }}"
-                    "\n`Task`  {{ ti.task_id }}"
-                    "\n`Execution`  {{ ti.execution_date }}"
-                    "\n`Log`  {{ ti.log_url }}"
-                ),
-                channel=description["channel"],
-            )
-        except Exception as e:
-            logging.info("Connection to DAG run notifier not configured: %s", str(e))
-            slack_notifier = None
+        }       
 
-        self.on_failure_callback = slack_notifier
+        self.on_failure_callback = self._notify_on_failure
         self.on_retry_callback = None
+
+    def _notify_on_failure(self, specs: DAGConfig, context):
+        """Function called when the task fails to send a notification to admin"""
+        try:
+           
+            task_instance = context.get('task_instance')
+            dag_run = context.get('dag_run')
+            exception = context.get('exception')
+
+            if not task_instance or not dag_run:
+                logging.error("Missing required context: task_instance or dag_run")
+                return
+
+            # Determina lista de emails para notificação
+            email_list = []
+            
+            if specs.callback and specs.callback.on_failure_callback:
+                # Usa emails configurados no .yaml
+                email_list = specs.callback.on_failure_callback
+            else:
+                # Usa email admin padrão
+                try:
+                    email_admin = Variable.get('email_admin', default_var=None)
+                    if email_admin:
+                        email_list = [email_admin]                        
+                    else:
+                        logging.warning("No email_admin variable found in Airflow")
+                except Exception as e:
+                    logging.error(f"Error getting email_admin variable: {str(e)}")
+
+            if not email_list:
+                logging.warning("No email configured for failure notification (neither callback nor email_admin variable)")
+
+            # Envia email se houver destinatários
+            if email_list:
+                try:
+                    execution_date_str = dag_run.execution_date.strftime("%d/%m/%Y %H:%M") if dag_run.execution_date else "N/A"
+
+                    send_email(
+                        to=email_list,
+                        subject=f'Falha na DAG {dag_run.dag_id}',
+                        html_content=f'''
+                        <h3>Falha detectada</h3>
+                        <p><strong>DAG:</strong> {dag_run.dag_id}</p>
+                        <p><strong>Task:</strong> {task_instance.task_id}</p>
+                        <p><strong>Estado:</strong> {task_instance.state}</p>
+                        <p><strong>Data de execução:</strong> {execution_date_str}</p>
+                        <p><strong>Exceção:</strong> {exception}</p>
+                        <p><strong>Log:</strong> <a href="{task_instance.log_url}" target="_blank">Ver log completo</a></p>
+                        '''
+                    )
+                    logging.error(f"SUCCESS: Failure notification email sent to: {email_list}")
+                except Exception as e:
+                    logging.error(f"ERROR: Failed to send failure notification email: {str(e)}", exc_info=True)
+
+            # Tenta enviar notificação via Slack (se disponível)
+            try:
+                conn = BaseHook.get_connection(self.SLACK_CONN_ID)
+                description = json.loads(conn.description)
+                slack_notifier = SlackNotifier(
+                    slack_conn_id=self.SLACK_CONN_ID,
+                    text=(
+                        ":bomb: *Falha na DAG*"
+                        f"\n*DAG:* `{dag_run.dag_id}`"
+                        f"\n*Task:* `{task_instance.task_id}`"
+                        f"\n*State:* `{task_instance.state}`"
+                        f"\n*Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
+                        f"\n*Exception:* {exception}"
+                        f"\n*Log:* <{task_instance.log_url}|Ver log completo>"
+                    ),
+                    channel=description["channel"],
+                )
+                slack_notifier.notify(context)                
+            except Exception as e:
+                logging.error(f"Slack notification not sent: {str(e)}")
+
+        except Exception as e:
+            logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
 
     @staticmethod
     def prepare_doc_md(specs: DAGConfig, config_file: str) -> str:
@@ -507,9 +568,9 @@ class DouDigestDagGenerator:
             "start_date": datetime(2021, 10, 18),
             "depends_on_past": False,
             "retries": 10,
-            "retry_delay": timedelta(minutes=20),
+            "retry_delay": timedelta(minutes=2),
             "on_retry_callback": self.on_retry_callback,
-            "on_failure_callback": self.on_failure_callback,
+            "on_failure_callback": lambda context: self._notify_on_failure(specs, context),
         }
 
         schedule = self._update_schedule(specs)
@@ -581,8 +642,7 @@ class DouDigestDagGenerator:
                             + str(counter)
                             + "') }}"
                         )
-                        logging.info(f"term_list (select terms from db): {term_list}")
-                   
+                                           
                     exec_search_task = PythonOperator(
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,

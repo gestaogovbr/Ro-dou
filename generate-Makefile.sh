@@ -1,3 +1,8 @@
+# Remove o arquivo atual
+mv Makefile Makefile.backup
+
+# Cria o novo Makefile com TABs corretos
+cat > Makefile << 'EOF'
 .PHONY: run
 run: \
 create-logs-dir \
@@ -132,3 +137,4 @@ down:
 .PHONY: tests
 tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+EOF

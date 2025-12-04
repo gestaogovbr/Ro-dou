@@ -8,6 +8,9 @@ dag:
     - pessoa 1
     - pessoa 2
   schedule: 0 8 * * MON-FRI
+  callback:
+    on_failure_callback: 
+    - admin@gov.br
   search:
     header: Pesquisa no DOU
     terms:
