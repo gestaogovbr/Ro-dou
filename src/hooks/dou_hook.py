@@ -57,7 +57,6 @@ class DOUHook(BaseHook):
 
 
     def _request_page(self, with_retry: bool, payload: dict):
-        # Cabeçalhos melhorados
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; Ro-DOU/0.7; +https://github.com/gestaogovbr/Ro-dou)",
             "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
@@ -65,40 +64,37 @@ class DOUHook(BaseHook):
         }
 
         try:
-            # Primeira tentativa com HTTPS
+            # First try with HTTPS
             response = requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
 
-            # Validação extra: garantir que não caiu para HTTP
+            # Extra Validation
             if not response.url.startswith("https://"):
-                logging.warning("Resposta redirecionada para HTTP! URL final: %s", response.url)
+                logging.warning("Response redirected to HTTP! Final URL: %s", response.url)
 
             response.raise_for_status()
             return response
 
         except requests.exceptions.SSLError as ssl_err:
-            logging.error("Erro SSL ao acessar via HTTPS: %s", ssl_err)
-            logging.info("Tentando fallback para HTTP...")
+            logging.error("SSL Error: %s", ssl_err)
+            logging.info("Trying fallback to HTTP…")
 
-            # Fallback para HTTP
+            # Fallback for HTTP
             http_url = self.IN_API_BASE_URL.replace("https://", "http://")
             try:
                 response = requests.get(http_url, params=payload, headers=headers, timeout=10)
                 response.raise_for_status()
-                logging.warning("Usando HTTP como fallback. URL final: %s", response.url)
+                logging.warning("Using HTTP fallback. Final URL: %s", response.url)
                 return response
             except requests.exceptions.RequestException as e:
-                logging.error("Erro também no fallback HTTP: %s", e)
+                logging.error("HTTP Fallback Error: %s", e)
                 raise
 
         except requests.exceptions.RequestException as e:
-            logging.error("Erro geral ao acessar DOU API: %s", e)
+            logging.error("General Error accessing DOU API: %s", e)
             if with_retry:
-                logging.info("Tentando novamente em 30 segundos...")
+                logging.info("Sleep. Trying again in 30 seconds...")
                 time.sleep(30)
                 return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
-
-
-
 
     def search_text(
         self,
