@@ -35,3 +35,8 @@ theme:
   name: readthedocs
   custom_dir: overrides
   
+plugins:
+  - macros
+
+extra:
+  version: "versão atual: 0.6.0"  # Será substituído pelo workflow
