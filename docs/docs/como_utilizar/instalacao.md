@@ -32,19 +32,39 @@ git clone https://github.com/gestaogovbr/Ro-dou
 cd Ro-Dou
 ```
 
-3. O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:
+3. O repositório já vem com comandos pré-definidos no Makefile para facilitar a execução.
+
+**Para iniciar o sistema, execute:**
 
 ```bash
 make run
 ```
 
-!['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/729329708b10c0e6298db5d9c9b5b6bcfd8a5f80/docs/img/Makerun.png)
+**💡 Dica:** Este comando irá inicializar todos os serviços necessários do projeto.
 
+Você deverá ver uma saída similar a esta:
+
+!['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/8edc3e3d567a4d2f182100db103316dc312fb241/docs/img/makerunwsl.png)
 
 
 **Observação:** Ao executar o comando, você verá uma mensagem confirmando a criação das variáveis de ambiente e das conexões. Caso não sejam criadas automaticamente, você pode executar cada função individualmente a partir do arquivo `Makefile`.
 
 Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
+
+Como observado na imagem, após executar o comando no terminal e efetura o build dos containers, ele também iniciará as conexões com os ambientes necessários automaticamente! No exemplo representado pela imagem, os containers e conexões já foram criados, e por isso o retorno das mensagens:
+
+```bash
+psql:/sql/init-db.sql:1: ERROR:  database "inlabs" already exists
+psql:/sql/init-db.sql:5: NOTICE:  schema "dou_inlabs" already exists, skipping
+psql:/sql/init-db.sql:35: NOTICE:  relation "article_raw" already exists, skipping
+```
+
+Ao ser executado pela primeira vez a mensagem retornada será:
+
+```bash
+Creating 'inlabs' database
+Creating 'dou_inlabs' schema
+```
 
 1. Verificar se o serviço do Airflow, no qual o Ro-DOU depende, está acessível via navegador, acessando:
 
