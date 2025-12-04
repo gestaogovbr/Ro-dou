@@ -55,12 +55,12 @@ class DOUHook(BaseHook):
         else:
             return f"{field.value}-{term}"
 
-    
+
     def _request_page(self, with_retry: bool, payload: dict):
         # Cabeçalhos melhorados
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; Ro-DOU/0.7; +https://github.com/gestaogovbr/Ro-dou)",
-            "Accept": "application/json",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
             "Cache-Control": "no-cache",
         }
 
@@ -96,7 +96,7 @@ class DOUHook(BaseHook):
                 logging.info("Tentando novamente em 30 segundos...")
                 time.sleep(30)
                 return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
-       
+
 
 
 
