@@ -32,11 +32,17 @@ git clone https://github.com/gestaogovbr/Ro-dou
 cd Ro-Dou
 ```
 
-3. O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:
+3. O repositório já vem com comandos pré-definidos no Makefile para facilitar a execução.
+
+**Para iniciar o sistema, execute:**
 
 ```bash
 make run
 ```
+
+**💡 Dica:** Este comando irá inicializar todos os serviços necessários do projeto.
+
+Você deverá ver uma saída similar a esta:
 
 !['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/8edc3e3d567a4d2f182100db103316dc312fb241/docs/img/makerunwsl.png)
 
