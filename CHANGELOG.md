@@ -1,6 +1,20 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.7.1] - 2025-12-04
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* MakerunIMG by @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/242
+* fix: adiciona User-Agent apropriado nas requisições DOU by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/241
+* refactor: Melhorar a robustez do DOUHook: tratamento de requisições, paginação e logging de erros by @duarch in https://github.com/gestaogovbr/Ro-dou/pull/243
+
+## New Contributors
+* @duarch made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/243
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.7.0...0.7.1
+
 ## [0.7.0] - 2025-12-01
 
 ## What's Changed 
