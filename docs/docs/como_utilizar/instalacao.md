@@ -18,6 +18,8 @@ O código-fonte está disponibilizado no <a href="https://github.com/gestaogovbr
 
 Neste título, fornecemos abaixo uma configuração demonstrativa para que você possa executar o Ro-DOU no seu computador.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 Passo a passo:
 
 1. Instalar na máquina o Docker e Docker Compose (versão 1.29 ou superior):
