@@ -54,7 +54,6 @@ coverage.xml
 # Translations
 *.mo
 *.pot
-CLAUDE.md
 
 # Django stuff:
 *.log
@@ -134,11 +133,7 @@ old.sql
 
 # specifics
 **/.vscode/settings.json
-dags/raiox/credenciais/token.pickle
 test_notrack/
 **/.DS_Store
-dags/airflow-mantainance/db-bkp
 **/mnt/pgdata/
 **/mnt/airflow-logs
-**/dag_confs/
-**/dag_load_inlabs/

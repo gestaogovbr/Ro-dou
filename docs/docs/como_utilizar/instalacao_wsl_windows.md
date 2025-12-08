@@ -1,12 +1,12 @@
 # Guia de Instalação e Configuração do WSL no Windows
 
 ## Índice
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação do WSL](#instalação-do-wsl)
-- [Configuração Inicial](#configuração-inicial)
-- [Configurações Avançadas](#configurações-avançadas)
-- [Comandos Úteis](#comandos-úteis)
-- [Solução de Problemas](#solução-de-problemas)
+- [Pré-requisitos](#pre-requisitos)
+- [Instalação do WSL](#instalacao-do-wsl)
+- [Configuração Inicial](#configuracao-inicial)
+- [Configurações Avançadas](#configuracoes-avancadas)
+- [Comandos Úteis](#comandos-uteis)
+- [Solução de Problemas](#solucao-de-problemas)
 
 ## Pré-requisitos
 

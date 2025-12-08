@@ -14,7 +14,6 @@ from airflow.models import Variable
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from schemas import RoDouConfig, DAGConfig
 
-
 class YAMLParser:
     """Parses YAML file and get the DAG parameters.
 
@@ -42,6 +41,7 @@ class YAMLParser:
         dag = self._try_get(dag_config_dict, "dag")
         dag_id = self._try_get(dag, "id")
         description = self._try_get(dag, "description")
+        callback = self._try_get(dag, "callback")
         report = self._try_get(dag, "report")
         search = self._try_get(dag, "search")
 
@@ -111,6 +111,7 @@ class YAMLParser:
             schedule=schedule,
             dataset=dataset,
             description=description,
+            callback=callback,
             skip_null=skip_null,
             doc_md=doc_md,
             dag_tags=set(dag_tags),
@@ -126,13 +127,21 @@ class YAMLParser:
         terms = self._try_get(search, "terms")
         sql = None
         conn_id = None
+        
         if isinstance(terms, dict):
             if "from_airflow_variable" in terms:
-                var_value = Variable.get(terms.get("from_airflow_variable"))
-                try:
-                    terms = json.loads(var_value)
-                except (ValueError, SyntaxError):
-                    terms = var_value.splitlines()
+                term_list = terms.get("from_airflow_variable") 
+                # var_name = subsearch.terms.from_airflow_variable
+                # try:
+                #     var_value = Variable.get(var_name)
+                #     if isinstance(var_value, list):
+                #         term_list = json.loads(var_value)
+                #     else:
+                #         term_list = var_value.splitlines()
+                # except (KeyError):
+                #     raise KeyError(
+                #         f"Airflow variable {var_name} not found."
+                #     )                
             elif "from_db_select" in terms:
                 from_db_select = terms.get("from_db_select")
                 terms = []
@@ -144,6 +153,7 @@ class YAMLParser:
                     "uma lista de strings ou parâmetros do tipo "
                     "`from_airflow_variable` ou `from_db_select`."
                 )
+            
         return terms, sql, conn_id
 
     def _try_get(self, variable: dict, field, error_msg=None):

@@ -3,9 +3,9 @@ dag:
   description: DAG de teste
   search:
     terms:
-    - dados abertos
-    - governo aberto
-    - lei de acesso à informação
+      - dados abertos
+      - governo aberto
+      - lei de acesso à informação
   report:
     emails:
       - destination@economia.gov.br

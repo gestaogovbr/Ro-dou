@@ -82,7 +82,7 @@ class INLABSHook(BaseHook):
         main_search_queries = self._generate_sql(search_terms)
         hook.run(main_search_queries["create_extension"], autocommit=True)
         main_search_results = hook.get_pandas_df(main_search_queries["select"])
-
+       
         # Fetching results for yesterday extra search terms
         extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
         extra_search_queries = self._generate_sql(extra_search_terms)
@@ -387,7 +387,7 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
-        def _find_matches(self, text: str, keys: list) -> list:
+        def _find_matches(self, text: str, keys: list) -> str:
             """Find keys that match the text, considering normalization
             for matching and ensuring exact matches.
 
@@ -397,7 +397,7 @@ class INLABSHook(BaseHook):
                     It's assumed that keys are strings.
 
             Returns:
-                list: A sorted list of unique keys found in the text.
+                str: A comma-separated string of unique keys found in the text.
             """
 
             normalized_text = self._normalize(text)
@@ -411,7 +411,7 @@ class INLABSHook(BaseHook):
                 )
             ]
 
-            return ", ".join(sorted(set(matches)))
+            return ", ".join(sorted(set(matches), key=str.lower))
 
         @staticmethod
         def _normalize(text: str) -> str:
