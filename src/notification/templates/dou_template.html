@@ -22,33 +22,32 @@
         h3 {
             color: #545b61;
             font-size: 16px;
+            font-weight: normal;
         }
 
         .ext_header {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto 30px auto;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            text-align: center;
             border-left: 4px solid #06acff;
         }
 
         .ext_footer {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 30px auto 20px auto;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            text-align: center;
             border-left: 4px solid #06acff;
             line-height: 1.6;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto 20px auto;
             background-color: white;
             border-radius: 8px;
@@ -57,14 +56,14 @@
         }
 
         .content {
-            padding: 30px;
+            padding: 0px;
         }
 
         .filters-section {
             background-color: #f8f9fa;
             border-radius: 8px;
+            margin-top: 10px;
             padding: 20px;
-            margin-bottom: 30px;
             border-left: 4px solid #06acff;
         }
 
@@ -146,8 +145,7 @@
             font-size: 14px;
             font-weight: bold;
             margin-bottom: 10px;
-            background-color: #e3f2fd;
-            padding: 4px 10px;
+            padding: 0px;
             border-radius: 4px;
         }
 
@@ -160,8 +158,8 @@
             color: #0056b3;
             text-decoration: none;
             font-weight: 600;
-            font-size: 18px;
-            margin: 10px 0;
+            font-size: 16px;
+            margin: 10px 0 0 0;
             transition: color 0.3s ease;
         }
 
@@ -180,7 +178,7 @@
             border-radius: 6px;
             margin: 15px 0;
             text-align: justify;
-            font-size: 16px;
+            font-size: 15px;
             line-height: 1.5;
         }
 
@@ -266,7 +264,7 @@
     </style>
 </head>
 
-<body>    
+<body>
     <!-- Cabeçalho opcional estilizado -->
     {% if header_text %}
     <div class="ext_header">
@@ -274,118 +272,127 @@
     </div>
     {% endif %}
 
-    <!-- Verifica se algum resulado foi encontrado -->
-    {% if not results or results|length == 0 %}        
+    <!-- Verifica se algum resultado foi encontrado -->
+    {% if not results or results|length == 0 %}
+
         <div class="no-results">
             <p>{{ no_results_message | default('Nenhum resultado foi encontrado para os critérios de pesquisa especificados.') }}</p>
         </div>
+
     {% else %}
 
-    <!-- Loop para criar um card por seção -->
-    {% for result_group in results %}
-        <div class="container"> 
+        <!-- Loop para criar um card por seção -->
+        {% for result_group in results %}
+        <div class="container">
             <div class="content">
-                <!-- Filtros da Seção -->
-                {% if result_group.filters|default({})|length > 0 %}
-                <section class="filters-section">
-                    <div class="filter-title">
-                        {{ result_group.filters.title | default('Filtros Aplicados na Pesquisa') }}
-                    </div>
 
-                    {% if result_group.filters.included_units %}
-                    <div class="filter-subtitle">
-                        {{ result_group.filters.included_units.title | default('Filtrando resultados para:') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for unit in result_group.filters.included_units['items'] %}
-                        <li>{{ unit }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-
-                    {% if result_group.filters.excluded_units %}
-                    <div class="filter-subtitle">
-                        {{ result_group.filters.excluded_units.title | default('Desconsiderar Unidades (e subordinadas):') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for unit in result_group.filters.excluded_units['items'] %}
-                        <li>{{ unit }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-
-                    {% if result_group.filters.publication_types %}
-                    <div class="filter-subtitle">
-                        {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
-                    </div>
-                    <ul class="filter-list">
-                        {% for type in result_group.filters.publication_types['items'] %}
-                        <li>{{ type }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-                
-                </section>
-                {% endif %}
                 <!-- Resultados da Seção -->
                 <section class="results-section">
                     {% if result_group.search_terms.get('terms', [])|length > 0 or
                     result_group.search_terms.get('items',[])|length > 0 %}
 
-                    {% set title = result_group.search_terms.terms | join(', ') %}
+                        {% set title = result_group.search_terms.terms | join(', ') %}
 
-                    {% for document in result_group.search_terms['items'] %}
-                    {% if loop.changed(document.header_title) %}
-                    <div class="result-header" title="{{ document.header_title }}">
-                        {{ document.header_title | safe }}
-                    </div>
-                    {% endif %}
+                        {% for document in result_group.search_terms['items'] %}
 
-                    <div class="result-body">
-                        {% if loop.first %}
-                        <div class="group-marker">
-                            {% if result_group.search_terms.group %}
-                            Grupo: {{ result_group.search_terms.group | safe }}
+                            {% if loop.changed(document.header_title|trim) %}
+                                {% if document.header_title %}
+                                    <div class="result-header" title="{{ header_title }}">
+                                        {{ document.header_title | safe }}
+                                    </div>
+                                {% endif %}
                             {% endif %}
-                        </div>
-                        <h3>Resultados para: {{ title }}</h3>
-                        {% endif %}
 
-                        {% if not document.get('section') %}
-                        {% if no_results_message is defined %}
-                        <p>{{ no_results_message | safe }}</p>
-                        {% else %}
-                        <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
-                        {% endif %}
-                        {% else %}
-                        <div class="section-marker">{{ document.section | safe }}</div>
+                            <!-- Corpo do resultado -->
+                            <div class="result-body">
 
-                        <a href="{{ document.url }}" class="document-link" {% if document.url_new_tab %}target="_blank" {% endif %}>
-                            {{ document.title }}
-                        </a>
+                                {% if loop.first %}
+                                    <div class="group-marker">
+                                        {% if result_group.search_terms.group %}
+                                            Grupo: {{ result_group.search_terms.group | safe }}
+                                        {% endif %}
+                                    </div>
 
-                        <div class="abstract">
-                            {{ document.abstract | safe }}
-                        </div>
+                                    <h3><strong>Resultados para: </strong> {{ title }}</h3>
+                                {% endif %}
 
-                        <div class="date">{{ document.date }}</div>
-                        {% endif %}
+                                {% if not document.get('section') %}
+                                    {% if no_results_message is defined %}
+                                        <p>{{ no_results_message | safe }}</p>
+                                    {% else %}
+                                        <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
+                                    {% endif %}
+                                {% else %}
 
-                        {% if not loop.last %}
-                        <hr class="separator">
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                                    <a href="{{ document.url }}" class="document-link"
+                                    {% if document.url_new_tab %}target="_blank"{% endif %}>
+                                        {{ document.title }}
+                                    </a>
 
-                    {% else %}
-                    <div class="no-results">
-                        <p>{{ no_results_message | default('Nenhum resultado encontrado para os critérios de pesquisa especificados.') }}</p>
-                    </div>
+                                    <div class="section-marker">{{ document.section | safe }}</div>
+
+                                    <div class="abstract">{{ document.abstract | safe }}</div>
+
+                                    <div class="date">{{ document.date }}</div>
+
+                                {% endif %}
+
+                                <hr class="separator">
+                            </div>
+
+                        {% endfor %}
+
                     {% endif %}
-                </section> 
+
+                </section>
+
+                <!-- Filtros da Seção -->
+                {% if result_group.filters|default({})|length > 0 %}
+                <section class="filters-section">
+
+                    <div class="filter-title">
+                        {{ result_group.filters.title | default('Filtros Aplicados na Pesquisa') }}
+                    </div>
+
+                    {% if result_group.filters.included_units %}
+                        <div class="filter-subtitle">
+                            {{ result_group.filters.included_units.title | default('Filtrando resultados para:') }}
+                        </div>
+                        <ul class="filter-list">
+                            {% for unit in result_group.filters.included_units.items %}
+                                <li>{{ unit }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    {% if result_group.filters.excluded_units %}
+                        <div class="filter-subtitle">
+                            {{ result_group.filters.excluded_units.title | default('Desconsiderar Unidades (e subordinadas):') }}
+                        </div>
+                        <ul class="filter-list">
+                            {% for unit in result_group.filters.excluded_units.items %}
+                                <li>{{ unit }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    {% if result_group.filters.publication_types %}
+                        <div class="filter-subtitle">
+                            {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
+                        </div>
+                        <ul class="filter-list">
+                            {% for type in result_group.filters.publication_types.items %}
+                                <li>{{ type }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                </section>
+                {% endif %}
+
             </div>
         </div>
-    {% endfor %}
+        {% endfor %}
 
     {% endif %}
 
