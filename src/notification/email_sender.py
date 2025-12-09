@@ -2,6 +2,8 @@
 
 import os
 import sys
+import logging
+
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
@@ -87,7 +89,7 @@ class EmailSender(ISender):
                 header_title = search["header"]
                 headers_list["header"] = f"{header_title}"
 
-            # Criar filters para ESTE search específico
+            # Criar filters para este search específico
             filters_content = {}
             if not self.report_config.hide_filters:
                 if (
@@ -116,27 +118,36 @@ class EmailSender(ISender):
                         }
         
             for group, search_results in search["result"].items():
-                term_data = {
-                    "search_terms": {"terms": [], "items": []},
-                    "filters": filters_content,  # Filtros específicos desta seção
-                    "header_title": header_title  # Guardar o título do header
-                }
-
                 if not search_results:
+                    term_data = {
+                        "search_terms": {"terms": [], "items": []},
+                        "filters": filters_content,
+                        "header_title": header_title
+                    }
                     term_data["search_terms"]["items"].append({"header_title": header_title})
-
+                    report_data.append(term_data)
                 else:
-                    if not self.report_config.hide_filters:
-                        if group != "single_group":
-                            term_data["search_terms"]["group"] = group
-
+                    # Group by term - each term will have its own block.
                     for term, term_results in search_results.items():
+                        term_data = {
+                            "search_terms": {"terms": [], "items": []},
+                            "filters": filters_content,
+                            "header_title": header_title
+                        }
+
+                        # Add group information if it's not the default.
                         if not self.report_config.hide_filters:
-                            if term != "all_publications":                                
+                            if group != "single_group":
+                                term_data["search_terms"]["group"] = group
+
+                        # Add the specific term
+                        if not self.report_config.hide_filters:
+                            if term != "all_publications":
                                 term_data["search_terms"]["terms"].append(f"{term}")
                             else:
                                 term_data["search_terms"]["terms"].append(f"{term}")
 
+                        # Process each department within this term.
                         for department, results in term_results.items():
                             if (
                                 not self.report_config.hide_filters
@@ -144,7 +155,8 @@ class EmailSender(ISender):
                             ):
                                 term_data["search_terms"]["terms"].append(f"{department}")
 
-                            for result in results:    
+                            # Add all results for this term.
+                            for result in results:
                                 sec_desc = result["section"]
                                 title = result["title"]
                                 if not result["title"]:
@@ -161,8 +173,8 @@ class EmailSender(ISender):
                                         "date": result["date"],
                                     }
                                 )
-                
-                report_data.append(term_data)
+
+                        report_data.append(term_data)
 
         return tm.renderizar(
             "dou_template.html",
