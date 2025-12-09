@@ -312,9 +312,9 @@
                                             Grupo: {{ result_group.search_terms.group | safe }}
                                         {% endif %}
                                     </div>
-
-                                    <h3><strong>Resultados para: </strong> {{ title }}</h3>
-                                    <!-- <h3><strong>Resultados para: </strong> {{ result_group.term }}</h3> -->
+                                      {% if title %}
+                                        <h3><strong>Resultados para: </strong> {{ title }}</h3>
+                                      {% endif %}
                                 {% endif %}
 
                                 {% if not document.get('section') %}
