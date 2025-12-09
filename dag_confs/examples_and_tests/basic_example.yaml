@@ -1,14 +1,9 @@
 dag:
   id: basic_example
   description: DAG de teste
-  owner: 
-    - Ro-dou Team
   search:
-    source: 
-      - DOU
     terms:
       - dados abertos
-      - tecnologia da informação
       - governo aberto
       - lei de acesso à informação
   report:
