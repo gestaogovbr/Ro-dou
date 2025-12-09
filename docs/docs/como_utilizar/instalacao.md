@@ -16,9 +16,11 @@
 O código-fonte está disponibilizado no <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> perfil do GitHub do Ministério da Gestão e da Inovação em Serviços Públicos.
 
 
-Neste conteúdo, fornecemos abaixo uma configuração demonstrativa para que você possa executar o Ro-DOU no seu computador.
+Neste conteúdo, fornecemos abaixo uma configuração demonstrativa para que você possa configurar e executar o Ro-DOU no seu computador.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Passo a passo:
 
@@ -33,9 +35,6 @@ Passo a passo:
 git clone https://github.com/gestaogovbr/Ro-dou
 cd Ro-Dou
 ```
-Abaixo, apresentamos um método ilustrativo Sobre como realizar a instalção e visualizar os clippings:
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 3. O repositório já vem com comandos pré-definidos no Makefile para facilitar a execução.
 
@@ -140,8 +139,6 @@ Este comando baixa as imagens Docker necessárias, efetua o build do container D
 
 **Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
 que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
-
-Os vídeos a seguir são uma demonstração ilustrativa sobre como realizar pesquisas através do protal do INLABS:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 

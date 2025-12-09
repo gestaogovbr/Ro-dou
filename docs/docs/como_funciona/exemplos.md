@@ -2,6 +2,9 @@
 
 Neste segmento, você encontrará uma série de exemplos práticos de utilização do Ro-DOU. A leitura dos exemplos ajudará a visualizar de que maneira o Ro-DOU pode ser utilizado.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/L6wlMqLlNBs?si=1n3qs7AZjxYfJWoh" title="Explorando as Dags do Ro-DOU com Exemplos Práticos" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
 ### Exemplo 1
 
 A configuração a seguir cria uma DAG que realiza a pesquisa **diária** dos
@@ -190,6 +193,7 @@ tela de visualização da DAG no Airflow.
 ### Exemplo 8
 Esta configuração envia as notificações para canais Discord. É necessário ter
 permissões de administrador no Discord para gerar o Webhook:
+
 
 ```yaml
 dag:
