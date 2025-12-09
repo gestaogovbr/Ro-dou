@@ -2,6 +2,11 @@
 
 A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
+Siga os passo e conteúdos abaixo para melhor entendimento e utilização da plataforma!
+Abaixo temos uma demonstração audiovisual para auxiliar no uso da ferramenta:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/L6wlMqLlNBs?si=1n3qs7AZjxYfJWoh" title="Explorando as Dags do Ro-DOU com Exemplos Práticos" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## Parâmetros da DAG
 * **id**: Nome identificador da DAG a ser gerada.
 * **description**: Descrição da DAG de pesquisa.
@@ -13,6 +18,15 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 * **owner**: Responsável pela DAG.
 
 ## Parâmetros da Pesquisa (Search)
+
+Abaixo temos uma demonstração audiovisual para auxiliar nos filtros de pesquisa e pesquisas avançadas:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HazhpYuComw?si=daHkk0epEe8CK7Ms" title="Criando uma DAG com múltiplas pesquisas" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Em seguida, tem uma demonstração audiovisual sobre como refinar o filtro de buscas do Ro-DOU:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/3I_wXZ_EUBg?si=qZnzljgo3akGFCpY" title="yFiltro por unidade e por tipo de publicação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 * **search**: Pode ser uma ou uma lista de pesquisas.
 - **date**: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA
 - **department**: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.
@@ -45,3 +59,8 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **slack_webhook**: URL de Webhook para integração com o Slack.
 - **subject**: Texto de assunto do email.
 
+## Como utilizar Slack ou Discord para envio do clippings (View)
+
+Baseado no que foi visto anteriormente nesta seção, o vídeo abaixo demonstra como utilizar outras plataformas para envio dos clippings de pesquisa:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/nHV_eH91fKE?si=6ezax8UaQjbkrSKr" title="Utilizando o Slack ou Discord para envio do clipping" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

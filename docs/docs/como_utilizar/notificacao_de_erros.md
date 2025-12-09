@@ -10,3 +10,7 @@
   * `Connection Type` = `Slack API`
   * `Description` = `{"channel": "nome-do-channel-para-mandar-mensagem"}`
   * `Slack API Token` = `obtido no passo 1`
+
+Abaixo temos uma demonstração ilustrativa sobre como acessar os logs de erro do Ro-DOU:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/_gU9Rsadl7M?si=--QtX7IjHUOk_bC2" title="Acessando os Logs de Erro do Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
