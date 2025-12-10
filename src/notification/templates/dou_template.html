@@ -62,8 +62,8 @@
         .filters-section {
             background-color: #f8f9fa;
             border-radius: 8px;
-            margin-top: 10px;
-            padding: 20px;
+            padding: 15px;
+            margin-bottom: 10px;
             border-left: 4px solid #06acff;
         }
 
@@ -283,15 +283,60 @@
 
         <!-- Loop para criar um card por seção -->
         {% for result_group in results %}
-        <div class="container">
-            <div class="content">
+            {% if loop.first %}
+                <!-- Filtros da Seção -->
+                {% if result_group.filters|default({})|length > 0 %}
+                    <section class="filters-section">
 
+                        <div class="filter-title">
+                            {{ result_group.filters.title | default('Filtros Aplicados na Pesquisa') }}
+                        </div>
+
+                        {% if result_group.filters.included_units['title'] | safe  %}
+                            <div class="filter-subtitle">
+                                {{ result_group.filters.included_units['title'] | safe | default('Filtrando resultados para:') }}
+                            </div>
+                            <ul class="filter-list">
+                                {% for unit in result_group.filters.included_units['items'] %}
+                                    <li>{{ unit }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if result_group.filters.excluded_units %}
+                            <div class="filter-subtitle">
+                                {{ result_group.filters.excluded_units['title'] | safe | default('Desconsiderar Unidades (e subordinadas):') }}
+                            </div>
+                            <ul class="filter-list">
+                                {% for unit in result_group.filters.excluded_units['items'] %}
+                                    <li>{{ unit }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if filters.publication_types %}
+                            <div class="filter-subtitle">
+                                {{ filters.publication_types.title | default('Tipos de publicações:') }}
+                            </div>
+                            <ul class="filter-list">
+                                {% for type in result_group.filters.publication_types['items'] %}
+                                    <li>{{ type }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                    </section>
+                {% endif %}
+            {% endif %}
+        <div class="container">            
+            <div class="content">
                 <!-- Resultados da Seção -->
                 <section class="results-section">
                     {% if result_group.search_terms.get('terms', [])|length > 0 or
                     result_group.search_terms.get('items',[])|length > 0 %}
 
                         {% set title = result_group.search_terms.terms | join(', ') %}
+                        {% set department = result_group.search_terms.department %}
 
                         {% for document in result_group.search_terms['items'] %}
 
@@ -312,6 +357,11 @@
                                             Grupo: {{ result_group.search_terms.group | safe }}
                                         {% endif %}
                                     </div>
+
+                                     {% if department %}
+                                        <h3><strong> {{ department }} </strong></h3>
+                                      {% endif %}
+
                                       {% if title %}
                                         <h3><strong>Resultados para: </strong> {{ title }}</h3>
                                       {% endif %}
@@ -327,7 +377,7 @@
 
                                     <a href="{{ document.url }}" class="document-link"
                                     {% if document.url_new_tab %}target="_blank"{% endif %}>
-                                        {{ document.title }}
+                                        {{ document.title | safe }}
                                     </a>
 
                                     <div class="section-marker">{{ document.section | safe }}</div>
@@ -346,51 +396,6 @@
                     {% endif %}
 
                 </section>
-
-                <!-- Filtros da Seção -->
-                {% if result_group.filters|default({})|length > 0 %}
-                <section class="filters-section">
-
-                    <div class="filter-title">
-                        {{ result_group.filters.title | default('Filtros Aplicados na Pesquisa') }}
-                    </div>
-
-                    {% if result_group.filters.included_units %}
-                        <div class="filter-subtitle">
-                            {{ result_group.filters.included_units.title | default('Filtrando resultados para:') }}
-                        </div>
-                        <ul class="filter-list">
-                            {% for unit in result_group.filters.included_units.items %}
-                                <li>{{ unit }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-
-                    {% if result_group.filters.excluded_units %}
-                        <div class="filter-subtitle">
-                            {{ result_group.filters.excluded_units.title | default('Desconsiderar Unidades (e subordinadas):') }}
-                        </div>
-                        <ul class="filter-list">
-                            {% for unit in result_group.filters.excluded_units.items %}
-                                <li>{{ unit }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-
-                    {% if result_group.filters.publication_types %}
-                        <div class="filter-subtitle">
-                            {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
-                        </div>
-                        <ul class="filter-list">
-                            {% for type in result_group.filters.publication_types.items %}
-                                <li>{{ type }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-
-                </section>
-                {% endif %}
-
             </div>
         </div>
         {% endfor %}

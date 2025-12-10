@@ -98,7 +98,7 @@ class EmailSender(ISender):
                     or search["pubtype"]
                 ):
                     filters_content = {"title": "Filtros Aplicados na Pesquisa:"}
-                    
+                   
                     if search["department"]:
                         filters_content["included_units"] = {
                             "title": "Unidades Incluídas:",
@@ -116,46 +116,56 @@ class EmailSender(ISender):
                             "title": "Tipos de Publicações:",
                             "items": [f"{pub}" for pub in search["pubtype"]],
                         }
-        
+
             for group, search_results in search["result"].items():
                 if not search_results:
                     term_data = {
-                        "search_terms": {"terms": [], "items": []},
-                        "filters": filters_content,
-                        "header_title": header_title
-                    }
+                            "search_terms": {
+                                "department": "",
+                                "terms": [],
+                                "items": []
+                            },
+                            "filters": filters_content,
+                            "header_title": header_title
+                        }
                     term_data["search_terms"]["items"].append({"header_title": header_title})
                     report_data.append(term_data)
                 else:
                     # Group by term - each term will have its own block.
                     for term, term_results in search_results.items():
-                        term_data = {
-                            "search_terms": {"terms": [], "items": []},
-                            "filters": filters_content,
-                            "header_title": header_title
-                        }
-
-                        # Add group information if it's not the default.
-                        if not self.report_config.hide_filters:
-                            if group != "single_group":
-                                term_data["search_terms"]["group"] = group
-
-                        # Add the specific term
-                        if not self.report_config.hide_filters:
-                            if term != "all_publications":
-                                term_data["search_terms"]["terms"].append(f"{term}")
-                            else:
-                                term_data["search_terms"]["terms"].append(f"{term}")
-
-                        # Process each department within this term.
+                        # Process each department within this term - create separate block per department
                         for department, results in term_results.items():
+                            # Create a separate term_data for each department
+                            term_data = {
+                                "search_terms": {
+                                    "department": "",
+                                    "terms": [],
+                                    "items": []
+                                },
+                                "filters": filters_content,
+                                "header_title": header_title
+                            }
+
+                            # Add group information if it's not the default.
+                            if not self.report_config.hide_filters:
+                                if group != "single_group":
+                                    term_data["search_terms"]["group"] = group
+
+                            # Add the specific term
+                            if not self.report_config.hide_filters:
+                                if term != "all_publications":
+                                    term_data["search_terms"]["terms"].append(f"{term}")
+                                else:
+                                    term_data["search_terms"]["terms"].append(f"{term}")
+
+                            # Add department to terms list if not default
                             if (
                                 not self.report_config.hide_filters
                                 and department != "single_department"
                             ):
-                                term_data["search_terms"]["terms"].append(f"{department}")
+                                term_data["search_terms"]["department"] = f"{department}"
 
-                            # Add all results for this term.
+                            # Add all results for this term and department.
                             for result in results:
                                 sec_desc = result["section"]
                                 title = result["title"]
@@ -174,11 +184,11 @@ class EmailSender(ISender):
                                     }
                                 )
 
-                        report_data.append(term_data)
-
+                            report_data.append(term_data)
+        logging.info(f"Filter content: {filters_content}")
+        logging.info(f"Report content: {report_data}")
         return tm.renderizar(
             "dou_template.html",
-            filters=filters_content,
             results=report_data,             
             hide_filters=self.report_config.hide_filters,       
             header_text=self.report_config.header_text or None,
