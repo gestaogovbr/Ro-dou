@@ -67,4 +67,4 @@ A colaboração neste repositório deve sempre ocorrer em um ambiente de respeit
 
 
 ### 📧 Contato
-Caso deseje expressar outros comentários, críticas, dúvidas ou sugestões, [contate-nos](../outros/contato.md).
+Caso deseje expressar outros comentários, críticas, dúvidas ou sugestões, [contate-nos](contato.md).
