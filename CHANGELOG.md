@@ -1,6 +1,18 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [8.0.3] - 2025-12-11
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+fix: add doc version
+
+### 🚀 Outros
+* Update CHANGELOG.md for 0.8.2 by @github-actions[bot] in https://github.com/gestaogovbr/Ro-dou/pull/250
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.2...8.0.3
+
 ## [0.8.2] - 2025-12-11
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
