@@ -44,6 +44,14 @@ jobs:
           git commit -m 'Update CHANGELOG.md for ${{ steps.get_latest_release.outputs.tag }}'
           git push -u origin update-changelog-${{ steps.get_latest_release.outputs.tag }}
 
+      - name: Write version file
+        run: echo "${{ steps.get_version.outputs.VERSION }}" > docs/version.txt
+
+      - name: Update mkdocs.yml with version
+        run: |
+          VERSION=$(cat docs/version.txt)
+          sed -i "s/version: .*/version: \"$VERSION\"/" docs/mkdocs.yml
+
       - name: Create Pull Request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -53,11 +61,3 @@ jobs:
             --body "This PR updates the CHANGELOG.md file with the release notes for ${{ steps.get_latest_release.outputs.tag }}." \
             --head update-changelog-${{ steps.get_latest_release.outputs.tag }} \
             --base main
-
-      - name: Write version file
-        run: echo "${{ steps.get_version.outputs.VERSION }}" > docs/version.txt
-
-      - name: Update mkdocs.yml with version
-        run: |
-          VERSION=$(cat docs/version.txt)
-          sed -i "s/version: .*/version: \"$VERSION\"/" docs/mkdocs.yml
