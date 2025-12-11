@@ -142,9 +142,8 @@
         .section-marker,
         .group-marker {
             color: #06acff;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 10px;
             padding: 0px;
             border-radius: 4px;
         }
@@ -362,9 +361,6 @@
                                         <h3><strong>Resultados para: </strong> {{ title }}</h3>
                                     {% endif %}
 
-                                    {% if department %}
-                                        <h3><strong> {{ department }} </strong></h3>
-                                    {% endif %}
                                 {% endif %}
 
                                 {% if not document.get('section') %}
@@ -379,7 +375,7 @@
                                     {% if document.url_new_tab %}target="_blank"{% endif %}>
                                         {{ document.title | safe }}
                                     </a>
-
+                                    <div class="section-marker">{{ department| safe }}</div>
                                     <div class="section-marker">{{ document.section | safe }}</div>
 
                                     <div class="abstract">{{ document.abstract | safe }}</div>
