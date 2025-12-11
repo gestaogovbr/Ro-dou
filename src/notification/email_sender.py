@@ -76,10 +76,10 @@ class EmailSender(ISender):
         """
 
         current_directory = os.path.dirname(__file__)
-        
+
         tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
         report_data = []
-        
+
         for search in self.search_report:
             headers_list = {}
             header_title = ""
@@ -98,7 +98,7 @@ class EmailSender(ISender):
                     or search["pubtype"]
                 ):
                     filters_content = {"title": "Filtros Aplicados na Pesquisa:"}
-                   
+
                     if search["department"]:
                         filters_content["included_units"] = {
                             "title": "Unidades Incluídas:",
@@ -159,10 +159,7 @@ class EmailSender(ISender):
                                     term_data["search_terms"]["terms"].append(f"{term}")
 
                             # Add department to terms list if not default
-                            if (
-                                not self.report_config.hide_filters
-                                and department != "single_department"
-                            ):
+                            if department != "single_department":
                                 term_data["search_terms"]["department"] = f"{department}"
 
                             # Add all results for this term and department.
@@ -189,13 +186,13 @@ class EmailSender(ISender):
         logging.info(f"Report content: {report_data}")
         return tm.renderizar(
             "dou_template.html",
-            results=report_data,             
-            hide_filters=self.report_config.hide_filters,       
+            results=report_data,
+            hide_filters=self.report_config.hide_filters,
             header_text=self.report_config.header_text or None,
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message
         )
-                       
+
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
         self.convert_report_to_dataframe().to_csv(temp_file, index=False)
