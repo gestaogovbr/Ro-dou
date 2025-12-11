@@ -1,6 +1,20 @@
 # Changelog
 
 As principais mudanças realizadas no repositório do [Ro-dou](https://github.com/gestaogovbr/Ro-dou) estão documentadas aqui a partir de 25/04/2023.
+## [0.8.0] - 2025-12-11
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+
+### Features
+* Criação de novo layout estilizado em HTML para notificação em email - Feat add new layout to email by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/208
+* feat: adiciona o número da versão no site da documentação by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/235
+
+### 🚀 Outros
+* Inclusão de tutoriais em vídeos na documentação - AdicionandoIframe by @Ian070508 in https://github.com/gestaogovbr/Ro-dou/pull/245
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.7.1...0.8.0
+
 ## [0.7.1] - 2025-12-04
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
