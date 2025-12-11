@@ -60,4 +60,4 @@ jobs:
       - name: Update mkdocs.yml with version
         run: |
           VERSION=$(cat docs/version.txt)
-          sed -i "s/version: .*/version: \"$VERSION\"/" mkdocs.yml
+          sed -i "s/version: .*/version: \"$VERSION\"/" docs/mkdocs.yml
