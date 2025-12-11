@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN pip install mkdocs mkdocs-macros-plugin
+RUN pip install mkdocs
 
 EXPOSE 8000
 
