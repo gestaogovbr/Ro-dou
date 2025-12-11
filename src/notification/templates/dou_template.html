@@ -328,7 +328,7 @@
                     </section>
                 {% endif %}
             {% endif %}
-        <div class="container">            
+        <div class="container">
             <div class="content">
                 <!-- Resultados da Seção -->
                 <section class="results-section">
@@ -358,13 +358,13 @@
                                         {% endif %}
                                     </div>
 
-                                     {% if department %}
-                                        <h3><strong> {{ department }} </strong></h3>
-                                      {% endif %}
-
-                                      {% if title %}
+                                    {% if title %}
                                         <h3><strong>Resultados para: </strong> {{ title }}</h3>
-                                      {% endif %}
+                                    {% endif %}
+
+                                    {% if department %}
+                                        <h3><strong> {{ department }} </strong></h3>
+                                    {% endif %}
                                 {% endif %}
 
                                 {% if not document.get('section') %}
