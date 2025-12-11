@@ -29,9 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install mkdocs mkdocs-macros-plugin
-
-      - name: Build MkDocs site
-        run: mkdocs gh-deploy --force -f docs/mkdocs.yml -b gh-pages
         
       - name: Write version file
         run: echo "${{ steps.get_version.outputs.VERSION }}" > docs/version.txt
@@ -40,3 +37,6 @@ jobs:
         run: |
           VERSION=$(cat docs/version.txt)
           sed -i "s/version: .*/version: \"$VERSION\"/" docs/mkdocs.yml
+          
+      - name: Build MkDocs site
+        run: mkdocs gh-deploy --force -f docs/mkdocs.yml -b gh-pages
