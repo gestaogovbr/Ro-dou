@@ -291,18 +291,16 @@
                         <div class="filter-title">
                             {{ result_group.filters.title | default('Filtros Aplicados na Pesquisa') }}
                         </div>
-
-                        {% if result_group.filters.included_units['title'] | safe  %}
-                            <div class="filter-subtitle">
-                                {{ result_group.filters.included_units['title'] | safe | default('Filtrando resultados para:') }}
-                            </div>
-                            <ul class="filter-list">
-                                {% for unit in result_group.filters.included_units['items'] %}
-                                    <li>{{ unit }}</li>
-                                {% endfor %}
-                            </ul>
+                        {% if result_group.filters.included_units %}
+                                <div class="filter-subtitle">
+                                    {{ result_group.filters.included_units['title'] | safe | default('Filtrando resultados para:') }}
+                                </div>
+                                <ul class="filter-list">
+                                    {% for unit in result_group.filters.included_units['items'] %}
+                                        <li>{{ unit }}</li>
+                                    {% endfor %}
+                                </ul>
                         {% endif %}
-
                         {% if result_group.filters.excluded_units %}
                             <div class="filter-subtitle">
                                 {{ result_group.filters.excluded_units['title'] | safe | default('Desconsiderar Unidades (e subordinadas):') }}
@@ -314,9 +312,9 @@
                             </ul>
                         {% endif %}
 
-                        {% if filters.publication_types %}
+                        {% if result_group.filters.publication_types %}
                             <div class="filter-subtitle">
-                                {{ filters.publication_types.title | default('Tipos de publicações:') }}
+                                {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
                             </div>
                             <ul class="filter-list">
                                 {% for type in result_group.filters.publication_types['items'] %}
