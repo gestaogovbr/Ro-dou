@@ -482,7 +482,7 @@ dag:
 ```
 
 ### Exemplo 19
-Esta configuração envia as notificações de falhas na execucação da DAG para
+Esta configuração envia as notificações de falhas na execução da DAG para
 uma lista de email específica.
 
 ```yaml
