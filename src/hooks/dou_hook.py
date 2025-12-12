@@ -19,8 +19,8 @@ from utils.search_domains import SearchDate, Field, Section, calculate_from_date
 
 
 class DOUHook(BaseHook):
-    IN_WEB_BASE_URL = "http://www.in.gov.br/web/dou/-/"
-    IN_API_BASE_URL = "http://www.in.gov.br/consulta/-/buscar/dou"
+    IN_WEB_BASE_URL = "https://www.in.gov.br/web/dou/-/"
+    IN_API_BASE_URL = "https://www.in.gov.br/consulta/-/buscar/dou"
     SEC_DESCRIPTION = {
         Section.SECAO_1.value: "Seção 1",
         Section.SECAO_2.value: "Seção 2",
@@ -55,30 +55,46 @@ class DOUHook(BaseHook):
         else:
             return f"{field.value}-{term}"
 
+
     def _request_page(self, with_retry: bool, payload: dict):
         headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; Ro-DOU/0.7; +https://github.com/gestaogovbr/Ro-dou)",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Cache-Control": "no-cache",
         }
+
         try:
-            return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
-        except requests.exceptions.SSLError as e:
-            # SSL errors are unlikely to be fixed by retrying; propagate immediately
-            logging.error("SSL error when requesting DOU API: %s", e)
-            raise
-        except requests.exceptions.ConnectionError:
+            # First try with HTTPS
+            response = requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
+
+            # Extra Validation
+            if not response.url.startswith("https://"):
+                logging.warning("Response redirected to HTTP! Final URL: %s", response.url)
+
+            response.raise_for_status()
+            return response
+
+        except requests.exceptions.SSLError as ssl_err:
+            logging.error("SSL Error: %s", ssl_err)
+            logging.info("Trying fallback to HTTP…")
+
+            # Fallback for HTTP
+            http_url = self.IN_API_BASE_URL.replace("https://", "http://")
+            try:
+                response = requests.get(http_url, params=payload, headers=headers, timeout=10)
+                response.raise_for_status()
+                logging.warning("Using HTTP fallback. Final URL: %s", response.url)
+                return response
+            except requests.exceptions.RequestException as e:
+                logging.error("HTTP Fallback Error: %s", e)
+                raise
+
+        except requests.exceptions.RequestException as e:
+            logging.error("General Error accessing DOU API: %s", e)
             if with_retry:
-                logging.info("Sleep for 30 seconds before retry requests.get().")
+                logging.info("Sleep. Trying again in 30 seconds...")
                 time.sleep(30)
                 return requests.get(self.IN_API_BASE_URL, params=payload, headers=headers, timeout=10)
-            # If no retry requested, propagate to caller
-            raise
-
-
 
     def search_text(
         self,
@@ -139,19 +155,20 @@ class DOUHook(BaseHook):
         logging.info("Total pages: %s", number_pages)
 
         all_results = []
+        last_item = None
 
         # Loop for each page of result
         for page_num in range(number_pages):
             logging.info("Searching in page %s", str(page_num + 1))
 
             # If there is more than one page add extra payload params and reload the page
-            if page_num > 0:
+            if page_num > 0 and last_item:
                 # The id is needed for pagination to work because it requires
                 # passing the last id from the previous item page in request URL
                 # Delta is the number of records per page. By now is restricted up to 20.
                 payload.update({
-                    "id": item["id"],
-                    "displayDate": item["display_date_sortable"],
+                    "id": last_item["id"],
+                    "displayDate": last_item["display_date_sortable"],
                     # "delta": 20,
                     "newPage": page_num + 1,
                     "currentPage": page_num,
@@ -179,18 +196,20 @@ class DOUHook(BaseHook):
 
             if search_results:
                 for content in search_results:
-                    item = {}
-                    item["section"] = content["pubName"].lower()
-                    item["title"] = content["title"]
-                    item["href"] = self.IN_WEB_BASE_URL + content["urlTitle"]
-                    item["abstract"] = content["content"]
-                    item["date"] = content["pubDate"]
-                    item["id"] = content["classPK"]
-                    item["display_date_sortable"] = content["displayDateSortable"]
-                    item["hierarchyList"] = content["hierarchyList"]
-                    item["hierarchyStr"] = content["hierarchyStr"]
-                    item["arttype"] = content["artType"]
+                    item = {
+                        "section": content["pubName"].lower(),
+                        "title": content["title"],
+                        "href": self.IN_WEB_BASE_URL + content["urlTitle"],
+                        "abstract": content["content"],
+                        "date": content["pubDate"],
+                        "id": content["classPK"],
+                        "display_date_sortable": content["displayDateSortable"],
+                        "hierarchyList": content["hierarchyList"],
+                        "hierarchyStr": content["hierarchyStr"],
+                        "arttype": content["artType"],
+                        }
 
                     all_results.append(item)
+                    last_item = item
 
         return all_results

@@ -97,7 +97,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "is_exact_search": True,
                         "ignore_signature_match": True,
                         "force_rematch": True,
-                        "full_text": True,                        
+                        "full_text": True,
                         "use_summary": True,
                         "department": None,
                         "pubtype": None,
@@ -755,7 +755,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
             "terms_from_variable.yaml",
             {
                 "id": "terms_from_variable",
-                "description": "DAG de exemplo com termos na Variável",
+                "description": "DAG de exemplo com termos na Variável do Airflow",
                 "schedule": None,
                 "dataset": None,
                 "skip_null": True,

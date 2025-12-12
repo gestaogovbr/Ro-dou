@@ -29,6 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install mkdocs mkdocs-macros-plugin
-
+ 
       - name: Build MkDocs site
         run: mkdocs gh-deploy --force -f docs/mkdocs.yml -b gh-pages

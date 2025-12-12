@@ -33,14 +33,22 @@ jobs:
       - name: Update Changelog.md at specific line
         run: |
           line_number=3
-          sed -i "${line_number}r new_entry.md" CHANGELOG.md        
+          sed -i "${line_number}r new_entry.md" CHANGELOG.md
+
+      - name: Write version file
+        run: echo "${{ steps.get_latest_release.outputs.tag }}" > docs/version.txt
+
+      - name: Update mkdocs.yml with version
+        run: |
+          VERSION=$(cat docs/version.txt)
+          sed -i "s/version: \"versão atual: .*\"/version: \"versão atual: $VERSION\"/" docs/mkdocs.yml
 
       - name: Create new branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b update-changelog-${{ steps.get_latest_release.outputs.tag }}
-          git add CHANGELOG.md
+          git add CHANGELOG.md docs/version.txt docs/mkdocs.yml
           git commit -m 'Update CHANGELOG.md for ${{ steps.get_latest_release.outputs.tag }}'
           git push -u origin update-changelog-${{ steps.get_latest_release.outputs.tag }}
 
@@ -53,11 +61,3 @@ jobs:
             --body "This PR updates the CHANGELOG.md file with the release notes for ${{ steps.get_latest_release.outputs.tag }}." \
             --head update-changelog-${{ steps.get_latest_release.outputs.tag }} \
             --base main
-      
-      - name: Write version file
-        run: echo "${{ steps.get_version.outputs.VERSION }}" > docs/version.txt
-
-      - name: Update mkdocs.yml with version
-        run: |
-          VERSION=$(cat docs/version.txt)
-          sed -i "s/version: .*/version: \"$VERSION\"/" mkdocs.yml
