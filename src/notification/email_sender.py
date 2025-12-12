@@ -99,19 +99,19 @@ class EmailSender(ISender):
                 ):
                     filters_content = {"title": "Filtros Aplicados na Pesquisa:"}
 
-                    if search["department"]:
+                    if search["department"] and search["department"] is not None:
                         filters_content["included_units"] = {
                             "title": "Unidades Incluídas:",
                             "items": [f"{dpt}" for dpt in search["department"]],
                         }
 
-                    if search["department_ignore"]:
+                    if search["department_ignore"] and search["department_ignore"] is not None:
                         filters_content["excluded_units"] = {
                             "title": "Unidades Ignoradas:",
                             "items": [f"{dpt}" for dpt in search["department_ignore"]],
                         }
 
-                    if search["pubtype"]:
+                    if search["pubtype"] and search["pubtype"] is not None:
                         filters_content["publication_types"] = {
                             "title": "Tipos de Publicações:",
                             "items": [f"{pub}" for pub in search["pubtype"]],
