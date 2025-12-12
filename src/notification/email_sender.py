@@ -72,7 +72,7 @@ class EmailSender(ISender):
 
     def _generate_email_content(self) -> str:
         """Generate HTML content to be sent by email based on
-            search_report dictionary
+        search_report dictionary
         """
 
         current_directory = os.path.dirname(__file__)
@@ -105,7 +105,10 @@ class EmailSender(ISender):
                             "items": [f"{dpt}" for dpt in search["department"]],
                         }
 
-                    if search["department_ignore"] and search["department_ignore"] is not None:
+                    if (
+                        search["department_ignore"]
+                        and search["department_ignore"] is not None
+                    ):
                         filters_content["excluded_units"] = {
                             "title": "Unidades Ignoradas:",
                             "items": [f"{dpt}" for dpt in search["department_ignore"]],
@@ -120,14 +123,14 @@ class EmailSender(ISender):
             for group, search_results in search["result"].items():
                 if not search_results:
                     term_data = {
-                            "search_terms": {
-                                "department": "",
-                                "terms": [],
-                                "items": [{"header_title": header_title}]
-                            },
-                            "filters": filters_content,
-                            "header_title": header_title
-                        }
+                        "search_terms": {
+                            "department": "",
+                            "terms": [],
+                            "items": [{"header_title": header_title}],
+                        },
+                        "filters": filters_content,
+                        "header_title": header_title,
+                    }
                     report_data.append(term_data)
                     continue
                 # Group by term - each term will have its own block.
@@ -139,10 +142,10 @@ class EmailSender(ISender):
                             "search_terms": {
                                 "department": "",
                                 "terms": [],
-                                "items": []
+                                "items": [],
                             },
                             "filters": filters_content,
-                            "header_title": header_title
+                            "header_title": header_title,
                         }
 
                         # Add group information if it's not the default.
@@ -186,7 +189,7 @@ class EmailSender(ISender):
             hide_filters=self.report_config.hide_filters,
             header_text=self.report_config.header_text or None,
             footer=self.report_config.footer_text or None,
-            no_results_message=no_result_message
+            no_results_message=no_result_message,
         )
 
     def get_csv_tempfile(self) -> NamedTemporaryFile:
