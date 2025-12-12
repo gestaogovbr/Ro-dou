@@ -1,6 +1,16 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.8.1] - 2025-12-12
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Change
+### 🚀 Outros
+* Hotfix for new layout email by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/254
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+
 
 ## [0.8.0] - 2025-12-11
 <!-- Release notes generated using configuration in .github/release.yml at main -->
