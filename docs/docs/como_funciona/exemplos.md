@@ -480,3 +480,26 @@ dag:
       - destination@economia.gov.br
     subject: "Teste do Ro-dou - Todas as Portarias e Resoluções do MGI"
 ```
+
+### Exemplo 19
+Esta configuração envia as notificações de falhas na execução da DAG para
+uma lista de email específica.
+
+```yaml
+dag:
+  id: no_terms_example
+  description: DAG de callback
+  callback:
+    on_failure_callback:
+    - departamentodeti@economia.gov.br
+  search:
+    sources:
+    - INLABS
+    terms:
+    - tecnologia
+    - informação
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou - Envia callback para email nas falhas"
+```
