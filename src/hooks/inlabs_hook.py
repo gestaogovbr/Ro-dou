@@ -297,10 +297,13 @@ class INLABSHook(BaseHook):
             # can be a table or other text content that is not inside
             # a publication.
             # df.dropna(subset=["identifica"], inplace=True)
-
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
+            # Fill NaN identifica with name column value
+            df["identifica"] = df["identifica"].fillna(df["name"])
+            # Remove blank spaces and convert to uppercase
+            df["identifica"] = df["identifica"].str.strip().str.upper()
             if any(text_terms):
                 df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
                 df["matches_assina"] = df.apply(
