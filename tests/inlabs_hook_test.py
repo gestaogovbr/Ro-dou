@@ -441,7 +441,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
                         "date": "15/03/2024",
@@ -453,7 +453,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Pellentesque": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 2",
+                        "title": "TÍTULO DA PUBLICAÇÃO 2",
                         "href": "http://xxx.gov.br/",
                         "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>.",
                         "date": "15/03/2024",
@@ -502,7 +502,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tincidunt urna. Cras tincidunt nunc vestibulum velit pellentesque facilisis. Aenean sollicitudin ante elit, vitae vehicula nisi congue id. Brasília/DF, 15 de março de 2024. Pessoa 1 Analista <br>",
                         "date": "15/03/2024",
@@ -552,7 +552,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": """Integer id neque quis urna ultrices iaculis.
                         Donec et enim mauris""",
@@ -600,7 +600,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tinc (...)",
                         "date": "15/03/2024",
@@ -680,7 +680,7 @@ def test_transform_search_results(
                 "Pellentesque": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação",
+                        "title": "TÍTULO DA PUBLICAÇÃO",
                         "href": "http://xxx.gov.br/",
                         "abstract": "<%%>Pellentesque</%%> Phasellus venenatis auctor mauris.",
                         "date": "15/03/2024",
