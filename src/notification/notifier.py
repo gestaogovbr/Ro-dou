@@ -33,7 +33,9 @@ class Notifier:
         if specs.report.slack:
             self.senders.append(SlackSender(specs.report))
         if specs.report.notification:
-            self.senders.append(NotificationSender(specs.report))
+            for _ in specs.report.notification:
+                print (_)
+                self.senders.append(NotificationSender(specs.report))
 
 
     def send_notification(self, search_report: str, report_date: str):

@@ -135,7 +135,7 @@ class SearchConfig(BaseModel):
         "(Funcionalidade disponível apenas no INLABS)",
     )
     text_length: Optional[int] = Field(
-        default=400, 
+        default=400,
         description="Tamanho do texto que será retornado na mensagem."
         "(Funcionalidade disponível apenas no INLABS)",
     )
@@ -166,7 +166,7 @@ class SearchConfig(BaseModel):
             raise ValueError(
                 "Os termos de pesquisa são obrigatórios quando a fonte QD é selecionada. "
             )
-        
+
         if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
                 "Pelo menos um critério de busca deve ser fornecido: "
@@ -175,7 +175,7 @@ class SearchConfig(BaseModel):
         return self
 
 class CallBacksConfig(BaseModel):
-    """Represents the configuration of the callback functions in the YAML file."""    
+    """Represents the configuration of the callback functions in the YAML file."""
     on_failure_callback: Optional[List[EmailStr]] = Field(
         default=None, description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha"
     )
@@ -189,7 +189,7 @@ class ReportConfig(BaseModel):
     discord: Optional[dict] = Field(
         default=None, description="Configuração do webhook do Discord para relatórios"
     )
-    notification: Optional[dict] = Field(
+    notification: Optional[List[str]] = Field(
         default=None, description="Configuração dos métodos de notificação para relatórios"
     )
     emails: Optional[List[EmailStr]] = Field(
@@ -209,14 +209,14 @@ class ReportConfig(BaseModel):
         "Default: True.",
     )
     page_title: Optional[str] = Field(
-        default=None, 
+        default=None,
         description="Título da página do relatório que é enviado por e-mail"
     )
     hide_filters: Optional[bool] = Field(
         default=False,
         description="Se deve ocultar os filtros aplicados no relatório."
         "Default: False.",
-    )    
+    )
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
     )
