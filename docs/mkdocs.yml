@@ -6,6 +6,10 @@ nav:
   - Como utilizar:
     - Introdução: como_utilizar/intro_utilizacao.md
     - Instalação e configuração: como_utilizar/instalacao.md
+    - Instalação do k8s: como_utilizar/instalacao_k8s.md
+    - Instalação do WSL no Windows: como_utilizar/instalacao_wsl_windows.md
+    - Habilitação do Docker no WSL: como_utilizar/habilitacao_docker_no_wsl.md
+
     - Usuários internos e externos: como_utilizar/usuarios.md
     - Notificação de erros: como_utilizar/notificacao_de_erros.md
   - Como funciona:
@@ -15,6 +19,7 @@ nav:
     - Parâmetros de pesquisa: como_funciona/parametros.md
     - Operadores de pesquisa avançada: como_funciona/operadores.md
     - Exemplos: como_funciona/exemplos.md
+    - Modelos de publicações: como_funciona/tipos_de_publicacoes.md
   - Como contribuir:
     - Contribuições: como_contribuir/contribuicoes.md
   - Oficinas e mídias:
@@ -25,6 +30,13 @@ nav:
     - Contato: outros/contato.md
   - CHANGELOG:
     - Changelog: changelog/changelog.md
-
+    
 theme:
-  name: 'readthedocs'
+  name: readthedocs
+  custom_dir: overrides
+  
+plugins:
+  - macros
+
+extra:
+  version: "versão atual: 0.8.1"  # Será substituído pelo workflow

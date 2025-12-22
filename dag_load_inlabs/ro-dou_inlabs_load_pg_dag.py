@@ -41,7 +41,7 @@ default_args = {
 @dag(
     dag_id="ro-dou_inlabs_load_pg",
     default_args=default_args,
-    schedule="00 15,23 * * *",
+    schedule="59 6,23 * * *",
     catchup=False,
     description=__doc__,
     max_active_runs=1,
@@ -103,6 +103,9 @@ def load_inlabs():
             files = [
                 tag.get("href") for tag in a_tags if tag.get("href").endswith(".zip")
             ]
+            logging.info("Files found: %s", files)
+            if not files:
+                raise ValueError("No files found for this date: %s" % trigger_date)
             return files
 
         def _download_files():
@@ -190,7 +193,7 @@ def load_inlabs():
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
-                )            
+                )
         df = _read_files()
         hook = PostgresHook(DEST_CONN_ID)
         _clean_db(hook)

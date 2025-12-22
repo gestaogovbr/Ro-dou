@@ -174,6 +174,11 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
@@ -184,21 +189,135 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             """,
             # texto_out
             (
-                """(...) cing elit.
+                """(...) . Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
             mauris, id semper tellus. Vivamus convallis lacinia ex sed
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
-            facilisis posue (...)"""
+            facilisis posuere elit. Proin consectetur tincidunt urna.
+            Cras tincidunt nunc vestibulum velit pellentesque facilisis.
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""
             ),
         ),
     ],
 )
 def test_trim_text(inlabs_hook, texto_in, texto_out):
-    print(inlabs_hook.TextDictHandler()._trim_text(texto_in))
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in) == texto_out
 
+@pytest.mark.parametrize(
+    "texto_in, texto_out",
+    [
+        (  # texto_in
+            """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
+            dolore magnam aliquam quaerat voluptatem.
+            """,
+            # texto_out
+            (
+                """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            adipisci velit, sed quia non numquam eius modi (...)"""
+            ),        
+        ),
+    ],
+)
+
+def test_trim_text_length(inlabs_hook, texto_in, texto_out):  
+    print(inlabs_hook.TextDictHandler()._trim_text(texto_in, 450))
+    assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 450) == texto_out
+
+@pytest.mark.parametrize(
+    "texto_in, texto_out",
+    [
+        (  # texto_in
+            """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
+            dolore magnam aliquam quaerat voluptatem.
+            """,
+            # texto_out
+            (
+                """(...) d ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            vo (...)"""
+            ),        
+        ),
+    ],
+)
+
+def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):     
+    assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 150) == texto_out
+
+@pytest.mark.parametrize(
+    "texto_in, texto_out",
+    [
+        (  # texto_in
+            """
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
+            mauris, id semper tellus. Vivamus convallis lacinia ex sed
+            fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
+            facilisis posuere elit. Proin consectetur tincidunt urna.
+            Cras tincidunt nunc vestibulum velit pellentesque facilisis.
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id.
+            Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista
+            """,
+            # texto_out
+            (
+                """(...) . Sed ut perspiciatis
+            unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+            totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            Phasellus venenatis auctor mauris. Integer id neque quis urna
+            ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
+            viverra finibus a et magna. <%%>Pellentesque</%%> vel elementum
+            mauris, id semper tellus. Vivamus convallis lacinia ex sed
+            fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
+            facilisis posuere elit. Proin consectetur tincidunt urna.
+            Cras tincidunt nunc vestibulum velit pellentesque facilisis.
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""
+            ),
+        ),
+    ],
+)
+def test_trim_text_length_less_than_0(inlabs_hook, texto_in, texto_out):
+    assert inlabs_hook.TextDictHandler()._trim_text(texto_in, -1) == texto_out
 
 @pytest.mark.parametrize(
     "df_in, dict_out",
@@ -322,9 +441,9 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "(...) <%%>Lorem</%%> ipsum dolor sit amet. (...)",
+                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -334,9 +453,9 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Pellentesque": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 2",
+                        "title": "TÍTULO DA PUBLICAÇÃO 2",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "(...) Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>. (...)",
+                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -383,7 +502,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tincidunt urna. Cras tincidunt nunc vestibulum velit pellentesque facilisis. Aenean sollicitudin ante elit, vitae vehicula nisi congue id. Brasília/DF, 15 de março de 2024. Pessoa 1 Analista <br>",
                         "date": "15/03/2024",
@@ -433,7 +552,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "Lorem": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": """Integer id neque quis urna ultrices iaculis.
                         Donec et enim mauris""",
@@ -481,7 +600,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                 "": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus venenatis auctor mauris. Integer id neque quis urna ultrices iaculis. Donec et enim mauris. Sed vel massa eget est viverra finibus a et magna. Pellentesque vel elementum mauris, id semper tellus. Vivamus convallis lacinia ex sed fermentum. Nulla mollis cursus ipsum vel interdum. Mauris facilisis posuere elit. Proin consectetur tinc (...)",
                         "date": "15/03/2024",
@@ -561,9 +680,9 @@ def test_transform_search_results(
                 "Pellentesque": [
                     {
                         "section": "DOU - Seção 1",
-                        "title": "Título da Publicação",
+                        "title": "TÍTULO DA PUBLICAÇÃO",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "(...) <%%>Pellentesque</%%> Phasellus venenatis auctor mauris. (...)",
+                        "abstract": "<%%>Pellentesque</%%> Phasellus venenatis auctor mauris.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,

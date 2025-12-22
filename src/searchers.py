@@ -17,6 +17,8 @@ import pandas as pd
 import requests
 from unidecode import unidecode
 
+from typing import Optional
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from hooks.dou_hook import DOUHook
@@ -29,23 +31,40 @@ from utils.search_domains import (
     calculate_from_datetime,
 )
 
-
 class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile("<.*?>")
 
     def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
-        """If `pre_term_list` is a str (in the case it came from xcom)
-        then its necessary to convert it back to dataframe and return
-        the first column. Otherwise the `pre_term_list` is returned.
+        """Convert different term list formats to a standardized list.
+        
+        Handles the conversion of search terms from various sources:
+        - Returns empty list if input is None
+        - Returns list as-is if already a list
+        - Returns string as-is if it's a string
+        - Converts JSON string to list by reading as DataFrame and extracting first column
+        
+        Args:
+            pre_term_list: Search terms in various formats (list, str, JSON string, or None)
+            
+        Returns:
+            list: Standardized list of search terms, empty list if input is None
         """
+        
         if pre_term_list is None:
             return []
-        return (
-            pre_term_list
-            if isinstance(pre_term_list, list)
-            else pd.read_json(pre_term_list).iloc[:, 0].tolist()
-        )
+        elif isinstance(pre_term_list, list):
+            return pre_term_list        
+        # elif isinstance(pre_term_list, str):
+        #     return pre_term_list
+        else:
+            return pd.read_json(pre_term_list).iloc[:, 0].tolist()
+
+        # return (
+        #     pre_term_list
+        #     if isinstance(pre_term_list, list)
+        #     else pd.read_json(pre_term_list).iloc[:, 0].tolist()
+        # )
 
     def _group_results(
         self,
@@ -58,6 +77,7 @@ class BaseSearcher(ABC):
         from `select_terms_from_db` task and the sql_query returned a
         second column (used as the group name)
         """
+
         dpt_grouped_result = self._group_by_department(search_results, department)
 
         if isinstance(term_list, str) and len(ast.literal_eval(term_list).values()) > 1:
@@ -191,7 +211,7 @@ class DOUSearcher(BaseSearcher):
         pubtype
     ) -> dict:
         search_results = {}
-
+        logging.info(f"Starting search with terms: {term_list}")
         # if no terms are specified, the search filter will search for all terms (*) to apply the filters
         if not term_list:
             logging.info("No specific terms provided, searching all")
@@ -277,19 +297,27 @@ class DOUSearcher(BaseSearcher):
                     field=field,
                     is_exact_search=is_exact_search,
                 )
-            except:
+            except Exception as e:
                 import requests
                 # If the underlying error is SSL related, don't retry — likely permanent
-                exc_type, exc_value, _ = sys.exc_info()
-                if isinstance(exc_value, requests.exceptions.SSLError):
-                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, exc_value)
+                if isinstance(e, requests.exceptions.SSLError):
+                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, e)
                     raise
+
+                # If it's a ValueError from missing script tag, it may indicate API structure change
+                # Still retry in case it's temporary
+                if isinstance(e, ValueError):
+                    logging.warning("ValueError encountered for term '%s': %s", search_term, str(e))
 
                 if retry > max_retries:
-                    logging.error("Error - Max retries reached")
+                    logging.error(
+                        "Error - Max retries reached for term '%s'. Last error: %s",
+                        search_term,
+                        str(e)
+                    )
                     raise
 
-                logging.info("Attempt %s of %s for term '%s'", retry, max_retries, search_term)
+                logging.info("Attempt %s of %s for term '%s'. Error: %s", retry, max_retries, search_term, str(e))
                 logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
                 time.sleep(30)
                 retry += 1
@@ -364,7 +392,7 @@ class DOUSearcher(BaseSearcher):
 
 class QDSearcher(BaseSearcher):
 
-    API_BASE_URL = "https://queridodiario.ok.org.br/api/gazettes"
+    API_BASE_URL = "https://api.queridodiario.ok.org.br/gazettes"
 
     def exec_search(
         self,
@@ -497,6 +525,7 @@ class INLABSSearcher(BaseSearcher):
         department_ignore: List[str],
         ignore_signature_match: bool,
         full_text: bool,
+        text_length: Optional[int],
         use_summary: bool,
         pubtype: List[str],
         reference_date: datetime = datetime.now(),
@@ -516,7 +545,8 @@ class INLABSSearcher(BaseSearcher):
             department_ignore (List[str]): List of departments to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
-            full_text (bool): If trim result text content
+            full_text (bool): If trim result text content 
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.           
             use_summary (bool): If exists, use summary as excerpt or full text
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -533,7 +563,7 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text, use_summary
+            search_terms, ignore_signature_match, full_text, text_length, use_summary
         )
 
         group_results = self._group_results(search_results, terms, department)
@@ -551,13 +581,16 @@ class INLABSSearcher(BaseSearcher):
                 None when no specific terms are provided
         Returns:
             Dict: Formatted as {"texto": List of terms}
-        """
-
+        """       
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
+        elif isinstance(terms, str) and terms.startswith("["):            
+            return {"texto": ast.literal_eval(terms)}   
+        elif isinstance(terms, dict):        
+            return {"texto": self._split_sql_terms(terms)}     
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
@@ -595,7 +628,7 @@ class INLABSSearcher(BaseSearcher):
     def _split_sql_terms(terms: Dict) -> List:
         """Split SQL terms into a list, removing duplicates.
         Get only the values from the first key of the Dict."""
-
+     
         first_key = next(iter(terms))
         return list(set(terms[first_key].values()))
 

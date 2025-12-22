@@ -1,10 +1,10 @@
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 WORKDIR /usr/src/app
 
 COPY . .
 
-RUN pip install mkdocs
+RUN pip install mkdocs mkdocs-macros-plugin
 
 EXPOSE 8000
 
