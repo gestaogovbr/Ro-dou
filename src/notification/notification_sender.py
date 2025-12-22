@@ -126,7 +126,7 @@ class NotificationSender(ISender):
             f"**{item['title']}**\n\n"
             f"{item['abstract']}\n\n"
             f"🔗 <{item['href']}>\n\n"
-            f"━━━━━━━━━━━━━━━━━"
+            f"━━━━━━━━━━━━━━━━━\n\n"
             for item in items
         )
 
