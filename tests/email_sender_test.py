@@ -1,14 +1,15 @@
 from collections import namedtuple
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 
 import pytest
 import apprise
-from pytest_mock import MockerFixture
 
 from dags.ro_dou_src.notification.email_sender import EmailSender
-  
+
+from notification.isender import ISender
+
 @pytest.fixture
 def mock_report_config():
     """Mock ReportConfig for testing"""
@@ -58,8 +59,8 @@ def mock_report_config_send_email():
 class TestEmailSenderInit:
     def test_init_with_valid_config(self, mock_report_config):
         sender = EmailSender(mock_report_config)
-        
-        assert isinstance(sender.apobj, apprise.Apprise)
+      
+        assert isinstance(sender, ISender)
 
 
 class TestEmailSenderProcessing:
@@ -95,23 +96,20 @@ class TestEmailSenderProcessing:
             },
         ]
         
-        email_content = sender.generate_email_content()
+        email_content = sender._generate_email_content()
 
         soup = BeautifulSoup(email_content, 'html.parser')
 
         # Procurar por elementos específicos
-        h2_element = soup.find('h2')
-        p_element = soup.find('p', string='ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...')
-        footer_p = soup.find('p', string='Test Footer')
-        date_p = soup.find('p', string='02/09/2021')
+        abstract = soup.find("div", class_="abstract")
+        date = soup.find('div', string='02/09/2021') 
+        footer = soup.find('div', class_='ext_footer')
         
-        assert h2_element is not None
-        assert h2_element.text == 'Seção 3'
-        assert p_element is not None
-        assert p_element.text == 'ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...'
-        assert footer_p is not None
-        assert footer_p.text == 'Test Footer'
-        assert date_p is not None
+        assert abstract is not None
+        assert abstract.text == 'ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...'
+        assert date is not None
+        assert date.text == '02/09/2021'
+        assert footer is not None
 
     def test_get_csv_tempfile(self, mock_report_config):
         sender = EmailSender(mock_report_config)
@@ -147,11 +145,8 @@ class TestEmailSenderProcessing:
         assert csv_file is not None
         assert csv_file.name.endswith('.csv')
 
-    @patch('dags.ro_dou_src.notification.email_sender.apprise.Apprise')
-    def test_send_email(self, mock_apprise_class, mock_report_config_send_email):
-        mock_apprise_instance = MagicMock()
-        mock_apprise_class.return_value = mock_apprise_instance
-
+    @patch('dags.ro_dou_src.notification.email_sender.send_email')
+    def test_send_email(self, mock_send_email, mock_report_config_send_email):
         sender = EmailSender(mock_report_config_send_email)
         report = [
             {
@@ -181,11 +176,18 @@ class TestEmailSenderProcessing:
                 },
             },
         ]
-        
-        sender.search_report = report
-        sender.watermark = "<p>Test Watermark</p>"
 
-        email_content = sender.send(search_report=report, report_date="2024-04-01")
-                 
-        assert mock_apprise_instance.notify.call_count == 1
-        assert email_content is None
+        result = sender.send(search_report=report, report_date="2024-04-01")
+
+        # Verifica que send_email foi chamado exatamente 1 vez
+        assert mock_send_email.call_count == 1
+
+        # Verifica os argumentos da chamada
+        call_args = mock_send_email.call_args
+        assert call_args[1]['to'] == ["teste@gestao.gov.br"]
+        assert "Test Subject - DOs de 2024-04-01" == call_args[1]['subject']
+        assert 'html_content' in call_args[1]
+        assert call_args[1]['mime_charset'] == 'utf-8'
+
+        # O método send não retorna nada quando envia o email
+        assert result is None
