@@ -18,6 +18,7 @@ class NotificationSender(ISender):
         self.apobj = apprise.Apprise()
         self.message = ""
         self.payload = []
+        self.delimiter = "━━━━━━━━━━━━━━━━━"
 
     def send(self, search_report: list, report_date: str = None):
         """
@@ -125,8 +126,8 @@ class NotificationSender(ISender):
             f"📅 {item['date']}\n\n"
             f"**{item['title']}**\n\n"
             f"{item['abstract']}\n\n"
-            f"🔗 <{item['href']}>\n\n"
-            f"━━━━━━━━━━━━━━━━━\n\n"
+            f"🔗 <{item['href']}>\n\n" +
+            self.delimiter + "\n\n"
             for item in items
         )
 
@@ -136,12 +137,16 @@ class NotificationSender(ISender):
 
         self.payload.append(self.message)
 
+    def _notify_or_fail(self, content: str):
+        sent = self.apobj.notify(body=content)
+        if not sent:
+            raise RuntimeError("Notification delivery failed")
+
     def send_chunked(self, message, max_len=8000):
         url = self.notification
         self.apobj.add(url)
 
-        delimiter = "━━━━━━━━━━━━━━━━━"
-        blocks = [b + delimiter for b in message.split(delimiter) if b.strip()]
+        blocks = [b + self.delimiter for b in message.split(self.delimiter) if b.strip()]
 
         current_chunk = ""
         try:
@@ -150,14 +155,15 @@ class NotificationSender(ISender):
                 # If a single block is too large, send it alone
                 if len(block) > max_len:
                     if current_chunk:
-                        self.apobj.notify(body=current_chunk.strip())
+                        self._notify_or_fail(current_chunk.strip())
                         current_chunk = ""
-                    self.apobj.notify(body=block.strip())
+
+                    self._notify_or_fail(block.strip())
                     continue
 
                 # Check if block fits in current chunk
                 if len(current_chunk) + len(block) > max_len:
-                    self.apobj.notify(body=current_chunk.strip())
+                    self._notify_or_fail(current_chunk.strip())
                     current_chunk = block
                 else:
                     current_chunk += block
@@ -165,7 +171,8 @@ class NotificationSender(ISender):
 
             # Send remaining content
             if current_chunk.strip():
-                self.apobj.notify(body=current_chunk.strip())
+                self._notify_or_fail(current_chunk.strip())
+
         except Exception:
             raise
 
