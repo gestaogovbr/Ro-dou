@@ -1,9 +1,8 @@
 from collections import namedtuple
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import apprise
-from pytest_mock import MockerFixture
 
 from dags.ro_dou_src.notification.notifier import Notifier
 

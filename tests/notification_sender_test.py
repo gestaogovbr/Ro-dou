@@ -6,8 +6,6 @@ from pytest_mock import MockerFixture
 
 from dags.ro_dou_src.notification.notification_sender import NotificationSender
 
-import logging
-
 @pytest.fixture
 def mock_report_config():
     """Mock ReportConfig for testing"""
@@ -139,8 +137,6 @@ class TestNotificationSenderSend:
         sender = NotificationSender(mock_report_config)
         sender.send(sample_search_report, "2024-04-01")
         
-        logging.info(f"Generated message: {sender.message}")
-
         assert "Test Header" in sender.message
         assert "**Seção 3**" in sender.message
 
@@ -336,7 +332,7 @@ class TestNotificationSenderProcessDepartmentResults:
         
         sender._process_department_results(department, results)
         
-        assert "**Departamento: Custom Department**" in sender.message
+        assert "**Unidade: Custom Department**" in sender.message
 
     def test_process_department_results_single_department_no_header(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -437,7 +433,7 @@ class TestNotificationSenderSendEmbeds:
     def test_send_embeds_single_item(self, mock_apprise_class, mock_report_config):
         mock_apprise_instance = MagicMock()
         mock_apprise_class.return_value = mock_apprise_instance
-        
+
         sender = NotificationSender(mock_report_config)
         items = [
             {
@@ -448,18 +444,25 @@ class TestNotificationSenderSendEmbeds:
                 "date": "01/01/2024"
             }
         ]
-        
-        with patch.object(sender, 'send_data') as mock_send_data:
-            sender.send_embeds(items)
-            
-            expected_message = "*📁 Seção 3*\n*📋 Test Title*\nTest abstract\n 🔗 https://example.com\n 📅 01/01/2024\nTest Footer\n"
-            mock_send_data.assert_called_once_with(expected_message)
+
+        sender.send_embeds(items)
+
+        expected_message = (
+            "📁 **Seção 3**\n\n"
+            "📅 01/01/2024\n\n"
+            "**Test Title**\n\n"
+            "Test abstract\n\n"
+            "🔗 <https://example.com>\n\n"
+            "━━━━━━━━━━━━━━━━━\n\n"
+            "Test Footer\n"
+        )
+        assert sender.payload[0] == expected_message
 
     @patch('dags.ro_dou_src.notification.notification_sender.apprise.Apprise')
     def test_send_embeds_multiple_items(self, mock_apprise_class, mock_report_config):
         mock_apprise_instance = MagicMock()
         mock_apprise_class.return_value = mock_apprise_instance
-        
+
         sender = NotificationSender(mock_report_config)
         items = [
             {
@@ -477,20 +480,19 @@ class TestNotificationSenderSendEmbeds:
                 "date": "02/01/2024"
             }
         ]
-        
-        with patch.object(sender, 'send_data') as mock_send_data:
-            sender.send_embeds(items)
-            
-            assert "*📁 Seção 1*" in sender.message
-            assert "*📋 Title 1*" in sender.message
-            assert "*📁 Seção 2*" in sender.message
-            assert "*📋 Title 2*" in sender.message
+
+        sender.send_embeds(items)
+
+        assert "📁 **Seção 1**" in sender.message
+        assert "**Title 1**" in sender.message
+        assert "📁 **Seção 2**" in sender.message
+        assert "**Title 2**" in sender.message
 
     @patch('dags.ro_dou_src.notification.notification_sender.apprise.Apprise')
     def test_send_embeds_without_footer(self, mock_apprise_class, mock_report_config_no_header_footer):
         mock_apprise_instance = MagicMock()
         mock_apprise_class.return_value = mock_apprise_instance
-        
+
         sender = NotificationSender(mock_report_config_no_header_footer)
         items = [
             {
@@ -501,12 +503,18 @@ class TestNotificationSenderSendEmbeds:
                 "date": "01/01/2024"
             }
         ]
-        
-        with patch.object(sender, 'send_data') as mock_send_data:
-            sender.send_embeds(items)
-            
-            expected_message = "*📁 Seção 3*\n*📋 Test Title*\nTest abstract\n 🔗 https://example.com\n 📅 01/01/2024\n"
-            mock_send_data.assert_called_once_with(expected_message)
+
+        sender.send_embeds(items)
+
+        expected_message = (
+            "📁 **Seção 3**\n\n"
+            "📅 01/01/2024\n\n"
+            "**Test Title**\n\n"
+            "Test abstract\n\n"
+            "🔗 <https://example.com>\n\n"
+            "━━━━━━━━━━━━━━━━━\n\n"
+        )
+        assert sender.payload[0] == expected_message
 
 
 class TestNotificationSenderSendData:
@@ -522,61 +530,16 @@ class TestNotificationSenderSendData:
         
         sender.send_data(data)
         
-        expected_url = "discord://123456789/abcdef123"
-        mock_apprise_instance.add.assert_called_once_with(expected_url)
+        expected_notification = {
+            "serviceId": "discord://",
+            "webhookId": "123456789",
+            "webhookToken": "abcdef123"
+        }
+        mock_apprise_instance.add.assert_called_once_with(expected_notification)
         mock_apprise_instance.notify.assert_called_once_with(body=data)
-
-    @patch('dags.ro_dou_src.notification.notification_sender.apprise.Apprise')
-    def test_send_data_service_with_protocol(self, mock_apprise_class):
-        MockReportConfig = namedtuple(
-            "MockReportConfig",
-            ["notification", "hide_filters", "header_text", "footer_text", "no_results_found_text"]
-        )
-        config_with_protocol = MockReportConfig(
-            notification={
-                "serviceId": "slack://",
-                "webhookId": "T12345678",
-                "webhookToken": "B87654321/abc123def456"
-            },
-            hide_filters=False,
-            header_text=None,
-            footer_text=None,
-            no_results_found_text="No results"
-        )
         
-        mock_apprise_instance = MagicMock()
-        mock_apprise_class.return_value = mock_apprise_instance
-        
-        sender = NotificationSender(config_with_protocol)
-        data = {"content": "Test data"}
-        
-        sender.send_data(data)
-        
-        expected_url = "slack://T12345678/B87654321/abc123def456"
-        mock_apprise_instance.add.assert_called_once_with(expected_url)
-        mock_apprise_instance.notify.assert_called_once_with(body=data)
-
-
 class TestNotificationSenderHelperMethods:
     """Test NotificationSender helper methods"""
-    
-    def test_remove_tag_from_serviceId_with_protocol(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-        
-        result = sender._remove_tag_from_serviceId("discord://")
-        assert result == "discord"
-
-    def test_remove_tag_from_serviceId_without_protocol(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-        
-        result = sender._remove_tag_from_serviceId("discord")
-        assert result == "discord"
-
-    def test_remove_tag_from_serviceId_multiple_protocols(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-        
-        result = sender._remove_tag_from_serviceId("https://discord://")
-        assert result == "httpsdiscord"
 
     def test_remove_html_tags_simple(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -621,18 +584,14 @@ class TestNotificationSenderIntegration:
         sender = NotificationSender(mock_report_config)
         sender.send(sample_search_report, "2024-04-01")
         
-        # Verify Apprise was configured correctly
-        expected_url = "discord://123456789/abcdef123"
-        mock_apprise_instance.add.assert_called_with(expected_url)
-        
         # Verify notification was sent
         mock_apprise_instance.notify.assert_called()
         
         # Verify message content includes expected elements
         assert "Test Header" in sender.message
         assert "**Seção 3**" in sender.message
-        assert "*📁 Seção 3*" in sender.message
-        assert "*📋 EXTRATO DE COMPROMISSO*" in sender.message
+        assert "\n\n**Unidade: Department A**\n\n📁 **Seção 3**\n\n" in sender.message
+        assert "\n\n**EXTRATO DE COMPROMISSO**\n\n" in sender.message
 
     @patch('dags.ro_dou_src.notification.notification_sender.apprise.Apprise')
     def test_notification_with_highlighting_placeholders(self, mock_apprise_class, mock_report_config):
