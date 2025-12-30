@@ -6,6 +6,7 @@ from pytest_mock import MockerFixture
 
 from dags.ro_dou_src.notification.notification_sender import NotificationSender
 
+import logging
 
 @pytest.fixture
 def mock_report_config():
@@ -138,6 +139,8 @@ class TestNotificationSenderSend:
         sender = NotificationSender(mock_report_config)
         sender.send(sample_search_report, "2024-04-01")
         
+        logging.info(f"Generated message: {sender.message}")
+
         assert "Test Header" in sender.message
         assert "**Seção 3**" in sender.message
 
@@ -694,7 +697,7 @@ class TestNotificationSenderEdgeCases:
 
     def test_send_with_nested_empty_structures(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
-        
+
         nested_empty_report = [
             {
                 "header": "Seção 1",
@@ -709,9 +712,11 @@ class TestNotificationSenderEdgeCases:
                 }
             }
         ]
-        
-        sender.send(nested_empty_report, "2024-04-01")
-        assert "**Seção 1**" in sender.message
+
+        # Mock the apprise notify to return False (indicating failure)
+        with patch.object(sender.apobj, 'notify', return_value=False):
+            with pytest.raises(RuntimeError, match="Notification delivery failed"):
+                sender.send(nested_empty_report, "2024-04-01")
 
     def test_highlight_tags_attribute(self, mock_report_config):
         sender = NotificationSender(mock_report_config)

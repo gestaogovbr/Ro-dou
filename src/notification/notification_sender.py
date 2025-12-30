@@ -137,6 +137,17 @@ class NotificationSender(ISender):
 
         self.payload.append(self.message)
 
+    def send_data(self, data):
+        """
+        Send notification data using Apprise.
+
+        Args:
+            data: Data to send (can be string or dict)
+        """
+        url = self.notification
+        self.apobj.add(url)
+        self.apobj.notify(body=data)
+
     def _notify_or_fail(self, content: str):
         sent = self.apobj.notify(body=content)
         if not sent:
