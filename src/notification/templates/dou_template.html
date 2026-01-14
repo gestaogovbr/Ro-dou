@@ -265,6 +265,14 @@
     </div>
     {% endif %}
 
+    <!-- Resumo gerado por IA -->
+    {% if ai_summary %}
+    <div class="ext_header">
+        <h3><strong>Resumo da IA:</strong></h3>
+        {{ ai_summary | safe }}
+    </div>
+    {% endif %}
+
     <!-- Verifica se algum resultado foi encontrado -->
     {% if not results or results|length == 0 %}
 

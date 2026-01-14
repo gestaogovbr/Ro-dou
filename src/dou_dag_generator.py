@@ -795,8 +795,9 @@ Status atual das variáveis:
         
         # Passa o summary e ai_summary para o notifier
         notifier.send_notification(
-            search_report=search_report, 
-            report_date=report_date
+            search_report=search_report,
+            report_date=report_date,
+            ai_summary=ai_summary
         )
 
     def select_terms_from_airflow_variable(self, variable: str):
