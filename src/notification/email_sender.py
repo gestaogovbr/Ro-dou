@@ -175,14 +175,13 @@ class EmailSender(ISender):
                                     "title": title,
                                     "url": result["href"],
                                     "url_new_tab": True,
-                                    "abstract": result["abstract"],
+                                    "abstract": self.remove_duplicate_title(result["abstract"]),
                                     "date": result["date"],
                                 }
                             )
 
                         report_data.append(term_data)
-        logging.info(f"Filter content: {filters_content}")
-        logging.info(f"Report content: {report_data}")
+
         return tm.renderizar(
             "dou_template.html",
             results=report_data,
@@ -191,7 +190,25 @@ class EmailSender(ISender):
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message,
         )
+    
+    def remove_duplicate_title(self, abstract):
+        """
+        Remove all content between ** (including the **) from the abstract.
+        This is used to remove the duplicate title that appears in the abstract.
+        Args:
+            abstract (str): The document abstract.
+        Returns:
+            str: The abstract without the duplicate title.
+        """
+        
+        import re
+        # Remove o primeiro par de ** e tudo que está entre eles
+        pattern = r'\*\*.*?\*\*'
+        cleaned = re.sub(pattern, '', abstract, count=1, flags=re.DOTALL)
 
+        return cleaned.strip()
+
+    
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
         self.convert_report_to_dataframe().to_csv(temp_file, index=False)
