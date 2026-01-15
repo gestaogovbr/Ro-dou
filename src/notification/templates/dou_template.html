@@ -381,6 +381,12 @@
 
                                         <div class="abstract">{{ document.abstract | safe }}</div>
 
+                                        {% if document.ai_summary %}
+                                        <div class="ai-summary" style="margin-top: 10px; padding: 10px; background-color: #f0f7ff; border-left: 3px solid #06acff; font-size: 13px; line-height: 1.5;">
+                                            <em>{{ document.ai_summary | safe }}</em>
+                                        </div>
+                                        {% endif %}
+
                                         <div class="date">{{ document.date }}</div>
 
                                     {% endif %}

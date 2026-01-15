@@ -35,11 +35,12 @@ class EmailSender(ISender):
         self.search_report = ""
         self.watermark = ""
 
-    def send(self, search_report: list, report_date: str, ai_summary: str):
+    def send(self, search_report: list, report_date: str, ai_summary: str = None, publications_with_summaries: list = None):
         """Builds the email content, the CSV if applies, and send it"""
         
         self.search_report = search_report
         self.ai_summary = ai_summary
+        self.publications_with_summaries = publications_with_summaries or []
 
         full_subject = f"{self.report_config.subject} - DOs de {report_date}"
         skip_notification = True
@@ -82,6 +83,15 @@ class EmailSender(ISender):
 
         tm = TemplateManager(template_dir=os.path.join(current_directory, "templates"))
         report_data = []
+        
+        # Cria um mapa de resumos individuais por título para fácil acesso
+        summaries_map = {}
+        if self.publications_with_summaries:
+            for pub in self.publications_with_summaries:
+                title = pub.get('title', '')
+                ai_summary = pub.get('ai_summary', '')
+                if title and ai_summary:
+                    summaries_map[title] = ai_summary
 
         for search in self.search_report:
             headers_list = {}
@@ -170,6 +180,9 @@ class EmailSender(ISender):
                         # Add all results for this term and department.
                         for result in results:
                             title = result["title"] or "Documento sem título"
+                            
+                            # Busca o resumo individual para este documento
+                            ai_summary = summaries_map.get(title, '')
 
                             term_data["search_terms"]["items"].append(
                                 {
@@ -180,6 +193,7 @@ class EmailSender(ISender):
                                     "url_new_tab": True,
                                     "abstract": result["abstract"],
                                     "date": result["date"],
+                                    "ai_summary": ai_summary,
                                 }
                             )
 

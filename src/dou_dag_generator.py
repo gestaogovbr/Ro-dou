@@ -296,20 +296,103 @@ class DouDigestDagGenerator:
             
             logging.info(f"AI summary generated successfully ({len(ai_summary)} characters)")
             
+            # Gera resumos individuais para cada publicação
+            publications_with_summaries = self.generate_individual_summaries(publications, summary_stats)
+            
+            # Armazena as publicações com resumos em XCom para uso posterior
+            context["ti"].xcom_push(key="publications_with_summaries", value=publications_with_summaries)
+            
+            # Retorna apenas o resumo geral
             return ai_summary
             
         except Exception as e:
             logging.error(f"Error generating AI summary: {str(e)}", exc_info=True)
             return f"Erro ao gerar resumo IA: {str(e)}"
 
+    def generate_individual_summaries(self, publications: list, summary_stats: dict) -> list:
+        """Gera resumo de uma frase para cada publicação"""
+        try:
+            llm_enabled = Variable.get("LLM_ENABLED", default_var="false").lower() == "true"
+            
+            if not llm_enabled:
+                logging.info("LLM disabled, skipping individual publication summaries")
+                return publications
+            
+            total_pubs = summary_stats.get('total_publications', 0)
+            
+            # Determina quantas publicações devem ser resumidas baseado no total
+            if total_pubs < 5:
+                num_to_summarize = 3
+            elif total_pubs < 20:
+                num_to_summarize = 5
+            else:
+                num_to_summarize = 8
+            
+            publications_to_process = publications[:num_to_summarize]
+            
+            for pub in publications_to_process:
+                title = pub.get('title', '')
+                abstract = pub.get('abstract', '')
+                content = pub.get('content', '')
+                
+                # Pula se não houver conteúdo significativo
+                if not title or (not abstract and not content):
+                    pub['ai_summary'] = ''
+                    continue
+                
+                # Monta prompt para resumo individual
+                text_to_summarize = f"{title}. {abstract if abstract else content}"
+                
+                prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU). Resuma o seguinte texto em UMA ÚNICA FRASE clara e concisa, em português brasileiro:
+
+Texto: {text_to_summarize[:500]}
+
+Gere apenas a frase de resumo, sem explicações adicionais. A frase deve começar com a ação ou tema principal."""
+                
+                # Chama a API para gerar o resumo
+                summary = self._call_ai_api(prompt)
+                
+                # Remove quebras de linha do resumo
+                summary = summary.replace('\n', ' ').strip()
+                
+                pub['ai_summary'] = summary
+                
+                logging.info(f"Individual summary generated for: {title[:50]}...")
+            
+            return publications
+            
+        except Exception as e:
+            logging.error(f"Error generating individual summaries: {str(e)}", exc_info=True)
+            return publications
+
+
     def _build_ai_prompt(self, summary_stats: dict, publications: list, report_date: str) -> str:
         """Constrói o prompt para a IA"""
+        total_pubs = summary_stats.get('total_publications', 0)
+        
+        # Ajusta o nível de detalhe baseado no número de publicações
+        if total_pubs < 5:
+            num_temas = 2
+            num_publicacoes = 2
+            word_limit = 300
+        elif total_pubs < 20:
+            num_temas = 3
+            num_publicacoes = 3
+            word_limit = 400
+        else:
+            num_temas = 5
+            num_publicacoes = 5
+            word_limit = 600
+        
+        # Ajusta quantidade de publicações para análise baseado no total
+        max_pubs_para_analise = min(10, total_pubs // 2 + 5)
+        
         prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU).
 
 Analise as seguintes publicações do Diário Oficial de {report_date}:
 
 ESTATÍSTICAS GERAIS:
-- Total de publicações encontradas: {summary_stats.get('total_publications', 0)}
+- Total de publicações encontradas: {total_pubs}
 - Fontes consultadas: {', '.join(summary_stats.get('publications_by_source', {}).keys())}
 - Buscas com resultados: {summary_stats.get('searches_with_results', 0)}/{summary_stats.get('total_searches', 0)}
 
@@ -320,8 +403,8 @@ DISTRIBUIÇÃO POR FONTE:
         
         prompt += f"\n\nPUBLICAÇÕES PARA ANÁLISE (amostra de {len(publications)}):\n\n"
         
-        # Adiciona detalhes das publicações (limitado a 15 para não estourar o contexto)
-        for idx, pub in enumerate(publications[:15], 1):
+        # Adiciona detalhes das publicações
+        for idx, pub in enumerate(publications[:max_pubs_para_analise], 1):
             prompt += f"{idx}. [{pub.get('source', 'N/A')}] {pub.get('section', 'N/A')}\n"
             prompt += f"   Título: {pub.get('title', 'Sem título')}\n"
             if pub.get('abstract'):
@@ -330,16 +413,28 @@ DISTRIBUIÇÃO POR FONTE:
                 prompt += f"   Conteúdo: {pub.get('content')[:300]}...\n"
             prompt += "\n"
         
-        prompt += """
+        prompt += f"""
 Com base nas informações acima, gere um RESUMO EXECUTIVO em português que contenha:
 
-1. **Principais Temas Identificados**: Liste os 3-5 temas mais recorrentes nas publicações
-2. **Publicações Mais Relevantes**: Destaque 2-3 publicações que merecem atenção especial
-3. **Tendências ou Padrões**: Identifique padrões interessantes (ex: aumento de publicações de um órgão específico)
-4. **Alertas Importantes**: Se houver algo que demande ação imediata ou atenção especial
+Formato: Texto claro, conciso e em português brasileiro, com até {word_limit} palavras.
+IMPORTANTE - Instruções de formatação HTML:
+- Use <strong>texto</strong> para destacar palavras-chave e títulos de seções (NÃO use ** ou markdown)
+- Separe os 3 parágrafos com <br><br> (quebra de linha dupla)
+- Inicie cada parágrafo com 4 espaços não-quebrável (&#160;&#160;&#160;&#160;) para recuo
+- Inicie cada seção com uma numeração em negrito: <strong>1. Título</strong>
+- Sem listas, sem asteriscos, sem #, ##, ---, ou outros caracteres especiais
 
-Formato: Texto claro, conciso e em português brasileiro, com até 500 palavras.
-Use markdown para formatação (negrito, listas, etc.).
+Estrutura esperada do output (copie exatamente este padrão):
+
+&#160;&#160;&#160;&#160;<strong>1. Principais Temas e Publicações Relevantes</strong> [Parágrafo 1 aqui com <strong>destaques em negrito</strong> para palavras-chave...]<br><br>&#160;&#160;&#160;&#160;<strong>2. Tendências e Padrões Identificados</strong> [Parágrafo 2 aqui com <strong>destaques em negrito</strong>...]<br><br>&#160;&#160;&#160;&#160;<strong>3. Alertas e Pontos de Atenção</strong> [Parágrafo 3 aqui com <strong>destaques em negrito</strong>...]
+
+Detalhes do conteúdo esperado:
+
+Parágrafo 1: Resuma os {num_temas}-{num_temas+1} temas mais recorrentes e destaque {num_publicacoes}-{num_publicacoes+1} publicações que merecem atenção especial. Apresente de forma corrida e fluida.
+
+Parágrafo 2: Identifique padrões interessantes nos dados (ex: aumento de publicações de um órgão específico, concentração em determinadas áreas, distribuição temporal, etc.). Apresente em forma narrativa.
+
+Parágrafo 3: Se houver algo que demande ação imediata, publicações urgentes ou situações que se destaquem, mencione aqui. Se não houver alertas críticos, descreva brevemente os pontos mais relevantes encontrados.
 """
         
         return prompt
@@ -787,17 +882,23 @@ Status atual das variáveis:
         summary = context["ti"].xcom_pull(task_ids="summarize_publications")
         # Recupera o resumo da IA se disponível
         ai_summary = context["ti"].xcom_pull(task_ids="generate_ai_summary")
+        # Recupera as publicações com resumos individuais
+        publications_with_summaries = context["ti"].xcom_pull(
+            task_ids="generate_ai_summary", key="publications_with_summaries"
+        )
         
         notifier = Notifier(specs)
 
         logging.info(f"Summary: {summary}")
         logging.info(f"IA Summary: {ai_summary}")
+        logging.info(f"Publications with summaries count: {len(publications_with_summaries) if publications_with_summaries else 0}")
         
-        # Passa o summary e ai_summary para o notifier
+        # Passa o summary, ai_summary e publicações com resumos para o notifier
         notifier.send_notification(
             search_report=search_report,
             report_date=report_date,
-            ai_summary=ai_summary
+            ai_summary=ai_summary,
+            publications_with_summaries=publications_with_summaries
         )
 
     def select_terms_from_airflow_variable(self, variable: str):
