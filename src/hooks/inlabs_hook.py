@@ -78,6 +78,9 @@ class INLABSHook(BaseHook):
 
         hook = PostgresHook(conn_id)
 
+        logging.info("Search term in INLABS HOOK.")
+        logging.info(f"Search terms -> {search_terms}")
+
         # Fetching results for main search terms
         main_search_queries = self._generate_sql(search_terms)
         hook.run(main_search_queries["create_extension"], autocommit=True)
@@ -130,6 +133,7 @@ class INLABSHook(BaseHook):
             "titulo",
             "subtitulo",
             "texto",
+            "terms_ignore",
         ]
         filtered_dict = {k: payload[k] for k in payload if k in allowed_keys}
 
@@ -207,7 +211,17 @@ class INLABSHook(BaseHook):
                         ) +
                         ")"
                 )
-
+            elif key == 'terms_ignore':
+                conditions.append(
+                    "(" +
+                    " AND ".join(
+                        [
+                            rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{value}\y')"
+                            for value in values
+                        ]
+                    ) +
+                    ")"
+                )
             else:
                 conditions.append(
                     "(" +
@@ -223,6 +237,7 @@ class INLABSHook(BaseHook):
         if conditions:
             query = f"{query} AND {' AND '.join(conditions)}"
 
+        logging.info("Generated SQL Query:")
         logging.info(query)
 
         queries = {
@@ -291,7 +306,7 @@ class INLABSHook(BaseHook):
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
-            """
+            """         
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside

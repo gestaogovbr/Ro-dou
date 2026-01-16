@@ -4,7 +4,7 @@ dag:
   search:
     sources:
       - QD
-    territory_id: 3106200
+    territory_id: 4106902
     terms:
       - pandemia
       - prefeitura

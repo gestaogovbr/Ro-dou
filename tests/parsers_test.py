@@ -35,6 +35,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "governo aberto",
                             "lei de acesso à informação",
                         ],
+                        "term_ignore": None,
                         "header": None,
                         "sources": ["DOU"],
                         "sql": None,
@@ -85,6 +86,9 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "dados abertos",
                             "governo aberto",
                             "lei de acesso à informação",
+                        ],
+                        "terms_ignore": [
+                            "Sanções Administrativas",
                         ],
                         "header": "Pesquisa no DOU",
                         "sources": ["DOU"],

@@ -7,12 +7,13 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "search_terms, sections, department, department_ignore, pubtype, reference_date, search_date, filters_applyed",
+    "search_terms, sections, department, department_ignore, terms_ignore, pubtype, reference_date, search_date, filters_applyed",
     [
         (
             {"texto": ["a", "b"]},
             ["SECAO_2"],
             ["Ministério"],
+            None,
             None,
             ["Edital"],
             datetime.now(),
@@ -36,6 +37,7 @@ def test_apply_filters(
     sections,
     department,
     department_ignore,
+    terms_ignore,
     pubtype,
     reference_date,
     search_date,
@@ -43,7 +45,7 @@ def test_apply_filters(
 ):
     assert (
         inlabs_searcher._apply_filters(
-            search_terms, sections, department, department_ignore, pubtype, reference_date, search_date
+            search_terms, sections, department, department_ignore, terms_ignore, pubtype, reference_date, search_date
         )
         == filters_applyed
     )
