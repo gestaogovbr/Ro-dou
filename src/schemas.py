@@ -107,6 +107,10 @@ class SearchConfig(BaseModel):
         description="Lista de termos de pesquisa ou uma forma de buscá-los. "
         "Opcional quando há filtros de department ou pubtype definidos"
     )
+    terms_ignore: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de termos que deverão ser ignorados na pesquisa. "
+    )
     field: Optional[str] = Field(
         default="TUDO",
         description="Campos dos quais os termos devem ser pesquisados. "
