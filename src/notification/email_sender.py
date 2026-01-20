@@ -183,6 +183,9 @@ class EmailSender(ISender):
                             
                             # Busca o resumo individual para este documento
                             ai_summary = summaries_map.get(title, '')
+                            
+                            # Verifica se há ementa (class="ementa") no abstract
+                            has_ementa = 'class="ementa"' in result["abstract"]
 
                             term_data["search_terms"]["items"].append(
                                 {
@@ -194,6 +197,7 @@ class EmailSender(ISender):
                                     "abstract": result["abstract"],
                                     "date": result["date"],
                                     "ai_summary": ai_summary,
+                                    "has_ementa": has_ementa,
                                 }
                             )
 

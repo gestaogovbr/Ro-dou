@@ -46,6 +46,11 @@ from airflow.utils.email import send_email
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+
 def merge_results(*dicts: SearchResult) -> SearchResult:
     """
     Merge multiple dictionaries and sum/concatenate values of common keys,
@@ -97,12 +102,398 @@ def result_as_html(specs: DAGConfig) -> bool:
     return bool(not (specs.report.discord or specs.report.slack))
 
 
+# ============================================================================
+# LLM / AI INTEGRATION - LLMSummarizer CLASS
+# ============================================================================
+
+
+class LLMSummarizer:
+    """
+    Encapsulates all AI/LLM integration logic for generating summaries
+    of publications. Handles interactions with multiple LLM providers
+    (Gemini, OpenAI) and prompt construction.
+
+    Responsibilities:
+    - Checking if LLM is enabled and configured
+    - Preparing context for AI processing
+    - Building prompts for general and individual summaries
+    - Calling different LLM APIs (Gemini, OpenAI)
+    - Generating overall and individual publication summaries
+    """
+
+    def __init__(self):
+        """Initialize the LLMSummarizer with configuration from Airflow variables"""
+        self.llm_enabled = Variable.get("LLM_ENABLED", default_var="false").lower() == "true"
+        self.llm_provider = Variable.get("LLM_PROVIDER", default_var="disabled").lower()
+        self.llm_api_key = Variable.get("LLM_API_KEY", default_var=None)
+
+    def is_enabled(self) -> bool:
+        """Check if LLM functionality is enabled"""
+        return self.llm_enabled
+
+    def prepare_ai_context(self, search_results: list, summary: dict, report_date: str) -> dict:
+        """
+        Prepares structured data for AI processing from search results.
+
+        Args:
+            search_results: List of search results from different searches
+            summary: Statistics summary from all searches
+            report_date: The date of the report for context
+
+        Returns:
+            Dictionary with prepared AI context containing publications and stats
+        """
+        publications_for_ai = []
+
+        for search in search_results:
+            if not search or "result" not in search:
+                continue
+
+            result = search["result"]
+            header = search.get("header", "")
+
+            for source, sections in result.items():
+                if not isinstance(sections, dict):
+                    continue
+
+                for section_name, section_data in sections.items():
+                    if not isinstance(section_data, dict):
+                        continue
+
+                    for key, value in section_data.items():
+                        if isinstance(value, list):
+                            for pub in value:
+                                if isinstance(pub, dict):
+                                    publications_for_ai.append({
+                                        "source": source,
+                                        "section": section_name,
+                                        "header": header,
+                                        "title": pub.get("title", ""),
+                                        "abstract": pub.get("abstract", ""),
+                                        "content": pub.get("abstract", "")[:1000],
+                                        "date": pub.get("date", ""),
+                                        "hierarchy": pub.get("hierarchyStr", ""),
+                                        "type": pub.get("arttype", ""),
+                                        "href": pub.get("href", ""),
+                                    })
+
+        logging.info(f"Total publications prepared for AI: {len(publications_for_ai)}")
+
+        ai_context = {
+            "summary_stats": summary,
+            "publications": publications_for_ai[:30],
+            "report_date": report_date
+        }
+
+        return ai_context
+
+    def _build_ai_prompt(self, summary_stats: dict, publications: list, report_date: str) -> str:
+        """
+        Constructs the prompt for overall AI summary generation.
+
+        Args:
+            summary_stats: Statistics about the publications
+            publications: List of publications to analyze
+            report_date: Date of the report
+
+        Returns:
+            Formatted prompt string for the LLM
+        """
+        total_pubs = summary_stats.get('total_publications', 0)
+
+        # Adjusts detail level based on number of publications
+        if total_pubs < 5:
+            num_temas = 2
+            num_publicacoes = 2
+            word_limit = 300
+        elif total_pubs < 20:
+            num_temas = 3
+            num_publicacoes = 3
+            word_limit = 400
+        else:
+            num_temas = 5
+            num_publicacoes = 5
+            word_limit = 600
+
+        max_pubs_para_analise = min(10, total_pubs // 2 + 5)
+
+        prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU). Seja simples e não fuja do texto original.
+
+Analise as seguintes publicações do Diário Oficial de {report_date}:
+
+ESTATÍSTICAS GERAIS:
+- Total de publicações encontradas: {total_pubs}
+- Fontes consultadas: {', '.join(summary_stats.get('publications_by_source', {}).keys())}
+- Buscas com resultados: {summary_stats.get('searches_with_results', 0)}/{summary_stats.get('total_searches', 0)}
+
+DISTRIBUIÇÃO POR FONTE:
+"""
+        for source, count in summary_stats.get('publications_by_source', {}).items():
+            prompt += f"- {source}: {count} publicações\n"
+
+        prompt += f"\n\nPUBLICAÇÕES PARA ANÁLISE (amostra de {len(publications)}):\n\n"
+
+        for idx, pub in enumerate(publications[:max_pubs_para_analise], 1):
+            prompt += f"{idx}. [{pub.get('source', 'N/A')}] {pub.get('section', 'N/A')}\n"
+            prompt += f"   Título: {pub.get('title', 'Sem título')}\n"
+            if pub.get('abstract'):
+                prompt += f"   Resumo: {pub.get('abstract')[:300]}...\n"
+            elif pub.get('content'):
+                prompt += f"   Conteúdo: {pub.get('content')[:300]}...\n"
+            prompt += "\n"
+
+        prompt += f"""
+Com base nas informações acima, gere um RESUMO EXECUTIVO em português que contenha:
+
+Formato: Texto claro, conciso e em português brasileiro, com até {word_limit} palavras.
+IMPORTANTE - Instruções de formatação HTML:
+- Use <strong>texto</strong> para destacar palavras-chave e títulos de seções (NÃO use ** ou markdown)
+- Separe os 3 parágrafos com <br><br> (quebra de linha dupla)
+- Inicie cada parágrafo com 4 espaços não-quebrável (&#160;&#160;&#160;&#160;) para recuo
+- Inicie cada seção com uma numeração em negrito: <strong>1. Título</strong>
+- Sem listas, sem asteriscos, sem #, ##, ---, ou outros caracteres especiais
+
+Estrutura esperada do output (copie exatamente este padrão):
+
+&#160;&#160;&#160;&#160;<strong>1. Principais Temas e Publicações Relevantes</strong> [Parágrafo 1 aqui com <strong>destaques em negrito</strong> para palavras-chave...]<br><br>&#160;&#160;&#160;&#160;<strong>2. Tendências e Padrões Identificados</strong> [Parágrafo 2 aqui com <strong>destaques em negrito</strong>...]<br><br>&#160;&#160;&#160;&#160;<strong>3. Alertas e Pontos de Atenção</strong> [Parágrafo 3 aqui com <strong>destaques em negrito</strong>...]
+
+Detalhes do conteúdo esperado:
+
+Parágrafo 1: Resuma os {num_temas}-{num_temas+1} temas mais recorrentes e destaque {num_publicacoes}-{num_publicacoes+1} publicações que merecem atenção especial. Apresente de forma corrida e fluida.
+
+Parágrafo 2: Identifique padrões interessantes nos dados (ex: aumento de publicações de um órgão específico, concentração em determinadas áreas, distribuição temporal, etc.). Apresente em forma narrativa.
+
+Parágrafo 3: Se houver algo que demande ação imediata, publicações urgentes ou situações que se destaquem, mencione aqui. Se não houver alertas críticos, descreva brevemente os pontos mais relevantes encontrados.
+"""
+
+        return prompt
+
+    def _call_gemini_api(self, prompt: str) -> str:
+        """
+        Calls Google Gemini API to generate summary.
+
+        Args:
+            prompt: The prompt to send to Gemini
+
+        Returns:
+            Generated summary text or error message
+        """
+        try:
+            import google.generativeai as genai
+
+            genai.configure(api_key=self.llm_api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+
+            response = model.generate_content(prompt)
+
+            if response and response.text:
+                return response.text
+            else:
+                logging.warning("Gemini returned empty response")
+                return "Resumo não pôde ser gerado (resposta vazia do Gemini)"
+
+        except ImportError:
+            logging.error("google-generativeai package not installed")
+            return "Erro: Pacote google-generativeai não instalado. Execute: pip install google-generativeai"
+        except Exception as e:
+            logging.error(f"Gemini API error: {str(e)}", exc_info=True)
+            return f"Erro ao chamar Gemini API: {str(e)}"
+
+    def _call_openai_api(self, prompt: str) -> str:
+        """
+        Calls OpenAI API (GPT) to generate summary.
+
+        Args:
+            prompt: The prompt to send to OpenAI
+
+        Returns:
+            Generated summary text or error message
+        """
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(api_key=self.llm_api_key)
+
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "Você é um assistente especializado em análise de publicações oficiais brasileiras."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+
+            if response and response.choices and len(response.choices) > 0:
+                return response.choices[0].message.content
+            else:
+                logging.warning("OpenAI returned empty response")
+                return "Resumo não pôde ser gerado (resposta vazia da OpenAI)"
+
+        except ImportError:
+            logging.error("openai package not installed")
+            return "Erro: Pacote openai não instalado. Execute: pip install openai"
+        except Exception as e:
+            logging.error(f"OpenAI API error: {str(e)}", exc_info=True)
+            return f"Erro ao chamar OpenAI API: {str(e)}"
+
+    def call_ai_api(self, prompt: str) -> str:
+        """
+        Calls the configured AI API (Gemini, OpenAI, or other).
+
+        Args:
+            prompt: The prompt to send to the LLM
+
+        Returns:
+            Generated text or error message
+        """
+        try:
+            if self.llm_provider == "disabled":
+                logging.info("LLM provider is 'disabled', returning placeholder")
+                return self._generate_placeholder_summary()
+
+            if not self.llm_api_key:
+                logging.error("LLM_API_KEY not configured")
+                return "Erro: LLM_API_KEY não configurada nas variáveis do Airflow"
+
+            if self.llm_provider == "gemini":
+                return self._call_gemini_api(prompt)
+            elif self.llm_provider == "openai":
+                return self._call_openai_api(prompt)
+            else:
+                logging.error(f"Unsupported LLM provider: {self.llm_provider}")
+                return f"Erro: Provedor LLM não suportado: {self.llm_provider}"
+
+        except Exception as e:
+            logging.error(f"Error calling AI API: {str(e)}", exc_info=True)
+            return f"Erro ao chamar API de IA: {str(e)}"
+
+    @staticmethod
+    def _generate_placeholder_summary() -> str:
+        """Generates a placeholder when AI is disabled"""
+        return """**Resumo IA - Modo Desabilitado**
+
+A funcionalidade de resumo inteligente está atualmente desabilitada.
+
+Para habilitar:
+1. Configure LLM_ENABLED=true
+2. Configure LLM_PROVIDER (gemini ou openai)
+3. Configure LLM_API_KEY com sua chave de API
+
+Status atual das variáveis:
+- LLM_ENABLED: Verificar no Airflow
+- LLM_PROVIDER: Verificar no Airflow
+- LLM_API_KEY: Verificar se está configurada
+"""
+
+    def generate_summary(self, summary_stats: dict, publications: list, report_date: str) -> str:
+        """
+        Generates overall AI summary from publications.
+
+        Args:
+            summary_stats: Statistics about publications
+            publications: List of publications to summarize
+            report_date: Date of the report
+
+        Returns:
+            Generated summary text or error message
+        """
+        try:
+            if not self.is_enabled():
+                logging.info("LLM disabled (LLM_ENABLED=false), skipping AI summary generation")
+                return None
+
+            if not publications:
+                logging.info("No publications to summarize")
+                return "Não há publicações para resumir."
+
+            prompt = self._build_ai_prompt(summary_stats, publications, report_date)
+            ai_summary = self.call_ai_api(prompt)
+
+            logging.info(f"AI summary generated successfully ({len(ai_summary)} characters)")
+            return ai_summary
+
+        except Exception as e:
+            logging.error(f"Error generating AI summary: {str(e)}", exc_info=True)
+            return f"Erro ao gerar resumo IA: {str(e)}"
+
+    def generate_individual_summaries(self, publications: list, summary_stats: dict) -> list:
+        """
+        Generates one-sentence summary for each publication.
+
+        Args:
+            publications: List of publications to summarize
+            summary_stats: Statistics about publications
+
+        Returns:
+            List of publications with added 'ai_summary' field
+        """
+        try:
+            if not self.is_enabled():
+                logging.info("LLM disabled, skipping individual publication summaries")
+                return publications
+
+            total_pubs = summary_stats.get('total_publications', 0)
+
+            # Determines how many publications to summarize based on total
+            if total_pubs < 5:
+                num_to_summarize = 3
+            elif total_pubs < 20:
+                num_to_summarize = 5
+            else:
+                num_to_summarize = 8
+
+            publications_to_process = publications[:num_to_summarize]
+
+            for pub in publications_to_process:
+                title = pub.get('title', '')
+                abstract = pub.get('abstract', '')
+                content = pub.get('content', '')
+
+                if not title or (not abstract and not content):
+                    pub['ai_summary'] = ''
+                    continue
+
+                text_to_summarize = f"{title}. {abstract if abstract else content}"
+
+                prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU). Seja simples e não fuja do texto original. Resuma o seguinte texto em UMA ÚNICA FRASE clara e concisa, em português brasileiro:
+
+Texto: {text_to_summarize[:500]}
+
+Gere apenas a frase de resumo se não houver ementa na origem, sem explicações adicionais. A frase deve começar com a ação ou tema principal. Adicione ao início do texto 'Texto sem ementa na origem, Segue resumo gerado por IA.' """
+
+                summary = self.call_ai_api(prompt)
+                summary = summary.replace('\n', ' ').strip()
+
+                pub['ai_summary'] = summary
+
+                logging.info(f"Individual summary generated for: {title[:50]}...")
+
+            return publications
+
+        except Exception as e:
+            logging.error(f"Error generating individual summaries: {str(e)}", exc_info=True)
+            return publications
+
+
+# ============================================================================
+# MAIN DAG GENERATOR CLASS
+# ============================================================================
+
+
 class DouDigestDagGenerator:
     """
     YAML based Generator of DAGs that digests the DOU (gazette) daily
     publication and send email report listing all documents matching
     pré-defined keywords. It's also possible to fetch keywords from the
     database.
+
+    Responsibilities:
+    - Generating DAGs from YAML configurations
+    - Executing searches across different sources (DOU, QD, INLABS)
+    - Managing DAG task orchestration
+    - Handling notifications on failure
+    - Orchestrating AI summarization through LLMSummarizer
     """
 
     YAMLS_DIR = os.getenv("RO_DOU__DAG_CONF_DIR")
@@ -118,19 +509,23 @@ class DouDigestDagGenerator:
     searchers: Dict[str, BaseSearcher]
 
     def __init__(self):
+        """Initialize the DAG generator with searchers and LLM summarizer"""
         self.searchers = {
             "DOU": DOUSearcher(),
             "QD": QDSearcher(),
             "INLABS": INLABSSearcher(),
-        }       
-
+        }
+        self.llm_summarizer = LLMSummarizer()
         self.on_failure_callback = self._notify_on_failure
         self.on_retry_callback = None
+
+    # ========================================================================
+    # FAILURE HANDLING
+    # ========================================================================
 
     def _notify_on_failure(self, specs: DAGConfig, context):
         """Function called when the task fails to send a notification to admin"""
         try:
-           
             task_instance = context.get('task_instance')
             dag_run = context.get('dag_run')
             exception = context.get('exception')
@@ -141,7 +536,7 @@ class DouDigestDagGenerator:
 
             # Determina lista de emails para notificação
             email_list = []
-            
+
             if specs.callback and specs.callback.on_failure_callback:
                 # Usa emails configurados no .yaml
                 email_list = specs.callback.on_failure_callback
@@ -150,7 +545,7 @@ class DouDigestDagGenerator:
                 try:
                     email_admin = Variable.get('email_admin', default_var=None)
                     if email_admin:
-                        email_list = [email_admin]                        
+                        email_list = [email_admin]
                     else:
                         logging.warning("No email_admin variable found in Airflow")
                 except Exception as e:
@@ -198,343 +593,66 @@ class DouDigestDagGenerator:
                     ),
                     channel=description["channel"],
                 )
-                slack_notifier.notify(context)                
+                slack_notifier.notify(context)
             except Exception as e:
                 logging.error(f"Slack notification not sent: {str(e)}")
 
         except Exception as e:
             logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
-    
+
+    # ========================================================================
+    # AI/LLM ORCHESTRATION METHODS
+    # ========================================================================
+
     def prepare_ai_context(self, num_searches: int, **context) -> dict:
-        """Prepara dados estruturados para processamento pela IA"""
+        """
+        Prepares AI context from search results.
+        Delegates to LLMSummarizer for actual processing.
+        """
         search_results = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
         summary = context["ti"].xcom_pull(task_ids="summarize_publications")
+        report_date = get_trigger_date(context, local_time=True)
 
-        publications_for_ai = []
-
-        for search in search_results:
-            if not search or "result" not in search:
-                continue
-
-            result = search["result"]
-            header = search.get("header", "")
-
-            for source, sections in result.items():
-                # source = "single_group"
-                # sections = {"dados abertos": {...}, "governo aberto": {...}, ...}
-                
-                if not isinstance(sections, dict):
-                    continue
-                    
-                for section_name, section_data in sections.items():
-                    # section_name = "dados abertos"
-                    # section_data = {"single_department": [...]}
-                    
-                    if not isinstance(section_data, dict):
-                        continue
-                        
-                    # Procura por "single_department" dentro de section_data
-                    for key, value in section_data.items():
-                        # key = "single_department"
-                        # value = lista de publicações
-                        
-                        if isinstance(value, list):
-                            for pub in value:
-                                if isinstance(pub, dict):
-                                    publications_for_ai.append({
-                                        "source": source,  # "single_group"
-                                        "section": section_name,  # "dados abertos"
-                                        "header": header,  # "Pesquisa no DOU"
-                                        "title": pub.get("title", ""),
-                                        "abstract": pub.get("abstract", ""),
-                                        "content": pub.get("abstract", "")[:1000],
-                                        "date": pub.get("date", ""),
-                                        "hierarchy": pub.get("hierarchyStr", ""),
-                                        "type": pub.get("arttype", ""),
-                                        "href": pub.get("href", ""),
-                                    })
-
-        logging.info(f"Total publications prepared for AI: {len(publications_for_ai)}")
-
-        ai_context = {
-            "summary_stats": summary,
-            "publications": publications_for_ai[:30],
-            "report_date": get_trigger_date(context, local_time=True)
-        }
-        
+        ai_context = self.llm_summarizer.prepare_ai_context(search_results, summary, report_date)
         return ai_context
 
     def generate_ai_summary(self, num_searches: int, **context) -> str:
-        """Usa AI para gerar resumo inteligente das publicações"""
+        """
+        Generates AI summary and individual publication summaries.
+        Delegates to LLMSummarizer for actual AI processing.
+        """
         try:
-            # Verifica se IA está habilitada
-            llm_enabled = Variable.get("LLM_ENABLED", default_var="false").lower() == "true"
-            
-            if not llm_enabled:
-                logging.info("LLM disabled (LLM_ENABLED=false), skipping AI summary generation")
-                return None
-            
             ai_context = context["ti"].xcom_pull(task_ids="prepare_ai_context")
-            
+
             if not ai_context:
                 logging.warning("AI context not found, returning empty summary")
                 return "Resumo IA não disponível (contexto vazio)."
-            
+
             summary_stats = ai_context.get('summary_stats', {})
             publications = ai_context.get('publications', [])
             report_date = ai_context.get('report_date', 'data desconhecida')
-            
-            if not publications:
-                logging.info("No publications to summarize")
-                return "Não há publicações para resumir."
-            
-            # Monta o prompt para a IA
-            prompt = self._build_ai_prompt(summary_stats, publications, report_date)
-            
-            # Chama a API de IA
-            ai_summary = self._call_ai_api(prompt)
-            
-            logging.info(f"AI summary generated successfully ({len(ai_summary)} characters)")
-            
+
+            # Gera o resumo geral usando o LLMSummarizer
+            ai_summary = self.llm_summarizer.generate_summary(summary_stats, publications, report_date)
+
             # Gera resumos individuais para cada publicação
-            publications_with_summaries = self.generate_individual_summaries(publications, summary_stats)
-            
+            publications_with_summaries = self.llm_summarizer.generate_individual_summaries(publications, summary_stats)
+
             # Armazena as publicações com resumos em XCom para uso posterior
             context["ti"].xcom_push(key="publications_with_summaries", value=publications_with_summaries)
-            
+
+            logging.info(f"AI summary generated successfully ({len(ai_summary) if ai_summary else 0} characters)")
+
             # Retorna apenas o resumo geral
             return ai_summary
-            
+
         except Exception as e:
             logging.error(f"Error generating AI summary: {str(e)}", exc_info=True)
             return f"Erro ao gerar resumo IA: {str(e)}"
 
-    def generate_individual_summaries(self, publications: list, summary_stats: dict) -> list:
-        """Gera resumo de uma frase para cada publicação"""
-        try:
-            llm_enabled = Variable.get("LLM_ENABLED", default_var="false").lower() == "true"
-            
-            if not llm_enabled:
-                logging.info("LLM disabled, skipping individual publication summaries")
-                return publications
-            
-            total_pubs = summary_stats.get('total_publications', 0)
-            
-            # Determina quantas publicações devem ser resumidas baseado no total
-            if total_pubs < 5:
-                num_to_summarize = 3
-            elif total_pubs < 20:
-                num_to_summarize = 5
-            else:
-                num_to_summarize = 8
-            
-            publications_to_process = publications[:num_to_summarize]
-            
-            for pub in publications_to_process:
-                title = pub.get('title', '')
-                abstract = pub.get('abstract', '')
-                content = pub.get('content', '')
-                
-                # Pula se não houver conteúdo significativo
-                if not title or (not abstract and not content):
-                    pub['ai_summary'] = ''
-                    continue
-                
-                # Monta prompt para resumo individual
-                text_to_summarize = f"{title}. {abstract if abstract else content}"
-                
-                prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU). Resuma o seguinte texto em UMA ÚNICA FRASE clara e concisa, em português brasileiro:
-
-Texto: {text_to_summarize[:500]}
-
-Gere apenas a frase de resumo, sem explicações adicionais. A frase deve começar com a ação ou tema principal."""
-                
-                # Chama a API para gerar o resumo
-                summary = self._call_ai_api(prompt)
-                
-                # Remove quebras de linha do resumo
-                summary = summary.replace('\n', ' ').strip()
-                
-                pub['ai_summary'] = summary
-                
-                logging.info(f"Individual summary generated for: {title[:50]}...")
-            
-            return publications
-            
-        except Exception as e:
-            logging.error(f"Error generating individual summaries: {str(e)}", exc_info=True)
-            return publications
-
-
-    def _build_ai_prompt(self, summary_stats: dict, publications: list, report_date: str) -> str:
-        """Constrói o prompt para a IA"""
-        total_pubs = summary_stats.get('total_publications', 0)
-        
-        # Ajusta o nível de detalhe baseado no número de publicações
-        if total_pubs < 5:
-            num_temas = 2
-            num_publicacoes = 2
-            word_limit = 300
-        elif total_pubs < 20:
-            num_temas = 3
-            num_publicacoes = 3
-            word_limit = 400
-        else:
-            num_temas = 5
-            num_publicacoes = 5
-            word_limit = 600
-        
-        # Ajusta quantidade de publicações para análise baseado no total
-        max_pubs_para_analise = min(10, total_pubs // 2 + 5)
-        
-        prompt = f"""Você é um assistente especializado em análise de publicações do Diário Oficial da União (DOU).
-
-Analise as seguintes publicações do Diário Oficial de {report_date}:
-
-ESTATÍSTICAS GERAIS:
-- Total de publicações encontradas: {total_pubs}
-- Fontes consultadas: {', '.join(summary_stats.get('publications_by_source', {}).keys())}
-- Buscas com resultados: {summary_stats.get('searches_with_results', 0)}/{summary_stats.get('total_searches', 0)}
-
-DISTRIBUIÇÃO POR FONTE:
-"""
-        for source, count in summary_stats.get('publications_by_source', {}).items():
-            prompt += f"- {source}: {count} publicações\n"
-        
-        prompt += f"\n\nPUBLICAÇÕES PARA ANÁLISE (amostra de {len(publications)}):\n\n"
-        
-        # Adiciona detalhes das publicações
-        for idx, pub in enumerate(publications[:max_pubs_para_analise], 1):
-            prompt += f"{idx}. [{pub.get('source', 'N/A')}] {pub.get('section', 'N/A')}\n"
-            prompt += f"   Título: {pub.get('title', 'Sem título')}\n"
-            if pub.get('abstract'):
-                prompt += f"   Resumo: {pub.get('abstract')[:300]}...\n"
-            elif pub.get('content'):
-                prompt += f"   Conteúdo: {pub.get('content')[:300]}...\n"
-            prompt += "\n"
-        
-        prompt += f"""
-Com base nas informações acima, gere um RESUMO EXECUTIVO em português que contenha:
-
-Formato: Texto claro, conciso e em português brasileiro, com até {word_limit} palavras.
-IMPORTANTE - Instruções de formatação HTML:
-- Use <strong>texto</strong> para destacar palavras-chave e títulos de seções (NÃO use ** ou markdown)
-- Separe os 3 parágrafos com <br><br> (quebra de linha dupla)
-- Inicie cada parágrafo com 4 espaços não-quebrável (&#160;&#160;&#160;&#160;) para recuo
-- Inicie cada seção com uma numeração em negrito: <strong>1. Título</strong>
-- Sem listas, sem asteriscos, sem #, ##, ---, ou outros caracteres especiais
-
-Estrutura esperada do output (copie exatamente este padrão):
-
-&#160;&#160;&#160;&#160;<strong>1. Principais Temas e Publicações Relevantes</strong> [Parágrafo 1 aqui com <strong>destaques em negrito</strong> para palavras-chave...]<br><br>&#160;&#160;&#160;&#160;<strong>2. Tendências e Padrões Identificados</strong> [Parágrafo 2 aqui com <strong>destaques em negrito</strong>...]<br><br>&#160;&#160;&#160;&#160;<strong>3. Alertas e Pontos de Atenção</strong> [Parágrafo 3 aqui com <strong>destaques em negrito</strong>...]
-
-Detalhes do conteúdo esperado:
-
-Parágrafo 1: Resuma os {num_temas}-{num_temas+1} temas mais recorrentes e destaque {num_publicacoes}-{num_publicacoes+1} publicações que merecem atenção especial. Apresente de forma corrida e fluida.
-
-Parágrafo 2: Identifique padrões interessantes nos dados (ex: aumento de publicações de um órgão específico, concentração em determinadas áreas, distribuição temporal, etc.). Apresente em forma narrativa.
-
-Parágrafo 3: Se houver algo que demande ação imediata, publicações urgentes ou situações que se destaquem, mencione aqui. Se não houver alertas críticos, descreva brevemente os pontos mais relevantes encontrados.
-"""
-        
-        return prompt
-
-    def _call_ai_api(self, prompt: str) -> str:
-        """Chama a API de IA configurada (Gemini, OpenAI ou outro)"""
-        try:
-            llm_provider = Variable.get("LLM_PROVIDER", default_var="disabled").lower()
-            
-            if llm_provider == "disabled":
-                logging.info("LLM provider is 'disabled', returning placeholder")
-                return self._generate_placeholder_summary()
-            
-            api_key = Variable.get("LLM_API_KEY", default_var=None)
-            
-            if not api_key:
-                logging.error("LLM_API_KEY not configured")
-                return "Erro: LLM_API_KEY não configurada nas variáveis do Airflow"
-            
-            if llm_provider == "gemini":
-                return self._call_gemini_api(prompt, api_key)
-            elif llm_provider == "openai":
-                return self._call_openai_api(prompt, api_key)
-            else:
-                logging.error(f"Unsupported LLM provider: {llm_provider}")
-                return f"Erro: Provedor LLM não suportado: {llm_provider}"
-                
-        except Exception as e:
-            logging.error(f"Error calling AI API: {str(e)}", exc_info=True)
-            return f"Erro ao chamar API de IA: {str(e)}"
-
-    def _call_gemini_api(self, prompt: str, api_key: str) -> str:
-        """Chama a API do Google Gemini"""
-        try:
-            import google.generativeai as genai
-
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            
-            response = model.generate_content(prompt)
-            
-            if response and response.text:
-                return response.text
-            else:
-                logging.warning("Gemini returned empty response")
-                return "Resumo não pôde ser gerado (resposta vazia do Gemini)"
-                
-        except ImportError:
-            logging.error("google-generativeai package not installed")
-            return "Erro: Pacote google-generativeai não instalado. Execute: pip install google-generativeai"
-        except Exception as e:
-            logging.error(f"Gemini API error: {str(e)}", exc_info=True)
-            return f"Erro ao chamar Gemini API: {str(e)}"
-
-    def _call_openai_api(self, prompt: str, api_key: str) -> str:
-        """Chama a API da OpenAI (GPT)"""
-        try:
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=api_key)
-            
-            response = client.chat.completions.create(
-                model="gpt-4",  # ou "gpt-3.5-turbo" para economizar
-                messages=[
-                    {"role": "system", "content": "Você é um assistente especializado em análise de publicações oficiais brasileiras."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1000
-            )
-            
-            if response and response.choices and len(response.choices) > 0:
-                return response.choices[0].message.content
-            else:
-                logging.warning("OpenAI returned empty response")
-                return "Resumo não pôde ser gerado (resposta vazia da OpenAI)"
-                
-        except ImportError:
-            logging.error("openai package not installed")
-            return "Erro: Pacote openai não instalado. Execute: pip install openai"
-        except Exception as e:
-            logging.error(f"OpenAI API error: {str(e)}", exc_info=True)
-            return f"Erro ao chamar OpenAI API: {str(e)}"
-
-    def _generate_placeholder_summary(self) -> str:
-        """Gera um placeholder quando a IA está desabilitada"""
-        return """**Resumo IA - Modo Desabilitado**
-
-A funcionalidade de resumo inteligente está atualmente desabilitada.
-
-Para habilitar:
-1. Configure LLM_ENABLED=true
-2. Configure LLM_PROVIDER (gemini ou openai)
-3. Configure LLM_API_KEY com sua chave de API
-
-Status atual das variáveis:
-- LLM_ENABLED: Verificar no Airflow
-- LLM_PROVIDER: Verificar no Airflow
-- LLM_API_KEY: Verificar se está configurada
-"""
+    # ========================================================================
+    # DOCUMENTATION
+    # ========================================================================
 
     @staticmethod
     def prepare_doc_md(specs: DAGConfig, config_file: str) -> str:
@@ -568,6 +686,10 @@ Status atual das variáveis:
                 doc_md += "\n" + f"- {str(value)}\n" + "\n"
 
         return doc_md
+
+    # ========================================================================
+    # SCHEDULING UTILITIES
+    # ========================================================================
 
     @staticmethod
     def _hash_dag_id(dag_id: str, size: int) -> int:
@@ -637,6 +759,10 @@ Status atual das variáveis:
 
         return schedule
 
+    # ========================================================================
+    # DAG GENERATION AND SEARCH ORCHESTRATION
+    # ========================================================================
+
     def generate_dags(self):
         """Iterates over the YAML files and creates all dags"""
 
@@ -657,10 +783,10 @@ Status atual das variáveis:
         """Converte term_list para lista, tratando aspas duplas extras."""
         if not isinstance(term_list, str):
             return term_list
-        
+
         # Remove espaços
         term_list = term_list.strip()
-        
+
         # Tenta converter até 2 vezes (para casos de serialização dupla)
         for _ in range(2):
             if term_list.startswith(('[', '"[', "'[")):
@@ -670,7 +796,7 @@ Status atual das variáveis:
                         return term_list
                 except (ValueError, SyntaxError):
                     break
-        
+
         return term_list
 
     def perform_searches(
@@ -696,7 +822,7 @@ Status atual das variáveis:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
-        """Performs the search in each source and merge the results"""        
+        """Performs the search in each source and merge the results"""
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
                 term_list=term_list,
@@ -711,7 +837,7 @@ Status atual das variáveis:
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
-        elif "INLABS" in sources:                         
+        elif "INLABS" in sources:
             terms = self._parse_term_list(term_list)
             inlabs_result = self.searchers["INLABS"].exec_search(
                 terms=terms,
@@ -787,7 +913,7 @@ Status atual das variáveis:
                     items = ["contains" for k, v in search["result"].items() if v]
                     if items:
                         skip_notification = False
-            
+
             return "skip_notification" if skip_notification else "summarize_publications"
         else:
             return "summarize_publications"
@@ -813,21 +939,21 @@ Status atual das variáveis:
         for idx, search in enumerate(search_results, 1):
             if not search or not search.get("result"):
                 continue
-                
+
             result = search["result"]
             header = search.get("header", f"Search {idx}")
-            
+
             logging.info(f"DEBUG: Processing search {idx} with header '{header}'")
             logging.info(f"DEBUG: Result keys: {list(result.keys())}")
 
             publication_count = 0
-        
+
             for source, categories in result.items():
                 logging.info(f"DEBUG: Source: {source}")
-            
+
                 if source not in summary["publications_by_source"]:
                     summary["publications_by_source"][source] = 0
-                
+
                 for category, content in categories.items():
                     logging.info(f"DEBUG: Category: {category}, Type of content: {type(content)}")
                     if isinstance(content, dict) and 'single_department' in content:
@@ -837,24 +963,23 @@ Status atual das variáveis:
                             summary["publications_by_source"][source] += pub_count
                             summary["total_publications"] += pub_count
                             publication_count += pub_count
-                                
+
                             # Registrar por seção
                             section_key = f"{source}_{category}"
                             if section_key not in summary["publications_by_section"]:
                                 summary["publications_by_section"][section_key] = 0
                             summary["publications_by_section"][section_key] += pub_count
-                            
+
                             logging.info(f"DEBUG: Found {pub_count} publications in {category}")
                         else:
                             logging.warning(f"DEBUG: 'single_department' is not a list in {category}")
                     else:
                         logging.warning(f"DEBUG: Unexpected content structure in {category}: {type(content)}")
 
-
             if publication_count > 0:
                 summary["searches_with_results"] += 1
                 summary["has_content"] = True
-                
+
                 if header not in summary["publications_by_header"]:
                     summary["publications_by_header"][header] = 0
                 summary["publications_by_header"][header] += publication_count
@@ -862,22 +987,26 @@ Status atual das variáveis:
                 logging.info(f"DEBUG: Search {idx} has {publication_count} publications")
             else:
                 logging.info(f"DEBUG: Search {idx} has 0 publications")
-        
+
         logging.info(
             f"Summary generated: {summary['total_publications']} publications "
             f"from {summary['searches_with_results']}/{num_searches} searches"
         )
         logging.info(f"Publications by source: {summary['publications_by_source']}")
         logging.info(f"Publications by header: {summary['publications_by_header']}")
-        
+
         return summary
-        
+
+    # ========================================================================
+    # NOTIFICATIONS
+    # ========================================================================
+
     def send_notification(
         self, num_searches: int, specs: DAGConfig, report_date: str, **context
     ) -> str:
         """Send user notification using class Notifier"""
         search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
-        
+
         # Recupera o summary se disponível
         summary = context["ti"].xcom_pull(task_ids="summarize_publications")
         # Recupera o resumo da IA se disponível
@@ -886,13 +1015,13 @@ Status atual das variáveis:
         publications_with_summaries = context["ti"].xcom_pull(
             task_ids="generate_ai_summary", key="publications_with_summaries"
         )
-        
+
         notifier = Notifier(specs)
 
         logging.info(f"Summary: {summary}")
         logging.info(f"IA Summary: {ai_summary}")
         logging.info(f"Publications with summaries count: {len(publications_with_summaries) if publications_with_summaries else 0}")
-        
+
         # Passa o summary, ai_summary e publicações com resumos para o notifier
         notifier.send_notification(
             search_report=search_report,
@@ -900,6 +1029,10 @@ Status atual das variáveis:
             ai_summary=ai_summary,
             publications_with_summaries=publications_with_summaries
         )
+
+    # ========================================================================
+    # DATABASE AND CONFIGURATION UTILITIES
+    # ========================================================================
 
     def select_terms_from_airflow_variable(self, variable: str):
         """
@@ -916,42 +1049,23 @@ Status atual das variáveis:
 
         Raises:
         KeyError: When a specified variable was not found in Airflow.
-
-        Examples:
-        >>> # For an Airflow variable containing JSON: ["term1", "term2", "term3"]
-        >>> terms = self.select_terms_from_airflow_variable("my_json_list")
-        >>> print(terms)
-        ['term1', 'term2', 'term3']
-
-        >>> # For a variable An Airflow variable containing text separated by lines:
-        >>>#term1
-        >>>#term2
-        >>>#term3
-        >>> terms = self.select_terms_from_airflow_variable("my_text_list")
-        >>> print (terms)
-        ['term1', 'term2', 'term3']
-
-        Note:
-        - If the variable value is a list (JSON), it will be parsed with json.loads()
-        - Otherwise, it will be treated as a string and split by line breaks
-        - Useful for configuring dynamic lists using Airflow variables
-        """        
+        """
 
         term_list = []
         var_name = variable
-        
+
         try:
             var_value = Variable.get(var_name)
             # Se já é uma lista, retorna direto
             if isinstance(var_value, list):
                 return var_value
-        
+
             if isinstance(var_value, str):
                 if var_value.strip().startswith('['):
                     return ast.literal_eval(var_value)
                 else:
                     # Trata como texto separado por linhas
-                    return var_value.splitlines()                    
+                    return var_value.splitlines()
             return term_list
 
         except (KeyError):
@@ -979,8 +1093,12 @@ Status atual das variáveis:
         terms_df = db_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
         terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
-      
+
         return terms_df.to_json(orient="columns")
+
+    # ========================================================================
+    # DAG CREATION
+    # ========================================================================
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
@@ -1023,7 +1141,7 @@ Status atual das variáveis:
 
                 searches = specs.search
 
-                for counter, subsearch in enumerate(searches, 1):                   
+                for counter, subsearch in enumerate(searches, 1):
                     # Verify if the terms were fetched from the database
                     terms_come_from_db: bool = isinstance(
                         subsearch.terms, FetchTermsConfig
@@ -1055,7 +1173,7 @@ Status atual das variáveis:
                             + str(counter)
                             + "') }}"
                         )
-                        
+
                     elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
                             task_id=f"select_terms_from_db_{counter}",
@@ -1070,7 +1188,7 @@ Status atual das variáveis:
                             + str(counter)
                             + "') }}"
                         )
-                                           
+
                     exec_search_task = PythonOperator(
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,
@@ -1102,7 +1220,12 @@ Status atual das variáveis:
 
                     if terms_come_from_db:
                         select_terms_from_db_task >> exec_search_task
-                        
+
+            # ====================================================================
+            # TASK DEFINITIONS - ORGANIZED BY FLOW
+            # ====================================================================
+
+            # Decision task: Check if there are search matches
             has_matches_task = BranchPythonOperator(
                 task_id="has_matches",
                 python_callable=self.has_matches,
@@ -1112,9 +1235,10 @@ Status atual das variáveis:
                 },
             )
 
+            # Alternative task: Skip notification if no matches
             skip_notification_task = EmptyOperator(task_id="skip_notification")
 
-            # Task: Summarize publications
+            # Task: Summarize publications statistics
             summarize_publications_task = PythonOperator(
                 task_id="summarize_publications",
                 python_callable=self.summarize_publications,
@@ -1123,20 +1247,21 @@ Status atual das variáveis:
                 },
             )
 
-            # Task: Preparação de contexto para IA
+            # Task: Prepare context for AI processing
             prepare_ai_context_task = PythonOperator(
                 task_id="prepare_ai_context",
                 python_callable=self.prepare_ai_context,
                 op_kwargs={"num_searches": len(searches)},
             )
 
-            # Task: Geração de resumo com IA
+            # Task: Generate AI summary and individual publication summaries
             generate_ai_summary_task = PythonOperator(
                 task_id="generate_ai_summary",
                 python_callable=self.generate_ai_summary,
                 op_kwargs={"num_searches": len(searches)},
             )
 
+            # Task: Send notification with all results
             send_notification_task = PythonOperator(
                 task_id="send_notification",
                 python_callable=self.send_notification,
@@ -1147,13 +1272,28 @@ Status atual das variáveis:
                 },
             )
 
-            # Fluxo com IA:
+            # ====================================================================
+            # TASK FLOW ORCHESTRATION
+            # ====================================================================
+
+            # Main flow: execute searches → check for matches
             tg_exec_searchs >> has_matches_task
+
+            # Branch 1: No matches found → skip notification
             has_matches_task >> skip_notification_task
-            has_matches_task >> summarize_publications_task >> prepare_ai_context_task >> generate_ai_summary_task >> send_notification_task
+
+            # Branch 2: Matches found → process and notify
+            has_matches_task >> summarize_publications_task
+            summarize_publications_task >> prepare_ai_context_task
+            prepare_ai_context_task >> generate_ai_summary_task
+            generate_ai_summary_task >> send_notification_task
 
         return dag
 
+
+# ============================================================================
+# DAG GENERATION - RUN AT MODULE LOAD TIME
+# ============================================================================
 
 # Run dag generation
 DouDigestDagGenerator().generate_dags()
