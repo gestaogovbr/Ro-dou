@@ -542,7 +542,7 @@ class INLABSHook(BaseHook):
             )
         
         @staticmethod
-        def _remove_duplicated_title(title: str, abstract: str)-> str:
+        def _remove_duplicated_title(title: str | None, abstract: str | None)-> str:
             """
             Remove the title from the beginning of the abstract if it is duplicated.
             Args:
@@ -552,6 +552,10 @@ class INLABSHook(BaseHook):
                 str: The abstract without the duplicate title at the beginning.
             """
             import re
+            
+            if not title  or not abstract:
+                return abstract or ""
+            
             # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
             title = re.sub(r'^\*\*(.*?)\*\*', r'\1', title.strip())
             abstract = abstract.strip()
