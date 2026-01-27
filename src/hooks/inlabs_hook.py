@@ -299,9 +299,12 @@ class INLABSHook(BaseHook):
             # df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
+            df["texto"] = df["texto"].apply(self._remove_html_tags)
             # Remove title duplicated
-            df["texto"] = df["texto"].apply(self._remove_duplicated_title)
+            df["texto"] = df.apply(
+                lambda row: self._remove_duplicated_title(row["identifica"], row["texto"]), 
+                axis=1
+            )
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
@@ -537,8 +540,9 @@ class INLABSHook(BaseHook):
                 .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
                 .to_dict()
             )
+        
         @staticmethod
-        def _remove_duplicated_title(title, abstract)-> str:
+        def _remove_duplicated_title(title: str, abstract: str)-> str:
             """
             Remove the title from the beginning of the abstract if it is duplicated.
             Args:
