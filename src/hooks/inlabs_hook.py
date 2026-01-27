@@ -300,10 +300,13 @@ class INLABSHook(BaseHook):
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
+            # Remove title duplicated
+            df["texto"] = df["texto"].apply(self._remove_duplicated_title)
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
             df["identifica"] = df["identifica"].str.strip().str.upper()
+            
             if any(text_terms):
                 df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
                 df["matches_assina"] = df.apply(
@@ -534,3 +537,26 @@ class INLABSHook(BaseHook):
                 .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
                 .to_dict()
             )
+        @staticmethod
+        def _remove_duplicated_title(title, abstract)-> str:
+            """
+            Remove the title from the beginning of the abstract if it is duplicated.
+            Args:
+                title (str): The document title.
+                abstract (str): The document abstract.
+            Returns:
+                str: The abstract without the duplicate title at the beginning.
+            """
+            import re
+            # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
+            title = re.sub(r'^\*\*(.*?)\*\*', r'\1', title.strip())
+            abstract = abstract.strip()
+
+            # Verifica se abstract começa com o título (case-insensitive)
+            title_lower = title.lower()
+            abstract_lower = abstract.lower()
+            if abstract_lower.startswith(title_lower):
+                # Remove o título e espaços iniciais restantes
+                return abstract[len(title):].lstrip()
+
+            return abstract

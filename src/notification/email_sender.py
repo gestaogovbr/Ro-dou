@@ -174,7 +174,7 @@ class EmailSender(ISender):
                                     "title": title,
                                     "url": result["href"],
                                     "url_new_tab": True,
-                                    "abstract": self.remove_duplicate_title(title, result["abstract"]),
+                                    "abstract": result["abstract"],
                                     "date": result["date"],
                                 }
                             )
@@ -189,30 +189,6 @@ class EmailSender(ISender):
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message,
         )
-    
-    def remove_duplicate_title(self, title, abstract):
-        """
-        Remove the title from the beginning of the abstract if it is duplicated.
-        Args:
-            title (str): The document title.
-            abstract (str): The document abstract.
-        Returns:
-            str: The abstract without the duplicate title at the beginning.
-        """
-        import re
-        # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
-        title = re.sub(r'^\*\*(.*?)\*\*', r'\1', title.strip())
-        abstract = abstract.strip()
-
-        # Verifica se abstract começa com o título (case-insensitive)
-        title_lower = title.lower()
-        abstract_lower = abstract.lower()
-        if abstract_lower.startswith(title_lower):
-            # Remove o título e espaços iniciais restantes
-            return abstract[len(title):].lstrip()
-
-        return abstract
-
     
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
