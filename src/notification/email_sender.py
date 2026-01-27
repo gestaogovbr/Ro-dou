@@ -199,14 +199,18 @@ class EmailSender(ISender):
         Returns:
             str: The abstract without the duplicate title at the beginning.
         """
-        title = title.strip()
+        import re
+        # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
+        title = re.sub(r'^\*\*(.*?)\*\*', r'\1', title.strip())
         abstract = abstract.strip()
-        
-        # Verifica se abstract começa com o título
-        if abstract.startswith(title):
+
+        # Verifica se abstract começa com o título (case-insensitive)
+        title_lower = title.lower()
+        abstract_lower = abstract.lower()
+        if abstract_lower.startswith(title_lower):
             # Remove o título e espaços iniciais restantes
             return abstract[len(title):].lstrip()
-        
+
         return abstract
 
     
