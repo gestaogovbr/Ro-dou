@@ -7,10 +7,4 @@ Dúvidas, sugestões e demais comentários sobre o Ro-DOU podem ser enviados ao 
 
 Interações de caráter técnico e sugestões de melhoria no código-fonte e nas funcionalidades do Ro-DOU podem ser enviadas diretamente via GitHub, por meio da abertura de `issues`: <https://github.com/gestaogovbr/Ro-dou>.
 
-<p>
-  <a href="https://discord.gg/8R6bS5D2KN" target="_blank">
-    <img alt="Discord Invite" src="https://img.shields.io/badge/Discord-Entre%20no%20servidor-blue?style=for-the-badge&logo=discord" >
-  </a>
-</p>
-
-Ingresse em nosso [canal de comunidade](https://discord.gg/8R6bS5D2KN) para dúvidas, sugestões, contribuições e conversas em geral sobre o Ro-DOU.
+Participe do nosso [canal de comunidade](https://github.com/gestaogovbr/Ro-dou/discussions) para dúvidas, sugestões, contribuições e conversas em geral sobre o Ro-DOU.
