@@ -14,8 +14,7 @@ from airflow.utils.email import send_email
 
 # Add parent directory to sys.path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# parent_dir = os.path.dirname(current_dir)
+
 
 sys.path.insert(0, parent_dir)
 
@@ -175,7 +174,7 @@ class EmailSender(ISender):
                                     "title": title,
                                     "url": result["href"],
                                     "url_new_tab": True,
-                                    "abstract": self.remove_duplicate_title(result["abstract"]),
+                                    "abstract": self.remove_duplicate_title(title, result["abstract"]),
                                     "date": result["date"],
                                 }
                             )
@@ -191,22 +190,24 @@ class EmailSender(ISender):
             no_results_message=no_result_message,
         )
     
-    def remove_duplicate_title(self, abstract):
+    def remove_duplicate_title(self, title, abstract):
         """
-        Remove all content between ** (including the **) from the abstract.
-        This is used to remove the duplicate title that appears in the abstract.
+        Remove the title from the beginning of the abstract if it is duplicated.
         Args:
+            title (str): The document title.
             abstract (str): The document abstract.
         Returns:
-            str: The abstract without the duplicate title.
+            str: The abstract without the duplicate title at the beginning.
         """
+        title = title.strip()
+        abstract = abstract.strip()
         
-        import re
-        # Remove o primeiro par de ** e tudo que está entre eles
-        pattern = r'\*\*.*?\*\*'
-        cleaned = re.sub(pattern, '', abstract, count=1, flags=re.DOTALL)
-
-        return cleaned.strip()
+        # Verifica se abstract começa com o título
+        if abstract.startswith(title):
+            # Remove o título e espaços iniciais restantes
+            return abstract[len(title):].lstrip()
+        
+        return abstract
 
     
     def get_csv_tempfile(self) -> NamedTemporaryFile:
