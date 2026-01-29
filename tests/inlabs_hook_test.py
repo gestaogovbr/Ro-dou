@@ -718,3 +718,32 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
 )
 def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
     assert inlabs_hook._generate_sql(data_in)["select"] == query_out
+
+
+@pytest.mark.parametrize(
+    "title, abstract, result",
+    [
+        (
+            "Título da Publicação 1",
+            "Título da Publicação 1Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        ),
+        (
+            "Título da Publicação 1",
+            "  Título da Publicação 1  Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        ),
+        (
+            "**Título da Publicação 1**",
+            "Título da Publicação 1Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        ),
+        (
+            "",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        ),
+    ],
+)
+def test_remove_duplicated_title(inlabs_hook, title, abstract, result):
+    assert inlabs_hook.TextDictHandler()._remove_duplicated_title(title, abstract) == result
