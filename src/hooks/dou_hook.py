@@ -9,6 +9,8 @@ import time
 import json
 from typing import List
 import requests
+import re
+from urllib.parse import unquote
 
 from airflow.hooks.base import BaseHook
 
@@ -35,12 +37,75 @@ class DOUHook(BaseHook):
         Section.EDICAO_EXTRA_3A.value: "Seção: 3 - Extra A",
         Section.EDICAO_EXTRA_3B.value: "Seção: 3 - Extra B",
         Section.EDICAO_EXTRA_3D.value: "Seção: 3 - Extra D",
-        Section.EDICAO_SUPLEMENTAR.value: "Edição Suplementar",
+        Section.EDICAO_SUPLEMENTAR.value: "Seção: 1 - Suplementar",
         Section.TODOS.value: "Todas",
+        # API variations and alternative names
+        "do1_sup": "Seção: 1 - Suplementar",  # Variations from DOU API
+        "do2_sup": "Seção: 2 - Suplementar",
+        "do3_sup": "Seção: 3 - Suplementar",
+        "do1e": "Edição Extra",
+        "do2e": "Edição Extra",
+        "do3e": "Edição Extra",
     }
 
     def __init__(self, *args, **kwargs):
         pass
+
+    @staticmethod
+    def _extract_ementa_from_html(html_content: str) -> str:
+        """
+        Extract ementa (summary) from DOU HTML content.
+        
+        The ementa can be in different formats:
+        1. In a mailto link in the body parameter (URL-encoded)
+        2. In a class="ementa" div
+        3. Encoded in the content structure
+        
+        Args:
+            html_content: Raw HTML content from DOU API
+            
+        Returns:
+            Ementa text if found, empty string otherwise
+        """
+        if not html_content:
+            return ""
+        
+        try:
+            # Parse HTML
+            soup = BeautifulSoup(html_content, "html.parser")
+            
+            # Try to find ementa in mailto link body parameter
+            # Format: mailto:?subject=...&body=EMENTA%0D%0A...
+            mailto_links = soup.find_all("a", href=re.compile(r"^mailto:"))
+            for link in mailto_links:
+                href = link.get("href", "")
+                # Extract the body parameter
+                body_match = re.search(r"[?&]body=([^&]*)", href)
+                if body_match:
+                    body_content = unquote(body_match.group(1))
+                    # Extract ementa (text before %0D%0A or newlines)
+                    ementa = body_content.split("%0D%0A")[0].split("\n")[0].strip()
+                    if ementa and ementa.lower() not in ["portaria", "decreto", "resolução"]:
+                        return ementa
+            
+            # Try to find in class="ementa"
+            ementa_div = soup.find("div", class_="ementa")
+            if ementa_div:
+                return ementa_div.get_text(strip=True)
+            
+            # Try to find in any span or p with ementa-like content
+            for tag in soup.find_all(["span", "p", "div"]):
+                classes = tag.get("class", [])
+                if "ementa" in classes or "summary" in classes:
+                    text = tag.get_text(strip=True)
+                    if text:
+                        return text
+            
+            return ""
+            
+        except Exception as e:
+            logging.warning(f"Error extracting ementa from HTML: {e}")
+            return ""
 
     def _get_query_str(self, term, field, is_exact_search):
         """
@@ -196,11 +261,16 @@ class DOUHook(BaseHook):
 
             if search_results:
                 for content in search_results:
+                    # Extract ementa from content HTML
+                    ementa = self._extract_ementa_from_html(content["content"])
+                    
                     item = {
                         "section": content["pubName"].lower(),
                         "title": content["title"],
                         "href": self.IN_WEB_BASE_URL + content["urlTitle"],
                         "abstract": content["content"],
+                        "ementa": ementa,
+                        "has_ementa": bool(ementa),
                         "date": content["pubDate"],
                         "id": content["classPK"],
                         "display_date_sortable": content["displayDateSortable"],

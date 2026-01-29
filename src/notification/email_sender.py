@@ -184,8 +184,9 @@ class EmailSender(ISender):
                             # Busca o resumo individual para este documento
                             ai_summary = summaries_map.get(title, '')
                             
-                            # Verifica se há ementa (class="ementa") no abstract
-                            has_ementa = 'class="ementa"' in result["abstract"]
+                            # Verifica se há ementa usando o campo has_ementa do hook
+                            # Este campo é definido no DOUHook._extract_ementa_from_html()
+                            has_ementa = result.get("has_ementa", False)
 
                             term_data["search_terms"]["items"].append(
                                 {

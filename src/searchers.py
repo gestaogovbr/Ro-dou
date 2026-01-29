@@ -351,8 +351,22 @@ class DOUSearcher(BaseSearcher):
                 results.remove(result)
 
     def _render_section_descriptions(self, results: list):
+        """Render section codes to human-readable descriptions.
+        
+        This method is ONLY for DOUSearcher results. It converts section codes
+        like 'do1', 'do2_extra_a' into formatted descriptions like 
+        'DOU - Seção 1', 'DOU - Seção: 2 - Extra A'.
+        
+        Handles missing keys gracefully by falling back to the original value.
+        """
         for result in results:
-            result["section"] = f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}"
+            section_code = result['section']
+            # Get description from mapping, or use original code if not found
+            description = DOUHook.SEC_DESCRIPTION.get(
+                section_code, 
+                section_code  # Fallback: use original code if not mapped
+            )
+            result["section"] = f"DOU - {description}"
 
 class QDSearcher(BaseSearcher):
 
