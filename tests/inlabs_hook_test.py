@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 from datetime import datetime
 
+
 @pytest.mark.parametrize(
     "text_terms_in, text_terms_out",
     [
@@ -10,6 +11,7 @@ from datetime import datetime
 )
 def test_filter_text_terms(inlabs_hook, text_terms_in, text_terms_out):
     assert inlabs_hook._filter_text_terms(text_terms_in) == text_terms_out
+
 
 @pytest.mark.parametrize(
     "data_in, query_out",
@@ -27,12 +29,13 @@ def test_filter_text_terms(inlabs_hook, text_terms_in, text_terms_out):
 def test_generate_sql(inlabs_hook, data_in, query_out):
     assert inlabs_hook._generate_sql(data_in)["select"] == query_out
 
+
 @pytest.mark.parametrize(
     "data_in, query_out",
     [
         (
             {
-                "texto": ["term1 & term2 ! term3", "term4 & term5" ],
+                "texto": ["term1 & term2 ! term3", "term4 & term5"],
                 "pubname": ["DO1"],
                 "pubdate": ["2024-04-01", "2024-04-02"],
             },
@@ -207,6 +210,7 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
 def test_trim_text(inlabs_hook, texto_in, texto_out):
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in) == texto_out
 
+
 @pytest.mark.parametrize(
     "texto_in, texto_out",
     [
@@ -237,14 +241,14 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
             consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
             Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
             adipisci velit, sed quia non numquam eius modi (...)"""
-            ),        
+            ),
         ),
     ],
 )
-
-def test_trim_text_length(inlabs_hook, texto_in, texto_out):  
+def test_trim_text_length(inlabs_hook, texto_in, texto_out):
     print(inlabs_hook.TextDictHandler()._trim_text(texto_in, 450))
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 450) == texto_out
+
 
 @pytest.mark.parametrize(
     "texto_in, texto_out",
@@ -270,13 +274,13 @@ def test_trim_text_length(inlabs_hook, texto_in, texto_out):
             totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
             quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
             vo (...)"""
-            ),        
+            ),
         ),
     ],
 )
-
-def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):     
+def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 150) == texto_out
+
 
 @pytest.mark.parametrize(
     "texto_in, texto_out",
@@ -318,6 +322,7 @@ def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):
 )
 def test_trim_text_length_less_than_0(inlabs_hook, texto_in, texto_out):
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in, -1) == texto_out
+
 
 @pytest.mark.parametrize(
     "df_in, dict_out",
@@ -616,12 +621,8 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
     ],
 )
 def test_transform_search_results(
-    inlabs_hook,
-    terms,
-    df_in,
-    dict_out,
-    full_text,
-    use_summary):
+    inlabs_hook, terms, df_in, dict_out, full_text, use_summary
+):
 
     r = inlabs_hook.TextDictHandler().transform_search_results(
         response=df_in,
@@ -700,7 +701,6 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
     assert r == dict_out
 
 
-
 @pytest.mark.parametrize(
     "data_in, query_out",
     [
@@ -739,6 +739,11 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         ),
         (
+            "Título da Publicação 1",
+            "**Título da Publicação 1** Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        ),
+        (
             "",
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -746,4 +751,7 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
     ],
 )
 def test_remove_duplicated_title(inlabs_hook, title, abstract, result):
-    assert inlabs_hook.TextDictHandler()._remove_duplicated_title(title, abstract) == result
+    assert (
+        inlabs_hook.TextDictHandler()._remove_duplicated_title(title, abstract)
+        == result
+    )

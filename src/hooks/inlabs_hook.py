@@ -1,5 +1,4 @@
-"""Apache Airflow Hook to execute DOU searches from INLABS source.
-"""
+"""Apache Airflow Hook to execute DOU searches from INLABS source."""
 
 import re
 import logging
@@ -11,6 +10,7 @@ import html2text
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from typing import Optional
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -37,18 +37,19 @@ class INLABSHook(BaseHook):
         Returns:
             list: A list of filtered text terms
         """
-        search_term_operators = ['&', '!', '|', '(', ')']
+        search_term_operators = ["&", "!", "|", "(", ")"]
 
         # Remove terms that precede a '!'
         text_terms = [re.sub(r"! .*", "", term).strip() for term in text_terms]
-        operator_str = ''.join(search_term_operators)
-        split_text_terms = [re.split(rf'\s*[{re.escape(operator_str)}]\s*', term) for term in text_terms]
+        operator_str = "".join(search_term_operators)
+        split_text_terms = [
+            re.split(rf"\s*[{re.escape(operator_str)}]\s*", term) for term in text_terms
+        ]
         text_terms = [item for sublist in split_text_terms for item in sublist]
         # Remove blank items
-        text_terms = list(filter(lambda t: t != '', text_terms))
+        text_terms = list(filter(lambda t: t != "", text_terms))
 
         return text_terms
-
 
     def search_text(
         self,
@@ -82,7 +83,7 @@ class INLABSHook(BaseHook):
         main_search_queries = self._generate_sql(search_terms)
         hook.run(main_search_queries["create_extension"], autocommit=True)
         main_search_results = hook.get_pandas_df(main_search_queries["select"])
-       
+
         # Fetching results for yesterday extra search terms
         extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
         extra_search_queries = self._generate_sql(extra_search_terms)
@@ -96,7 +97,12 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results, filtered_text_terms, ignore_signature_match, full_text, text_length, use_summary
+                all_results,
+                filtered_text_terms,
+                ignore_signature_match,
+                full_text,
+                text_length,
+                use_summary,
             )
             if not all_results.empty
             else {}
@@ -143,21 +149,23 @@ class INLABSHook(BaseHook):
         query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
 
         # Term search operators
-        term_operators = ['&', '!', '|', '(', ')']
+        term_operators = ["&", "!", "|", "(", ")"]
 
         conditions = []
         for key, values in filtered_dict.items():
 
-            if key == 'texto':
+            if key == "texto":
                 if any(values):
                     key_conditions = []
                     for term in values:
                         if any(operator in term for operator in term_operators):
-                            operator_str = ''.join(term_operators)
+                            operator_str = "".join(term_operators)
                             # split the string based on the operators
-                            sub_terms = re.split(rf'\s*([{operator_str}])\s*', term)
+                            sub_terms = re.split(rf"\s*([{operator_str}])\s*", term)
                             # remove blank items
-                            sub_terms = [sub_term for sub_term in sub_terms if sub_term.strip()]
+                            sub_terms = [
+                                sub_term for sub_term in sub_terms if sub_term.strip()
+                            ]
 
                             sub_conditions = []
                             # If the previous operator in the string is different from '!', the ilike is inclusive
@@ -165,26 +173,26 @@ class INLABSHook(BaseHook):
                             for sub_term in sub_terms:
 
                                 if sub_term in term_operators:
-                                    if sub_term in {'&', '!'}:
+                                    if sub_term in {"&", "!"}:
                                         # If the previous operator in the string is equal to '!',
                                         # the ilike is exlusive
                                         like_positive = sub_term != "!"
                                         # If the previous operator in the string is '&' or '!', the operator is 'OR'
-                                        operator = ' AND '
+                                        operator = " AND "
                                     # If the previous operator in the string is '|', the operator is 'OR'
-                                    elif sub_term == '|':
+                                    elif sub_term == "|":
                                         like_positive = True
-                                        operator = ' OR '
-                                    elif sub_term in {'(', ')'}:
+                                        operator = " OR "
+                                    elif sub_term in {"(", ")"}:
                                         like_positive = True
                                         operator = sub_term
                                     sub_conditions.append(operator)
                                 else:
                                     sub_conditions.append(
                                         rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
-                                        )
+                                    )
 
-                            statement = ''.join(sub_conditions)
+                            statement = "".join(sub_conditions)
 
                             # Add the parentheses-enclosed statement to key_conditions
                             key_conditions.append("(" + statement + ")")
@@ -192,32 +200,33 @@ class INLABSHook(BaseHook):
                         else:
                             # If there isn't operator in the string
                             key_conditions.append(
-                                rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')")
+                                rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')"
+                            )
 
                     conditions.append("(" + " OR ".join(key_conditions) + ")")
 
-            elif key == 'artcategory_ignore':
+            elif key == "artcategory_ignore":
                 conditions.append(
-                        "(" +
-                        " AND ".join(
+                    "("
+                    + " AND ".join(
                         [
                             rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
                             for value in values
                         ]
-                        ) +
-                        ")"
+                    )
+                    + ")"
                 )
 
             else:
                 conditions.append(
-                    "(" +
-                    " OR ".join(
+                    "("
+                    + " OR ".join(
                         [
                             rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
                             for value in values
                         ]
-                    ) +
-                    ")"
+                    )
+                    + ")"
                 )
 
         if conditions:
@@ -302,14 +311,16 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_html_tags)
             # Remove title duplicated
             df["texto"] = df.apply(
-                lambda row: self._remove_duplicated_title(row["identifica"], row["texto"]), 
-                axis=1
+                lambda row: self._remove_duplicated_title(
+                    row["identifica"], row["texto"]
+                ),
+                axis=1,
             )
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
             df["identifica"] = df["identifica"].str.strip().str.upper()
-            
+
             if any(text_terms):
                 df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
                 df["matches_assina"] = df.apply(
@@ -322,7 +333,7 @@ class INLABSHook(BaseHook):
                         row["matches"].split(", "), row["texto"]
                     ),
                     axis=1,
-                    )
+                )
                 df["count_assina"] = df.apply(
                     lambda row: (
                         row["texto"].count(row["assina"])
@@ -338,15 +349,16 @@ class INLABSHook(BaseHook):
 
             if not full_text:
                 df["texto"] = df["texto"].apply(self._trim_text)
-            
+
             if text_length is not None and text_length != 400:
-                df["texto"] = df["texto"].apply(lambda x: self._trim_text(x, text_length))
+                df["texto"] = df["texto"].apply(
+                    lambda x: self._trim_text(x, text_length)
+                )
 
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
             df["display_date_sortable"] = None
-
 
             cols_rename = {
                 "pubname": "section",
@@ -468,25 +480,25 @@ class INLABSHook(BaseHook):
         @staticmethod
         def _trim_text(text: str, text_length: int = 400) -> str:
             """Truncates text while keeping the `<%%>` marker centered when present.
-    
-                If the text contains the `<%%>` marker, the function preserves this marker
-                in the center and keeps a specific number of characters before and after it.
-                Otherwise, it truncates the text from the beginning.
-                
-                Args:
-                    text (str): Text to be truncated
-                    text_length (int, optional): Number of characters to keep on each side of 
-                                        the `<%%>` marker.
-                
-                Returns:
-                    str: Truncated text with "(...)" indicating removed parts
-                    
-                Examples:
-                    - With marker: "(...) last_N_chars<%%>first_N_chars (...)"
-                    - Without marker: "first_N_chars (...)"
+
+            If the text contains the `<%%>` marker, the function preserves this marker
+            in the center and keeps a specific number of characters before and after it.
+            Otherwise, it truncates the text from the beginning.
+
+            Args:
+                text (str): Text to be truncated
+                text_length (int, optional): Number of characters to keep on each side of
+                                    the `<%%>` marker.
+
+            Returns:
+                str: Truncated text with "(...)" indicating removed parts
+
+            Examples:
+                - With marker: "(...) last_N_chars<%%>first_N_chars (...)"
+                - Without marker: "first_N_chars (...)"
             """
 
-            parts = text.split("<%%>", 1)    
+            parts = text.split("<%%>", 1)
             if text_length is False or text_length is None or text_length <= 0:
                 text_length = 400
 
@@ -494,11 +506,11 @@ class INLABSHook(BaseHook):
                 # Texto tem o marcador <%%>
                 before_full = parts[0]
                 after_full = parts[1]
-                
+
                 # Determina se precisa truncar cada parte
                 before_truncated = len(before_full) > text_length
                 after_truncated = len(after_full) > text_length
-                
+
                 # Processa a parte antes do marcador
                 if before_truncated:
                     before = before_full[-text_length:]
@@ -506,7 +518,7 @@ class INLABSHook(BaseHook):
                 else:
                     before = before_full
                     prefix = ""
-                
+
                 # Processa a parte depois do marcador
                 if after_truncated:
                     after = after_full[:text_length].rstrip()
@@ -514,7 +526,7 @@ class INLABSHook(BaseHook):
                 else:
                     after = after_full
                     suffix = ""
-                
+
                 return f"{prefix}{before}<%%>{after}{suffix}"
             else:
                 return f"{text[:text_length].rstrip()} (...)"
@@ -540,9 +552,9 @@ class INLABSHook(BaseHook):
                 .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
                 .to_dict()
             )
-        
+
         @staticmethod
-        def _remove_duplicated_title(title: str | None, abstract: str | None)-> str:
+        def _remove_duplicated_title(title: str | None, abstract: str | None) -> str:
             """
             Remove the title from the beginning of the abstract if it is duplicated.
             Args:
@@ -552,12 +564,16 @@ class INLABSHook(BaseHook):
                 str: The abstract without the duplicate title at the beginning.
             """
             import re
-            
-            if not title  or not abstract:
+
+            if not title or not abstract:
                 return abstract or ""
-            
+
             # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
-            title = re.sub(r'^\*\*(.*?)\*\*', r'\1', title.strip())
+            title = re.sub(r"^\*\*(.*?)\*\*", r"\1", title.strip())
+
+            # Remove os ** iniciais do abstract, se existirem (ex: **PORTARIA** -> PORTARIA)
+            abstract = re.sub(r"^\*\*(.*?)\*\*", r"\1", abstract.strip())
+
             abstract = abstract.strip()
 
             # Verifica se abstract começa com o título (case-insensitive)
@@ -565,6 +581,6 @@ class INLABSHook(BaseHook):
             abstract_lower = abstract.lower()
             if abstract_lower.startswith(title_lower):
                 # Remove o título e espaços iniciais restantes
-                return abstract[len(title):].lstrip()
+                return abstract[len(title) :].lstrip()
 
             return abstract
