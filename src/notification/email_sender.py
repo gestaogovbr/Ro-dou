@@ -14,8 +14,7 @@ from airflow.utils.email import send_email
 
 # Add parent directory to sys.path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# parent_dir = os.path.dirname(current_dir)
+
 
 sys.path.insert(0, parent_dir)
 
@@ -175,7 +174,7 @@ class EmailSender(ISender):
                                     "title": title,
                                     "url": result["href"],
                                     "url_new_tab": True,
-                                    "abstract": self.remove_duplicate_title(result["abstract"]),
+                                    "abstract": result["abstract"],
                                     "date": result["date"],
                                 }
                             )
@@ -190,24 +189,6 @@ class EmailSender(ISender):
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message,
         )
-    
-    def remove_duplicate_title(self, abstract):
-        """
-        Remove all content between ** (including the **) from the abstract.
-        This is used to remove the duplicate title that appears in the abstract.
-        Args:
-            abstract (str): The document abstract.
-        Returns:
-            str: The abstract without the duplicate title.
-        """
-        
-        import re
-        # Remove o primeiro par de ** e tudo que está entre eles
-        pattern = r'\*\*.*?\*\*'
-        cleaned = re.sub(pattern, '', abstract, count=1, flags=re.DOTALL)
-
-        return cleaned.strip()
-
     
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
