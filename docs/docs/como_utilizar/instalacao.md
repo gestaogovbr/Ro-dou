@@ -3,7 +3,7 @@
 **⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com oa passos de instalação, certifique-se também de habilitar o [docker no WSL](https://learn.microsoft.com/pt-br/windows/wsl/tutorials/wsl-containers)
 
 * [Como instalar e configurar o WSL](instalacao_wsl_windows.md)
-* [Como habilitar no docker no WSL](habilitacao_docker_no_wsl.md)
+* [Como habilitar o docker no WSL](habilitacao_docker_no_wsl.md)
 
 ### Configurando o ambiente local (desenvolvimento)
 
@@ -13,10 +13,10 @@
 * 2Gb de espaço em disco
 * Sistema operacional Linux ou Windows com WSL
 
-O código-fonte está disponibilizado no <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> perfil do GitHub do Ministério da Gestão e da Inovação em Serviços Públicos.
+O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.
 
 
-Neste conteúdo, fornecemos abaixo uma configuração demonstrativa para que você possa configurar e executar o Ro-DOU no seu computador.
+Neste material, apresentamos uma configuração de exemplo para que você possa instalar e executar o Ro-DOU em seu computador.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -51,11 +51,11 @@ Você deverá ver uma saída similar a esta:
 !['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/8edc3e3d567a4d2f182100db103316dc312fb241/docs/img/makerunwsl.png)
 
 
-**Observação:** Ao executar o comando, você verá uma mensagem confirmando a criação das variáveis de ambiente e das conexões. Caso não sejam criadas automaticamente, você pode executar cada função individualmente a partir do arquivo `Makefile`.
+**Observação:** Ao executar o comando, uma mensagem será exibida confirmando a criação das variáveis de ambiente e das conexões. Caso isso não ocorra automaticamente, você pode executar cada função separadamente a partir do arquivo `Makefile`.
 
-Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
+<!-- Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários. -->
 
-Como observado na imagem, após executar o comando no terminal e efetura o build dos containers, ele também iniciará as conexões com os ambientes necessários automaticamente! No exemplo representado pela imagem, os containers e conexões já foram criados, e por isso o retorno das mensagens:
+Como mostrado na imagem, após executar o comando no terminal e realizar o build dos containers, as conexões com os ambientes necessários serão iniciadas automaticamente. No exemplo apresentado, os containers e conexões já haviam sido criados, por isso as mensagens exibidas no retorno.
 
 ```bash
 psql:/sql/init-db.sql:1: ERROR:  database "inlabs" already exists
@@ -70,11 +70,11 @@ Creating 'inlabs' database
 Creating 'dou_inlabs' schema
 ```
 
-1. Verificar se o serviço do Airflow, no qual o Ro-DOU depende, está acessível via navegador, acessando:
+1. Confirme se o serviço do Airflow — do qual o Ro-DOU depende — está funcionando, acessando-o pelo navegador no endereço:
 
     [http://localhost:8080/](http://localhost:8080/)
 
-O Apache Airflow, que também é usado para rodar o Ro-DOU, pode demorar alguns minutos para se configurar na primeira vez. Para se autenticar e acessar o Apache Airflow, entre no link e utilize login `airflow` e senha `airflow`.
+O Apache Airflow, utilizado também para executar o Ro-DOU, pode levar alguns minutos para ser configurado na primeira inicialização. Para acessar e se autenticar no Airflow, abra o link e utilize o usuário `airflow` e a senha `airflow`.
 
 5. Ativar a DAG de clipping:
 
