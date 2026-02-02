@@ -9,7 +9,7 @@ class TemplateManager:
             lstrip_blocks=True  # Remove espaços em branco à esquerda
         )
 
-    def renderizar(self, template_name, filters=None, results=None, **context):
+    def renderizar(self, template_name, filters=None, results=None, ai_summary=None,**context):
         """
         Renders DOU results using a Jinja2 template.
         
@@ -18,6 +18,7 @@ class TemplateManager:
             filters: Dict with filters applied
             results: List of search results
             header_title: Header title (optional)
+            ai_summary: AI generated summary (optional)
 
         Returns:
             str: HTML rendered
@@ -27,6 +28,7 @@ class TemplateManager:
             return template.render(
                 filters=filters,
                 results=results,
+                ai_summary=ai_summary,
                 **context
             )
         except Exception as e:

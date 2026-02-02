@@ -1,0 +1,29 @@
+dag:
+  id: busca_termos_arquivo_nacional_inlabs_copra
+  description: Realiza busca no DOU das publicações no âmbito do Copra (Arquivo Nacional)
+  tags:
+    - arquivo_nacional
+    - inlabs
+  owner:
+    - cdata
+  dataset: inlabs
+  search:
+    sources:
+      - INLABS
+    terms:
+      - Arquivo Nacional
+    is_exact_search: On
+    ignore_signature_match: On
+  report:
+    emails:
+      - copra.gabin@gestao.gov.br
+      - daiana.ribeiro@gestao.gov.br
+      - carlos.burity@gestao.an.gov.br
+      - ro-dou-suporte@gestao.gov.br
+    subject: "Ro-DOU: Publicações do dia no DOU"
+    skip_null: False
+  doc_md: >-
+    ## Clipping Arquivo Nacional
+
+    Realiza a busca de termos no âmbito do COPRA/Arquivo Nacional.
+    Contato: Daiana Ribeiro daiana.ribeiro@gestao.gov.br

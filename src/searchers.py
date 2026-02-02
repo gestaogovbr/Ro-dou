@@ -11,13 +11,12 @@ import os
 from abc import ABC
 from datetime import datetime, timedelta
 from random import random
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 import string
 import pandas as pd
 import requests
 from unidecode import unidecode
-
-from typing import Optional
+from relevance import is_relevant_entry
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -31,52 +30,35 @@ from utils.search_domains import (
     calculate_from_datetime,
 )
 
+logger = logging.getLogger(__name__)
+
+
 class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile("<.*?>")
 
-    def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
-        """Convert different term list formats to a standardized list.
-        
-        Handles the conversion of search terms from various sources:
-        - Returns empty list if input is None
-        - Returns list as-is if already a list
-        - Returns string as-is if it's a string
-        - Converts JSON string to list by reading as DataFrame and extracting first column
-        
-        Args:
-            pre_term_list: Search terms in various formats (list, str, JSON string, or None)
-            
-        Returns:
-            list: Standardized list of search terms, empty list if input is None
-        """
-        
+    # ------------------------------------------------------------------
+    # Term handling
+    # ------------------------------------------------------------------
+
+    def _cast_term_list(self, pre_term_list: Union[list, str, None]) -> list:
         if pre_term_list is None:
             return []
         elif isinstance(pre_term_list, list):
-            return pre_term_list        
-        # elif isinstance(pre_term_list, str):
-        #     return pre_term_list
+            return pre_term_list
         else:
             return pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
-        # return (
-        #     pre_term_list
-        #     if isinstance(pre_term_list, list)
-        #     else pd.read_json(pre_term_list).iloc[:, 0].tolist()
-        # )
+    # ------------------------------------------------------------------
+    # Grouping
+    # ------------------------------------------------------------------
 
     def _group_results(
         self,
         search_results: dict,
-        term_list: Dict[list, str],
+        term_list: Union[list, str],
         department: list[str] = None,
     ) -> dict:
-        """Produces a grouped result based on departments and group name.
-        If `term_list` is already  the list of terms or it is a string received through xcom
-        from `select_terms_from_db` task and the sql_query returned a
-        second column (used as the group name)
-        """
 
         dpt_grouped_result = self._group_by_department(search_results, department)
 
@@ -89,9 +71,6 @@ class BaseSearcher(ABC):
 
     @staticmethod
     def _group_by_term_group(search_results: dict, term_n_group: str) -> dict:
-        """Rebuild the dict grouping the results based on term_n_group
-        mapping
-        """
         dict_struct = ast.literal_eval(term_n_group)
         terms, groups = dict_struct.values()
         term_group_map = dict(zip(terms.values(), groups.values()))
@@ -99,66 +78,100 @@ class BaseSearcher(ABC):
         grouped_result = {}
         for k, v in search_results.items():
             group = term_group_map[k.split(",")[0]]
-            update = {k: v}
+            grouped_result.setdefault(group, {}).update({k: v})
 
-            if group in grouped_result:
-                grouped_result[group].update(update)
-            else:
-                grouped_result[group] = update
-
-        sorted_dict = {key: grouped_result[key] for key in sorted(grouped_result)}
-
-        return sorted_dict
+        return dict(sorted(grouped_result.items()))
 
     @staticmethod
     def _group_by_department(search_results: dict, department: list) -> dict:
         dpt_grouped_result = {}
-        # Iterate over all terms under the group
+
         for term, results in search_results.items():
-            # Initialize the department group for this term
             dpt_grouped_result[term] = {}
 
             for result in results:
-                # change all units in hierarchyList to lower case
-                # for unit in result['hierarchyList']:
                 if department:
                     for dept in department:
                         if dept.casefold() in str(result["hierarchyList"]).casefold():
-                            # Initialize the group if not present
-                            if dept not in dpt_grouped_result[term]:
-                                dpt_grouped_result[term][dept] = []
-                            dpt_grouped_result[term][dept].append(result)
+                            dpt_grouped_result[term].setdefault(dept, []).append(result)
                 else:
-                    dpt_grouped_result[term].setdefault("single_department", [])
-                    dpt_grouped_result[term]["single_department"].append(result)
+                    dpt_grouped_result[term].setdefault(
+                        "single_department", []
+                    ).append(result)
 
-        search_results = dpt_grouped_result
+        return dpt_grouped_result
 
-        return search_results
+    # ------------------------------------------------------------------
+    # Semantic decision layer (CRITICAL POINT)
+    # ------------------------------------------------------------------
+
+    def is_relevant_result(
+        self,
+        search_term: str,
+        result: dict,
+        ignore_signature_match: bool,
+        force_rematch: bool,
+    ) -> bool:
+        """
+        Centralized semantic decision point.
+        This method decides whether a result is relevant enough
+        to be included in the final output.
+        """
+
+        abstract = result.get("abstract", "")
+
+        if ignore_signature_match:
+            if self._is_signature(search_term, abstract):
+                return False
+
+        if force_rematch:
+            if not self._really_matched(search_term, abstract):
+                return False
+
+        return True
+
+    # ------------------------------------------------------------------
+    # Heuristics (legacy logic, preserved)
+    # ------------------------------------------------------------------
 
     def _really_matched(self, search_term: str, abstract: str) -> bool:
-        """Verify if the term returned from the API matches the search terms.
-        This function is useful for filtering API results to include only close matches, not exact matches.
-        """
         whole_match = self._clean_html(abstract).replace("... ", "")
         norm_whole_match = self._normalize(whole_match)
-
         norm_term = self._normalize(search_term)
-
         return norm_term in norm_whole_match
 
+    def _is_signature(self, search_term: str, abstract: str) -> bool:
+        clean_abstract = self._clean_html(abstract)
+        start_name, match_name = self._get_prior_and_matched_name(abstract)
+
+        norm_abstract = self._normalize(clean_abstract)
+        norm_abstract_without_start = norm_abstract[len(start_name):]
+        norm_term = self._normalize(search_term)
+
+        return (
+            (start_name + match_name).isupper()
+            and (
+                norm_abstract.startswith(norm_term)
+                or norm_abstract_without_start.startswith(norm_term)
+            )
+        )
+
+    # ------------------------------------------------------------------
+    # Text utilities
+    # ------------------------------------------------------------------
+
     def _clean_html(self, raw_html: str) -> str:
-        clean_text = re.sub(self.CLEAN_HTML_RE, "", raw_html)
-        return clean_text
+        return re.sub(self.CLEAN_HTML_RE, "", raw_html)
 
     def _normalize(self, raw_str: str) -> str:
-        """Remove characters (accents and other not alphanumeric) lower
-        it and keep only one space between words"""
         KEEPCHAR = string.punctuation + "—–"
         text = unidecode(raw_str).lower()
         text = "".join(c if c.isalnum() or c in KEEPCHAR else " " for c in text)
-        text = " ".join(text.split())
-        return text
+        return " ".join(text.split())
+
+    def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
+        groups = DOUSearcher.SPLIT_MATCH_RE.match(raw_html).groups()
+        return groups[0], groups[1]
 
 
 class DOUSearcher(BaseSearcher):
@@ -190,11 +203,10 @@ class DOUSearcher(BaseSearcher):
             force_rematch,
             department,
             department_ignore,
-            pubtype
+            pubtype,
         )
-        group_results = self._group_results(search_results, term_list, department)
 
-        return group_results
+        return self._group_results(search_results, term_list, department)
 
     def _search_all_terms(
         self,
@@ -208,23 +220,19 @@ class DOUSearcher(BaseSearcher):
         force_rematch,
         department,
         department_ignore,
-        pubtype
+        pubtype,
     ) -> dict:
+
         search_results = {}
-        logging.info(f"Starting search with terms: {term_list}")
-        # if no terms are specified, the search filter will search for all terms (*) to apply the filters
+
         if not term_list:
-            logging.info("No specific terms provided, searching all")
             term_list = ["*"]
 
         for search_term in term_list:
-            logging.info("Starting search for term: %s", search_term)
-
-            # To perform a search without specifying terms, use the broad search function
-            search_term = "" if search_term == "*" else search_term
+            effective_term = "" if search_term == "*" else search_term
 
             results = self._search_text_with_retry(
-                search_term=search_term,
+                search_term=effective_term,
                 sections=[Section[s] for s in dou_sections],
                 reference_date=trigger_date,
                 search_date=SearchDate[search_date],
@@ -232,20 +240,36 @@ class DOUSearcher(BaseSearcher):
                 is_exact_search=is_exact_search,
             )
 
-            # In cases where no terms are specified, skip the matching checks
-            if search_term != "":
-                if ignore_signature_match:
-                    results = [
-                        r
-                        for r in results
-                        if not self._is_signature(search_term, r.get("abstract"))
-                    ]
-                if force_rematch:
-                    results = [
-                        r
-                        for r in results
-                        if self._really_matched(search_term, r.get("abstract"))
-                    ]
+            if effective_term:
+                results = [
+                    r
+                    for r in results
+                    if self.is_relevant_result(
+                        effective_term,
+                        r,
+                        ignore_signature_match,
+                        force_rematch,
+                    )
+                ]
+
+            # Aplicar filtro de relevância baseado em palavras-chave com contadores
+            total_entries = 0
+            relevant_entries = 0
+            filtered_results = []
+            
+            for entry in results:
+                total_entries += 1
+                if is_relevant_entry(entry):
+                    relevant_entries += 1
+                    filtered_results.append(entry)
+            
+            logger.info(
+                "Relevância DOU | total=%s | relevantes=%s",
+                total_entries,
+                relevant_entries,
+            )
+            
+            results = filtered_results
 
             if department or department_ignore:
                 self._match_department(results, department, department_ignore)
@@ -254,17 +278,19 @@ class DOUSearcher(BaseSearcher):
                 self._match_pubtype(results, pubtype)
 
             self._render_section_descriptions(results)
-
             self._add_standard_highlight_formatting(results)
 
             if results:
-                # To execute a search without terms, use the key "all_publications"
-                result_key = "all_publications" if search_term == "" else search_term
-                search_results[result_key] = results
+                key = "all_publications" if effective_term == "" else search_term
+                search_results[key] = results
 
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
 
         return search_results
+
+    # ------------------------------------------------------------------
+    # Infra helpers (unchanged)
+    # ------------------------------------------------------------------
 
     def _add_standard_highlight_formatting(self, results: list) -> None:
         for result in results:
@@ -286,7 +312,6 @@ class DOUSearcher(BaseSearcher):
     ) -> list:
 
         retry = 1
-
         while True:
             try:
                 return self.dou_hook.search_text(
@@ -298,97 +323,50 @@ class DOUSearcher(BaseSearcher):
                     is_exact_search=is_exact_search,
                 )
             except Exception as e:
-                import requests
-                # If the underlying error is SSL related, don't retry — likely permanent
                 if isinstance(e, requests.exceptions.SSLError):
-                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, e)
                     raise
-
-                # If it's a ValueError from missing script tag, it may indicate API structure change
-                # Still retry in case it's temporary
-                if isinstance(e, ValueError):
-                    logging.warning("ValueError encountered for term '%s': %s", search_term, str(e))
 
                 if retry > max_retries:
-                    logging.error(
-                        "Error - Max retries reached for term '%s'. Last error: %s",
-                        search_term,
-                        str(e)
-                    )
                     raise
 
-                logging.info("Attempt %s of %s for term '%s'. Error: %s", retry, max_retries, search_term, str(e))
-                logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
                 time.sleep(30)
                 retry += 1
 
-    def _is_signature(self, search_term: str, abstract: str) -> bool:
-        """This function checks if the search_term (usually used to search for people's names)
-        is present in the signature. To achieve this, the function takes advantage of a "bug" in the API.
-        In such cases, the value returns as abstract and begins with the document signature.
-        This does not happen when the match occurs in other parts of the document.
-        With this approach, the function checks if this situation occurs
-        and is used to filter results present in the final document.
-        This function corrects cases where a person's name forms a larger part of another name.
-        For example, the name 'ANTONIO DE OLIVEIRA' is part of the name 'JOSÉ ANTONIO DE OLIVEIRA MATOS'.
-        """
-        clean_abstract = self._clean_html(abstract)
-        start_name, match_name = self._get_prior_and_matched_name(abstract)
-
-        norm_abstract = self._normalize(clean_abstract)
-        norm_abstract_without_start_name = norm_abstract[len(start_name) :]
-        norm_term = self._normalize(search_term)
-
-        return (
-            # Approve the signature only if it contains uppercase letters.
-            (start_name + match_name).isupper()
-            and
-            # Fix the cases '`ANTONIO DE OLIVEIRA`' and
-            # '`ANTONIO DE OLIVEIRA` MATOS'
-            (
-                norm_abstract.startswith(norm_term)
-                or
-                # Fix the cases 'JOSÉ `ANTONIO DE OLIVEIRA`' and
-                # ' JOSÉ `ANTONIO DE OLIVEIRA` MATOS'
-                norm_abstract_without_start_name.startswith(norm_term)
-            )
-        )
-
-    def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
-        """Applies the filter to the results returned by the units
-        listed in the 'department' parameter in the YAML.
-        """
-        if department:
-            logging.info("Applying filter for department list")
-            logging.info(department)
-        if department_ignore:
-            logging.info("Applying filter for department_ignore list")
-            logging.info(department_ignore)
+    def _match_department(
+        self, results: list, department: list = None, department_ignore: list = None
+    ):
         for result in results[:]:
-            if department is not None:
-                if not any(dpt in result["hierarchyList"] for dpt in department):
-                    results.remove(result)
-            if department_ignore is not None:
-                if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
-                    results.remove(result)
-    def _match_pubtype(self, results: list, pubtype: list) -> list:
-        """Applies the filter to the results returned by the publications type listed
-        in the 'pubtype' parameter in the YAML.
-        """
-        logging.info("Applying filter for pubtype list")
-        logging.info(pubtype)
+            if department and not any(
+                dpt in result["hierarchyList"] for dpt in department
+            ):
+                results.remove(result)
+            if department_ignore and any(
+                dpt in result["hierarchyStr"] for dpt in department_ignore
+            ):
+                results.remove(result)
+
+    def _match_pubtype(self, results: list, pubtype: list):
         for result in results[:]:
             if not any(pub in result["arttype"] for pub in pubtype):
                 results.remove(result)
 
-    def _get_prior_and_matched_name(self, raw_html: str) -> Tuple[str, str]:
-        groups = self.SPLIT_MATCH_RE.match(raw_html).groups()
-        return groups[0], groups[1]
-
-    def _render_section_descriptions(self, results: list) -> list:
+    def _render_section_descriptions(self, results: list):
+        """Render section codes to human-readable descriptions.
+        
+        This method is ONLY for DOUSearcher results. It converts section codes
+        like 'do1', 'do2_extra_a' into formatted descriptions like 
+        'DOU - Seção 1', 'DOU - Seção: 2 - Extra A'.
+        
+        Handles missing keys gracefully by falling back to the original value.
+        """
         for result in results:
-            result["section"] = f"DOU - {DOUHook.SEC_DESCRIPTION[result['section']]}"
-
+            section_code = result['section']
+            # Get description from mapping, or use original code if not found
+            description = DOUHook.SEC_DESCRIPTION.get(
+                section_code, 
+                section_code  # Fallback: use original code if not mapped
+            )
+            result["section"] = f"DOU - {description}"
 
 class QDSearcher(BaseSearcher):
 
@@ -419,6 +397,26 @@ class QDSearcher(BaseSearcher):
                 number_of_excerpts=number_of_excerpts,
                 result_as_email=result_as_email,
             )
+            
+            # Aplicar filtro de relevância com contadores
+            total_entries = 0
+            relevant_entries = 0
+            filtered_results = []
+            
+            for entry in results:
+                total_entries += 1
+                if is_relevant_entry(entry):
+                    relevant_entries += 1
+                    filtered_results.append(entry)
+            
+            logger.info(
+                "Relevância QD | total=%s | relevantes=%s",
+                total_entries,
+                relevant_entries,
+            )
+            
+            results = filtered_results
+            
             if results:
                 search_results[search_term] = results
             time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
@@ -566,7 +564,28 @@ class INLABSSearcher(BaseSearcher):
             search_terms, ignore_signature_match, full_text, text_length, use_summary
         )
 
-        group_results = self._group_results(search_results, terms, department)
+        # Aplicar filtro de relevância antes de agrupar com contadores
+        total_entries = 0
+        relevant_entries = 0
+        filtered_results = {}
+        
+        for term, results in search_results.items():
+            term_filtered = []
+            for entry in results:
+                total_entries += 1
+                if is_relevant_entry(entry):
+                    relevant_entries += 1
+                    term_filtered.append(entry)
+            if term_filtered:
+                filtered_results[term] = term_filtered
+        
+        logger.info(
+            "Relevância INLABS | total=%s | relevantes=%s",
+            total_entries,
+            relevant_entries,
+        )
+
+        group_results = self._group_results(filtered_results, terms, department)
 
         return group_results
 

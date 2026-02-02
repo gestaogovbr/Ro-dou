@@ -3,3 +3,5 @@ unidecode==1.2.0
 html2text==2024.2.26
 markdown==3.6.0
 Jinja2==3.1.4
+google-generativeai==0.8.6
+airflow-ai-sdk==0.1.7

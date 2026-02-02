@@ -18,6 +18,10 @@ RUN pip uninstall -y -r requirements-uninstall.txt && \
   apache-airflow-providers-microsoft-mssql==3.9.0 \
   apache-airflow-providers-common-sql==1.16.0
 
+# Copy and install MAIN requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy and install requirements.txt
 COPY tests-requirements.txt .
 RUN pip install --no-cache-dir -r tests-requirements.txt

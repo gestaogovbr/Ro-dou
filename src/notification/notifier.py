@@ -33,13 +33,15 @@ class Notifier:
             self.senders.append(SlackSender(specs.report))
 
 
-    def send_notification(self, search_report: str, report_date: str):
+    def send_notification(self, search_report: str, report_date: str, ai_summary: str = None, publications_with_summaries: list = None):
         """Sends the notification to the specified email, Discord or Slack
 
         Args:
             search_report (str): The report to be sent
             report_date (str): The date of the report
+            ai_summary (str): AI generated summary (optional)
+            publications_with_summaries (list): Publications with individual AI summaries (optional)
         """
 
         for sender in self.senders:
-            sender.send_report(search_report, report_date)
+            sender.send(search_report, report_date, ai_summary, publications_with_summaries)
