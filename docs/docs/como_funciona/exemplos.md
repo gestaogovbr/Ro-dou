@@ -507,25 +507,24 @@ dag:
 ```
 
 ### Exemplo 20
-Esta configuração permite que seja configurado uma lista de termos a serem ignorados na busca.
+Esta configuração permite que seja configurado uma lista de termos a serem ignorados
+na busca. No exemplo abaixo serão ignorados as publicações que tiverem o termo "deputados"
+no corpo do texto.
 
 ```yaml
 dag:
   id: terms_ignore_example
-  description: DAG de callback
-  callback:
-    on_failure_callback:
-    - departamentodeti@economia.gov.br
+  description: DAG de exemplo com termos ignorados
+  dataset: inlabs
   search:
     sources:
     - INLABS
     terms:
-    - tecnologia
-    - informação
+    - câmara
     terms_ignore:
-      - Sanções Administrativas 
+    - deputados
   report:
     emails:
       - destination@economia.gov.br
-    subject: "Teste do Ro-dou - Envia callback para email nas falhas"
+    subject: "Teste do Ro-dou - Termos ignorados"
 ```

@@ -19,7 +19,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **date**: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA
 - **department**: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.
 - **department_ignore**: Lista de unidades e subordinadas a serem desconsideradas na busca. O nome deve ser idêntico ao da publicação.
-- **terms_ignore**: Lista de termos serem desconsideradas na busca. O nome deve ser idêntico ao da publicação. **(O recurso esta disponível para DOU e INLABS)** Ainda não foi implementado para o Querido Diário.
+- **terms_ignore**: Lista de termos serem desconsideradas na busca. O nome deve ser idêntico ao da publicação. **(O recurso esta disponível para DOU (limitado ao excerto) e INLABS)**
 - **dou_sections**: Lista de seções do DOU onde a busca deverá ser realizada. Valores aceitos: SECAO_1, SECAO_2, SECAO_3, EDICAO_EXTRA, EDICAO_SUPLEMENTAR, TODOS.
 - **field**: Campos dos quais os termos devem ser pesquisados. Valores: TUDO, TITULO, CONTEUDO. Default: TUDO
 - **force_rematch**: Indica que a busca deve ser forçada, mesmo que já tenha sido feita anteriormente. Valores: True ou False.
