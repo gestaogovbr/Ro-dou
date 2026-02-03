@@ -16,7 +16,7 @@ library.
 
 import textwrap
 from typing import List, Optional, Set, Union
-from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
 
@@ -105,7 +105,7 @@ class SearchConfig(BaseModel):
     terms: Optional[Union[List[str], FetchTermsConfig]] = Field(
         default=None,
         description="Lista de termos de pesquisa ou uma forma de buscá-los. "
-        "Opcional quando há filtros de department ou pubtype definidos"
+        "Opcional quando há filtros de department ou pubtype definidos",
     )
     field: Optional[str] = Field(
         default="TUDO",
@@ -135,7 +135,7 @@ class SearchConfig(BaseModel):
         "(Funcionalidade disponível apenas no INLABS)",
     )
     text_length: Optional[int] = Field(
-        default=400, 
+        default=400,
         description="Tamanho do texto que será retornado na mensagem."
         "(Funcionalidade disponível apenas no INLABS)",
     )
@@ -151,22 +151,22 @@ class SearchConfig(BaseModel):
     excerpt_size: Optional[int] = Field(
         default=None,
         description="Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. "
-        "(Funcionalidade disponível apenas no Querido Diário)"
+        "(Funcionalidade disponível apenas no Querido Diário)",
     )
     number_of_excerpts: Optional[int] = Field(
         default=None,
         description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
-        "(Funcionalidade disponível apenas no Querido Diário)"
+        "(Funcionalidade disponível apenas no Querido Diário)",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_search_criteria(self):
         """Validate that at least one search criterion is provided."""
         if not self.terms and "QD" in self.sources:
             raise ValueError(
                 "Os termos de pesquisa são obrigatórios quando a fonte QD é selecionada. "
             )
-        
+
         if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
                 "Pelo menos um critério de busca deve ser fornecido: "
@@ -174,11 +174,15 @@ class SearchConfig(BaseModel):
             )
         return self
 
+
 class CallBacksConfig(BaseModel):
-    """Represents the configuration of the callback functions in the YAML file."""    
+    """Represents the configuration of the callback functions in the YAML file."""
+
     on_failure_callback: Optional[List[EmailStr]] = Field(
-        default=None, description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha"
+        default=None,
+        description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha",
     )
+
 
 class ReportConfig(BaseModel):
     """Represents the report configuration in the YAML file."""
@@ -206,14 +210,14 @@ class ReportConfig(BaseModel):
         "Default: True.",
     )
     page_title: Optional[str] = Field(
-        default=None, 
-        description="Título da página do relatório que é enviado por e-mail"
+        default=None,
+        description="Título da página do relatório que é enviado por e-mail",
     )
     hide_filters: Optional[bool] = Field(
         default=False,
         description="Se deve ocultar os filtros aplicados no relatório."
         "Default: False.",
-    )    
+    )
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
     )
@@ -224,6 +228,7 @@ class ReportConfig(BaseModel):
         default="Nenhum dos termos pesquisados foi encontrado nesta consulta",
         description="Texto a ser exibido quando não há resultados",
     )
+
 
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
@@ -244,7 +249,7 @@ class DAGConfig(BaseModel):
     )
     callback: Union[CallBacksConfig, None] = Field(
         default=None,
-        description="Seção para definição dos endereços de e-mail de notificação"
+        description="Seção para definição dos endereços de e-mail de notificação",
     )
     doc_md: Optional[str] = Field(default=None, description="description")
     report: ReportConfig = Field(
@@ -255,7 +260,7 @@ class DAGConfig(BaseModel):
     @field_validator("search")
     @staticmethod
     def cast_to_list(
-        search_param: Union[List[SearchConfig], SearchConfig]
+        search_param: Union[List[SearchConfig], SearchConfig],
     ) -> List[SearchConfig]:
         """Cast the value of "search" parameter to always be a list.
         If the yaml configuration file does not use a list, convert to
