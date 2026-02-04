@@ -15,11 +15,14 @@ library.
 """
 
 import textwrap
+import os
+import sys
 from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
-
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from utils.default_ai_prompt import prompt
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -149,6 +152,22 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    use_ai_summary: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibido um resumo gerado por IA. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_custom_prompt: Optional[str] = Field(
+        default=prompt,
+        description="Prompt do agente para geração do resumo por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_pub_limit: Optional[int] = Field(
+        default=None,
+        description="Número máximo de publicações a serem processadas por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
@@ -232,6 +251,15 @@ class ReportConfig(BaseModel):
         description="Texto a ser exibido quando não há resultados",
     )
 
+class AIConfig(BaseModel):
+    """Represents the AI configuration in the YAML file."""
+    api_key_var: Optional[str] = Field(
+        default=None,
+        description="Variável da chave da API de IA")
+
+    model: Optional[str] = Field(
+        default=None,
+        description="Modelo da API de IA")
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -254,6 +282,11 @@ class DAGConfig(BaseModel):
         description="Seção para definição dos endereços de e-mail de notificação"
     )
     doc_md: Optional[str] = Field(default=None, description="description")
+
+    ai_config: Optional[AIConfig] = Field(
+        default=None,
+        description="Configurações de IA"
+    )
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
