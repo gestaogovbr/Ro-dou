@@ -220,16 +220,16 @@ class INLABSHook(BaseHook):
                     )
                     + ")"
                 )
-            elif key == 'terms_ignore':
+            elif key == "terms_ignore":
                 conditions.append(
-                    "(" +
-                    " AND ".join(
+                    "("
+                    + " AND ".join(
                         [
                             rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{value}\y')"
                             for value in values
                         ]
-                    ) +
-                    ")"
+                    )
+                    + ")"
                 )
             else:
                 conditions.append(
@@ -315,7 +315,7 @@ class INLABSHook(BaseHook):
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
-            """         
+            """
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
@@ -323,7 +323,7 @@ class INLABSHook(BaseHook):
             # df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            df["texto"] = df["texto"].apply(self._remove_html_tags)
+            # df["texto"] = df["texto"].apply(self._remove_html_tags)
             # Remove title duplicated
             df["texto"] = df.apply(
                 lambda row: self._remove_duplicated_title(
@@ -584,12 +584,12 @@ class INLABSHook(BaseHook):
                 return abstract or ""
 
             # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
-            title = re.sub(r"^\*\*(.*?)\*\*", r"\1", title.strip())
+            title = re.sub(r"^\*\*(.*?)\*\*", r"\1", title.lstrip())
 
             # Remove os ** iniciais do abstract, se existirem (ex: **PORTARIA** -> PORTARIA)
-            abstract = re.sub(r"^\*\*(.*?)\*\*", r"\1", abstract.strip())
+            abstract = re.sub(r"^\*\*(.*?)\*\*", r"\1", abstract.lstrip())
 
-            abstract = abstract.strip()
+            abstract = abstract.lstrip()
 
             # Verifica se abstract começa com o título (case-insensitive)
             title_lower = title.lower()
