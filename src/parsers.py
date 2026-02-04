@@ -1,6 +1,5 @@
 """Abstract and concrete classes to parse DAG configuration from a file."""
 
-import json
 import textwrap
 import os
 import sys

@@ -389,7 +389,7 @@ dag:
   schedule: 0 8 * * MON-FRI
   dataset: inlabs
   owner:
-    - cdata
+    - ro-dou
   search:
     sources:
     - INLABS
@@ -415,7 +415,7 @@ dag:
     - inlabs
   dataset: inlabs
   owner:
-    - cdata
+    - ro-dou
   search:
     sources:
     - INLABS
@@ -438,6 +438,8 @@ dag:
   description: DAG de teste
   tags:
     - inlabs
+  owner:
+    - ro-dou
   schedule: 0 8 * * MON-FRI
   search:
     header: HEADER TEXT
@@ -502,4 +504,27 @@ dag:
     emails:
       - destination@economia.gov.br
     subject: "Teste do Ro-dou - Envia callback para email nas falhas"
+```
+
+### Exemplo 20
+Esta configuração permite que seja configurado uma lista de termos a serem ignorados
+na busca. No exemplo abaixo serão ignorados as publicações que tiverem o termo "deputados"
+no corpo do texto.
+
+```yaml
+dag:
+  id: terms_ignore_example
+  description: DAG de exemplo com termos ignorados
+  dataset: inlabs
+  search:
+    sources:
+    - INLABS
+    terms:
+    - câmara
+    terms_ignore:
+    - deputados
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou - Termos ignorados"
 ```
