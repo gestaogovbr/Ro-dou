@@ -1,5 +1,9 @@
-pandas==2.1.4
+ipdb==0.13.13
+pytest==7.2.1
+mock==5.0.1
+pytest-mock==3.10.0
 unidecode==1.2.0
+requests==2.32.2
 html2text==2024.2.26
 markdown==3.6.0
 Jinja2==3.1.4
