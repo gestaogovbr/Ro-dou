@@ -5,6 +5,10 @@ pytest-mock==3.10.0
 unidecode==1.2.0
 requests==2.32.2
 html2text==2024.2.26
+openai==2.16.0
+pydantic-ai-slim==1.54.0
 markdown==3.6.0
 apprise==1.9.7
 Jinja2==3.1.4
+google-genai==1.73.1
+anthropic==0.96.0
