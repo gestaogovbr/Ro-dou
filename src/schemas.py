@@ -15,11 +15,14 @@ library.
 """
 
 import textwrap
+import os
+import sys
 from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
-
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from utils.default_ai_prompt import prompt
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -139,7 +142,7 @@ class SearchConfig(BaseModel):
         "(Funcionalidade disponível apenas no INLABS)",
     )
     text_length: Optional[int] = Field(
-        default=400, 
+        default=400,
         description="Tamanho do texto que será retornado na mensagem."
         "(Funcionalidade disponível apenas no INLABS)",
     )
@@ -147,6 +150,22 @@ class SearchConfig(BaseModel):
         default=False,
         description="Define se no relatório será exibido a ementa, se existir. "
         "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    use_ai_summary: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibido um resumo gerado por IA. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_custom_prompt: Optional[str] = Field(
+        default=prompt,
+        description="Prompt do agente para geração do resumo por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_pub_limit: Optional[int] = Field(
+        default=None,
+        description="Número máximo de publicações a serem processadas por IA. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
     pubtype: Optional[List[str]] = Field(
@@ -170,7 +189,7 @@ class SearchConfig(BaseModel):
             raise ValueError(
                 "Os termos de pesquisa são obrigatórios quando a fonte QD é selecionada. "
             )
-        
+
         if not any([self.terms, self.department, self.pubtype]):
             raise ValueError(
                 "Pelo menos um critério de busca deve ser fornecido: "
@@ -179,7 +198,7 @@ class SearchConfig(BaseModel):
         return self
 
 class CallBacksConfig(BaseModel):
-    """Represents the configuration of the callback functions in the YAML file."""    
+    """Represents the configuration of the callback functions in the YAML file."""
     on_failure_callback: Optional[List[EmailStr]] = Field(
         default=None, description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha"
     )
@@ -210,14 +229,14 @@ class ReportConfig(BaseModel):
         "Default: True.",
     )
     page_title: Optional[str] = Field(
-        default=None, 
+        default=None,
         description="Título da página do relatório que é enviado por e-mail"
     )
     hide_filters: Optional[bool] = Field(
         default=False,
         description="Se deve ocultar os filtros aplicados no relatório."
         "Default: False.",
-    )    
+    )
     header_text: Optional[str] = Field(
         default=None, description="Texto a ser incluído no cabeçalho do relatório"
     )
@@ -229,6 +248,15 @@ class ReportConfig(BaseModel):
         description="Texto a ser exibido quando não há resultados",
     )
 
+class AIConfig(BaseModel):
+    """Represents the AI configuration in the YAML file."""
+    api_key_var: Optional[str] = Field(
+        default=None,
+        description="Variável da chave da API de IA")
+
+    model: Optional[str] = Field(
+        default=None,
+        description="Modelo da API de IA")
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -251,6 +279,11 @@ class DAGConfig(BaseModel):
         description="Seção para definição dos endereços de e-mail de notificação"
     )
     doc_md: Optional[str] = Field(default=None, description="description")
+
+    ai_config: Optional[AIConfig] = Field(
+        default=None,
+        description="Configurações de IA"
+    )
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
