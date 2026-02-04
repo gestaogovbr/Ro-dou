@@ -112,7 +112,6 @@ grpcio-gcp
 json-merge-patch
 looker-sdk
 pandas-gbq
-proto-plus
 PyOpenSSL
 sqlalchemy-bigquery
 sqlalchemy-spanner
@@ -127,6 +126,7 @@ google-crc32c
 google-resumable-media
 grpc-google-iam-v1
 pydata-google-auth
+google-analytics-admin
 
 # from apache-airflow-providers-hashicorp
 apache-airflow-providers-hashicorp
