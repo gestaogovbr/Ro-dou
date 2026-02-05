@@ -735,37 +735,13 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 
 
 @pytest.mark.parametrize(
-    "title, abstract, result",
+    "abstract, result",
     [
         (
-            "Título da Publicação 1",
-            "Título da Publicação 1Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        ),
-        (
-            "Título da Publicação 1",
-            "  Título da Publicação 1  Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        ),
-        (
-            "**Título da Publicação 1**",
-            "Título da Publicação 1Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        ),
-        (
-            "Título da Publicação 1",
-            "**Título da Publicação 1** Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        ),
-        (
-            "",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        ),
+            """<p class="identifica">Título da Publicação </p><p class='subtitulo'>Lorem ipsum.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>""",
+            """<p class="subtitulo">Lorem ipsum.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>""",
+        )
     ],
 )
-def test_remove_duplicated_title(inlabs_hook, title, abstract, result):
-    assert (
-        inlabs_hook.TextDictHandler()._remove_duplicated_title(title, abstract)
-        == result
-    )
+def test_remove_duplicated_title(inlabs_hook, abstract, result):
+    assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result

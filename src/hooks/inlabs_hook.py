@@ -320,15 +320,11 @@ class INLABSHook(BaseHook):
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
             # a publication.
-            # df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            # df["texto"] = df["texto"].apply(self._remove_html_tags)
             # Remove title duplicated
             df["texto"] = df.apply(
-                lambda row: self._remove_duplicated_title(
-                    row["identifica"], row["texto"]
-                ),
+                lambda row: self._remove_duplicated_title(row["texto"]),
                 axis=1,
             )
             # Fill NaN identifica with name column value
@@ -569,33 +565,30 @@ class INLABSHook(BaseHook):
             )
 
         @staticmethod
-        def _remove_duplicated_title(title: str | None, abstract: str | None) -> str:
-            """
-            Remove the title from the beginning of the abstract if it is duplicated.
-            Args:
-                title (str): The document title.
-                abstract (str): The document abstract.
-            Returns:
-                str: The abstract without the duplicate title at the beginning.
-            """
-            import re
+        def _remove_duplicated_title(abstract: str | None) -> str:
+            """Remove HTML elements with class 'identifica' from the abstract.
 
-            if not title or not abstract:
+            The DOU the publication title both in the
+            'identifica' column and as a <p class="identifica"> tag within
+            the 'texto' column. This function removes the duplicated title
+            from the abstract HTML to avoid redundancy.
+
+            Args:
+                abstract (str | None): The document abstract as HTML string,
+                    or None.
+
+            Returns:
+                str: The abstract HTML without the 'identifica' paragraph,
+                    or an empty string if abstract is None/empty.
+            """
+            from bs4 import BeautifulSoup
+
+            if not abstract:
                 return abstract or ""
 
-            # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
-            title = re.sub(r"^\*\*(.*?)\*\*", r"\1", title.lstrip())
+            soup = BeautifulSoup(abstract, "html.parser")
 
-            # Remove os ** iniciais do abstract, se existirem (ex: **PORTARIA** -> PORTARIA)
-            abstract = re.sub(r"^\*\*(.*?)\*\*", r"\1", abstract.lstrip())
+            for tag in soup.find_all("p", class_="identifica"):
+                tag.decompose()
 
-            abstract = abstract.lstrip()
-
-            # Verifica se abstract começa com o título (case-insensitive)
-            title_lower = title.lower()
-            abstract_lower = abstract.lower()
-            if abstract_lower.startswith(title_lower):
-                # Remove o título e espaços iniciais restantes
-                return abstract[len(title) :].lstrip()
-
-            return abstract
+            return str(soup)
