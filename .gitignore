@@ -137,3 +137,4 @@ test_notrack/
 **/.DS_Store
 **/mnt/pgdata/
 **/mnt/airflow-logs
+**/dag_confs/
