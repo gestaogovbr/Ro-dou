@@ -1,15 +1,19 @@
 import copy
 import re
+import logging
+
 from abc import ABC, abstractmethod
 
 START_PLACEHOLDER_REGEX = re.compile(r"(?<!\s)<%%>")
 END_PLACEHOLDER_REGEX = re.compile(r"</%%>(?!\s)")
+MAX_ABSTRACT_LENGTH = 1000
+
 
 class ISender(ABC):
-    """Interface that defines a notifier sender.
-    """
+    """Interface that defines a notifier sender."""
+
     @abstractmethod
-    def send(self, search_report: dict, report_date: str=None):
+    def send(self, search_report: dict, report_date: str = None):
         """Implement this method sending the report to destination
         according to its API!
 
@@ -19,8 +23,16 @@ class ISender(ABC):
         """
         pass
 
+    @staticmethod
+    def remove_html_tags(text):
+        if not text or not isinstance(text, str):
+            return text
 
-    def send_report(self, search_report: list, report_date: str=None):
+        # Remove todas as tags HTML
+        text = re.sub(r"<[^>]+>", "", text)
+        return text
+
+    def send_report(self, search_report: list, report_date: str = None):
         """Send a notification with the search report, after highlighting the abstracts.
 
         Args:
@@ -32,7 +44,6 @@ class ISender(ABC):
             highlighted_reports.append(self._highlighted_reports(report))
 
         self.send(highlighted_reports, report_date)
-
 
     def _highlighted_reports(self, search_report: dict) -> dict:
         """Replace placeholders with specific formatting depending on
@@ -46,13 +57,15 @@ class ISender(ABC):
         """
         reports = copy.deepcopy(search_report)
         for _, results in reports["result"].items():
-            for _,dpt in results.items():
+            for _, dpt in results.items():
                 for _, items in dpt.items():
                     for item in items:
                         open_tag, close_tag = self.highlight_tags
-                        item['abstract'] = _fix_missing_spaces(item['abstract']) \
-                            .replace('<%%>', open_tag) \
-                            .replace('</%%>', close_tag)
+                        item["abstract"] = (
+                            _fix_missing_spaces(item["abstract"])
+                            .replace("<%%>", open_tag)
+                            .replace("</%%>", close_tag)
+                        )
 
         return reports
 

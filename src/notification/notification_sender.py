@@ -1,5 +1,3 @@
-import re
-
 import apprise
 
 from notification.isender import ISender
@@ -34,7 +32,8 @@ class NotificationSender(ISender):
 
         # Send header if exists
         if self.header_text:
-            header_text = self._remove_html_tags(self.header_text)
+            # header_text = self._remove_html_tags(self.header_text)
+            header_text = self.remove_html_tags(self.header_text)
             self.message += header_text + "\n"
 
         # Process each search in the report
@@ -107,7 +106,7 @@ class NotificationSender(ISender):
             results: Results to send as embeds
         """
         # Send department name if not hiding filters and not default department
-        if not self.hide_filters and department != 'single_department':
+        if not self.hide_filters and department != "single_department":
             self.message += f"**Unidade: {department}**\n\n"
 
         # Send the actual results
@@ -115,7 +114,7 @@ class NotificationSender(ISender):
 
     def send_text(self, content):
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = self.remove_html_tags(self.footer_text)
             content += footer_text + "\n"
 
         self.send_data({"content": content})
@@ -126,13 +125,12 @@ class NotificationSender(ISender):
             f"📅 {item['date']}\n\n"
             f"**{item['title']}**\n\n"
             f"{item['abstract']}\n\n"
-            f"🔗 <{item['href']}>\n\n" +
-            self.delimiter + "\n\n"
+            f"🔗 <{item['href']}>\n\n" + self.delimiter + "\n\n"
             for item in items
         )
 
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = self.remove_html_tags(self.footer_text)
             self.message += footer_text + "\n"
 
         self.payload.append(self.message)
@@ -157,7 +155,9 @@ class NotificationSender(ISender):
         url = self.notification
         self.apobj.add(url)
 
-        blocks = [b + self.delimiter for b in message.split(self.delimiter) if b.strip()]
+        blocks = [
+            b + self.delimiter for b in message.split(self.delimiter) if b.strip()
+        ]
 
         current_chunk = ""
         try:
@@ -179,18 +179,9 @@ class NotificationSender(ISender):
                 else:
                     current_chunk += block
 
-
             # Send remaining content
             if current_chunk.strip():
                 self._notify_or_fail(current_chunk.strip())
 
         except Exception:
             raise
-
-    def _remove_html_tags(self, text):
-        if not text or not isinstance(text, str):
-            return text
-
-        # Remove todas as tags HTML
-        text = re.sub(r'<[^>]+>', '', text)
-        return text

@@ -1,8 +1,6 @@
-"""Send reports to Slack.
-"""
+"""Send reports to Slack."""
 
 from datetime import datetime
-import re
 
 import requests
 from notification.isender import ISender
@@ -11,8 +9,8 @@ from schemas import ReportConfig
 
 
 class SlackSender(ISender):
-    """Prepare a report and send it to Slack.
-    """
+    """Prepare a report and send it to Slack."""
+
     highlight_tags = ("*", "*")
 
     def __init__(self, report_config: ReportConfig) -> None:
@@ -26,7 +24,7 @@ class SlackSender(ISender):
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Slack"""
         if self.header_text:
-            header_text = _remove_html_tags(self.header_text)
+            header_text = self.remove_html_tags(self.header_text)
             self._add_header(header_text)
 
         for search in search_report:
@@ -40,22 +38,23 @@ class SlackSender(ISender):
 
                 for term, term_results in search_results.items():
                     if not term_results:
-                        self._add_text(
-                            self.no_results_found_text
-                        )
+                        self._add_text(self.no_results_found_text)
                     else:
                         if not self.hide_filters and term != "all_publications":
                             self._add_header(f"Termo: {term}")
 
                         for department, results in term_results.items():
-                            if not self.hide_filters and department != 'single_department':
+                            if (
+                                not self.hide_filters
+                                and department != "single_department"
+                            ):
                                 self._add_header(f"{department}")
 
                             for result in results:
                                 self._add_block(result)
 
         if self.footer_text:
-            footer_text = _remove_html_tags(self.footer_text)
+            footer_text = self.remove_html_tags(self.footer_text)
             self._add_header(footer_text)
         self._flush()
 
@@ -108,7 +107,6 @@ class SlackSender(ISender):
             result.raise_for_status()
 
 
-
 WEEKDAYS_EN_TO_PT = [
     ("Mon", "Seg"),
     ("Tue", "Ter"),
@@ -124,12 +122,3 @@ def _format_date(date_str: str) -> str:
     date = datetime.strptime(date_str, "%d/%m/%Y")
     _from, _to = WEEKDAYS_EN_TO_PT[date.weekday()]
     return date.strftime("%a %d/%m").replace(_from, _to)
-
-
-def _remove_html_tags(text):
-    if not text or not isinstance(text, str):
-        return text
-
-    # Remove todas as tags HTML
-    text = re.sub(r'<[^>]+>', '', text)
-    return text     
