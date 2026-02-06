@@ -3,6 +3,8 @@ import apprise
 from notification.isender import ISender
 from schemas import ReportConfig
 
+import re
+
 
 class NotificationSender(ISender):
     highlight_tags = ("__", "__")
@@ -32,8 +34,7 @@ class NotificationSender(ISender):
 
         # Send header if exists
         if self.header_text:
-            # header_text = self._remove_html_tags(self.header_text)
-            header_text = self.remove_html_tags(self.header_text)
+            header_text = self._remove_html_tags(self.header_text)
             self.message += header_text + "\n"
 
         # Process each search in the report
@@ -114,7 +115,7 @@ class NotificationSender(ISender):
 
     def send_text(self, content):
         if self.footer_text:
-            footer_text = self.remove_html_tags(self.footer_text)
+            footer_text = self._remove_html_tags(self.footer_text)
             content += footer_text + "\n"
 
         self.send_data({"content": content})
@@ -130,7 +131,7 @@ class NotificationSender(ISender):
         )
 
         if self.footer_text:
-            footer_text = self.remove_html_tags(self.footer_text)
+            footer_text = self._remove_html_tags(self.footer_text)
             self.message += footer_text + "\n"
 
         self.payload.append(self.message)
@@ -185,3 +186,11 @@ class NotificationSender(ISender):
 
         except Exception:
             raise
+
+    def _remove_html_tags(self, text):
+        if not text or not isinstance(text, str):
+            return text
+
+        # Remove todas as tags HTML
+        text = re.sub(r"<[^>]+>", "", text)
+        return text

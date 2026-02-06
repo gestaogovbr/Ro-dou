@@ -1,12 +1,10 @@
 import copy
 import re
-import logging
 
 from abc import ABC, abstractmethod
 
 START_PLACEHOLDER_REGEX = re.compile(r"(?<!\s)<%%>")
 END_PLACEHOLDER_REGEX = re.compile(r"</%%>(?!\s)")
-MAX_ABSTRACT_LENGTH = 1000
 
 
 class ISender(ABC):
@@ -22,15 +20,6 @@ class ISender(ABC):
             report_date (str, optional): The date of the search report. Defaults to None.
         """
         pass
-
-    @staticmethod
-    def remove_html_tags(text):
-        if not text or not isinstance(text, str):
-            return text
-
-        # Remove todas as tags HTML
-        text = re.sub(r"<[^>]+>", "", text)
-        return text
 
     def send_report(self, search_report: list, report_date: str = None):
         """Send a notification with the search report, after highlighting the abstracts.
