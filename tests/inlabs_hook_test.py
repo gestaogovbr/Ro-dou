@@ -726,7 +726,7 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
                 "artcategory": ["Ministério da Defesa"],
                 "artcategory_ignore": ["Ministério da Defesa/Comando da Marinha"],
             },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y')) AND (dou_inlabs.unaccent(artcategory) ~* dou_inlabs.unaccent('\yMinistério da Defesa\y')) AND (dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^Ministério da Defesa/Comando da Marinha'))",
+            r"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm1\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm2\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\yDO1\y')) AND (dou_inlabs.unaccent(artcategory) ~* dou_inlabs.unaccent('\yMinistério da Defesa\y')) AND (dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^Ministério da Defesa/Comando da Marinha'))",
         ),
     ],
 )

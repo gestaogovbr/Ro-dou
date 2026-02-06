@@ -13,6 +13,7 @@ from notification.discord_sender import DiscordSender
 from notification.email_sender import EmailSender
 from notification.isender import ISender
 from notification.slack_sender import SlackSender
+from notification.notification_sender import NotificationSender
 from parsers import DAGConfig
 
 
@@ -21,6 +22,7 @@ class Notifier:
     defined in the YAML file. Currently it sends notification to email,
     Discord and Slack.
     """
+
     senders = List[ISender]
 
     def __init__(self, specs: DAGConfig) -> None:
@@ -31,10 +33,11 @@ class Notifier:
             self.senders.append(DiscordSender(specs.report))
         if specs.report.slack:
             self.senders.append(SlackSender(specs.report))
-
+        if specs.report.notification:
+            self.senders.append(NotificationSender(specs.report))
 
     def send_notification(self, search_report: str, report_date: str):
-        """Sends the notification to the specified email, Discord or Slack
+        """Sends the notification to the specified email, Discord, Slack and nother notification services.
 
         Args:
             search_report (str): The report to be sent
