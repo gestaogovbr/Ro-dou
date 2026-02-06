@@ -1,6 +1,18 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.8.2] - 2026-01-29
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Corrige novo template HTML para cliente outlook by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/260
+* Remove espaços em branco do título - INLABS by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/264
+* fix: remoção de título duplicado no abstract do email by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/270
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.1...0.8.2
+
 ## [0.8.1] - 2025-12-12
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

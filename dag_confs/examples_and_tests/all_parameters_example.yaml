@@ -17,6 +17,8 @@ dag:
     - dados abertos
     - governo aberto
     - lei de acesso à informação
+    terms_ignore:
+      - Sanções Administrativas  
     field: TUDO
     is_exact_search: True
     ignore_signature_match: True

@@ -51,7 +51,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
     AIRFLOW__SMTP__SMTP_HOST: smtp4dev
-    AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@economia.gov.br
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: rodou@gestao.gov.br
     AIRFLOW__SMTP__SMTP_PORT: 25
     AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
     # AIRFLOW__SMTP__SMTP_USER:

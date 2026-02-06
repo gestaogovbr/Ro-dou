@@ -15,8 +15,7 @@ from airflow.utils.email import send_email
 
 # Add parent directory to sys.path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# parent_dir = os.path.dirname(current_dir)
+
 
 sys.path.insert(0, parent_dir)
 
@@ -182,8 +181,7 @@ class EmailSender(ISender):
                             )
 
                         report_data.append(term_data)
-        logging.info(f"Filter content: {filters_content}")
-        logging.info(f"Report content: {report_data}")
+
         return tm.renderizar(
             "dou_template.html",
             results=report_data,

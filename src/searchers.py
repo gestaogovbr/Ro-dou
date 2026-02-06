@@ -55,16 +55,8 @@ class BaseSearcher(ABC):
             return []
         elif isinstance(pre_term_list, list):
             return pre_term_list        
-        # elif isinstance(pre_term_list, str):
-        #     return pre_term_list
         else:
             return pd.read_json(pre_term_list).iloc[:, 0].tolist()
-
-        # return (
-        #     pre_term_list
-        #     if isinstance(pre_term_list, list)
-        #     else pd.read_json(pre_term_list).iloc[:, 0].tolist()
-        # )
 
     def _group_results(
         self,
@@ -176,6 +168,7 @@ class DOUSearcher(BaseSearcher):
         force_rematch: bool,
         department: List[str],
         department_ignore: List[str],
+        terms_ignore: List[str],
         pubtype: List[str],
         reference_date: datetime,
     ):
@@ -190,6 +183,7 @@ class DOUSearcher(BaseSearcher):
             force_rematch,
             department,
             department_ignore,
+            terms_ignore,
             pubtype
         )
         group_results = self._group_results(search_results, term_list, department)
@@ -208,6 +202,7 @@ class DOUSearcher(BaseSearcher):
         force_rematch,
         department,
         department_ignore,
+        terms_ignore,
         pubtype
     ) -> dict:
         search_results = {}
@@ -249,6 +244,9 @@ class DOUSearcher(BaseSearcher):
 
             if department or department_ignore:
                 self._match_department(results, department, department_ignore)
+
+            if terms_ignore:
+                self._match_terms_ignore(results, terms_ignore)
 
             if pubtype:
                 self._match_pubtype(results, pubtype)
@@ -371,6 +369,20 @@ class DOUSearcher(BaseSearcher):
             if department_ignore is not None:
                 if any(dpt in result["hierarchyStr"] for dpt in department_ignore):
                     results.remove(result)
+
+    def _match_terms_ignore(self, results: list, terms_ignore: list = None) -> list:
+        """Applies the filter to the results returned by the terms_ignore
+        listed in the 'terms_ignore' parameter in the YAML.
+        """
+        if terms_ignore:
+            logging.info("Applying filter for terms_ignore list")
+            logging.info(terms_ignore)
+        for result in results[:]:
+            if terms_ignore is not None:
+                result_text = f"{result.get('abstract', '')} {result.get('title', '')}".casefold()
+                if any(term.casefold() in result_text for term in terms_ignore):
+                    results.remove(result)
+
     def _match_pubtype(self, results: list, pubtype: list) -> list:
         """Applies the filter to the results returned by the publications type listed
         in the 'pubtype' parameter in the YAML.
@@ -523,6 +535,7 @@ class INLABSSearcher(BaseSearcher):
         search_date: str,
         department: List[str],
         department_ignore: List[str],
+        terms_ignore: List[str],
         ignore_signature_match: bool,
         full_text: bool,
         text_length: Optional[int],
@@ -543,6 +556,7 @@ class INLABSSearcher(BaseSearcher):
                 search_date examples: DIA, SEMANA, MES, ANO
             department (List[str]): List of departments to filter the search.
             department_ignore (List[str]): List of departments to be ignored in the search.
+            terms_ignore (List[str]): List of terms to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
             full_text (bool): If trim result text content 
@@ -559,7 +573,7 @@ class INLABSSearcher(BaseSearcher):
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
         search_terms = self._apply_filters(
-            search_terms, dou_sections, department, department_ignore, pubtype, reference_date, search_date
+            search_terms, dou_sections, department, department_ignore, terms_ignore, pubtype, reference_date, search_date
         )
 
         search_results = inlabs_hook.search_text(
@@ -599,6 +613,7 @@ class INLABSSearcher(BaseSearcher):
         sections: List[str],
         department: List[str],
         department_ignore: List[str],
+        terms_ignore: List[str],
         pubtype: List[str],
         reference_date: datetime,
         search_date: str,
@@ -614,6 +629,8 @@ class INLABSSearcher(BaseSearcher):
             search_terms["artcategory"] = department
         if department_ignore:
             search_terms["artcategory_ignore"] = department_ignore
+        if terms_ignore:           
+            search_terms["terms_ignore"] = terms_ignore
         if pubtype:
             search_terms["arttype"] = pubtype
         publish_from = calculate_from_datetime(
