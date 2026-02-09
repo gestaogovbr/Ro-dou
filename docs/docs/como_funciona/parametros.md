@@ -31,9 +31,9 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **pubtype**: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).
 - **sources**: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS.
 - **terms**: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca.
-- **territory_id**: Lista de identificadores do id do município. Necessário para buscar no Querido Diário.
-- **excerpt_size**: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário)
-- **number_of_excerpts**: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário)
+- **territory_id**: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário-QD
+- **excerpt_size**: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário-QD)
+- **number_of_excerpts**: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário-QD)
 
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.
