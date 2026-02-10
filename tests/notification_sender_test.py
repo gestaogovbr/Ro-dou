@@ -141,7 +141,7 @@ class TestNotificationSenderSend:
         sender.send(sample_search_report, "2024-04-01")
 
         assert "Test Header" in sender.message
-        assert "**Seção 3**" in sender.message
+        assert "Seção 3" in sender.message
 
     @patch("dags.ro_dou_src.notification.notification_sender.apprise.Apprise")
     def test_send_without_header(
@@ -157,7 +157,7 @@ class TestNotificationSenderSend:
         sender.send(sample_search_report, "2024-04-01")
 
         assert "Test Header" not in sender.message
-        assert "**Seção 3**" in sender.message
+        assert "Seção 3" in sender.message
 
     @patch("dags.ro_dou_src.notification.notification_sender.apprise.Apprise")
     def test_send_with_empty_report(
@@ -184,7 +184,7 @@ class TestNotificationSenderProcessSearchSection:
 
         sender._process_search_section(search)
 
-        assert "**Seção 3**" in sender.message
+        assert "Seção 3" in sender.message
 
     def test_process_search_section_without_header(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -194,7 +194,7 @@ class TestNotificationSenderProcessSearchSection:
         sender._process_search_section(search)
 
         # Message should not contain any section header
-        assert "**Seção" not in sender.message
+        assert "Seção" not in sender.message
 
     def test_process_search_section_empty_result(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -202,7 +202,7 @@ class TestNotificationSenderProcessSearchSection:
 
         sender._process_search_section(search)
 
-        assert "**Seção 1**" in sender.message
+        assert "Seção 1" in sender.message
 
 
 class TestNotificationSenderProcessGroup:
@@ -215,7 +215,7 @@ class TestNotificationSenderProcessGroup:
 
         with patch.object(sender, "send_text") as mock_send_text:
             sender._process_group(group_name, search_results)
-            mock_send_text.assert_called_once_with("**Grupo: custom_group**")
+            mock_send_text.assert_called_once_with("Grupo: custom_group")
 
     def test_process_group_with_filters_hidden(
         self, mock_report_config_no_header_footer
@@ -258,7 +258,7 @@ class TestNotificationSenderProcessTermResults:
 
         sender._process_term_results(term, term_results)
 
-        assert "**Resultados para: custom_term**" in sender.message
+        assert "Resultados para: custom_term" in sender.message
 
     def test_process_term_results_all_publications_no_header(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -277,7 +277,7 @@ class TestNotificationSenderProcessTermResults:
 
         sender._process_term_results(term, term_results)
 
-        assert "**Resultados para: all_publications**" not in sender.message
+        assert "Resultados para: all_publications" not in sender.message
 
     def test_process_term_results_empty_with_filters_visible(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
@@ -318,7 +318,7 @@ class TestNotificationSenderProcessDepartmentResults:
 
         sender._process_department_results(department, results)
 
-        assert "**Unidade: Custom Department**" in sender.message
+        assert "Unidade: Custom Department" in sender.message
 
     def test_process_department_results_single_department_no_header(
         self, mock_report_config
@@ -337,7 +337,7 @@ class TestNotificationSenderProcessDepartmentResults:
 
         sender._process_department_results(department, results)
 
-        assert "**Departamento: single_department**" not in sender.message
+        assert "Departamento: single_department" not in sender.message
 
     def test_process_department_results_with_filters_hidden(
         self, mock_report_config_no_header_footer
@@ -356,7 +356,7 @@ class TestNotificationSenderProcessDepartmentResults:
 
         sender._process_department_results(department, results)
 
-        assert "**Departamento: Custom Department**" not in sender.message
+        assert "Departamento: Custom Department" not in sender.message
 
 
 class TestNotificationSenderSendText:
@@ -450,9 +450,9 @@ class TestNotificationSenderSendEmbeds:
         sender.send_embeds(items)
 
         expected_message = (
-            "📁 **Seção 3**\n\n"
+            "📁 Seção 3\n\n"
             "📅 01/01/2024\n\n"
-            "**Test Title**\n\n"
+            "Test Title\n\n"
             "Test abstract\n\n"
             "🔗 <https://example.com>\n\n"
             "━━━━━━━━━━━━━━━━━\n\n"
@@ -485,10 +485,10 @@ class TestNotificationSenderSendEmbeds:
 
         sender.send_embeds(items)
 
-        assert "📁 **Seção 1**" in sender.message
-        assert "**Title 1**" in sender.message
-        assert "📁 **Seção 2**" in sender.message
-        assert "**Title 2**" in sender.message
+        assert "📁 Seção 1" in sender.message
+        assert "Title 1" in sender.message
+        assert "📁 Seção 2" in sender.message
+        assert "Title 2" in sender.message
 
     @patch("dags.ro_dou_src.notification.notification_sender.apprise.Apprise")
     def test_send_embeds_without_footer(
@@ -511,9 +511,9 @@ class TestNotificationSenderSendEmbeds:
         sender.send_embeds(items)
 
         expected_message = (
-            "📁 **Seção 3**\n\n"
+            "📁 Seção 3\n\n"
             "📅 01/01/2024\n\n"
-            "**Test Title**\n\n"
+            "Test Title\n\n"
             "Test abstract\n\n"
             "🔗 <https://example.com>\n\n"
             "━━━━━━━━━━━━━━━━━\n\n"
@@ -596,9 +596,9 @@ class TestNotificationSenderIntegration:
 
         # Verify message content includes expected elements
         assert "Test Header" in sender.message
-        assert "**Seção 3**" in sender.message
-        assert "\n\n**Unidade: Department A**\n\n📁 **Seção 3**\n\n" in sender.message
-        assert "\n\n**EXTRATO DE COMPROMISSO**\n\n" in sender.message
+        assert "Seção 3" in sender.message
+        assert "\n\nUnidade: Department A\n\n📁 Seção 3\n\n" in sender.message
+        assert "\n\nEXTRATO DE COMPROMISSO\n\n" in sender.message
 
     @patch("dags.ro_dou_src.notification.notification_sender.apprise.Apprise")
     def test_notification_with_highlighting_placeholders(
@@ -663,7 +663,7 @@ class TestNotificationSenderEdgeCases:
 
         # Should not raise exception, just process what's available
         sender.send(malformed_report, "2024-04-01")
-        assert "**Test**" in sender.message
+        assert "Test" in sender.message
 
     def test_send_with_nested_empty_structures(self, mock_report_config):
         sender = NotificationSender(mock_report_config)
