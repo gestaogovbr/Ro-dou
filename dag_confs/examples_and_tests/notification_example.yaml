@@ -1,0 +1,13 @@
+dag:
+  id: notification_example
+  description: DAG de teste de envio de resultados para multiplos canais via apprise
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    notification:
+      - slack://TokenA/TokenB/TokenC
+      - discord://WebhookID/WebhookToken
+      - tgram://bot_token/chat_id

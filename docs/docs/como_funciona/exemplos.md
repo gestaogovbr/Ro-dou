@@ -190,7 +190,13 @@ tela de visualização da DAG no Airflow.
 
 ![Botão "DAG Docs". Captura de tela da documentação de DAG no Airflow.](https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/exemplo-dag-doc_md.png?raw=true)
 
-### Exemplo 8
+### Exemplo 8 (Depreciado)
+
+!!! warning "Depreciado"
+    Este exemplo utiliza a configuração `discord` que foi **depreciada**.
+    Utilize o parâmetro `notification` com URLs do [Apprise](https://github.com/caronc/apprise)
+    conforme o **Exemplo 10**.
+
 Esta configuração envia as notificações para canais Discord. É necessário ter
 permissões de administrador no Discord para gerar o Webhook:
 
@@ -210,7 +216,13 @@ dag:
       webhook: https://discord.com/api/webhooks/105220xxxxxx811250/Q-XsfdnoHtudTQ-8A6zzzzznitai-vi0bGLE7xxxxxxxxxxxxxxxxxxxmx94R3oZ1h0ngl1
 ```
 
-### Exemplo 9
+### Exemplo 9 (Depreciado)
+
+!!! warning "Depreciado"
+    Este exemplo utiliza a configuração `slack` que foi **depreciada**.
+    Utilize o parâmetro `notification` com URLs do [Apprise](https://github.com/caronc/apprise)
+    conforme o **Exemplo 10**.
+
 Esta configuração envia as notificações para canais Slack. É necessário ter
 permissões de administrador no Slack para gerar o Webhook:
 
@@ -224,12 +236,37 @@ dag:
     - expressão cultural
     - política cultural
   report:
-    report:
     slack:
       webhook: https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9
 ```
-
 ### Exemplo 10
+Esta configuração possibilita o envio de notificações através de múltiplos canais
+utilizando o parâmetro `notification`. O Ro-DOU emprega a biblioteca
+[Apprise](https://github.com/caronc/apprise) para realizar o envio de notificações.
+Por meio dela, é possível estabelecer integração com diversos serviços de
+comunicação como Slack, Discord, Telegram, Microsoft Teams, entre outros.
+
+O parâmetro `notification` recebe uma lista de URLs no formato do Apprise.
+Para consultar os formatos de URL suportados, acesse a
+[documentação do Apprise](https://github.com/caronc/apprise/wiki).
+
+```yaml
+dag:
+  id: notification_example
+  description: Envia notificações para múltiplos canais com Apprise
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    notification:
+      - slack://TokenA/TokenB/TokenC
+      - discord://WebhookID/WebhookToken
+      - tgram://bot_token/chat_id
+```
+
+### Exemplo 11
 Esta configuração filtra os resultados por órgão/unidade selecionados.
 Por enquanto disponível apenas para as pesquisas no DOU.
 
@@ -249,7 +286,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 11
+### Exemplo 12
 Esta configuração permite múltiplas buscas utilizando o mesmo arquivo.
 O Ro-dou permite numa mesma busca juntar resultados do DOU e Querido Diário.
 
@@ -292,7 +329,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 12
+### Exemplo 13
 Esta configuração filtra os resultados por tipos de publicações selecionadas.
 Disponível para as pesquisas no DOU e INLABS.
 
@@ -320,7 +357,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 13
+### Exemplo 14
 Esta dag recebe e lista dados de múltiplos territórios para busca no Querido Diário.
 
 ```yaml
@@ -351,7 +388,7 @@ dag:
     skip_null: False
 ```
 
-### Exemplo 14
+### Exemplo 15
 Realiza as busca de termos a partir de uma fonte de um banco SGBD externo, possibilitando assim que os termos de buscas sejam dinâmicos.
 
 ```yaml
@@ -377,7 +414,7 @@ dag:
     subject: "[String] com caracteres especiais deve estar entre aspas"
 ```
 
-### Exemplo 15
+### Exemplo 16
 Esta dag coleta e realiza pesquisas de dados do inlabs.
 
 ```yaml
@@ -404,7 +441,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 16
+### Exemplo 17
 Esta dag realiza pesquisas com parâmetros de busca avançados quando a fonte é INLABS.
 
 ```yaml
@@ -429,7 +466,7 @@ dag:
     subject: "Teste do Ro-dou"
 ```
 
-### Exemplo 17
+### Exemplo 18
 Esta dag é utilizada para ocultar filtros de pesquisa de texto e outros metadados.
 
 ```yaml
@@ -459,7 +496,7 @@ dag:
     hide_filters: True
 ```
 
-### Exemplo 18
+### Exemplo 19
 Esta dag é utilizada quando nenhum termo é definido (obrigatório informar tipo de
 publicação ou órgão/unidade).
 

@@ -1,9 +1,9 @@
-import re
-
 import requests
 
 from notification.isender import ISender
 from schemas import ReportConfig
+
+import re
 
 
 class DiscordSender(ISender):
@@ -34,15 +34,16 @@ class DiscordSender(ISender):
                 for term, term_results in search_results.items():
                     if not self.hide_filters:
                         if not term_results:
-                            self.send_text(
-                                f"**{self.no_results_found_text}**"
-                            )
+                            self.send_text(f"**{self.no_results_found_text}**")
                         else:
                             if term != "all_publications":
                                 self.send_text(f"**Resultados para: {term}**")
 
                             for department, results in term_results.items():
-                                if not self.hide_filters and department != 'single_department':
+                                if (
+                                    not self.hide_filters
+                                    and department != "single_department"
+                                ):
                                     self.send_text(f"{department}")
 
                                 self.send_embeds(results)
@@ -69,12 +70,12 @@ class DiscordSender(ISender):
         )
 
     def send_data(self, data):
-        data["username"] = "Querido Prisma (rodou)"
+        data["username"] = "Ro-DOU Bot"
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
 
     def _remove_html_tags(self, text):
         # Define a regular expression pattern to match HTML tags
-        clean = re.compile('<.*?>')
+        clean = re.compile("<.*?>")
         # Substitute HTML tags with an empty string
-        return re.sub(clean, '', text)
+        return re.sub(clean, "", text)
