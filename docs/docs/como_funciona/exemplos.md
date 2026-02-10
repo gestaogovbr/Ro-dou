@@ -190,7 +190,13 @@ tela de visualização da DAG no Airflow.
 
 ![Botão "DAG Docs". Captura de tela da documentação de DAG no Airflow.](https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/exemplo-dag-doc_md.png?raw=true)
 
-### Exemplo 8
+### Exemplo 8 (Depreciado)
+
+!!! warning "Depreciado"
+    Este exemplo utiliza a configuração `discord` que foi **depreciada**.
+    Utilize o parâmetro `notification` com URLs do [Apprise](https://github.com/caronc/apprise)
+    conforme o **Exemplo 10**.
+
 Esta configuração envia as notificações para canais Discord. É necessário ter
 permissões de administrador no Discord para gerar o Webhook:
 
@@ -210,7 +216,13 @@ dag:
       webhook: https://discord.com/api/webhooks/105220xxxxxx811250/Q-XsfdnoHtudTQ-8A6zzzzznitai-vi0bGLE7xxxxxxxxxxxxxxxxxxxmx94R3oZ1h0ngl1
 ```
 
-### Exemplo 9
+### Exemplo 9 (Depreciado)
+
+!!! warning "Depreciado"
+    Este exemplo utiliza a configuração `slack` que foi **depreciada**.
+    Utilize o parâmetro `notification` com URLs do [Apprise](https://github.com/caronc/apprise)
+    conforme o **Exemplo 10**.
+
 Esta configuração envia as notificações para canais Slack. É necessário ter
 permissões de administrador no Slack para gerar o Webhook:
 
@@ -228,14 +240,20 @@ dag:
       webhook: https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9
 ```
 ### Exemplo 10
-Esta configuração possibilita o envio de notificações através de múltiplos canais.
-O Ro-DOU emprega a biblioteca [Apprise](https://github.com/caronc/apprise) para realizar o envio de notificações. Por meio dela, é possível estabelecer integração com diversos meios de comunicação.
-O serviceId segue o mesmo padrão utilizado pelo Apprise, podendo ser ```slack``` ou ```slack://```
+Esta configuração possibilita o envio de notificações através de múltiplos canais
+utilizando o parâmetro `notification`. O Ro-DOU emprega a biblioteca
+[Apprise](https://github.com/caronc/apprise) para realizar o envio de notificações.
+Por meio dela, é possível estabelecer integração com diversos serviços de
+comunicação como Slack, Discord, Telegram, Microsoft Teams, entre outros.
+
+O parâmetro `notification` recebe uma lista de URLs no formato do Apprise.
+Para consultar os formatos de URL suportados, acesse a
+[documentação do Apprise](https://github.com/caronc/apprise/wiki).
 
 ```yaml
 dag:
-  id: apprise_example
-  description: Envia notificações para canal Slack com apprise
+  id: notification_example
+  description: Envia notificações para múltiplos canais com Apprise
   search:
     terms:
     - manifestação cultural
@@ -243,9 +261,9 @@ dag:
     - política cultural
   report:
     notification:
-      serviceId: slack ou slack://
-      webhookId: XXXXXXX
-      webhookToken: YYYYYYYYYY
+      - slack://TokenA/TokenB/TokenC
+      - discord://WebhookID/WebhookToken
+      - tgram://bot_token/chat_id
 ```
 
 ### Exemplo 11

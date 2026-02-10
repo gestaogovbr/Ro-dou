@@ -4,6 +4,7 @@ from notification.isender import ISender
 from schemas import ReportConfig
 
 import re
+import logging
 
 
 class NotificationSender(ISender):
@@ -54,7 +55,7 @@ class NotificationSender(ISender):
         """
         # Send section header
         if search.get("header"):
-            self.message += f'**{search["header"]}**' + "\n"
+            self.message += f'{search["header"]}\n'
 
         # Process all groups in this search
         for group_name, search_results in search.get("result", {}).items():
@@ -70,7 +71,7 @@ class NotificationSender(ISender):
         """
         # Send group header if not hiding filters and not default group
         if not self.hide_filters and group_name != "single_group":
-            self.send_text(f"**Grupo: {group_name}**")
+            self.send_text(f"Grupo: {group_name}")
 
         # Process each term in the group
         for term, term_results in search_results.items():
@@ -86,13 +87,13 @@ class NotificationSender(ISender):
         """
         if not self.hide_filters:
             if not term_results:
-                self.message += f"**{self.no_results_found_text}**"
+                self.message += f"{self.no_results_found_text}"
                 self.send_text(self.message)
                 return
 
             # Send term header if not the default term
             if term != "all_publications":
-                self.message += f"**Resultados para: {term}**\n\n"
+                self.message += f"Resultados para: {term}\n\n"
 
         # Process results by department
         for department, results in term_results.items():
@@ -108,7 +109,7 @@ class NotificationSender(ISender):
         """
         # Send department name if not hiding filters and not default department
         if not self.hide_filters and department != "single_department":
-            self.message += f"**Unidade: {department}**\n\n"
+            self.message += f"Unidade: {department}\n\n"
 
         # Send the actual results
         self.send_embeds(results)
@@ -122,9 +123,9 @@ class NotificationSender(ISender):
 
     def send_embeds(self, items):
         self.message += "\n".join(
-            f"📁 **{item['section']}**\n\n"
+            f"📁 {item['section']}\n\n"
             f"📅 {item['date']}\n\n"
-            f"**{item['title']}**\n\n"
+            f"{item['title']}\n\n"
             f"{item['abstract']}\n\n"
             f"🔗 <{item['href']}>\n\n" + self.delimiter + "\n\n"
             for item in items
@@ -143,16 +144,19 @@ class NotificationSender(ISender):
         Args:
             data: Data to send (can be string or dict)
         """
+
         url = self.notification
         self.apobj.add(url)
         self.apobj.notify(body=data)
 
     def _notify_or_fail(self, content: str):
         sent = self.apobj.notify(body=content)
+
         if not sent:
             raise RuntimeError("Notification delivery failed")
 
-    def send_chunked(self, message, max_len=8000):
+    def send_chunked(self, message, max_len=1900):
+
         url = self.notification
         self.apobj.add(url)
 

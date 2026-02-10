@@ -1,0 +1,16 @@
+dag:
+  id: notification_example
+  description: DAG de teste de envio de resultados para multiplos canais Slack e Discord
+  search:
+    sources:
+    - QD
+    terms:
+      - edital cultural
+      - edital de cultura
+      - chamada pública cultural
+      - financiamento cultural
+      - apoio financeiro cultural
+  report:
+    notification:    
+      - https://discord.com/api/webhooks/105220xxxxxx811250/Q-XsfdnoHtudTQ-8A6zzzzznitai-vi0bGLE7xxxxxxxxxxxxxxxxxxxmx94R3oZ1h0ngl1
+      - https://hooks.slack.com/services/XXXXXXXX/XXXXNFDXXX/n6QXXXXrPwxQ71ZXXXXXT9  
