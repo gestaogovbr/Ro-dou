@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Habilitação do Docker no WSL - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Habilita\u00e7\u00e3o do Docker no WSL";
+        var mkdocs_page_input_path = "como_utilizar/habilitacao_docker_no_wsl.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.9.0
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao/">Instalação e configuração</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_k8s/">Instalação do k8s</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_wsl_windows/">Instalação do WSL no Windows</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Habilitação do Docker no WSL</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-1-verificar-e-instalar-o-wsl-2">Passo 1: Verificar e Instalar o WSL 2</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-2-instalar-uma-distribuicao-linux">Passo 2: Instalar uma Distribuição Linux</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-3-baixar-e-instalar-o-docker-desktop">Passo 3: Baixar e Instalar o Docker Desktop</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-4-configurar-o-docker-desktop-para-wsl-2">Passo 4: Configurar o Docker Desktop para WSL 2</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-5-verificar-a-instalacao">Passo 5: Verificar a Instalação</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuracoes-adicionais-opcionais">Configurações Adicionais (Opcionais)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#alocar-recursos-para-wsl-2">Alocar Recursos para WSL 2</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#configurar-docker-para-usar-menos-recursos">Configurar Docker para Usar menos Recursos</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comandos-uteis">Comandos Úteis</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#gerenciar-wsl">Gerenciar WSL</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verificar-status-do-docker">Verificar Status do Docker</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#solucao-de-problemas-comuns">Solução de Problemas Comuns</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-nao-inicia-no-wsl">Docker não inicia no WSL</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-command-not-found">"docker: command not found"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#performance-lenta">Performance lenta</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vantagens-do-docker-no-wsl-2">Vantagens do Docker no WSL 2</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#conclusao">Conclusão</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/parametros/">Parâmetros de pesquisa</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como utilizar</li>
+      <li class="breadcrumb-item active">Habilitação do Docker no WSL</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="tutorial-como-habilitar-o-docker-desktop-no-wsl">Tutorial: Como Habilitar o Docker Desktop no WSL</h1>
+<h2 id="pre-requisitos">Pré-requisitos</h2>
+<p>Antes de começar, certifique-se de que você tem:
+- Windows 10 versão 2004 ou superior (Build 19041+) ou Windows 11
+- WSL 2 instalado e configurado
+- Privilégios de administrador no Windows</p>
+<h2 id="passo-1-verificar-e-instalar-o-wsl-2">Passo 1: Verificar e Instalar o WSL 2</h2>
+<p>Abra o PowerShell como administrador e execute:</p>
+<pre><code class="language-powershell">wsl --list --verbose
+</code></pre>
+<p>Se o WSL não estiver instalado, instale com:</p>
+<pre><code class="language-powershell">wsl --install
+</code></pre>
+<p>Para atualizar para WSL 2 (se necessário):</p>
+<pre><code class="language-powershell">wsl --set-default-version 2
+</code></pre>
+<h2 id="passo-2-instalar-uma-distribuicao-linux">Passo 2: Instalar uma Distribuição Linux</h2>
+<p>Se você ainda não tem uma distribuição Linux instalada:</p>
+<pre><code class="language-powershell">wsl --install -d Ubuntu
+</code></pre>
+<p>Ou instale via Microsoft Store:
+- Ubuntu
+- Debian
+- openSUSE
+- Outras distribuições disponíveis</p>
+<h2 id="passo-3-baixar-e-instalar-o-docker-desktop">Passo 3: Baixar e Instalar o Docker Desktop</h2>
+<ol>
+<li>Acesse o site oficial do Docker: https://www.docker.com/products/docker-desktop/</li>
+<li>Baixe o Docker Desktop para Windows</li>
+<li>Execute o instalador como administrador</li>
+<li>Durante a instalação, certifique-se de que a opção <strong>"Use WSL 2 instead of Hyper-V"</strong> esteja marcada</li>
+</ol>
+<h2 id="passo-4-configurar-o-docker-desktop-para-wsl-2">Passo 4: Configurar o Docker Desktop para WSL 2</h2>
+<p>Após a instalação:</p>
+<ol>
+<li><strong>Inicie o Docker Desktop</strong></li>
+<li><strong>Acesse as configurações</strong>: Clique no ícone do Docker na bandeja do sistema → Settings</li>
+<li><strong>Vá para Resources → WSL Integration</strong></li>
+<li><strong>Habilite a integração</strong>:</li>
+<li>Marque "Enable integration with my default WSL distro"</li>
+<li>Marque as distribuições específicas onde você quer usar o Docker</li>
+<li><strong>Clique em "Apply &amp; Restart"</strong></li>
+</ol>
+<h2 id="passo-5-verificar-a-instalacao">Passo 5: Verificar a Instalação</h2>
+<p>Abra o terminal da sua distribuição WSL e execute:</p>
+<pre><code class="language-bash">docker --version
+</code></pre>
+<pre><code class="language-bash">docker-compose --version
+</code></pre>
+<p>Teste se o Docker está funcionando:</p>
+<pre><code class="language-bash">docker run hello-world
+</code></pre>
+<h2 id="configuracoes-adicionais-opcionais">Configurações Adicionais (Opcionais)</h2>
+<h3 id="alocar-recursos-para-wsl-2">Alocar Recursos para WSL 2</h3>
+<p>Crie um arquivo <code>.wslconfig</code> em <code>C:\Users\&lt;seu-usuario&gt;\</code>:</p>
+<pre><code class="language-ini">[wsl2]
+memory=4GB
+processors=2
+swap=2GB
+</code></pre>
+<h3 id="configurar-docker-para-usar-menos-recursos">Configurar Docker para Usar menos Recursos</h3>
+<p>No Docker Desktop, vá em Settings → Resources e ajuste:
+- Memory: 2-4GB (dependendo da sua RAM)
+- CPU: 2-4 cores
+- Disk image size: conforme necessário</p>
+<h2 id="comandos-uteis">Comandos Úteis</h2>
+<h3 id="gerenciar-wsl">Gerenciar WSL</h3>
+<pre><code class="language-powershell"># Listar distribuições
+wsl --list --verbose
+
+# Parar WSL
+wsl --shutdown
+
+# Reiniciar uma distribuição específica
+wsl --terminate &lt;nome-da-distro&gt;
+</code></pre>
+<h3 id="verificar-status-do-docker">Verificar Status do Docker</h3>
+<pre><code class="language-bash"># Status dos containers
+docker ps
+
+# Status do serviço Docker
+sudo service docker status
+
+# Iniciar Docker (se necessário)
+sudo service docker start
+</code></pre>
+<h2 id="solucao-de-problemas-comuns">Solução de Problemas Comuns</h2>
+<h3 id="docker-nao-inicia-no-wsl">Docker não inicia no WSL</h3>
+<ol>
+<li>Reinicie o Docker Desktop</li>
+<li>Execute <code>wsl --shutdown</code> e reinicie a distribuição</li>
+<li>Verifique se a virtualização está habilitada no BIOS</li>
+</ol>
+<h3 id="docker-command-not-found">"docker: command not found"</h3>
+<ol>
+<li>Verifique se a integração WSL está habilitada no Docker Desktop</li>
+<li>Reinicie o terminal WSL</li>
+<li>Reinstale o Docker Desktop se necessário</li>
+</ol>
+<h3 id="performance-lenta">Performance lenta</h3>
+<ol>
+<li>Mantenha os arquivos do projeto dentro do sistema de arquivos WSL (<code>/home/usuario/</code>)</li>
+<li>Evite acessar arquivos do Windows (<code>/mnt/c/</code>) frequentemente</li>
+<li>Ajuste os recursos alocados para WSL 2</li>
+</ol>
+<h2 id="vantagens-do-docker-no-wsl-2">Vantagens do Docker no WSL 2</h2>
+<ul>
+<li><strong>Performance superior</strong> comparado ao WSL 1</li>
+<li><strong>Compatibilidade completa</strong> com comandos Linux</li>
+<li><strong>Integração nativa</strong> com o sistema de arquivos Linux</li>
+<li><strong>Menor consumo de recursos</strong> comparado ao Hyper-V</li>
+<li><strong>Inicialização mais rápida</strong> dos containers</li>
+</ul>
+<h2 id="conclusao">Conclusão</h2>
+<p>Com essas configurações, você terá o Docker Desktop funcionando perfeitamente no WSL 2, proporcionando uma experiência de desenvolvimento mais próxima ao ambiente Linux nativo, mas com a conveniência do Windows como sistema operacional principal.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../instalacao_wsl_windows/" class="btn btn-neutral float-left" title="Instalação do WSL no Windows"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../usuarios/" class="btn btn-neutral float-right" title="Usuários internos e externos">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../instalacao_wsl_windows/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../usuarios/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
