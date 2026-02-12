@@ -127,7 +127,7 @@ class NotificationSender(ISender):
             f"📅 {item['date']}\n\n"
             f"{item['title']}\n\n"
             f"{item['abstract']}\n\n"
-            f"🔗 <{item['href']}>\n\n" + self.delimiter + "\n\n"
+            f"🔗 {item['href']}\n\n" + self.delimiter + "\n\n"
             for item in items
         )
 

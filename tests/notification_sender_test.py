@@ -454,7 +454,7 @@ class TestNotificationSenderSendEmbeds:
             "📅 01/01/2024\n\n"
             "Test Title\n\n"
             "Test abstract\n\n"
-            "🔗 <https://example.com>\n\n"
+            "🔗 https://example.com\n\n"
             "━━━━━━━━━━━━━━━━━\n\n"
             "Test Footer\n"
         )
@@ -515,7 +515,7 @@ class TestNotificationSenderSendEmbeds:
             "📅 01/01/2024\n\n"
             "Test Title\n\n"
             "Test abstract\n\n"
-            "🔗 <https://example.com>\n\n"
+            "🔗 https://example.com\n\n"
             "━━━━━━━━━━━━━━━━━\n\n"
         )
         assert sender.payload[0] == expected_message
