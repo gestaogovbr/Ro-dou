@@ -9,7 +9,7 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 * **schedule** *(opcional)*: Agendamento da periodicidade de execução da DAG. Use expressão cron (o padrão utilizado pelo gerador é `0 8 * * MON-FRI` quando não informado).
 * **dataset** *(opcional)*: Nome de um `Dataset` do Airflow. Se fornecido, a DAG só dispara quando o dataset for atualizado; pode ser combinado com `schedule`.
 * **callback** *(opcional)*: Notificações técnicas do sistema.
-  * **on_failure_callback**: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG.
+  * **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
 * **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
 * **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
 
@@ -72,4 +72,3 @@ O vídeo abaixo demonstra como refinar as buscas utilizando os filtros de unidad
 O vídeo abaixo demonstra como criar DAGs com múltiplas buscas (search) no mesmo arquivo
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/HazhpYuComw?si=daHkk0epEe8CK7Ms" title="Criando uma DAG com múltiplas pesquisas" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
