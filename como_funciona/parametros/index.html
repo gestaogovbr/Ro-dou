@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Parâmetros de pesquisa - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Par\u00e2metros de pesquisa";
+        var mkdocs_page_input_path = "como_funciona/parametros.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.9.0
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/instalacao/">Instalação e configuração</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/instalacao_k8s/">Instalação do k8s</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/instalacao_wsl_windows/">Instalação do WSL no Windows</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/habilitacao_docker_no_wsl/">Habilitação do Docker no WSL</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_utilizar/notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Parâmetros de pesquisa</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#parametros-da-dag">Parâmetros da DAG</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parametros-da-pesquisa-search">Parâmetros da Pesquisa (Search)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parametros-do-relatorio-report">Parâmetros do Relatório (Report)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-utilizar-slack-ou-discord-para-envio-do-clippings">Como utilizar Slack ou Discord para envio do clippings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-filtrar-por-unidade-ou-por-tipo-de-publicacao">Como filtrar por unidade ou por tipo de publicação</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-criar-multiplas-buscas">Como criar múltiplas buscas</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como funciona</li>
+      <li class="breadcrumb-item active">Parâmetros de pesquisa</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="parametros-de-pesquisa-disponiveis">Parâmetros de pesquisa disponíveis</h1>
+<p>A página abaixo lista os parâmetros configuráveis nos arquivos YAML:</p>
+<h2 id="parametros-da-dag">Parâmetros da DAG</h2>
+<ul>
+<li><strong>id</strong> <em>(obrigatório)</em>: Nome identificador da DAG a ser gerada. Deve ser único.</li>
+<li><strong>description</strong> <em>(obrigatório)</em>: Descrição da DAG de pesquisa exibida na interface do Airflow.</li>
+<li><strong>doc_md</strong> <em>(opcional)</em>: Documentação em markdown da DAG para uma descrição mais completa. Pode conter títulos, listas e links.</li>
+<li><strong>schedule</strong> <em>(opcional)</em>: Agendamento da periodicidade de execução da DAG. Use expressão cron (o padrão utilizado pelo gerador é <code>0 8 * * MON-FRI</code> quando não informado).</li>
+<li><strong>dataset</strong> <em>(opcional)</em>: Nome de um <code>Dataset</code> do Airflow. Se fornecido, a DAG só dispara quando o dataset for atualizado; pode ser combinado com <code>schedule</code>.</li>
+<li><strong>callback</strong> <em>(opcional)</em>: Notificações técnicas do sistema.</li>
+<li><strong>on_failure_callback</strong> <em>(opcional)</em>: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.</li>
+<li><strong>tags</strong> <em>(opcional)</em>: Conjunto de tags para categorizar a DAG. Dois valores padrão (<code>dou</code> e <code>generated_dag</code>) são sempre adicionados automaticamente.</li>
+<li><strong>owner</strong> <em>(opcional)</em>: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.</li>
+</ul>
+<p>(Quando uma chave não é informada, é utilizada a configuração padrão definida pelo gerador: veja o código-fonte em <code>src/schemas.py</code> para os valores e comportamentos.)</p>
+<h2 id="parametros-da-pesquisa-search">Parâmetros da Pesquisa (Search)</h2>
+<ul>
+<li><strong>search</strong> <em>(obrigatório)</em>: Seção que define um conjunto de filtros a serem executados em sequência. Pode ser uma única pesquisa ou uma lista de pesquisas aninhadas.</li>
+</ul>
+<p>Para cada item de <code>search</code> aplica‑se o conjunto de parâmetros abaixo. Nem todos precisam ser informados, mas existe uma <strong>validação interna</strong> que exige pelo menos um dos critérios <code>terms</code>, <code>department</code> ou <code>pubtype</code>. Além disso, se <code>sources</code> incluir <code>QD</code> (Querido Diário), o uso de <code>terms</code> torna‑se obrigatório.</p>
+<ul>
+<li><strong>date</strong> <em>(opcional)</em>: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA.</li>
+<li><strong>department</strong> <em>(opcional)</em>: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.</li>
+<li><strong>department_ignore</strong> <em>(opcional)</em>: Lista de unidades e subordinadas a serem desconsideradas na busca. O nome deve ser idêntico ao da publicação.</li>
+<li><strong>terms_ignore</strong> <em>(opcional)</em>: Lista de termos serem desconsideradas na busca. O nome deve ser idêntico ao da publicação. <strong>(O recurso está disponível para DOU – limitado ao excerto – e INLABS)</strong></li>
+<li><strong>dou_sections</strong> <em>(opcional)</em>: Lista de seções do DOU onde a busca deverá ser realizada. Valores aceitos: SECAO_1, SECAO_2, SECAO_3, EDICAO_EXTRA, EDICAO_SUPLEMENTAR, TODOS. Default: TODOS.</li>
+<li><strong>field</strong> <em>(opcional)</em>: Campos dos quais os termos devem ser pesquisados. Valores: TUDO, TITULO, CONTEUDO. Default: TUDO.</li>
+<li><strong>force_rematch</strong> <em>(opcional)</em>: Indica que a busca deve ser forçada, mesmo que já tenha sido feita anteriormente. Valores: True ou False. Default: False.</li>
+<li><strong>full_text</strong> <em>(opcional)</em>: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)</li>
+<li><strong>text_length</strong> <em>(opcional)</em>: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)</li>
+<li><strong>use_summary</strong> <em>(opcional)</em>: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)</li>
+<li><strong>ignore_signature_match</strong> <em>(opcional)</em>: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.</li>
+<li><strong>is_exact_search</strong> <em>(opcional)</em>: Busca somente o termo exato. Valores: True ou False. Default: True.</li>
+<li><strong>pubtype</strong> <em>(opcional)</em>: Lista de tipos de publicações a serem filtradas na busca. Valores: <a href="../tipos_de_publicacoes/">Lista de tipos de publicações</a>.</li>
+<li><strong>sources</strong> <em>(opcional)</em>: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS. Default: DOU.</li>
+<li><strong>terms</strong> <em>(condicionalmente obrigatório)</em>: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se <code>QD</code> estiver na lista de <code>sources</code>, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios <code>terms</code>, <code>department</code> ou <code>pubtype</code>.</li>
+<li><strong>territory_id</strong> <em>(opcional)</em>: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.</li>
+<li><strong>excerpt_size</strong> <em>(opcional)</em>: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)</li>
+<li><strong>number_of_excerpts</strong> <em>(opcional)</em>: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário‑QD)</li>
+</ul>
+<h2 id="parametros-do-relatorio-report">Parâmetros do Relatório (Report)</h2>
+<p>O bloco <code>report</code> contém as informações de notificação. Não há validação estrita no esquema, mas <strong>deve existir pelo menos um mecanismo de envio</strong> (por exemplo <code>emails</code>, <code>slack_webhook</code>, <code>discord_webhook</code> ou <code>notification</code>).</p>
+<ul>
+<li><strong>attach_csv</strong> <em>(opcional)</em>: Anexar no email o resultado da pesquisa em CSV. Default: False.</li>
+<li><strong>discord_webhook</strong> <em>(opcional)</em>: URL de Webhook para integração com o Discord.</li>
+<li><strong>notification</strong> <em>(opcional)</em>: Integração com aplicativos de mensagens via <a href="https://github.com/caronc/apprise">Apprise</a>.</li>
+<li><strong>emails</strong> <em>(opcional)</em>: Lista de emails dos destinatários. Normalmente ao menos este campo ou um webhook deve ser preenchido.</li>
+<li><strong>footer_text</strong> <em>(opcional)</em>: Texto em HTML do rodapé do relatório.</li>
+<li><strong>header_text</strong> <em>(opcional)</em>: Texto em HTML de cabeçalho do relatório.</li>
+<li><strong>hide_filters</strong> <em>(opcional)</em>: Omite no relatório os filtros de pesquisa. Default: False.</li>
+<li><strong>no_results_found_text</strong> <em>(opcional)</em>: Texto padrão para quando não há resultados encontrados. Default: "Nenhum dos termos pesquisados foi encontrado nesta consulta".</li>
+<li><strong>skip_null</strong> <em>(opcional)</em>: Dispensa o envio de email quando não há resultados encontrados em todas as pesquisas. Valores: True ou False. Default: True.</li>
+<li><strong>slack_webhook</strong> <em>(opcional)</em>: URL de Webhook para integração com o Slack.</li>
+<li><strong>subject</strong> <em>(opcional)</em>: Texto de assunto do email. Se não for fornecido o gerador define um texto padrão.</li>
+</ul>
+<h2 id="como-utilizar-slack-ou-discord-para-envio-do-clippings">Como utilizar Slack ou Discord para envio do clippings</h2>
+<p>Baseado no que foi visto anteriormente nesta seção, o vídeo abaixo demonstra como utilizar outras plataformas para envio dos clippings de pesquisa:</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/nHV_eH91fKE?si=6ezax8UaQjbkrSKr" title="Utilizando o Slack ou Discord para envio do clipping" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<h2 id="como-filtrar-por-unidade-ou-por-tipo-de-publicacao">Como filtrar por unidade ou por tipo de publicação</h2>
+<p>O vídeo abaixo demonstra como refinar as buscas utilizando os filtros de unidade e tipo de publicação.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/3I_wXZ_EUBg?si=qZnzljgo3akGFCpY" title="yFiltro por unidade e por tipo de publicação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<h2 id="como-criar-multiplas-buscas">Como criar múltiplas buscas</h2>
+<p>O vídeo abaixo demonstra como criar DAGs com múltiplas buscas (search) no mesmo arquivo</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HazhpYuComw?si=daHkk0epEe8CK7Ms" title="Criando uma DAG com múltiplas pesquisas" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../recursos_funcionalidades/" class="btn btn-neutral float-left" title="Recursos e funcionalidades"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../operadores/" class="btn btn-neutral float-right" title="Operadores de pesquisa avançada">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../recursos_funcionalidades/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../operadores/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

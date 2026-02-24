@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Instalação do WSL no Windows - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Instala\u00e7\u00e3o do WSL no Windows";
+        var mkdocs_page_input_path = "como_utilizar/instalacao_wsl_windows.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.9.0
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao/">Instalação e configuração</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_k8s/">Instalação do k8s</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Instalação do WSL no Windows</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#indice">Índice</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#versoes-do-windows-compativeis">Versões do Windows Compatíveis</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verificar-versao-do-windows">Verificar Versão do Windows</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#habilitar-recursos-necessarios">Habilitar Recursos Necessários</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#instalacao-do-wsl">Instalação do WSL</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#metodo-1-instalacao-automatica-recomendado">Método 1: Instalação Automática (Recomendado)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metodo-2-instalacao-manual">Método 2: Instalação Manual</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuracao-inicial">Configuração Inicial</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#primeira-configuracao-da-distribuicao">Primeira Configuração da Distribuição</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#atualizar-o-sistema">Atualizar o Sistema</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verificar-instalacao">Verificar Instalação</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuracoes-avancadas">Configurações Avançadas</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#arquivo-wslconfig">Arquivo .wslconfig</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#configuracoes-por-distribuicao">Configurações por Distribuição</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#configurar-git-recomendado">Configurar Git (Recomendado)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#instalar-ferramentas-essenciais">Instalar Ferramentas Essenciais</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comandos-uteis">Comandos Úteis</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#comandos-basicos-do-wsl">Comandos Básicos do WSL</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#acessar-arquivos">Acessar Arquivos</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#executar-comandos">Executar Comandos</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#solucao-de-problemas">Solução de Problemas</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#erro-wslregisterdistribution-failed-with-error-0x80073712">Erro: "WslRegisterDistribution failed with error: 0x80073712"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#erro-wslregisterdistribution-failed-with-error-0x8007019e">Erro: "WslRegisterDistribution failed with error: 0x8007019e"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#wsl-2-requer-uma-atualizacao">WSL 2 requer uma atualização</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#performance-lenta">Performance lenta</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#problemas-de-conectividade-de-rede">Problemas de conectividade de rede</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#nao-consegue-acessar-arquivos-windows">Não consegue acessar arquivos Windows</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dicas-extras">Dicas Extras</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#integracao-com-vs-code">Integração com VS Code</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#usar-windows-terminal">Usar Windows Terminal</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#backup-automatico">Backup Automático</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitacao_docker_no_wsl/">Habilitação do Docker no WSL</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/parametros/">Parâmetros de pesquisa</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como utilizar</li>
+      <li class="breadcrumb-item active">Instalação do WSL no Windows</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="guia-de-instalacao-e-configuracao-do-wsl-no-windows">Guia de Instalação e Configuração do WSL no Windows</h1>
+<h2 id="indice">Índice</h2>
+<ul>
+<li><a href="#pre-requisitos">Pré-requisitos</a></li>
+<li><a href="#instalacao-do-wsl">Instalação do WSL</a></li>
+<li><a href="#configuracao-inicial">Configuração Inicial</a></li>
+<li><a href="#configuracoes-avancadas">Configurações Avançadas</a></li>
+<li><a href="#comandos-uteis">Comandos Úteis</a></li>
+<li><a href="#solucao-de-problemas">Solução de Problemas</a></li>
+</ul>
+<h2 id="pre-requisitos">Pré-requisitos</h2>
+<h3 id="versoes-do-windows-compativeis">Versões do Windows Compatíveis</h3>
+<ul>
+<li>Windows 10 versão 2004 ou superior (Build 19041 ou superior)</li>
+<li>Windows 11 (todas as versões)</li>
+</ul>
+<h3 id="verificar-versao-do-windows">Verificar Versão do Windows</h3>
+<ol>
+<li>Pressione <code>Win + R</code></li>
+<li>Digite <code>winver</code> e pressione Enter</li>
+<li>Verifique se sua versão atende aos requisitos</li>
+</ol>
+<h3 id="habilitar-recursos-necessarios">Habilitar Recursos Necessários</h3>
+<p>Antes da instalação, alguns recursos do Windows devem estar habilitados:</p>
+<ol>
+<li><strong>Abra o PowerShell como Administrador</strong></li>
+<li>Clique com botão direito no menu Iniciar</li>
+<li>
+<p>Selecione "Windows PowerShell (Admin)" ou "Terminal (Admin)"</p>
+</li>
+<li>
+<p><strong>Execute os seguintes comandos:</strong></p>
+</li>
+</ol>
+<pre><code class="language-powershell">dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+</code></pre>
+<ol>
+<li><strong>Reinicie o computador</strong></li>
+</ol>
+<h2 id="instalacao-do-wsl">Instalação do WSL</h2>
+<h3 id="metodo-1-instalacao-automatica-recomendado">Método 1: Instalação Automática (Recomendado)</h3>
+<p><strong>Para Windows 10 versão 2004+ e Windows 11:</strong></p>
+<ol>
+<li>
+<p><strong>Abra o PowerShell ou Terminal como Administrador</strong></p>
+</li>
+<li>
+<p><strong>Execute o comando de instalação:</strong></p>
+</li>
+</ol>
+<pre><code class="language-powershell">wsl --install
+</code></pre>
+<ol>
+<li>
+<p><strong>Reinicie o computador quando solicitado</strong></p>
+</li>
+<li>
+<p><strong>Após a reinicialização, o Ubuntu será instalado automaticamente</strong></p>
+</li>
+</ol>
+<h3 id="metodo-2-instalacao-manual">Método 2: Instalação Manual</h3>
+<p>Se o método automático não funcionar:</p>
+<ol>
+<li><strong>Baixe e instale o pacote de atualização do kernel do Linux:</strong></li>
+<li>Acesse: https://aka.ms/wsl2kernel</li>
+<li>
+<p>Baixe e instale o arquivo MSI</p>
+</li>
+<li>
+<p><strong>Defina WSL 2 como versão padrão:</strong></p>
+</li>
+</ol>
+<pre><code class="language-powershell">wsl --set-default-version 2
+</code></pre>
+<ol>
+<li><strong>Instale uma distribuição Linux:</strong></li>
+<li>Acesse a Microsoft Store</li>
+<li>Pesquise por "Ubuntu", "Debian", "openSUSE", etc.</li>
+<li>Clique em "Instalar"</li>
+</ol>
+<h2 id="configuracao-inicial">Configuração Inicial</h2>
+<h3 id="primeira-configuracao-da-distribuicao">Primeira Configuração da Distribuição</h3>
+<ol>
+<li><strong>Abra a distribuição Linux instalada</strong></li>
+<li>Procure no menu Iniciar (ex: "Ubuntu")</li>
+<li>
+<p>Ou digite <code>wsl</code> no Terminal/PowerShell</p>
+</li>
+<li>
+<p><strong>Configure usuário e senha:</strong></p>
+</li>
+<li>Digite um nome de usuário (minúsculas, sem espaços)</li>
+<li>Digite uma senha (não será exibida durante a digitação)</li>
+<li>Confirme a senha</li>
+</ol>
+<h3 id="atualizar-o-sistema">Atualizar o Sistema</h3>
+<p>Após a configuração inicial:</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt upgrade -y
+</code></pre>
+<h3 id="verificar-instalacao">Verificar Instalação</h3>
+<p>Para verificar se o WSL está funcionando corretamente:</p>
+<pre><code class="language-powershell">wsl --list --verbose
+</code></pre>
+<h2 id="configuracoes-avancadas">Configurações Avançadas</h2>
+<h3 id="arquivo-wslconfig">Arquivo .wslconfig</h3>
+<p>Crie um arquivo <code>.wslconfig</code> na pasta do usuário Windows (<code>C:\Users\SeuUsuario\.wslconfig</code>):</p>
+<pre><code class="language-ini">[wsl2]
+# Limitar memória RAM (exemplo: 4GB)
+memory=4GB
+
+# Limitar número de processadores
+processors=2
+
+# Habilitar swap
+swap=2GB
+
+# Desabilitar página de memória virtual
+pageReporting=false
+
+# Especificar kernel customizado (opcional)
+# kernel=C:\\temp\\myCustomKernel
+
+# Argumentos adicionais do kernel
+# kernelCommandLine = vsyscall=emulate
+
+# Habilitar conexões localhost
+localhostForwarding=true
+
+# Habilitar modo debug
+# debugConsole=true
+</code></pre>
+<h3 id="configuracoes-por-distribuicao">Configurações por Distribuição</h3>
+<p>Crie um arquivo <code>wsl.conf</code> dentro da distribuição Linux (<code>/etc/wsl.conf</code>):</p>
+<pre><code class="language-ini">[automount]
+enabled = true
+root = /mnt/
+options = &quot;metadata,umask=22,fmask=11&quot;
+mountFsTab = false
+
+[network]
+generateHosts = true
+generateResolvConf = true
+hostname = meu-wsl
+
+[interop]
+enabled = true
+appendWindowsPath = true
+
+[user]
+default = seu-usuario
+
+[boot]
+systemd = true
+</code></pre>
+<h3 id="configurar-git-recomendado">Configurar Git (Recomendado)</h3>
+<pre><code class="language-bash">git config --global user.name &quot;Seu Nome&quot;
+git config --global user.email &quot;seu.email@exemplo.com&quot;
+</code></pre>
+<h3 id="instalar-ferramentas-essenciais">Instalar Ferramentas Essenciais</h3>
+<pre><code class="language-bash"># Ferramentas básicas de desenvolvimento
+sudo apt install curl wget git vim nano build-essential
+
+# Node.js e npm
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Python e pip
+sudo apt install python3 python3-pip
+
+# Docker (se necessário)
+sudo apt install docker.io
+sudo usermod -aG docker $USER
+</code></pre>
+<h2 id="comandos-uteis">Comandos Úteis</h2>
+<h3 id="comandos-basicos-do-wsl">Comandos Básicos do WSL</h3>
+<pre><code class="language-powershell"># Listar distribuições instaladas
+wsl --list --verbose
+
+# Listar distribuições disponíveis para download
+wsl --list --online
+
+# Instalar uma distribuição específica
+wsl --install -d Ubuntu-22.04
+
+# Definir distribuição padrão
+wsl --set-default Ubuntu-22.04
+
+# Iniciar uma distribuição específica
+wsl -d Ubuntu-22.04
+
+# Parar uma distribuição
+wsl --terminate Ubuntu-22.04
+
+# Parar todas as distribuições
+wsl --shutdown
+
+# Fazer backup de uma distribuição
+wsl --export Ubuntu-22.04 C:\backup\ubuntu-backup.tar
+
+# Restaurar uma distribuição
+wsl --import Ubuntu-Restaurada C:\WSL\Ubuntu-Restaurada C:\backup\ubuntu-backup.tar
+
+# Desinstalar uma distribuição
+wsl --unregister Ubuntu-22.04
+
+# Verificar versão do WSL
+wsl --version
+
+# Atualizar WSL
+wsl --update
+</code></pre>
+<h3 id="acessar-arquivos">Acessar Arquivos</h3>
+<p><strong>Do Windows para Linux:</strong></p>
+<pre><code>\\wsl$\Ubuntu-22.04\home\usuario
+</code></pre>
+<p><strong>Do Linux para Windows:</strong></p>
+<pre><code class="language-bash">cd /mnt/c/Users/SeuUsuario
+</code></pre>
+<h3 id="executar-comandos">Executar Comandos</h3>
+<p><strong>Executar comando Linux do Windows:</strong></p>
+<pre><code class="language-powershell">wsl ls -la
+wsl -d Ubuntu-22.04 ls -la
+</code></pre>
+<p><strong>Executar comando Windows do Linux:</strong></p>
+<pre><code class="language-bash">cmd.exe /c dir
+powershell.exe -c &quot;Get-Process&quot;
+</code></pre>
+<h2 id="solucao-de-problemas">Solução de Problemas</h2>
+<h3 id="erro-wslregisterdistribution-failed-with-error-0x80073712">Erro: "WslRegisterDistribution failed with error: 0x80073712"</h3>
+<p><strong>Solução:</strong>
+1. Habilite o recurso "Plataforma de Máquina Virtual":</p>
+<pre><code class="language-powershell">dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+</code></pre>
+<ol>
+<li>Reinicie o computador</li>
+</ol>
+<h3 id="erro-wslregisterdistribution-failed-with-error-0x8007019e">Erro: "WslRegisterDistribution failed with error: 0x8007019e"</h3>
+<p><strong>Solução:</strong>
+1. Habilite o WSL:</p>
+<pre><code class="language-powershell">dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+</code></pre>
+<ol>
+<li>Reinicie o computador</li>
+</ol>
+<h3 id="wsl-2-requer-uma-atualizacao">WSL 2 requer uma atualização</h3>
+<p><strong>Solução:</strong>
+1. Baixe o pacote de atualização: https://aka.ms/wsl2kernel
+2. Execute o arquivo baixado
+3. Defina WSL 2 como padrão:</p>
+<pre><code class="language-powershell">wsl --set-default-version 2
+</code></pre>
+<h3 id="performance-lenta">Performance lenta</h3>
+<p><strong>Soluções:</strong>
+1. Certifique-se de que está usando WSL 2:</p>
+<pre><code class="language-powershell">wsl --set-version Ubuntu-22.04 2
+</code></pre>
+<ol>
+<li>
+<p>Mantenha arquivos no sistema de arquivos Linux para melhor performance</p>
+</li>
+<li>
+<p>Configure limites de recursos no arquivo <code>.wslconfig</code></p>
+</li>
+</ol>
+<h3 id="problemas-de-conectividade-de-rede">Problemas de conectividade de rede</h3>
+<p><strong>Solução:</strong>
+1. Reinicie o WSL:</p>
+<pre><code class="language-powershell">wsl --shutdown
+</code></pre>
+<ol>
+<li>
+<p>Desabilite o firewall temporariamente para teste</p>
+</li>
+<li>
+<p>Configure DNS manualmente em <code>/etc/resolv.conf</code>:</p>
+</li>
+</ol>
+<pre><code class="language-bash">nameserver 8.8.8.8
+nameserver 8.8.4.4
+</code></pre>
+<h3 id="nao-consegue-acessar-arquivos-windows">Não consegue acessar arquivos Windows</h3>
+<p><strong>Solução:</strong>
+1. Verifique se a montagem automática está habilitada em <code>/etc/wsl.conf</code>
+2. Reinicie o WSL após alterações de configuração</p>
+<h2 id="dicas-extras">Dicas Extras</h2>
+<h3 id="integracao-com-vs-code">Integração com VS Code</h3>
+<ol>
+<li>Instale a extensão "Remote - WSL" no VS Code</li>
+<li>Abra um projeto WSL: <code>code .</code> dentro da pasta do projeto no Linux</li>
+<li>Ou use <code>Ctrl+Shift+P</code> &gt; "Remote-WSL: New Window"</li>
+</ol>
+<h3 id="usar-windows-terminal">Usar Windows Terminal</h3>
+<ol>
+<li>Instale o Windows Terminal da Microsoft Store</li>
+<li>Ele detectará automaticamente suas distribuições WSL</li>
+<li>Configure perfis personalizados para cada distribuição</li>
+</ol>
+<h3 id="backup-automatico">Backup Automático</h3>
+<p>Crie um script PowerShell para backup regular:</p>
+<pre><code class="language-powershell"># backup-wsl.ps1
+$data = Get-Date -Format &quot;yyyy-MM-dd&quot;
+wsl --export Ubuntu-22.04 &quot;C:\Backups\Ubuntu-$data.tar&quot;
+</code></pre>
+<hr />
+<p><strong>Nota:</strong> Sempre execute comandos PowerShell como Administrador quando necessário e mantenha o WSL atualizado com <code>wsl --update</code>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../instalacao_k8s/" class="btn btn-neutral float-left" title="Instalação do k8s"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../habilitacao_docker_no_wsl/" class="btn btn-neutral float-right" title="Habilitação do Docker no WSL">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../instalacao_k8s/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../habilitacao_docker_no_wsl/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
