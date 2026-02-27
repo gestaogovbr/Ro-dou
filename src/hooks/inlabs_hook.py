@@ -322,17 +322,9 @@ class INLABSHook(BaseHook):
             # a publication.
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            # Remove title duplicated
+            # Remove duplicated title then strip HTML tags
+            df["texto"] = df["texto"].apply(self._remove_duplicated_title)
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
-
-            # TUDO: A chamada _remove_html_tags no transform_search_results colapsa whitespace
-            # (newlines e espaços múltiplos viram espaço único) e o BeautifulSoup em _remove_duplicated_title
-            # converte <br> para <br/>. Os testes esperavam o texto com a formatação original.
-
-            # df["texto"] = df.apply(
-            #     lambda row: self._remove_duplicated_title(row["texto"]),
-            #     axis=1,
-            # )
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])

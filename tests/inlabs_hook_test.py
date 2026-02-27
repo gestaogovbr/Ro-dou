@@ -522,7 +522,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                             " vestibulum velit pellentesque facilisis. Aenean"
                             " sollicitudin ante elit, vitae vehicula nisi congue"
                             " id. Brasília/DF, 15 de março de 2024. Pessoa 1"
-                            " Analista <br/>"
+                            " Analista <br>"
                         ),
                         "date": "15/03/2024",
                         "id": 1,
@@ -584,6 +584,46 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
             },
             True,
             True,
+        ),
+        # HTML texto with identifica tag — title must not appear in abstract
+        (
+            ["Lorem"],
+            pd.DataFrame(
+                [
+                    {
+                        "artcategory": "Texto exemplo art_category",
+                        "arttype": "Publicação xxx",
+                        "id": 1,
+                        "assina": "Pessoa 1",
+                        "data": "Brasília/DF, 15 de março de 2024.",
+                        "ementa": "None",
+                        "identifica": "Título da Publicação 1",
+                        "name": "15.03.2024 bsb DOU xxx",
+                        "pdfpage": "http://xxx.gov.br/",
+                        "pubdate": datetime(2024, 3, 15),
+                        "pubname": "DO1",
+                        "subtitulo": "None",
+                        "texto": '<p class="identifica">Título da Publicação 1</p><p>Lorem ipsum dolor sit amet.</p>',
+                        "titulo": "None",
+                    },
+                ]
+            ),
+            {
+                "Lorem": [
+                    {
+                        "section": "DOU - Seção 1",
+                        "title": "TÍTULO DA PUBLICAÇÃO 1",
+                        "href": "http://xxx.gov.br/",
+                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
+                        "date": "15/03/2024",
+                        "id": 1,
+                        "display_date_sortable": None,
+                        "hierarchyList": "Texto exemplo art_category",
+                    }
+                ],
+            },
+            False,
+            False,
         ),
         # No terms
         (
