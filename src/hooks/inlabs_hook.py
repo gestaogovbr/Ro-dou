@@ -322,6 +322,7 @@ class INLABSHook(BaseHook):
             # a publication.
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
+            df["texto"] = df["texto"].apply(self._remove_html_tags)
             # Remove title duplicated
             df["texto"] = df.apply(
                 lambda row: self._remove_duplicated_title(row["texto"]),
