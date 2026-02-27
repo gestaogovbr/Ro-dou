@@ -4,7 +4,6 @@ from notification.isender import ISender
 from schemas import ReportConfig
 
 import re
-import logging
 
 
 class NotificationSender(ISender):
@@ -155,7 +154,7 @@ class NotificationSender(ISender):
         if not sent:
             raise RuntimeError("Notification delivery failed")
 
-    def send_chunked(self, message, max_len=1900):
+    def send_chunked(self, message, max_len=1500):
 
         url = self.notification
         self.apobj.add(url)
