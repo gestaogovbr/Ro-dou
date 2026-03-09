@@ -11,6 +11,9 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from typing import Optional
 
+import markdown
+import textwrap
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -326,6 +329,14 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
             df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
 
+            # Identify if the text contains markdown table and convert to HTML if True
+            if df["texto"].apply(lambda x: self._has_markdown_table(x)).any():
+                df["texto"] = df["texto"].apply(
+                    lambda x: markdown.markdown(
+                        textwrap.dedent(x).strip(), extensions=["tables"]
+                    )
+                )
+
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
@@ -591,3 +602,17 @@ class INLABSHook(BaseHook):
                 tag.decompose()
 
             return str(soup)
+
+        @staticmethod
+        def _has_markdown_table(text: str) -> bool:
+            lines = text.splitlines()
+            for line in lines:
+                if "|" not in line:
+                    continue
+                # Formato markdown padrão: linha separadora ---|---|---
+                if re.match(r"^\s*\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$", line):
+                    return True
+                # Formato pipe-delimitado sem separador: linha com 3+ pipes
+                if line.count("|") >= 3:
+                    return True
+            return False

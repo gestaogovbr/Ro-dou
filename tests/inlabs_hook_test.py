@@ -796,3 +796,42 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 )
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
+
+
+@pytest.mark.parametrize(
+    "abstract, result",
+    [
+        # Linha separadora padrão markdown ---|---|---
+        (
+            "Cargo | Nome | CPF\n---|---|---\nAdministrador | João | 123",
+            True,
+        ),
+        # Linha com 3+ pipes (tabela pipe-delimitada sem separador)
+        (
+            "Cargo| Nome| CPF| Classif.| Concorrência ---|---|---|---|--- Administrador| LUCIA CLAUBIA SOARES DOS SANTOS| *** . 707 . 601 - **| 45| Ampla",
+            True,
+        ),
+        # Texto sem tabela
+        (
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            False,
+        ),
+        # Linha com apenas 2 pipes e sem separador markdown (não é tabela)
+        (
+            "coluna1 | coluna2\ntexto simples",
+            False,
+        ),
+        # String vazia
+        (
+            "",
+            False,
+        ),
+        # Separador markdown com espaços e alinhamento de colunas
+        (
+            "| Nome | Valor |\n|:-----|------:|\n| João | 100   |",
+            True,
+        ),
+    ],
+)
+def test_has_markdown_table(inlabs_hook, abstract, result):
+    assert inlabs_hook.TextDictHandler()._has_markdown_table(abstract) == result
