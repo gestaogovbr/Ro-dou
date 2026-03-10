@@ -595,38 +595,3 @@ class INLABSHook(BaseHook):
                 tag.decompose()
 
             return str(soup)
-
-        @staticmethod
-        def _prettier_html(html: str) -> str:
-            """
-            Receives an HTML string and returns a corrected and formatted version.
-
-            Fixes applied:
-            - Consistent indentation
-            - Unclosed tags
-            - Unquoted attributes
-            - Extra spaces and unnecessary blank lines
-            - Unnecessary empty tags (except void elements)
-            - Basic HTML entity normalization
-            """
-
-            # Parse with BeautifulSoup (fixes unclosed tags and general structure)
-            soup = BeautifulSoup(html, "html.parser")
-
-            # Serialize with indentation
-            pretty = soup.prettify(formatter="html5")
-
-            # Remove consecutive blank lines (more than 1 in a row)
-            pretty = re.sub(r"\n{3,}", "\n\n", pretty)
-
-            # Strip trailing whitespace from each line
-            pretty = "\n".join(line.rstrip() for line in pretty.splitlines())
-
-            # Normalize unnecessarily escaped HTML entities
-            #    (BeautifulSoup sometimes escapes & in URLs, for example)
-            pretty = re.sub(r"&amp;(amp;)*", "&", pretty)
-
-            # Ensure the document ends with a single newline
-            pretty = pretty.strip() + "\n"
-
-            return pretty
