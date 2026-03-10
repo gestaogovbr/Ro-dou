@@ -3,11 +3,9 @@
 from datetime import datetime
 
 import requests
-from notification.isender import ISender
+from notification.isender import ISender, remove_html_tags
 
 from schemas import ReportConfig
-
-import re
 
 
 class SlackSender(ISender):
@@ -26,7 +24,7 @@ class SlackSender(ISender):
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Slack"""
         if self.header_text:
-            header_text = _remove_html_tags(self.header_text)
+            header_text = remove_html_tags(self.header_text)
             self._add_header(header_text)
 
         for search in search_report:
@@ -56,7 +54,7 @@ class SlackSender(ISender):
                                 self._add_block(result)
 
         if self.footer_text:
-            footer_text = _remove_html_tags(self.footer_text)
+            footer_text = remove_html_tags(self.footer_text)
             self._add_header(footer_text)
         self._flush()
 
@@ -124,12 +122,3 @@ def _format_date(date_str: str) -> str:
     date = datetime.strptime(date_str, "%d/%m/%Y")
     _from, _to = WEEKDAYS_EN_TO_PT[date.weekday()]
     return date.strftime("%a %d/%m").replace(_from, _to)
-
-
-def _remove_html_tags(text):
-    if not text or not isinstance(text, str):
-        return text
-
-    # Remove todas as tags HTML
-    text = re.sub(r"<[^>]+>", "", text)
-    return text

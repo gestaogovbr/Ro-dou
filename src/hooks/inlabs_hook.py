@@ -11,8 +11,7 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from typing import Optional
 
-import markdown
-import textwrap
+from bs4 import BeautifulSoup
 
 
 class INLABSHook(BaseHook):
@@ -327,15 +326,8 @@ class INLABSHook(BaseHook):
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
             # Remove duplicated title then strip HTML tags
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
-            df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
 
-            # Identify if the text contains markdown table and convert to HTML if True
-            if df["texto"].apply(lambda x: self._has_markdown_table(x)).any():
-                df["texto"] = df["texto"].apply(
-                    lambda x: markdown.markdown(
-                        textwrap.dedent(x).strip(), extensions=["tables"]
-                    )
-                )
+            # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
@@ -379,6 +371,7 @@ class INLABSHook(BaseHook):
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+
             df["display_date_sortable"] = None
 
             cols_rename = {
@@ -604,15 +597,36 @@ class INLABSHook(BaseHook):
             return str(soup)
 
         @staticmethod
-        def _has_markdown_table(text: str) -> bool:
-            lines = text.splitlines()
-            for line in lines:
-                if "|" not in line:
-                    continue
-                # Formato markdown padrão: linha separadora ---|---|---
-                if re.match(r"^\s*\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$", line):
-                    return True
-                # Formato pipe-delimitado sem separador: linha com 3+ pipes
-                if line.count("|") >= 3:
-                    return True
-            return False
+        def _prettier_html(html: str) -> str:
+            """
+            Receives an HTML string and returns a corrected and formatted version.
+
+            Fixes applied:
+            - Consistent indentation
+            - Unclosed tags
+            - Unquoted attributes
+            - Extra spaces and unnecessary blank lines
+            - Unnecessary empty tags (except void elements)
+            - Basic HTML entity normalization
+            """
+
+            # Parse with BeautifulSoup (fixes unclosed tags and general structure)
+            soup = BeautifulSoup(html, "html.parser")
+
+            # Serialize with indentation
+            pretty = soup.prettify(formatter="html5")
+
+            # Remove consecutive blank lines (more than 1 in a row)
+            pretty = re.sub(r"\n{3,}", "\n\n", pretty)
+
+            # Strip trailing whitespace from each line
+            pretty = "\n".join(line.rstrip() for line in pretty.splitlines())
+
+            # Normalize unnecessarily escaped HTML entities
+            #    (BeautifulSoup sometimes escapes & in URLs, for example)
+            pretty = re.sub(r"&amp;(amp;)*", "&", pretty)
+
+            # Ensure the document ends with a single newline
+            pretty = pretty.strip() + "\n"
+
+            return pretty

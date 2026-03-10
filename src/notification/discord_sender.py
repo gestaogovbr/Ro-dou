@@ -1,9 +1,7 @@
 import requests
 
-from notification.isender import ISender
+from notification.isender import ISender, remove_html_tags
 from schemas import ReportConfig
-
-import re
 
 
 class DiscordSender(ISender):
@@ -19,7 +17,7 @@ class DiscordSender(ISender):
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
         if self.header_text:
-            header_text = self._remove_html_tags(self.header_text)
+            header_text = remove_html_tags(self.header_text)
             self.send_text(header_text)
 
         for search in search_report:
@@ -49,7 +47,7 @@ class DiscordSender(ISender):
                                 self.send_embeds(results)
 
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = remove_html_tags(self.footer_text)
             self.send_text(footer_text)
 
     def send_text(self, content):
@@ -73,9 +71,3 @@ class DiscordSender(ISender):
         data["username"] = "Ro-DOU Bot"
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
-
-    def _remove_html_tags(self, text):
-        # Define a regular expression pattern to match HTML tags
-        clean = re.compile("<.*?>")
-        # Substitute HTML tags with an empty string
-        return re.sub(clean, "", text)

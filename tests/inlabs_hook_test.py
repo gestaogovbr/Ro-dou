@@ -510,19 +510,17 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur"
-                            " adipiscing elit. Phasellus venenatis auctor mauris."
-                            " Integer id neque quis urna ultrices iaculis. Donec"
-                            " et enim mauris. Sed vel massa eget est viverra"
-                            " finibus a et magna. Pellentesque vel elementum"
-                            " mauris, id semper tellus. Vivamus convallis lacinia"
-                            " ex sed fermentum. Nulla mollis cursus ipsum vel"
-                            " interdum. Mauris facilisis posuere elit. Proin"
-                            " consectetur tincidunt urna. Cras tincidunt nunc"
-                            " vestibulum velit pellentesque facilisis. Aenean"
-                            " sollicitudin ante elit, vitae vehicula nisi congue"
-                            " id. Brasília/DF, 15 de março de 2024. Pessoa 1"
-                            " Analista <br>"
+                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
+                            "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
+                            "                        viverra finibus a et magna. Pellentesque vel elementum\n"
+                            "                        mauris, id semper tellus. Vivamus convallis lacinia ex sed\n"
+                            "                        fermentum. Nulla mollis cursus ipsum vel interdum. Mauris\n"
+                            "                        facilisis posuere elit. Proin consectetur tincidunt urna.\n"
+                            "                        Cras tincidunt nunc vestibulum velit pellentesque facilisis.\n"
+                            "                        Aenean sollicitudin ante elit, vitae vehicula nisi congue id.\n"
+                            "                        Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista\n"
+                            "                        "
                         ),
                         "date": "15/03/2024",
                         "id": 1,
@@ -614,7 +612,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
+                        "abstract": "<p><%%>Lorem</%%> ipsum dolor sit amet.</p>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -662,16 +660,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "Lorem ipsum dolor sit amet, consectetur"
-                            " adipiscing elit. Phasellus venenatis auctor"
-                            " mauris. Integer id neque quis urna ultrices"
-                            " iaculis. Donec et enim mauris. Sed vel massa"
-                            " eget est viverra finibus a et magna."
-                            " Pellentesque vel elementum mauris, id semper"
-                            " tellus. Vivamus convallis lacinia ex sed"
-                            " fermentum. Nulla mollis cursus ipsum vel"
-                            " interdum. Mauris facilisis posuere elit."
-                            " Proin consectetur tinc (...)"
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
+                            "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
+                            "                        viverra finibus a et magna. Pellentesque vel elementum\n"
+                            "                        mauris, id semper tellus. Vivamus convallis lacinia ex sed (...)"
                         ),
                         "date": "15/03/2024",
                         "id": 1,
@@ -796,42 +789,3 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 )
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
-
-
-@pytest.mark.parametrize(
-    "abstract, result",
-    [
-        # Linha separadora padrão markdown ---|---|---
-        (
-            "Cargo | Nome | CPF\n---|---|---\nAdministrador | João | 123",
-            True,
-        ),
-        # Linha com 3+ pipes (tabela pipe-delimitada sem separador)
-        (
-            "Cargo| Nome| CPF| Classif.| Concorrência ---|---|---|---|--- Administrador| LUCIA CLAUBIA SOARES DOS SANTOS| *** . 707 . 601 - **| 45| Ampla",
-            True,
-        ),
-        # Texto sem tabela
-        (
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            False,
-        ),
-        # Linha com apenas 2 pipes e sem separador markdown (não é tabela)
-        (
-            "coluna1 | coluna2\ntexto simples",
-            False,
-        ),
-        # String vazia
-        (
-            "",
-            False,
-        ),
-        # Separador markdown com espaços e alinhamento de colunas
-        (
-            "| Nome | Valor |\n|:-----|------:|\n| João | 100   |",
-            True,
-        ),
-    ],
-)
-def test_has_markdown_table(inlabs_hook, abstract, result):
-    assert inlabs_hook.TextDictHandler()._has_markdown_table(abstract) == result
