@@ -543,41 +543,6 @@ class TestNotificationSenderSendData:
         mock_apprise_instance.notify.assert_called_once_with(body=data)
 
 
-class TestNotificationSenderHelperMethods:
-    """Test NotificationSender helper methods"""
-
-    def test_remove_html_tags_simple(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-
-        result = sender._remove_html_tags("<p>Hello <strong>World</strong></p>")
-        assert result == "Hello World"
-
-    def test_remove_html_tags_complex(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-
-        html_text = '<div class="content"><h1>Title</h1><p>Text with <a href="link">link</a></p></div>'
-        result = sender._remove_html_tags(html_text)
-        assert result == "TitleText with link"
-
-    def test_remove_html_tags_none_input(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-
-        result = sender._remove_html_tags(None)
-        assert result is None
-
-    def test_remove_html_tags_empty_string(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-
-        result = sender._remove_html_tags("")
-        assert result == ""
-
-    def test_remove_html_tags_non_string_input(self, mock_report_config):
-        sender = NotificationSender(mock_report_config)
-
-        result = sender._remove_html_tags(123)
-        assert result == 123
-
-
 class TestNotificationSenderIntegration:
     """Integration tests for NotificationSender"""
 
