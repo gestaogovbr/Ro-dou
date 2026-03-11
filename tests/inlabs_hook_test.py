@@ -789,3 +789,29 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 )
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
+
+
+@pytest.mark.parametrize(
+    "abstract, result",
+    [
+        (
+            """<p class="identifica">**Título** da Publicação </p><p class='subtitulo'>Lorem ipsum.</p><p>Lorem ipsum dolor sit *amet*, consectetur adipiscing *elit*.</p>""",
+            """<p class="identifica">Título da Publicação </p><p class='subtitulo'>Lorem ipsum.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>""",
+        )
+    ],
+)
+def test_remove_asterisks(inlabs_hook, abstract, result):
+    assert inlabs_hook.TextDictHandler()._remove_asterisks(abstract) == result
+
+
+@pytest.mark.parametrize(
+    "abstract, result",
+    [
+        (
+            """<p class="identifica">**Título** da Publicação </p>< br > <span> </span><p class='subtitulo'>Lorem ipsum.</p><p>Lorem ipsum dolor sit *amet*</p> <p></>, < p > consectetur adipiscing < /p > *elit*.</p>""",
+            """<p class="identifica">Título da Publicação </p><p class='subtitulo'>Lorem ipsum.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>""",
+        )
+    ],
+)
+def test_prettier_html(inlabs_hook, abstract, result):
+    assert inlabs_hook.TextDictHandler()._prettier_html(abstract) == result
