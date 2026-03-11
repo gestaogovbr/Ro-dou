@@ -329,6 +329,8 @@ class INLABSHook(BaseHook):
 
             # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
 
+            df["texto"] = df["texto"].apply(self._prettier_html)
+
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
@@ -567,8 +569,7 @@ class INLABSHook(BaseHook):
                 .to_dict()
             )
 
-        @staticmethod
-        def _remove_duplicated_title(abstract: str | None) -> str:
+        def _remove_duplicated_title(self, abstract: str | None) -> str:
             """Remove HTML elements with class 'identifica' from the abstract.
 
             The DOU the publication title both in the
@@ -584,14 +585,95 @@ class INLABSHook(BaseHook):
                 str: The abstract HTML without the 'identifica' paragraph,
                     or an empty string if abstract is None/empty.
             """
-            from bs4 import BeautifulSoup
+            # from bs4 import BeautifulSoup
 
             if not abstract:
                 return abstract or ""
 
-            soup = BeautifulSoup(abstract, "html.parser")
+            soup = self._html_to_soup(abstract)
 
             for tag in soup.find_all("p", class_="identifica"):
                 tag.decompose()
 
             return str(soup)
+
+        @staticmethod
+        def _remove_asterisks(text: str) -> str:
+            """Remove all asterisk characters from text.
+
+            Args:
+                text (str): The text to process.
+
+            Returns:
+                str: The text with all '*' characters removed.
+            """
+            return text.replace("*", "") if isinstance(text, str) else ""
+
+        def _prettier_html(self, html: str) -> str:
+            """Clean up HTML by removing asterisks, fixing malformed tags,
+            and removing empty or whitespace-only tags.
+
+            Transformations applied (in order):
+            - Remove asterisks
+            - Fix tags with internal spaces, e.g. ``< p >``, ``< /p >``, ``< br >``
+            - Remove invalid no-name closing tags, e.g. ``</>``
+            - Remove void standalone tags, e.g. ``<br>``
+            - Remove empty or whitespace-only paired tags, e.g. ``<span> </span>``
+            - Flatten nested ``<p>`` within ``<p>`` to avoid fragmentation
+            - Merge adjacent paragraphs when the second begins with punctuation
+            - Remove whitespace between tags
+            - Normalize multiple spaces
+
+            Args:
+                html (str): The HTML content to clean.
+
+            Returns:
+                str: The cleaned HTML string.
+            """
+            if not isinstance(html, str):
+                return ""
+
+            html = self._remove_asterisks(html)
+
+            # Fix tags with internal spaces, e.g. < p >, < /p >, < br >
+            html = re.sub(r"<\s*(/?)\s*(\w+)\s*>", r"<\1\2>", html)
+
+            # Remove invalid no-name closing tags, e.g. </>
+            html = re.sub(r"<\s*/\s*>", "", html)
+
+            # Remove void standalone tags like <br>
+            html = re.sub(r"<br\s*/?>", "", html)
+
+            # Remove empty or whitespace-only paired tags, e.g. <span> </span>
+            html = re.sub(r"<(\w+)[^>]*>\s*</\1>", "", html)
+
+            # Flatten nested <p> within <p> to avoid fragmentation on parsing.
+            # Normalize spaces only within the merged content to avoid touching
+            # plain-text content outside HTML context.
+            while re.search(r"<p>([^<]*)<p>([^<]*)</p>([^<]*)</p>", html):
+                html = re.sub(
+                    r"<p>([^<]*)<p>([^<]*)</p>([^<]*)</p>",
+                    lambda m: f"<p>{re.sub(r' {2,}', ' ', m.group(1) + m.group(2) + m.group(3))}</p>",
+                    html,
+                )
+
+            # Merge adjacent paragraphs where the second begins with punctuation
+            html = re.sub(r"</p>\s*<p>\s*([,;:])", r"\1", html)
+
+            # Remove whitespace between tags
+            html = re.sub(r">\s+<", "><", html)
+
+            return html
+
+        def _html_to_soup(self, html: str) -> BeautifulSoup:
+            """Convert HTML content to BeautifulSoup.
+
+            Args:
+                html (str): The HTML content to convert.
+
+            Returns:
+                BeautifulSoup: The BeautifulSoup object representing the HTML.
+            """
+            from bs4 import BeautifulSoup
+
+            return BeautifulSoup(html, "html.parser")
