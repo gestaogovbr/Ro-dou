@@ -37,24 +37,24 @@ class BaseSearcher(ABC):
 
     def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
         """Convert different term list formats to a standardized list.
-        
+
         Handles the conversion of search terms from various sources:
         - Returns empty list if input is None
         - Returns list as-is if already a list
         - Returns string as-is if it's a string
         - Converts JSON string to list by reading as DataFrame and extracting first column
-        
+
         Args:
             pre_term_list: Search terms in various formats (list, str, JSON string, or None)
-            
+
         Returns:
             list: Standardized list of search terms, empty list if input is None
         """
-        
+
         if pre_term_list is None:
             return []
         elif isinstance(pre_term_list, list):
-            return pre_term_list        
+            return pre_term_list
         else:
             return pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
@@ -530,6 +530,7 @@ class INLABSSearcher(BaseSearcher):
 
     def exec_search(
         self,
+        ai_config: dict,
         terms: Union[List[str], str],
         dou_sections: List[str],
         search_date: str,
@@ -540,6 +541,9 @@ class INLABSSearcher(BaseSearcher):
         full_text: bool,
         text_length: Optional[int],
         use_summary: bool,
+        use_ai_summary: bool,
+        ai_pub_limit: int,
+        ai_custom_prompt: str,
         pubtype: List[str],
         reference_date: datetime = datetime.now(),
     ) -> Dict:
@@ -559,8 +563,8 @@ class INLABSSearcher(BaseSearcher):
             terms_ignore (List[str]): List of terms to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
-            full_text (bool): If trim result text content 
-            text_length (int, optional): Size of the text to be sent in the message. The default is 400.           
+            full_text (bool): If trim result text content
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -577,7 +581,15 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text, text_length, use_summary
+            ai_config=ai_config,
+            search_terms=search_terms,
+            ignore_signature_match=ignore_signature_match,
+            full_text=full_text,
+            text_length=text_length,
+            use_summary=use_summary,
+            use_ai_summary=use_ai_summary,
+            ai_pub_limit=ai_pub_limit,
+            ai_custom_prompt=ai_custom_prompt,
         )
 
         group_results = self._group_results(search_results, terms, department)
@@ -595,16 +607,16 @@ class INLABSSearcher(BaseSearcher):
                 None when no specific terms are provided
         Returns:
             Dict: Formatted as {"texto": List of terms}
-        """       
+        """
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
-        elif isinstance(terms, str) and terms.startswith("["):            
-            return {"texto": ast.literal_eval(terms)}   
-        elif isinstance(terms, dict):        
-            return {"texto": self._split_sql_terms(terms)}     
+        elif isinstance(terms, str) and terms.startswith("["):
+            return {"texto": ast.literal_eval(terms)}
+        elif isinstance(terms, dict):
+            return {"texto": self._split_sql_terms(terms)}
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
@@ -629,7 +641,7 @@ class INLABSSearcher(BaseSearcher):
             search_terms["artcategory"] = department
         if department_ignore:
             search_terms["artcategory_ignore"] = department_ignore
-        if terms_ignore:           
+        if terms_ignore:
             search_terms["terms_ignore"] = terms_ignore
         if pubtype:
             search_terms["arttype"] = pubtype
@@ -645,7 +657,7 @@ class INLABSSearcher(BaseSearcher):
     def _split_sql_terms(terms: Dict) -> List:
         """Split SQL terms into a list, removing duplicates.
         Get only the values from the first key of the Dict."""
-     
+
         first_key = next(iter(terms))
         return list(set(terms[first_key].values()))
 
