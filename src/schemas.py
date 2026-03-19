@@ -22,7 +22,7 @@ from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from utils.default_ai_prompt import prompt
+from ai.config import prompt
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -250,6 +250,10 @@ class ReportConfig(BaseModel):
 
 class AIConfig(BaseModel):
     """Represents the AI configuration in the YAML file."""
+    provider: Optional[str] = Field(
+        default=None,
+        description="Nome do provedor da API de IA")
+
     api_key_var: Optional[str] = Field(
         default=None,
         description="Variável da chave da API de IA")
