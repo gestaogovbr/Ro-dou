@@ -406,17 +406,17 @@ class INLABSHook(BaseHook):
                     # AI on entire column
                     mask = df["texto"].notna()
 
-                df.loc[mask, "texto"] = df.loc[mask, "texto"].apply(
-                    lambda x: AIRunner.run(
-                    provider=ai_config.provider,
-                    api_key=ai_config.api_key_var,
-                    model=ai_config.model,
-                    input_text=x,
-                    system_prompt=ai_custom_prompt,
-                    max_tokens=500,
-                    temperature=0.2,
+                idx = df.loc[mask].index[:ai_pub_limit]
+                for i in idx:
+                    df.at[i, "texto"] = AIRunner.run(
+                        provider=ai_config.provider,
+                        api_key=ai_config.api_key_var,
+                        model=ai_config.model,
+                        input_text=df.at[i, "texto"],
+                        system_prompt=ai_custom_prompt,
+                        max_tokens=500,
+                        temperature=0.2,
                     )
-                )
             else:
                 if not full_text:
                     df["texto"] = df["texto"].apply(self._trim_text)
