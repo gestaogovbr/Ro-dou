@@ -10,7 +10,8 @@ import html2text
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from typing import Optional
-
+from schemas import AIConfig
+from ai.runner import AIRunner
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -53,6 +54,10 @@ class INLABSHook(BaseHook):
 
     def search_text(
         self,
+        ai_config: dict,
+        ai_pub_limit: int,
+        use_ai_summary: bool,
+        ai_custom_prompt: str,
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
@@ -100,12 +105,16 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results,
-                filtered_text_terms,
-                ignore_signature_match,
-                full_text,
-                text_length,
-                use_summary,
+                ai_config=ai_config,
+                response=all_results,
+                text_terms=filtered_text_terms,
+                ignore_signature_match=ignore_signature_match,
+                ai_pub_limit=ai_pub_limit,
+                full_text=full_text,
+                text_length=text_length,
+                use_summary=use_summary,
+                use_ai_summary=use_ai_summary,
+                ai_custom_prompt=ai_custom_prompt,
             )
             if not all_results.empty
             else {}
@@ -290,12 +299,16 @@ class INLABSHook(BaseHook):
 
         def transform_search_results(
             self,
+            ai_config: AIConfig,
             response: pd.DataFrame,
             text_terms: list,
             ignore_signature_match: bool,
+            ai_pub_limit: int,
+            ai_custom_prompt: str,
             full_text: bool = False,
             text_length: Optional[int] = 400,
             use_summary: bool = False,
+            use_ai_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -315,7 +328,7 @@ class INLABSHook(BaseHook):
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
-            """         
+            """
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
@@ -362,17 +375,39 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
-            if not full_text:
-                df["texto"] = df["texto"].apply(self._trim_text)
-
-            if text_length is not None and text_length != 400:
-                df["texto"] = df["texto"].apply(
-                    lambda x: self._trim_text(x, text_length)
-                )
 
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+
+            if use_ai_summary:
+                if use_summary:
+                    # AI only where ementa not exists
+                    mask = df["ementa"].isnull()
+                else:
+                    # AI on entire column
+                    mask = df["texto"].notna()
+
+                df.loc[mask, "texto"] = df.loc[mask, "texto"].apply(
+                    lambda x: AIRunner.run(
+                    provider=ai_config.provider,
+                    api_key=ai_config.api_key_var,
+                    model=ai_config.model,
+                    input_text=x,
+                    system_prompt=ai_custom_prompt,
+                    max_tokens=500,
+                    temperature=0.2,
+                    )
+                )
+            else:
+                if not full_text:
+                    df["texto"] = df["texto"].apply(self._trim_text)
+
+                if text_length is not None and text_length != 400:
+                    df["texto"] = df["texto"].apply(
+                        lambda x: self._trim_text(x, text_length)
+                    )
+
             df["display_date_sortable"] = None
 
             cols_rename = {
