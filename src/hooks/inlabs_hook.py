@@ -329,6 +329,7 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
             # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
+            df["texto"] = df["texto"].apply(self._remove_empty_tr)
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
@@ -565,7 +566,9 @@ class INLABSHook(BaseHook):
                 non_special = text[last_end : m.start()]
                 remaining = text_length - char_count
                 if _vlen(non_special) >= remaining:
-                    result.append(_cut_at_word_boundary(non_special, _cut(non_special, remaining)))
+                    result.append(
+                        _cut_at_word_boundary(non_special, _cut(non_special, remaining))
+                    )
                     return "".join(result), True
                 result.append(non_special)
                 char_count += _vlen(non_special)
@@ -720,6 +723,17 @@ class INLABSHook(BaseHook):
                 .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
                 .to_dict()
             )
+
+        @staticmethod
+        def _remove_empty_tr(text: str) -> str:
+            """Remove <tr> tags that contain no visible content."""
+            soup = BeautifulSoup(text, "html.parser")
+
+            for tr in soup.find_all("tr"):
+                if all(not td.get_text(strip=True) for td in tr.find_all("td")):
+                    tr.decompose()
+
+            return str(soup)
 
         def _remove_duplicated_title(self, abstract: str | None) -> str:
             """Remove HTML elements with class 'identifica' from the abstract.
