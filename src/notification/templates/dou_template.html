@@ -24,6 +24,10 @@
             font-size: 16px;
             font-weight: normal;
         }
+        
+        .highlight {
+            background-color: #FFA;           
+        }
 
         .ext_header {
             max-width: 1200px;
@@ -233,13 +237,13 @@
             font-family: Arial, sans-serif;
         }
 
-        th, td {
-            border: 1px solid #ccc;
+        table tr:first-child td {
+            background-color: #ddd;
+            font-weight: bold;
         }
 
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+        th, td {
+            border: 1px solid #ccc;
         }
 
         /* Responsividade */
@@ -389,7 +393,7 @@
                                         <div class="section-marker">{{ department| safe }}</div>
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
-                                        <div class="abstract">{{ document.abstract | safe }}</div>
+                                        <div class="abstract">{{ document.abstract | safe}}</div>
 
                                         <div class="date">{{ document.date }}</div>
 

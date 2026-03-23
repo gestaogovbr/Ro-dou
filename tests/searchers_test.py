@@ -1,5 +1,4 @@
-"""Serachers unit tests
-"""
+"""Serachers unit tests"""
 
 import pytest
 
@@ -27,14 +26,12 @@ def test_clean_html(dou_searcher, raw_html, clean_text):
     [
         ("PRIOR<>MATCHED NAME<>EVENTUALLY END NAME", "PRIOR", "MATCHED NAME"),
         (
-            "JOSE<span class='highlight' style='background:#FFA;'>"
-            "ANTONIO DE OLIVEIRA</span>CAMARGO",
+            "JOSE<span class='highlight'>" "ANTONIO DE OLIVEIRA</span>CAMARGO",
             "JOSE",
             "ANTONIO DE OLIVEIRA",
         ),
         (
-            "<span class='highlight' style='background:#FFA;'>"
-            "ANTONIO DE OLIVEIRA</span>CAMARGO",
+            "<span class='highlight'>" "ANTONIO DE OLIVEIRA</span>CAMARGO",
             "",
             "ANTONIO DE OLIVEIRA",
         ),
@@ -66,14 +63,14 @@ def test_normalize(dou_searcher, raw_text, normalized_text):
     [
         (
             "ANTONIO DE OLIVEIRA",
-            "<span class='highlight' style='background:#FFA;'>ANTONIO DE OLIVEIRA"
+            "<span class='highlight'>ANTONIO DE OLIVEIRA"
             "</span> FREITAS - Diretor Geral.EXTRATO DE COMPROMISSO PRONAS/PCD: "
             "Termo de Compromisso que entre si celebram a União, por intermédio "
             "do Ministério da Saúde,...",
         ),
         (
             "ANTONIO DE OLIVEIRA",
-            "JOSÉ <span class='highlight' style='background:#FFA;'>ANTONIO DE "
+            "JOSÉ <span class='highlight'>ANTONIO DE "
             "OLIVEIRA</span> FREITAS - Diretor Geral.EXTRATO DE COMPROMISSO "
             "PRONAS/PCD: Termo de Compromisso que entre si celebram a União, "
             "por intermédio do Ministério da Saúde,...",
@@ -90,7 +87,7 @@ def test_is_signature(dou_searcher, search_term, abstract):
     [
         (
             "ANTONIO DE OLIVEIRA",
-            "<span class='highlight' style='background:#FFA;'>ANTONIO DE "
+            "<span class='highlight'>ANTONIO DE "
             "OLIVEIRA</span> FREITAS - Diretor Geral.EXTRATO DE COMPROMISSO "
             "PRONAS/PCD: Termo de Compromisso que entre si celebram a União, "
             "por intermédio do Ministério da Saúde,...",
@@ -157,6 +154,7 @@ def test_match_department(dou_searcher):
     dou_searcher._match_department(results, department, department_ignore)
     assert len(results) == 1
 
+
 def test_match_pubtype(dou_searcher):
     pubtype = ["Edital"]
     results = [
@@ -183,7 +181,6 @@ def test_match_pubtype(dou_searcher):
     ]
     dou_searcher._match_pubtype(results, pubtype)
     assert len(results) == 1
-
 
 
 @pytest.mark.parametrize(
@@ -231,6 +228,7 @@ def test_cast_term_list__list_param(dou_searcher):
     pre_term_list = ["a", "b", "c"]
     assert tuple(dou_searcher._cast_term_list(pre_term_list)) == tuple(pre_term_list)
 
+
 def assert_grouped_term_result(grouped_result):
     assert "ATI" in grouped_result
     assert "SILVA" in grouped_result["ATI"]
@@ -238,6 +236,7 @@ def assert_grouped_term_result(grouped_result):
     assert "EPPGG" in grouped_result
     assert "ANTONIO DE OLIVEIRA" in grouped_result["EPPGG"]
     assert len(grouped_result["EPPGG"]["ANTONIO DE OLIVEIRA"]) == 3
+
 
 def assert_grouped_term_dept_result(grouped_result):
     assert "ATI" in grouped_result
@@ -253,11 +252,13 @@ def test_group_by_term_group(dou_searcher, search_results, term_n_group):
     grouped_result = dou_searcher._group_by_term_group(search_results, term_n_group)
     assert_grouped_term_result(grouped_result)
 
+
 def test_group_by_department(dou_searcher, search_results):
     grouped_result = dou_searcher._group_by_department(search_results, None)
     assert "single_department" in grouped_result["ANTONIO DE OLIVEIRA"]
     assert "single_department" in grouped_result["SILVA"]
     assert len(grouped_result["SILVA"]["single_department"]) == 4
+
 
 def test_group_results__sql_term_list_with_group(
     dou_searcher, search_results, term_n_group
@@ -294,9 +295,9 @@ def test_add_standard_highlight_formatting(dou_searcher):
             "href": "https://www.in.gov.br/web/dou/-/"
             "portaria-gm/mma-n-404-de-14-de-marco-de-2023-470057067",
             "abstract": "As manifestações registradas na Plataforma Fala.BR versando "
-            "sobre a <span class='highlight' style='background:#FFA;'>"
-            "Lei</span> de <span class='highlight' style='background:"
-            "#FFA;'>Acesso à Informação</span> têm ritoPORTARIA GM/MMA "
+            "sobre a <span class='highlight'>"
+            "Lei</span> de <span class='highlight'>"
+            "Acesso à Informação</span> têm ritoPORTARIA GM/MMA "
             "Nº 404, DE 14 DE MARÇO DE 2023 Estabelece, no âmbito do "
             "Ministério do Meio Ambiente e Mudança do Clima, os "
             "procedimentos para o recebimento e o "
@@ -305,6 +306,7 @@ def test_add_standard_highlight_formatting(dou_searcher):
         }
     ]
     dou_searcher._add_standard_highlight_formatting(results)
+
     assert results[0]["abstract"] == (
         "As manifestações registradas na Plataforma Fala.BR versando sobre "
         "a <%%>Lei</%%> de <%%>Acesso à Informação</%%> têm ritoPORTARIA "
