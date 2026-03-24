@@ -765,6 +765,62 @@ def test_remove_duplicated_title(inlabs_hook, abstract, result):
 
 
 @pytest.mark.parametrize(
+    "abstract, result",
+    [
+        (
+            """
+            <table>
+                <tr></tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>QTD.</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>NOME</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>01</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>ANDREA COSTA CHAVES</p>
+                    </td>        
+                </tr>
+            </table>
+            """,
+            """
+            <table>                            
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>QTD.</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>NOME</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>01</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>ANDREA COSTA CHAVES</p>
+                    </td>        
+                </tr>
+            </table>
+            """,
+        )
+    ],
+)
+def test_remove_empty_tr(inlabs_hook, abstract, result):
+    from bs4 import BeautifulSoup
+
+    assert BeautifulSoup(
+        inlabs_hook.TextDictHandler()._remove_empty_tr(abstract), "html.parser"
+    ) == BeautifulSoup(result, "html.parser")
+
+
+@pytest.mark.parametrize(
     "text, expected",
     [
         ("hello world", 11),
