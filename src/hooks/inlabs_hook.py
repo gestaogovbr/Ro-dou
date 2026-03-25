@@ -438,6 +438,7 @@ class INLABSHook(BaseHook):
                 "id": "id",
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
+                "ementa": "ementa",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
