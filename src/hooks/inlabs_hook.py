@@ -380,6 +380,8 @@ class INLABSHook(BaseHook):
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
 
+            df["ai_generated"] = False
+
             if use_ai_summary:
                 if use_summary:
                     # AI only where ementa not exists
@@ -399,6 +401,7 @@ class INLABSHook(BaseHook):
                         max_tokens=500,
                         temperature=0.2,
                     )
+                    df.at[i, "ai_generated"] = True
             else:
                 if not full_text:
                     df["texto"] = df["texto"].apply(self._trim_text)
@@ -419,11 +422,12 @@ class INLABSHook(BaseHook):
                 "id": "id",
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
-                "ementa": "ementa",
+                "ai_generated": "ai_generated",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
 
+            print(self._group_to_dict(df, "matches", cols_output))
             return (
                 {}
                 if df.empty

@@ -177,6 +177,15 @@
             line-height: 1.5;
         }
 
+        .summary-block {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f7ff;
+            border-left: 3px solid #06acff;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .date {
             color: #6c757d;
             font-size: 14px;
@@ -377,9 +386,9 @@
                                         <div class="abstract">{{ document.abstract | safe }}</div>
                                         {% endif %}
 
-                                        {% if document.summary_prefix %}
-                                        <div class="summary-block" style="margin-top: 10px; padding: 10px; background-color: #f0f7ff; border-left: 3px solid #06acff; font-size: 13px; line-height: 1.5;">
-                                            <em>{{ document.summary_prefix | safe }}</em>
+                                        {% if document.ai_sufix %}
+                                        <div class="summary-block">
+                                            <em>{{ document.ai_sufix | safe }}</em>
                                         </div>
                                         {% endif %}
 

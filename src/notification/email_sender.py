@@ -166,12 +166,21 @@ class EmailSender(ISender):
                         # Add all results for this term and department.
                         for result in results:
                             title = result["title"] or "Documento sem título"
-                            has_ementa = result.get("ementa") is not None and result.get("ementa") != ""
-                            
-                            # Display abstract: ementa if available, otherwise AI summary
-                            display_abstract = result["ementa"] if has_ementa else result["abstract"]
-                            # Show prefix only for AI-generated summaries (no ementa + has abstract)
-                            summary_prefix = "Texto sem ementa na origem. Resumo gerado por IA (pode conter erros)." if (not has_ementa and result["abstract"]) else None
+                            display_abstract = (
+                                result.get("abstract").strip()
+                                if result.get("abstract")
+                                else None
+                            )
+
+                            ai_sufix = None
+                            if result.get("ai_generated"):
+                                # Inlabs_hook sets ai_generated when the AI summary is used.
+                                # We don't need has_ementa in EmailSender anymore.
+                                ai_sufix = (
+                                    "Resumo gerado por IA (pode conter erros)."
+                                    if display_abstract
+                                    else "Resumo gerado por IA (pode conter erros)."
+                                )
 
                             term_data["search_terms"]["items"].append(
                                 {
@@ -182,7 +191,7 @@ class EmailSender(ISender):
                                     "url_new_tab": True,
                                     "abstract": display_abstract,
                                     "date": result["date"],
-                                    "summary_prefix": summary_prefix,
+                                    "ai_sufix": ai_sufix,
                                 }
                             )
 
