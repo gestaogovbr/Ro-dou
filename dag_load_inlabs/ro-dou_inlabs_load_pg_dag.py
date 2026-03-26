@@ -13,8 +13,9 @@ from airflow.decorators import dag, task
 from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 from airflow.models import Variable
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator
-from airflow.operators.python import BranchPythonOperator
+
+# from airflow.providers.common.sql.operators.sql import SQLCheckOperator
+# from airflow.operators.python import BranchPythonOperator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -29,7 +30,6 @@ STG_TABLE = "dou_inlabs.article_raw"
 # DAG
 
 default_args = {
-    # XXX update here
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
@@ -57,19 +57,19 @@ def load_inlabs():
     @task
     def get_date() -> str:
         """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context
+        from airflow.operators.python import get_current_context  # type: ignore
         from utils.date import get_trigger_date
 
         context = get_current_context()
         return get_trigger_date(context, local_time=True).strftime("%Y-%m-%d")
 
-    @task.short_circuit
+    @task.short_circuit(ignore_downstream_trigger_rules=False)
     def download_n_unzip_files(trigger_date: str):
         import requests
         from bs4 import BeautifulSoup
         import zipfile
         from urllib.parse import urljoin
-        from airflow.hooks.base import BaseHook
+        from airflow.hooks.base import BaseHook  # type: ignore
 
         def _create_directories():
             subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
@@ -116,8 +116,6 @@ def load_inlabs():
                 "origem": "736372697074",
             }
             files = _find_files(session, headers)
-            if not files:
-                return False
 
             for file in files:
                 r = session.request(
@@ -152,71 +150,28 @@ def load_inlabs():
 
     @task
     def load_data(trigger_date: str):
-        from bs4 import BeautifulSoup
-        import glob
-        import pandas as pd
-        from slugify import slugify
-        from airflow.providers.postgres.hooks.postgres import PostgresHook
+        from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
+        from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
 
-        def _read_files():
-            dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
-            df = pd.DataFrame()
-            for xml_file in glob.glob(
-                os.path.join(dest_path, trigger_date, "**/*.xml"), recursive=True
-            ):
-                df1 = pd.read_xml(xml_file)
-                df2 = pd.read_xml(xml_file, xpath="//body")
-                df = pd.concat([df, df1.join(df2)], ignore_index=True)
+        def process_folder(folder_path, pipeline=None):
+            files = [f for f in os.listdir(folder_path) if f.endswith(".xml")]
 
-            df.columns = [slugify(col, separator="_") for col in df.columns]
-            df.drop(columns=["body"], inplace=True)
-            df["pubdate"] = pd.to_datetime(df["pubdate"], format="%d/%m/%Y")
-            df["assina"] = df["texto"].apply(_get_assina)
+            for file in files:
+                xml_path = os.path.join(folder_path, file)
 
-            return df
+                with open(xml_path, "r", encoding="utf-8") as f:
+                    xml_str = f.read()
 
-        def _get_assina(text):
-            soup = BeautifulSoup(text, "html.parser")
-            p_tags = soup.find_all("p", class_="assina")
-            return ", ".join([p.text for p in p_tags]) if p_tags else None
+                data = DOUXmlParser().parse_dou_xml(xml_str)
+                response = OpenSearchPipeline().send(data, pipeline=pipeline)
 
-        def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(
-                f"""
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.tables
-                    WHERE table_name = '{STG_TABLE.split(".")[1]}'
-                );
-            """
-            )
-            if table_exists[0]:
-                hook.run(
-                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
-                )
-        df = _read_files()
-        hook = PostgresHook(DEST_CONN_ID)
-        _clean_db(hook)
-        df.to_sql(
-            name=STG_TABLE.split(".")[1],
-            schema=STG_TABLE.split(".", maxsplit=1)[0],
-            con=hook.get_sqlalchemy_engine(),
-            if_exists="append",
-            index=False,
-        )
-        logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
+                logging.info(f"[OK] {file} → indexed: {response['_id']}")
 
-    check_loaded_data = SQLCheckOperator(
-        task_id="check_loaded_data",
-        conn_id=DEST_CONN_ID,
-        sql=f"""
-            SELECT 1
-                FROM
-                    {STG_TABLE}
-                WHERE
-                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
-            """,
-    )
+        dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR, trigger_date)
+        if not os.path.isdir(dest_path):
+            logging.warning(f"Directory {dest_path} not found, skipping load.")
+            return
+        process_folder(dest_path, pipeline=None)
 
     @task.branch
     def check_if_first_run_of_day():
@@ -247,14 +202,13 @@ def load_inlabs():
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
-        logging.info("Directory %s removed.", dest_path)
+        logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
     trigger_date = get_date()
     (
         download_n_unzip_files(trigger_date)
-        >> load_data(trigger_date)
-        >> check_loaded_data
+        >> load_data(trigger_date)  # type: ignore
         >> remove_directory()
         >> check_if_first_run_of_day()
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]

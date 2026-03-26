@@ -11,6 +11,10 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from typing import Optional
 
+from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+from opensearchpy import OpenSearch  # type: ignore
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -21,6 +25,7 @@ class INLABSHook(BaseHook):
     """
 
     CONN_ID = "inlabs_db"
+    CLIENT = OpenSearchClient().get_client()
 
     def __init__(self, *args, **kwargs):
         pass
@@ -59,6 +64,7 @@ class INLABSHook(BaseHook):
         text_length: Optional[int],
         use_summary: bool,
         conn_id: str = CONN_ID,
+        client: OpenSearch = CLIENT,
     ) -> dict:
         """Searches the DOU Database with the provided search terms and processes
         the results.
@@ -77,25 +83,59 @@ class INLABSHook(BaseHook):
             dict: A dictionary of processed search results.
         """
 
-        hook = PostgresHook(conn_id)
+        # hook = PostgresHook(conn_id)
 
         logging.info("Search term in INLABS HOOK.")
         logging.info(f"Search terms -> {search_terms}")
 
         # Fetching results for main search terms
-        main_search_queries = self._generate_sql(search_terms)
-        hook.run(main_search_queries["create_extension"], autocommit=True)
-        main_search_results = hook.get_pandas_df(main_search_queries["select"])
+        # main_search_queries = self._generate_sql(search_terms)
+        # hook.run(main_search_queries["create_extension"], autocommit=True)
+        # main_search_results = hook.get_pandas_df(main_search_queries["select"])
 
-        # Fetching results for yesterday extra search terms
-        extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
-        extra_search_queries = self._generate_sql(extra_search_terms)
-        extra_search_results = hook.get_pandas_df(extra_search_queries["select"])
+        # # Fetching results for yesterday extra search terms
+        # extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
+        # extra_search_queries = self._generate_sql(extra_search_terms)
+        # extra_search_results = hook.get_pandas_df(extra_search_queries["select"])
 
-        # Combining main and extra search results
-        all_results = pd.concat(
-            [main_search_results, extra_search_results], ignore_index=True
-        )
+        # # Combining main and extra search results
+        # all_results = pd.concat(
+        #     [main_search_results, extra_search_results], ignore_index=True
+        # )
+
+        _BATCH_SIZE = 500
+        texto_terms = search_terms.get("texto", [])
+
+        if len(texto_terms) > _BATCH_SIZE:
+            batches = [
+                texto_terms[i : i + _BATCH_SIZE]
+                for i in range(0, len(texto_terms), _BATCH_SIZE)
+            ]
+            seen_ids: set = set()
+            hits = []
+            for batch in batches:
+                batch_terms = {**search_terms, "texto": batch}
+                query = self._generate_opensearch_query(batch_terms)
+                response = client.search(body=query, index=INDEX_NAME)
+                for hit in response["hits"]["hits"]:
+                    if hit["_id"] not in seen_ids:
+                        seen_ids.add(hit["_id"])
+                        hits.append(hit)
+        else:
+            query = self._generate_opensearch_query(search_terms)
+            response = client.search(body=query, index=INDEX_NAME)
+            hits = response["hits"]["hits"]
+
+        logging.info("Total hits after batching: %s", len(hits))
+
+        sources = [h["_source"] for h in hits]
+        all_results = pd.DataFrame(sources)
+
+        if not all_results.empty:
+            all_results["pubdate"] = pd.to_datetime(
+                all_results["pubdate"], format="%Y-%m-%d", errors="coerce"
+            )
+
         # Remove the words that suceeds the delimitator !
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
@@ -110,6 +150,148 @@ class INLABSHook(BaseHook):
             if not all_results.empty
             else {}
         )
+
+    @staticmethod
+    def _term_to_opensearch_qs(term: str) -> str:
+        """Convert a term expression (possibly with operators &, !, |, (, )) to
+        OpenSearch query_string syntax.
+
+        Operator mapping:
+            & → AND
+            ! → AND NOT
+            | → OR
+            (, ) → preserved as grouping
+
+        Args:
+            term (str): A search term expression, e.g. "term1 & term2 ! term3".
+
+        Returns:
+            str: An OpenSearch query_string expression, e.g. '"term1" AND "term2" AND NOT "term3"'.
+        """
+        operator_chars = "&!|()"
+        sub_terms = re.split(rf"\s*([{re.escape(operator_chars)}])\s*", term)
+        sub_terms = [t for t in sub_terms if t.strip()]
+
+        parts = []
+        for sub_term in sub_terms:
+            if sub_term == "!":
+                parts.append("AND NOT")
+            elif sub_term == "&":
+                parts.append("AND")
+            elif sub_term == "|":
+                parts.append("OR")
+            elif sub_term in ("(", ")"):
+                parts.append(sub_term)
+            else:
+                escaped = sub_term.replace("\\", "\\\\").replace('"', '\\"')
+                parts.append(f'"{escaped}"')
+
+        return " ".join(parts)
+
+    def _generate_opensearch_query(self, payload: dict) -> dict:
+        """Generate an OpenSearch DSL query from a search payload dict.
+
+        Mirrors the logic of _generate_sql but produces an OpenSearch bool query.
+
+        Args:
+            payload (dict): A dictionary containing search parameters.
+                example = {
+                    "texto": ["Termo 1", "Termo 2 & Termo 3"],
+                    "pubdate": ["2024-04-01", "2024-04-01"],
+                    "pubname": ["DO1"],
+                    "artcategory_ignore": ["Ministério X/Órgão Y"],
+                    "terms_ignore": ["Termo Ignorado"],
+                }
+
+        Returns:
+            dict: An OpenSearch query body dict.
+        """
+        allowed_keys = [
+            "name",
+            "pubname",
+            "artcategory",
+            "artcategory_ignore",
+            "arttype",
+            "identifica",
+            "titulo",
+            "subtitulo",
+            "texto",
+            "terms_ignore",
+        ]
+
+        pub_date = payload.get("pubdate", [date.today().strftime("%Y-%m-%d")])
+        pub_date_from = pub_date[0]
+        pub_date_to = pub_date[1] if len(pub_date) > 1 else pub_date_from
+
+        filter_clauses = [
+            {"range": {"pubdate": {"gte": pub_date_from, "lte": pub_date_to}}}
+        ]
+        must_clauses = []
+        must_not_clauses = []
+
+        filtered_dict = {
+            k: payload[k] for k in payload if k in allowed_keys and payload[k]
+        }
+
+        for key, values in filtered_dict.items():
+            if key == "texto":
+                if any(values):
+                    qs_clauses = []
+                    for term in values:
+                        if not term or not term.strip():
+                            continue
+                        qs = self._term_to_opensearch_qs(term)
+                        if qs.strip():
+                            qs_clauses.append(
+                                {"query_string": {"query": qs, "default_field": "texto_plain"}}
+                            )
+                    if len(qs_clauses) == 1:
+                        must_clauses.append(qs_clauses[0])
+                    elif len(qs_clauses) > 1:
+                        must_clauses.append(
+                            {"bool": {"should": qs_clauses, "minimum_should_match": 1}}
+                        )
+
+            elif key == "artcategory_ignore":
+                must_not_clauses.extend(
+                    {"match_phrase_prefix": {"artcategory": value}}
+                    for value in values
+                    if value
+                )
+
+            elif key == "terms_ignore":
+                must_not_clauses.extend(
+                    {
+                        "query_string": {
+                            "query": f'"{value}"',
+                            "default_field": "texto_plain",
+                        }
+                    }
+                    for value in values
+                    if value
+                )
+
+            else:
+                should_clauses = [
+                    {"match_phrase": {key: value}} for value in values if value
+                ]
+                if len(should_clauses) == 1:
+                    must_clauses.append(should_clauses[0])
+                elif len(should_clauses) > 1:
+                    must_clauses.append(
+                        {"bool": {"should": should_clauses, "minimum_should_match": 1}}
+                    )
+
+        bool_query: dict = {"filter": filter_clauses}
+        if must_clauses:
+            bool_query["must"] = must_clauses
+        if must_not_clauses:
+            bool_query["must_not"] = must_not_clauses
+
+        logging.info("Generated OpenSearch Query:")
+        logging.info(bool_query)
+
+        return {"query": {"bool": bool_query}}
 
     @staticmethod
     def _generate_sql(payload: dict) -> str:
