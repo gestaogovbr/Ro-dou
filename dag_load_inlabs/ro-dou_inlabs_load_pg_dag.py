@@ -63,7 +63,7 @@ def load_inlabs():
         context = get_current_context()
         return get_trigger_date(context, local_time=True).strftime("%Y-%m-%d")
 
-    @task.short_circuit(ignore_downstream_trigger_rules=False)
+    @task.short_circuit
     def download_n_unzip_files(trigger_date: str):
         import requests
         from bs4 import BeautifulSoup
@@ -117,6 +117,10 @@ def load_inlabs():
             }
             files = _find_files(session, headers)
 
+            if not files:
+                logging.error(f"Files not found for this date: {trigger_date}")
+                return False
+
             for file in files:
                 r = session.request(
                     "GET",
@@ -148,16 +152,41 @@ def load_inlabs():
 
         return files_exists
 
+    @task.short_circuit
+    def health_database() -> bool:
+        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+
+        client = OpenSearchClient().get_client()
+        ping: bool = client.ping()
+        return ping
+
     @task
-    def load_data(trigger_date: str):
-        from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
-        from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
+    def load_data(trigger_date: str) -> None:
+
+        def _recreated_index():
+            from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+            from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+
+            client = OpenSearchClient().get_client()
+            if client.indices.exists(index=INDEX_NAME):
+                client.indices.delete(index=INDEX_NAME)
+                logging.info(f"Index {INDEX_NAME} deleted.")
+
+            client.indices.create(index=INDEX_NAME)
+            logging.info(f"Index {INDEX_NAME} created.")
 
         def process_folder(folder_path, pipeline=None):
-            files = [f for f in os.listdir(folder_path) if f.endswith(".xml")]
+            from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
+            from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
 
-            for file in files:
-                xml_path = os.path.join(folder_path, file)
+            files = [
+                os.path.join(root, f)
+                for root, _, fs in os.walk(folder_path)
+                for f in fs
+                if f.endswith(".xml")
+            ]
+
+            for xml_path in files:
 
                 with open(xml_path, "r", encoding="utf-8") as f:
                     xml_str = f.read()
@@ -165,12 +194,13 @@ def load_inlabs():
                 data = DOUXmlParser().parse_dou_xml(xml_str)
                 response = OpenSearchPipeline().send(data, pipeline=pipeline)
 
-                logging.info(f"[OK] {file} → indexed: {response['_id']}")
+                logging.info(f"[OK] {xml_path} → indexed: {response['_id']}")
 
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR, trigger_date)
         if not os.path.isdir(dest_path):
             logging.warning(f"Directory {dest_path} not found, skipping load.")
             return
+        _recreated_index()
         process_folder(dest_path, pipeline=None)
 
     @task.branch
@@ -208,6 +238,7 @@ def load_inlabs():
     trigger_date = get_date()
     (
         download_n_unzip_files(trigger_date)
+        >> health_database()
         >> load_data(trigger_date)  # type: ignore
         >> remove_directory()
         >> check_if_first_run_of_day()

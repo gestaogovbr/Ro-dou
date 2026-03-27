@@ -21,6 +21,24 @@ class DOUXmlParser:
         cleaned = re.sub("\s+", " ", cleaned)
         return cleaned.strip()
 
+    def _get_assina(self, html_content: str) -> str | None:
+        """Extract the signature text from a DOU article HTML content.
+
+        Searches for all `<p class="assina">` tags and joins their text
+        content with ", ".
+
+        Args:
+            html_content (str): String containing the article HTML.
+
+        Returns:
+            str | None: Comma-separated signatures if found, None otherwise.
+        """
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html_content, "html.parser")
+        p_tags = soup.find_all("p", class_="assina")
+        return ", ".join([p.text for p in p_tags]) if p_tags else None
+
     def parse_dou_xml(self, xml_str: str) -> dict:
         """Parse an Open Search XML response from the DOU and return a structured dictionary.
 
@@ -77,8 +95,8 @@ class DOUXmlParser:
             "data": body.findtext("Data"),
             "texto": texto_html,
             "texto_plain": self._extract_plain_text(texto_html),
-            "assina": None,
-            "ementa": None,
+            "assina": self._get_assina(texto_html),
+            "ementa": body.findtext("Ementa"),
         }
 
         return doc
