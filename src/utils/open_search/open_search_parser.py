@@ -65,6 +65,8 @@ class DOUXmlParser:
                     - data (str): Date present in the article body.
                     - texto_html (str): Article text in HTML.
                     - texto_plain (str): Article text without HTML tags.
+                    - assina: (str): Signature text from a DOU article HTML content.
+                    - ementa: (str): Ementa text from a DOU article HTML content.
         """
         root = etree.fromstring(xml_str.encode("utf-8"))
         article = root.find(".//article")
