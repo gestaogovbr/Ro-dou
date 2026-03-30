@@ -1,5 +1,6 @@
 """Apache Airflow Hook to execute DOU searches from INLABS source."""
 
+import copy
 import re
 import logging
 from datetime import datetime, timedelta, date
@@ -93,7 +94,7 @@ class INLABSHook(BaseHook):
         # hook.run(main_search_queries["create_extension"], autocommit=True)
         # main_search_results = hook.get_pandas_df(main_search_queries["select"])
 
-        # # Fetching results for yesterday extra search terms
+        # Fetching results for yesterday extra search terms
         # extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
         # extra_search_queries = self._generate_sql(extra_search_terms)
         # extra_search_results = hook.get_pandas_df(extra_search_queries["select"])
@@ -128,8 +129,36 @@ class INLABSHook(BaseHook):
 
         logging.info("Total hits after batching: %s", len(hits))
 
-        sources = [h["_source"] for h in hits]
-        all_results = pd.DataFrame(sources)
+        # Fetching results for extra edition search terms
+        seen_ids = {hit["_id"] for hit in hits}
+        extra_search_terms = self._adapt_search_terms_to_extra(copy.deepcopy(search_terms))
+        extra_texto_terms = extra_search_terms.get("texto", [])
+
+        if len(extra_texto_terms) > _BATCH_SIZE:
+            batches = [
+                extra_texto_terms[i : i + _BATCH_SIZE]
+                for i in range(0, len(extra_texto_terms), _BATCH_SIZE)
+            ]
+            for batch in batches:
+                batch_terms = {**extra_search_terms, "texto": batch}
+                query = self._generate_opensearch_query(batch_terms)
+                response = client.search(body=query, index=INDEX_NAME)
+                for hit in response["hits"]["hits"]:
+                    if hit["_id"] not in seen_ids:
+                        seen_ids.add(hit["_id"])
+                        hits.append(hit)
+        else:
+            query = self._generate_opensearch_query(extra_search_terms)
+            response = client.search(body=query, index=INDEX_NAME)
+            for hit in response["hits"]["hits"]:
+                if hit["_id"] not in seen_ids:
+                    seen_ids.add(hit["_id"])
+                    hits.append(hit)
+
+        logging.info("Total hits after extra edition search: %s", len(hits))
+
+        main_search_results = [h["_source"] for h in hits]
+        all_results = pd.DataFrame(main_search_results)
 
         if not all_results.empty:
             all_results["pubdate"] = pd.to_datetime(
@@ -243,7 +272,12 @@ class INLABSHook(BaseHook):
                         qs = self._term_to_opensearch_qs(term)
                         if qs.strip():
                             qs_clauses.append(
-                                {"query_string": {"query": qs, "default_field": "texto_plain"}}
+                                {
+                                    "query_string": {
+                                        "query": qs,
+                                        "default_field": "texto_plain",
+                                    }
+                                }
                             )
                     if len(qs_clauses) == 1:
                         must_clauses.append(qs_clauses[0])

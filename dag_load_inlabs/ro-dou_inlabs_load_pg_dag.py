@@ -152,20 +152,15 @@ def load_inlabs():
 
         return files_exists
 
-    @task.short_circuit
-    def health_database() -> bool:
-        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-
-        client = OpenSearchClient().get_client()
-        ping: bool = client.ping()
-        return ping
-
     @task
     def load_data(trigger_date: str) -> None:
+        logging.info("Loading data to OpenSearch")
 
         def _recreated_index():
             from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
             from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+
+            logging.info("Starting index recreation function: %s", INDEX_NAME)
 
             client = OpenSearchClient().get_client()
             if client.indices.exists(index=INDEX_NAME):
@@ -179,6 +174,7 @@ def load_inlabs():
             from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
             from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
 
+            logging.info(f"Processing folder: {folder_path}")
             files = [
                 os.path.join(root, f)
                 for root, _, fs in os.walk(folder_path)
@@ -201,6 +197,7 @@ def load_inlabs():
             logging.warning(f"Directory {dest_path} not found, skipping load.")
             return
         _recreated_index()
+        logging.info(f"Starting to process folder: {dest_path}")
         process_folder(dest_path, pipeline=None)
 
     @task.branch
@@ -238,7 +235,6 @@ def load_inlabs():
     trigger_date = get_date()
     (
         download_n_unzip_files(trigger_date)
-        >> health_database()
         >> load_data(trigger_date)  # type: ignore
         >> remove_directory()
         >> check_if_first_run_of_day()
