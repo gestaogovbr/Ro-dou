@@ -38,6 +38,7 @@ cd Ro-Dou
 
 3. O repositório já vem com comandos pré-definidos no Makefile para facilitar a execução.
 
+
 **Para iniciar o sistema, execute:**
 
 ```bash
@@ -94,7 +95,49 @@ Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/.
 **Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
 que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
-8. Desligando o ambiente:
+8. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
+
+O Ro-DOU suporta geração de resumos automáticos de publicações utilizando modelos de linguagem (LLMs). Para habilitar essa funcionalidade, é necessário configurar as variáveis do provedor de IA no Apache Airflow.
+
+**Provedor suportado: Azure, OpenAI e Gemini**
+
+As seguintes variáveis precisam ser criadas no Airflow:
+
+| Variável | Descrição | Exemplo |
+|---|---|---|
+| `AZURE_OPENAI_ENDPOINT` | URL do endpoint do Azure OpenAI | `https://seu-recurso.openai.azure.com/` |
+| `AZURE_OPENAI_API_VERSION` | Versão da API | `2024-02-01` |
+| `AZURE_OPENAI_DEPLOYMENT` | Nome do deployment do modelo | `gpt-4o-mini` |
+| `AZURE_OPENAI_API_KEY` | Chave de API do Azure OpenAI | `<sua-chave>` |
+
+**Criando as variáveis automaticamente via Makefile:**
+
+Execute o comando abaixo para criar as variáveis com valores padrão (exceto a chave de API):
+
+```bash
+make create-azure-openai-variables
+```
+
+A variável `AZURE_OPENAI_API_KEY` será criada com o valor `<your-api-key>`. Para inserir sua chave real, acesse a interface do Airflow em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/), localize a variável e edite o valor. Se preferir, você também pode criar todas as variáveis diretamente por essa interface, sem utilizar o Makefile.
+
+**Observação:** O uso do Makefile é a forma recomendada para criação das variáveis, pois garante que todas sejam criadas com os valores corretos e de forma consistente.
+
+**Configurando a DAG para usar IA:**
+
+No arquivo YAML da DAG, adicione o bloco `ai_config` com o provedor e o nome da variável que contém a chave de API:
+
+```yaml
+search:
+  use_ai_summary: True
+  ai_pub_limit: 5  # limite de publicações a serem resumidas por execução
+  ai_custom_prompt: |
+    Você é um assistente que cria resumos concisos de publicações oficiais.
+ai_config:
+  provider: openai
+  api_key_var: AZURE_OPENAI_API_KEY  # nome da variável do Airflow com a chave
+```
+
+9. Desligando o ambiente:
 
 Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por meio do seguinte comando:
 
