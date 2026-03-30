@@ -35,6 +35,20 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 - **excerpt_size**: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário)
 - **number_of_excerpts**: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário)
 
+## Parâmetros de IA (ai_config)
+
+- **ai_config**: Configurações do provedor de IA para geração de resumos automáticos.
+  - **provider**: Provedor de LLM a ser utilizado. Valor aceito: `openai` (compatível com Azure OpenAI).
+  - **api_key_var**: Nome da variável do Airflow que contém a chave de API do provedor.
+
+Os parâmetros abaixo, utilizados dentro do bloco `search`, controlam o comportamento da IA:
+
+- **use_ai_summary**: Habilita a geração de resumos automáticos com IA para as publicações encontradas. Valores: `True` ou `False`. Default: `False`. (Disponível apenas para INLABS)
+- **ai_pub_limit**: Número máximo de publicações que serão resumidas por execução da DAG.
+- **ai_custom_prompt**: Prompt personalizado enviado ao modelo de IA para orientar a geração dos resumos.
+
+**Observação:** Para utilizar a funcionalidade de IA, é necessário configurar as variáveis de ambiente `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_DEPLOYMENT` e `AZURE_OPENAI_API_KEY` no Apache Airflow. Consulte a seção de [instalação](../como_utilizar/instalacao.md) para mais detalhes.
+
 ## Parâmetros do Relatório (Report)
 - **attach_csv**: Anexar no email o resultado da pesquisa em CSV.
 - **discord_webhook**: URL de Webhook para integração com o Discord.
