@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from typing import Optional
+
 
 class AIRunner:
     """Runtime LLM execution logic (provider-agnostic)."""
@@ -21,20 +23,29 @@ class AIRunner:
 
         if provider == "openai":
             return AIRunner._run_openai(
-                api_key, model, input_text,
-                system_prompt, max_tokens, temperature, timeout_seconds
+                api_key,
+                model,
+                input_text,
+                system_prompt,
+                max_tokens,
+                temperature,
+                timeout_seconds,
             )
 
         if provider == "gemini":
             return AIRunner._run_gemini(
-                api_key, model, input_text,
-                system_prompt, max_tokens, temperature
+                api_key, model, input_text, system_prompt, max_tokens, temperature
             )
 
         if provider == "claude":
             return AIRunner._run_claude(
-                api_key, model, input_text,
-                system_prompt, max_tokens, temperature, timeout_seconds
+                api_key,
+                model,
+                input_text,
+                system_prompt,
+                max_tokens,
+                temperature,
+                timeout_seconds,
             )
 
         if provider == "azure":
@@ -79,8 +90,7 @@ class AIRunner:
         response = client.responses.create(
             model=model,
             input=[
-                {"role": "system", "content": system_prompt}
-                if system_prompt else None,
+                {"role": "system", "content": system_prompt} if system_prompt else None,
                 {"role": "user", "content": input_text},
             ],
             temperature=temperature,
@@ -129,9 +139,7 @@ class AIRunner:
         response = client.messages.create(
             model=model,
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": input_text}
-            ],
+            messages=[{"role": "user", "content": input_text}],
             temperature=temperature,
             max_tokens=max_tokens or 1024,
         )
