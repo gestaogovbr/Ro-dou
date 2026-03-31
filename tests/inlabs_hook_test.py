@@ -824,13 +824,32 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
             {
                 "query": {
                     "bool": {
-                        "filter": [{"range": {"pubdate": {"gte": "2024-04-01", "lte": "2024-04-02"}}}],
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
                         "must": [
                             {
                                 "bool": {
                                     "should": [
-                                        {"query_string": {"query": '"term1"', "default_field": "texto_plain"}},
-                                        {"query_string": {"query": '"term2"', "default_field": "texto_plain"}},
+                                        {
+                                            "query_string": {
+                                                "query": '"term1"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term2"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -838,7 +857,8 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
                             {"match_phrase": {"pubname": "DO1"}},
                         ],
                     }
-                }
+                },
+                "size": 10000,
             },
         ),
         (
@@ -850,13 +870,32 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
             {
                 "query": {
                     "bool": {
-                        "filter": [{"range": {"pubdate": {"gte": "2024-04-01", "lte": "2024-04-02"}}}],
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
                         "must": [
                             {
                                 "bool": {
                                     "should": [
-                                        {"query_string": {"query": '"term1" AND "term2" AND NOT "term3"', "default_field": "texto_plain"}},
-                                        {"query_string": {"query": '"term4" AND "term5"', "default_field": "texto_plain"}},
+                                        {
+                                            "query_string": {
+                                                "query": '"term1" AND "term2" AND NOT "term3"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term4" AND "term5"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -864,7 +903,8 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
                             {"match_phrase": {"pubname": "DO1"}},
                         ],
                     }
-                }
+                },
+                "size": 10000,
             },
         ),
         (
@@ -876,7 +916,16 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
             {
                 "query": {
                     "bool": {
-                        "filter": [{"range": {"pubdate": {"gte": "2024-04-01", "lte": "2024-04-02"}}}],
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
                         "must": [
                             {"match_phrase": {"pubname": "DO1"}},
                             {
@@ -890,7 +939,8 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
                             },
                         ],
                     }
-                }
+                },
+                "size": 10000,
             },
         ),
         (
@@ -904,13 +954,32 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
             {
                 "query": {
                     "bool": {
-                        "filter": [{"range": {"pubdate": {"gte": "2024-04-01", "lte": "2024-04-02"}}}],
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
                         "must": [
                             {
                                 "bool": {
                                     "should": [
-                                        {"query_string": {"query": '"term1"', "default_field": "texto_plain"}},
-                                        {"query_string": {"query": '"term2"', "default_field": "texto_plain"}},
+                                        {
+                                            "query_string": {
+                                                "query": '"term1"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term2"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -919,10 +988,15 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
                             {"match_phrase": {"artcategory": "Ministério da Defesa"}},
                         ],
                         "must_not": [
-                            {"match_phrase_prefix": {"artcategory": "Ministério da Defesa/Comando da Marinha"}},
+                            {
+                                "match_phrase_prefix": {
+                                    "artcategory": "Ministério da Defesa/Comando da Marinha"
+                                }
+                            },
                         ],
                     }
-                }
+                },
+                "size": 10000,
             },
         ),
     ],
