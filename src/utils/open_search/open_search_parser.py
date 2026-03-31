@@ -75,7 +75,13 @@ class DOUXmlParser:
             return article.get(name)
 
         body = article.find("body")
-        texto_html = body.findtext("Texto") or ""
+        texto_element = body.find("Texto")
+        if texto_element is not None:
+            texto_html = (texto_element.text or "") + "".join(
+                etree.tostring(child, encoding="unicode") for child in texto_element
+            )
+        else:
+            texto_html = ""
 
         doc = {
             "id": get_attr("id"),

@@ -131,7 +131,10 @@ class INLABSHook(BaseHook):
 
         # Fetching results for extra edition search terms
         seen_ids = {hit["_id"] for hit in hits}
-        extra_search_terms = self._adapt_search_terms_to_extra(copy.deepcopy(search_terms))
+        logging.info("Seen IDs after main search: %s", seen_ids)
+        extra_search_terms = self._adapt_search_terms_to_extra(
+            copy.deepcopy(search_terms)
+        )
         extra_texto_terms = extra_search_terms.get("texto", [])
 
         if len(extra_texto_terms) > _BATCH_SIZE:
@@ -325,7 +328,7 @@ class INLABSHook(BaseHook):
         logging.info("Generated OpenSearch Query:")
         logging.info(bool_query)
 
-        return {"query": {"bool": bool_query}}
+        return {"query": {"bool": bool_query}, "size": 10000}
 
     @staticmethod
     def _generate_sql(payload: dict) -> str:
@@ -532,6 +535,7 @@ class INLABSHook(BaseHook):
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
+            logging.info(f"Search results: {response}")
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
@@ -583,7 +587,10 @@ class INLABSHook(BaseHook):
 
             if use_summary:
                 # If use_summary replace texto value by summary value
-                df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+                if use_summary:
+                    df["texto"] = df["texto"].where(
+                        df["ementa"].isnull() | (df["ementa"] == ""), df["ementa"]
+                    )
             df["display_date_sortable"] = None
 
             cols_rename = {

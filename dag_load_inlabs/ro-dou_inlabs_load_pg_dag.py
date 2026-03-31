@@ -154,21 +154,28 @@ def load_inlabs():
 
     @task
     def load_data(trigger_date: str) -> None:
-        logging.info("Loading data to OpenSearch")
 
-        def _recreated_index():
+        def _clean_index(date: str):
             from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
             from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
 
-            logging.info("Starting index recreation function: %s", INDEX_NAME)
-
             client = OpenSearchClient().get_client()
-            if client.indices.exists(index=INDEX_NAME):
-                client.indices.delete(index=INDEX_NAME)
-                logging.info(f"Index {INDEX_NAME} deleted.")
 
-            client.indices.create(index=INDEX_NAME)
-            logging.info(f"Index {INDEX_NAME} created.")
+            if not client.indices.exists(index=INDEX_NAME):
+                client.indices.create(index=INDEX_NAME)
+                logging.info(f"Index {INDEX_NAME} created.")
+                return
+
+            response = client.delete_by_query(
+                index=INDEX_NAME,
+                body={"query": {"term": {"pubdate": date}}},
+            )
+            logging.info(
+                "Deleted %s documents with pubdate=%s from index %s.",
+                response.get("deleted", 0),
+                date,
+                INDEX_NAME,
+            )
 
         def process_folder(folder_path, pipeline=None):
             from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
@@ -196,9 +203,31 @@ def load_inlabs():
         if not os.path.isdir(dest_path):
             logging.warning(f"Directory {dest_path} not found, skipping load.")
             return
-        _recreated_index()
         logging.info(f"Starting to process folder: {dest_path}")
         process_folder(dest_path, pipeline=None)
+        _clean_index(trigger_date)
+
+    @task
+    def check_loaded_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+        from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+
+        client = OpenSearchClient().get_client()
+        response = client.count(
+            index=INDEX_NAME,
+            body={"query": {"term": {"pubdate": trigger_date}}},
+        )
+        count = response.get("count", 0)
+        if count == 0:
+            raise ValueError(
+                f"No documents found in index '{INDEX_NAME}' for pubdate={trigger_date}."
+            )
+        logging.info(
+            "check_loaded_data: found %s documents for pubdate=%s in index %s.",
+            count,
+            trigger_date,
+            INDEX_NAME,
+        )
 
     @task.branch
     def check_if_first_run_of_day():
@@ -236,6 +265,7 @@ def load_inlabs():
     (
         download_n_unzip_files(trigger_date)
         >> load_data(trigger_date)  # type: ignore
+        >> check_loaded_data(trigger_date)
         >> remove_directory()
         >> check_if_first_run_of_day()
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
