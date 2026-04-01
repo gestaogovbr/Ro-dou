@@ -2,12 +2,10 @@
 
 import os
 import sys
-import logging
 
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
-import apprise
 from airflow.utils.email import send_email
 
 # TODO fix this
