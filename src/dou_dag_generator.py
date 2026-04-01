@@ -418,7 +418,7 @@ class DouDigestDagGenerator:
             "owner": ",".join(specs.owner),
             "start_date": datetime(2021, 10, 18),
             "depends_on_past": False,
-            "retries": 1,
+            "retries": 10,
             "retry_delay": timedelta(minutes=2),
             "on_retry_callback": self.on_retry_callback,
             "on_failure_callback": lambda context: self._notify_on_failure(

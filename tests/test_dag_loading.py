@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from dou_dag_generator import DouDigestDagGenerator
 from airflow import DAG
-from airflow.models import Variable, DagBag
+from airflow.models import DagBag
 
 
 class TestDAGLoading:
