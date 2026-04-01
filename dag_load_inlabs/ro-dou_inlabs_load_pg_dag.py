@@ -14,7 +14,8 @@ from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
-from airflow.operators.python import BranchPythonOperator
+
+# from airflow.operators.python import BranchPythonOperator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -194,6 +195,7 @@ def load_inlabs():
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
                 )
+
         df = _read_files()
         hook = PostgresHook(DEST_CONN_ID)
         _clean_db(hook)
