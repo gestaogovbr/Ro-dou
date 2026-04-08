@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+from airflow.models import Variable
 from typing import Optional
 
 
@@ -49,9 +49,9 @@ class AIRunner:
             )
 
         if provider == "azure":
-            endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-            api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-            deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+            endpoint = Variable.get("AZURE_OPENAI_ENDPOINT", default_var=None)
+            api_version = Variable.get("AZURE_OPENAI_API_VERSION", default_var=None)
+            deployment = Variable.get("AZURE_OPENAI_DEPLOYMENT", default_var=None)
 
             if not all([api_key, endpoint, api_version, deployment]):
                 raise RuntimeError(
@@ -87,16 +87,19 @@ class AIRunner:
         from openai import OpenAI
 
         client = OpenAI(api_key=api_key, timeout=timeout_seconds)
-        response = client.responses.create(
+        
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": input_text})
+        
+        response = client.chat.completions.create(
             model=model,
-            input=[
-                {"role": "system", "content": system_prompt} if system_prompt else None,
-                {"role": "user", "content": input_text},
-            ],
+            messages=messages,
             temperature=temperature,
-            max_output_tokens=max_tokens,
+            max_tokens=max_tokens,
         )
-        return response.output_text
+        return response.choices[0].message.content
 
     @staticmethod
     def _run_gemini(
@@ -171,11 +174,10 @@ class AIRunner:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": input_text})
 
-        response = client.responses.create(
+        response = client.chat.completions.create(
             model=deployment,
-            input=messages,
+            messages=messages,
             temperature=temperature,
-            max_output_tokens=max_tokens,
+            max_tokens=max_tokens,
         )
-
-        return response.output_text
+        return response.choices[0].message.content
