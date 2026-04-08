@@ -9,6 +9,7 @@ import html2text
 
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -410,12 +411,12 @@ class INLABSHook(BaseHook):
                 for i in idx:
                     df.at[i, "texto"] = AIRunner.run(
                         provider=ai_config.provider,
-                        api_key=ai_config.api_key_var,
+                        api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
                         system_prompt=ai_custom_prompt,
-                        max_tokens=500,
-                        temperature=0.2,
+                        max_tokens=getattr(ai_config, "max_tokens", 2000),
+                        temperature=getattr(ai_config, "temperature", 0.2),
                     )
                     df.at[i, "ai_generated"] = True
             else:
