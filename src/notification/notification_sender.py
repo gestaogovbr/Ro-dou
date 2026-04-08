@@ -1,9 +1,7 @@
 import apprise
 
-from notification.isender import ISender
+from notification.isender import ISender, remove_html_tags
 from schemas import ReportConfig
-
-import re
 
 
 class NotificationSender(ISender):
@@ -34,7 +32,7 @@ class NotificationSender(ISender):
 
         # Send header if exists
         if self.header_text:
-            header_text = self._remove_html_tags(self.header_text)
+            header_text = remove_html_tags(self.header_text)
             self.message += header_text + "\n"
 
         # Process each search in the report
@@ -115,7 +113,7 @@ class NotificationSender(ISender):
 
     def send_text(self, content):
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = remove_html_tags(self.footer_text)
             content += footer_text + "\n"
 
         self.send_data({"content": content})
@@ -124,14 +122,14 @@ class NotificationSender(ISender):
         self.message += "\n".join(
             f"📁 {item['section']}\n\n"
             f"📅 {item['date']}\n\n"
-            f"{item['title']}\n\n"
-            f"{item['abstract']}\n\n"
+            f"{remove_html_tags(item['title'])}\n\n"
+            f"{remove_html_tags(item['abstract'])}\n\n"
             f"🔗 {item['href']}\n\n" + self.delimiter + "\n\n"
             for item in items
         )
 
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = remove_html_tags(self.footer_text)
             self.message += footer_text + "\n"
 
         self.payload.append(self.message)
@@ -189,11 +187,3 @@ class NotificationSender(ISender):
 
         except Exception:
             raise
-
-    def _remove_html_tags(self, text):
-        if not text or not isinstance(text, str):
-            return text
-
-        # Remove todas as tags HTML
-        text = re.sub(r"<[^>]+>", "", text)
-        return text

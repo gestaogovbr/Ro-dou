@@ -123,33 +123,6 @@ def test_rename_section(inlabs_hook, pub_name_in, pub_name_out):
     assert inlabs_hook.TextDictHandler()._rename_section(pub_name_in) == pub_name_out
 
 
-# @pytest.mark.parametrize(
-#     "texto_in, texto_out",
-#     [
-#         (  # texto_in
-#             """
-#             <p class="identifica">Título da Publicação</p>
-#             <p class="identifica">Título da Publicação 2</p>
-#             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-#             Phasellus venenatis auctor mauris.</p>
-#             <p class="data">Brasília/DF, 15 de março de 2024.</p>
-#             <p class="assina">Pessoa 1</p>
-#             <p class="cargo">Analista</p>
-#             """,
-#             # texto_out
-#             (
-#                 "Título da Publicação Título da Publicação 2 Lorem ipsum dolor sit amet, "
-#                 "consectetur adipiscing elit. Phasellus venenatis auctor mauris. "
-#                 "Brasília/DF, 15 de março de 2024. Pessoa 1 Analista"
-#             ),
-#         )
-#     ],
-# )
-# def test_remove_html_tags(inlabs_hook, texto_in, texto_out):
-#     print(inlabs_hook.TextDictHandler()._remove_html_tags(texto_in))
-#     assert inlabs_hook.TextDictHandler()._remove_html_tags(texto_in) == texto_out
-
-
 @pytest.mark.parametrize(
     "term, texto_in, texto_out",
     [
@@ -208,6 +181,7 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
     ],
 )
 def test_trim_text(inlabs_hook, texto_in, texto_out):
+
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in) == texto_out
 
 
@@ -246,7 +220,6 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
     ],
 )
 def test_trim_text_length(inlabs_hook, texto_in, texto_out):
-    print(inlabs_hook.TextDictHandler()._trim_text(texto_in, 450))
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 450) == texto_out
 
 
@@ -272,13 +245,13 @@ def test_trim_text_length(inlabs_hook, texto_in, texto_out):
                 """(...) d ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
             totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
-            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
-            vo (...)"""
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam (...)"""
             ),
         ),
     ],
 )
 def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):
+
     assert inlabs_hook.TextDictHandler()._trim_text(texto_in, 150) == texto_out
 
 
@@ -510,19 +483,17 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur"
-                            " adipiscing elit. Phasellus venenatis auctor mauris."
-                            " Integer id neque quis urna ultrices iaculis. Donec"
-                            " et enim mauris. Sed vel massa eget est viverra"
-                            " finibus a et magna. Pellentesque vel elementum"
-                            " mauris, id semper tellus. Vivamus convallis lacinia"
-                            " ex sed fermentum. Nulla mollis cursus ipsum vel"
-                            " interdum. Mauris facilisis posuere elit. Proin"
-                            " consectetur tincidunt urna. Cras tincidunt nunc"
-                            " vestibulum velit pellentesque facilisis. Aenean"
-                            " sollicitudin ante elit, vitae vehicula nisi congue"
-                            " id. Brasília/DF, 15 de março de 2024. Pessoa 1"
-                            " Analista <br>"
+                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
+                            "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
+                            "                        viverra finibus a et magna. Pellentesque vel elementum\n"
+                            "                        mauris, id semper tellus. Vivamus convallis lacinia ex sed\n"
+                            "                        fermentum. Nulla mollis cursus ipsum vel interdum. Mauris\n"
+                            "                        facilisis posuere elit. Proin consectetur tincidunt urna.\n"
+                            "                        Cras tincidunt nunc vestibulum velit pellentesque facilisis.\n"
+                            "                        Aenean sollicitudin ante elit, vitae vehicula nisi congue id.\n"
+                            "                        Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista\n"
+                            "                        "
                         ),
                         "date": "15/03/2024",
                         "id": 1,
@@ -614,7 +585,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
+                        "abstract": "<p><%%>Lorem</%%> ipsum dolor sit amet.</p>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -662,16 +633,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "Lorem ipsum dolor sit amet, consectetur"
-                            " adipiscing elit. Phasellus venenatis auctor"
-                            " mauris. Integer id neque quis urna ultrices"
-                            " iaculis. Donec et enim mauris. Sed vel massa"
-                            " eget est viverra finibus a et magna."
-                            " Pellentesque vel elementum mauris, id semper"
-                            " tellus. Vivamus convallis lacinia ex sed"
-                            " fermentum. Nulla mollis cursus ipsum vel"
-                            " interdum. Mauris facilisis posuere elit."
-                            " Proin consectetur tinc (...)"
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
+                            "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
+                            "                        viverra finibus a et magna. Pellentesque vel elementum\n"
+                            "                        mauris, id semper tellus. Vivamus convallis lacinia ex sed (...)"
                         ),
                         "date": "15/03/2024",
                         "id": 1,
@@ -796,3 +762,192 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 )
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
+
+
+@pytest.mark.parametrize(
+    "abstract, result",
+    [
+        (
+            """
+            <table>
+                <tr></tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>QTD.</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>NOME</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>01</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>ANDREA COSTA CHAVES</p>
+                    </td>        
+                </tr>
+            </table>
+            """,
+            """
+            <table>                            
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>QTD.</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>NOME</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1" rowspan="1">
+                        <p>01</p>
+                    </td>
+                    <td colspan="1" rowspan="1">
+                        <p>ANDREA COSTA CHAVES</p>
+                    </td>        
+                </tr>
+            </table>
+            """,
+        )
+    ],
+)
+def test_remove_empty_tr(inlabs_hook, abstract, result):
+    from bs4 import BeautifulSoup
+
+    assert BeautifulSoup(
+        inlabs_hook.TextDictHandler()._remove_empty_tr(abstract), "html.parser"
+    ) == BeautifulSoup(result, "html.parser")
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("hello world", 11),
+        ("<b>hello</b> world", 11),
+        ("<%%>termo</%%>", 5),
+        ("<p class='x'>abc</p>", 3),
+        ("sem tags", 8),
+        ("", 0),
+    ],
+)
+def test_visible_len(inlabs_hook, text, expected):
+    assert inlabs_hook.TextDictHandler()._visible_len(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text, n, expected_visible",
+    [
+        ("abcdef", 3, 3),
+        ("<b>abc</b>def", 3, 3),  # tags não contam, retém tag completa
+        ("<%%>ab</%%>cde", 4, 4),  # marcadores de destaque não contam
+        ("abc", 10, 3),  # n maior que o texto: retorna tudo
+        ("", 5, 0),
+    ],
+)
+def test_cut_visible_start_visible_len(inlabs_hook, text, n, expected_visible):
+    H = inlabs_hook.TextDictHandler()
+    result = H._cut_visible_start(text, n)
+    assert H._visible_len(result) == expected_visible
+
+
+@pytest.mark.parametrize(
+    "text, n, expected",
+    [
+        # tag HTML preservada no resultado
+        ("<b>hello</b> world", 7, "<b>hello</b> w"),
+        # marcador <%%> preservado
+        ("<%%>abc</%%> def", 5, "<%%>abc</%%> d"),
+    ],
+)
+def test_cut_visible_start_preserves_tags(inlabs_hook, text, n, expected):
+    assert inlabs_hook.TextDictHandler()._cut_visible_start(text, n) == expected
+
+
+@pytest.mark.parametrize(
+    "text, n, expected_visible",
+    [
+        ("abcdef", 3, 3),
+        ("abc<b>def</b>", 3, 3),  # tags não contam, retém tag completa
+        ("ab<%%>cd</%%>ef", 4, 4),
+        ("abc", 10, 3),  # n maior que o texto: retorna tudo
+        ("", 5, 0),
+    ],
+)
+def test_cut_visible_end_visible_len(inlabs_hook, text, n, expected_visible):
+    H = inlabs_hook.TextDictHandler()
+    result = H._cut_visible_end(text, n)
+    assert H._visible_len(result) == expected_visible
+
+
+@pytest.mark.parametrize(
+    "text, n, expected",
+    [
+        # tag HTML preservada no resultado
+        ("hello <b>world</b>", 7, "o <b>world</b>"),
+        # marcador <%%> preservado
+        ("abc <%%>def</%%>", 5, "c <%%>def</%%>"),
+    ],
+)
+def test_cut_visible_end_preserves_tags(inlabs_hook, text, n, expected):
+    assert inlabs_hook.TextDictHandler()._cut_visible_end(text, n) == expected
+
+
+@pytest.mark.parametrize(
+    "text, text_length, expected_text, expected_cut",
+    [
+        # sem tags: comportamento original
+        ("abcde fghij", 5, "abcde", True),
+        ("abc", 10, "abc", False),
+        # tags não contam: "<b>abc</b> de" → visível "abc de" (6 chars)
+        # limite 5 → deve cortar após 5 chars visíveis, preservando a tag
+        ("<b>abc</b> de", 5, "<b>abc</b>", True),
+        # marcador <%%> não conta
+        ("<%%>abc</%%> def ghi", 6, "<%%>abc</%%> def", True),
+        # texto com tabela HTML: tabela não entra na contagem e é preservada inteira
+        ("ab <table><tr><td>x</td></tr></table> cd", 2, "ab", True),
+    ],
+)
+def test_truncate_from_start(
+    inlabs_hook, text, text_length, expected_text, expected_cut
+):
+    result, was_cut = inlabs_hook.TextDictHandler()._truncate_from_start(
+        text, text_length
+    )
+
+    assert result == expected_text
+    assert was_cut == expected_cut
+
+
+@pytest.mark.parametrize(
+    "text, text_length, expected_text, expected_cut",
+    [
+        # sem tags: comportamento original
+        ("abcde fghij", 5, "fghij", True),
+        ("abc", 10, "abc", False),
+        # tags não contam
+        ("ab <b>cde</b>", 5, "b <b>cde</b>", True),
+        # marcador <%%> não conta
+        ("abc <%%>def</%%> ghi", 6, "<%%>def</%%> ghi", True),
+        # tabela preservada inteira e não contada
+        (
+            "ab <table><tr><td>x</td></tr></table> cd",
+            2,
+            "<table><tr><td>x</td></tr></table>cd",
+            True,
+        ),
+        (
+            "ab <table><tr><td>x</td></tr></table> cd",
+            4,
+            " <table><tr><td>x</td></tr></table> cd",
+            True,
+        ),
+    ],
+)
+def test_truncate_from_end(inlabs_hook, text, text_length, expected_text, expected_cut):
+    result, was_cut = inlabs_hook.TextDictHandler()._truncate_from_end(
+        text, text_length
+    )
+
+    assert result == expected_text
+    assert was_cut == expected_cut
