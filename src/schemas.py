@@ -253,16 +253,13 @@ class ReportConfig(BaseModel):
 
 class AIConfig(BaseModel):
     """Represents the AI configuration in the YAML file."""
-    provider: Optional[str] = Field(
-        default=None,
+    provider: str = Field(
         description="Nome do provedor da API de IA")
 
-    api_key_var: Optional[str] = Field(
-        default=None,
+    api_key_var: str = Field(
         description="Variável da chave da API de IA")
 
-    model: Optional[str] = Field(
-        default=None,
+    model: str = Field(
         description="Modelo da API de IA")
 
     temperature: Optional[float] = Field(
@@ -331,7 +328,16 @@ class DAGConfig(BaseModel):
         """Add default tags to the list of tags."""
         tags_param.update({"dou", "generated_dag"})
         return tags_param
-
+    
+    @model_validator(mode='after') 
+    def validate_ai_config(self):
+        for search in self.search:
+            if search.use_ai_summary and not self.ai_config:
+                raise ValueError(
+                    "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True."
+                )
+ 
+        return self
 
 class RoDouConfig(BaseModel):
     """Represents the overall configuration in the YAML file."""

@@ -415,8 +415,8 @@ class INLABSHook(BaseHook):
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
                         system_prompt=ai_custom_prompt,
-                        max_tokens=getattr(ai_config, "max_tokens", 2000),
-                        temperature=getattr(ai_config, "temperature", 0.2),
+                        max_tokens=ai_config.max_tokens,
+                        temperature=ai_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
             else:
