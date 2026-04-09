@@ -264,6 +264,14 @@ class AIConfig(BaseModel):
     model: Optional[str] = Field(
         default=None,
         description="Modelo da API de IA")
+
+    temperature: Optional[float] = Field(
+        default=0.2,
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+
+    max_tokens: Optional[int] = Field(
+        default=2000,
+        description="Número máximo de tokens para a resposta da IA.")
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
