@@ -8,12 +8,16 @@ dag:
   owner:
     - cdata
   ai_config:
-    provider: openai
-    api_key_var: test
+    provider: azure
+    api_key_var: AZURE_OPENAI_API_KEY
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 2000
+  search:
     sources:
     - INLABS
     terms:
-      - Gestão, Planejamento, Monitoramento e Avaliação Educacional
+      - Assessoria Especial de Controle Interno
     use_summary: True
     use_ai_summary: True
     ai_pub_limit: 5
