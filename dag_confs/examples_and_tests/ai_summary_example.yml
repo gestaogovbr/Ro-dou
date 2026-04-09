@@ -17,7 +17,7 @@ dag:
     sources:
     - INLABS
     terms:
-      - Assessoria Especial de Controle Interno
+      - dados abertos
     use_summary: True
     use_ai_summary: True
     ai_pub_limit: 5
