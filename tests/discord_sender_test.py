@@ -38,7 +38,7 @@ def test_send_discord_data(session_mocker: MockerFixture, mocked_specs):
         WEBHOOK,
         json={
             "content": "string",
-            "username": "Querido Prisma (rodou)",
+            "username": "Ro-DOU Bot",
         },
     )
 
@@ -53,7 +53,7 @@ def test_send_text_to_discord(session_mocker: MockerFixture, mocked_specs):
         WEBHOOK,
         json={
             "content": "string",
-            "username": "Querido Prisma (rodou)",
+            "username": "Ro-DOU Bot",
         },
     )
 
@@ -84,7 +84,7 @@ def test_send_embeds_to_discord(session_mocker: MockerFixture, mocked_specs):
         WEBHOOK,
         json={
             "embeds": embeds,
-            "username": "Querido Prisma (rodou)",
+            "username": "Ro-DOU Bot",
         },
     )
 
@@ -135,7 +135,7 @@ def _send_report(specs):
                                 "title": "Valinhos/SP",
                             },
                         ],
-                    }
+                    },
                 }
             },
             "header": "Test Discord Report",
