@@ -2,12 +2,10 @@
 
 import os
 import sys
-import logging
 
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
-import apprise
 from airflow.utils.email import send_email
 
 # TODO fix this
@@ -28,7 +26,7 @@ from schemas import ReportConfig
 class EmailSender(ISender):
     """Prepare and send e-mails with the reports."""
 
-    highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
+    highlight_tags = ("<span class='highlight'>", "</span>")
 
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config

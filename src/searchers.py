@@ -1,5 +1,4 @@
-"""Abstract and concrete classes to perform terms searchs.
-"""
+"""Abstract and concrete classes to perform terms searchs."""
 
 import ast
 import json
@@ -31,30 +30,31 @@ from utils.search_domains import (
     calculate_from_datetime,
 )
 
+
 class BaseSearcher(ABC):
     SCRAPPING_INTERVAL = 1
     CLEAN_HTML_RE = re.compile("<.*?>")
 
     def _cast_term_list(self, pre_term_list: Dict[list, str]) -> list:
         """Convert different term list formats to a standardized list.
-        
+
         Handles the conversion of search terms from various sources:
         - Returns empty list if input is None
         - Returns list as-is if already a list
         - Returns string as-is if it's a string
         - Converts JSON string to list by reading as DataFrame and extracting first column
-        
+
         Args:
             pre_term_list: Search terms in various formats (list, str, JSON string, or None)
-            
+
         Returns:
             list: Standardized list of search terms, empty list if input is None
         """
-        
+
         if pre_term_list is None:
             return []
         elif isinstance(pre_term_list, list):
-            return pre_term_list        
+            return pre_term_list
         else:
             return pd.read_json(pre_term_list).iloc[:, 0].tolist()
 
@@ -184,7 +184,7 @@ class DOUSearcher(BaseSearcher):
             department,
             department_ignore,
             terms_ignore,
-            pubtype
+            pubtype,
         )
         group_results = self._group_results(search_results, term_list, department)
 
@@ -203,7 +203,7 @@ class DOUSearcher(BaseSearcher):
         department,
         department_ignore,
         terms_ignore,
-        pubtype
+        pubtype,
     ) -> dict:
         search_results = {}
         logging.info(f"Starting search with terms: {term_list}")
@@ -253,7 +253,7 @@ class DOUSearcher(BaseSearcher):
 
             self._render_section_descriptions(results)
 
-            self._add_standard_highlight_formatting(results)
+            # self._add_standard_highlight_formatting(results)
 
             if results:
                 # To execute a search without terms, use the key "all_publications"
@@ -268,7 +268,7 @@ class DOUSearcher(BaseSearcher):
         for result in results:
             result["abstract"] = (
                 result["abstract"]
-                .replace("<span class='highlight' style='background:#FFA;'>", "<%%>")
+                .replace("<span class='highlight'>", "<%%>")
                 .replace("</span>", "</%%>")
             )
 
@@ -297,26 +297,41 @@ class DOUSearcher(BaseSearcher):
                 )
             except Exception as e:
                 import requests
+
                 # If the underlying error is SSL related, don't retry — likely permanent
                 if isinstance(e, requests.exceptions.SSLError):
-                    logging.error("SSL error encountered for term '%s' — aborting retries: %s", search_term, e)
+                    logging.error(
+                        "SSL error encountered for term '%s' — aborting retries: %s",
+                        search_term,
+                        e,
+                    )
                     raise
 
                 # If it's a ValueError from missing script tag, it may indicate API structure change
                 # Still retry in case it's temporary
                 if isinstance(e, ValueError):
-                    logging.warning("ValueError encountered for term '%s': %s", search_term, str(e))
+                    logging.warning(
+                        "ValueError encountered for term '%s': %s", search_term, str(e)
+                    )
 
                 if retry > max_retries:
                     logging.error(
                         "Error - Max retries reached for term '%s'. Last error: %s",
                         search_term,
-                        str(e)
+                        str(e),
                     )
                     raise
 
-                logging.info("Attempt %s of %s for term '%s'. Error: %s", retry, max_retries, search_term, str(e))
-                logging.info("Sleeping for 30 seconds before retry dou_hook.search_text().")
+                logging.info(
+                    "Attempt %s of %s for term '%s'. Error: %s",
+                    retry,
+                    max_retries,
+                    search_term,
+                    str(e),
+                )
+                logging.info(
+                    "Sleeping for 30 seconds before retry dou_hook.search_text()."
+                )
                 time.sleep(30)
                 retry += 1
 
@@ -352,7 +367,9 @@ class DOUSearcher(BaseSearcher):
             )
         )
 
-    def _match_department(self, results: list, department: list = None, department_ignore: list = None) -> list:
+    def _match_department(
+        self, results: list, department: list = None, department_ignore: list = None
+    ) -> list:
         """Applies the filter to the results returned by the units
         listed in the 'department' parameter in the YAML.
         """
@@ -379,7 +396,9 @@ class DOUSearcher(BaseSearcher):
             logging.info(terms_ignore)
         for result in results[:]:
             if terms_ignore is not None:
-                result_text = f"{result.get('abstract', '')} {result.get('title', '')}".casefold()
+                result_text = (
+                    f"{result.get('abstract', '')} {result.get('title', '')}".casefold()
+                )
                 if any(term.casefold() in result_text for term in terms_ignore):
                     results.remove(result)
 
@@ -453,7 +472,7 @@ class QDSearcher(BaseSearcher):
             reference_date,
             territory_id,
             excerpt_size,
-            number_of_excerpts
+            number_of_excerpts,
         )
 
         req_result = requests.get(self.API_BASE_URL, params=payload)
@@ -492,7 +511,7 @@ def _build_query_payload(
     reference_date: datetime,
     territory_id,
     excerpt_size: int = 250,
-    number_of_excerpts: int = 3
+    number_of_excerpts: int = 3,
 ) -> List[tuple]:
     if is_exact_search:
         search_term = f'"{search_term}"'
@@ -500,14 +519,15 @@ def _build_query_payload(
     size = 100
     payload_territory_id = []
     if territory_id:
-        if isinstance(territory_id, int): territory_id = [territory_id]
+        if isinstance(territory_id, int):
+            territory_id = [territory_id]
         for terr_id in territory_id:
             payload_territory_id.append(("territory_ids", terr_id))
         # The search filter is applied using only a date,
         # and the result returns a maximum of one edition per country(township).
         size = len(territory_id)
 
-    payload =  [
+    payload = [
         ("size", size),
         ("excerpt_size", excerpt_size),
         ("sort_by", "relevance"),
@@ -559,8 +579,8 @@ class INLABSSearcher(BaseSearcher):
             terms_ignore (List[str]): List of terms to be ignored in the search.
             ignore_signature_match (bool): Flag to ignore publication
                 signature content.
-            full_text (bool): If trim result text content 
-            text_length (int, optional): Size of the text to be sent in the message. The default is 400.           
+            full_text (bool): If trim result text content
+            text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -573,7 +593,14 @@ class INLABSSearcher(BaseSearcher):
         inlabs_hook = INLABSHook()
         search_terms = self._prepare_search_terms(terms)
         search_terms = self._apply_filters(
-            search_terms, dou_sections, department, department_ignore, terms_ignore, pubtype, reference_date, search_date
+            search_terms,
+            dou_sections,
+            department,
+            department_ignore,
+            terms_ignore,
+            pubtype,
+            reference_date,
+            search_date,
         )
 
         search_results = inlabs_hook.search_text(
@@ -595,16 +622,16 @@ class INLABSSearcher(BaseSearcher):
                 None when no specific terms are provided
         Returns:
             Dict: Formatted as {"texto": List of terms}
-        """       
+        """
         if not terms:
             #  Searches without specific terms = search for all terms
             return {"texto": [""]}
         elif isinstance(terms, List):
             return {"texto": terms}
-        elif isinstance(terms, str) and terms.startswith("["):            
-            return {"texto": ast.literal_eval(terms)}   
-        elif isinstance(terms, dict):        
-            return {"texto": self._split_sql_terms(terms)}     
+        elif isinstance(terms, str) and terms.startswith("["):
+            return {"texto": ast.literal_eval(terms)}
+        elif isinstance(terms, dict):
+            return {"texto": self._split_sql_terms(terms)}
         return {"texto": self._split_sql_terms(json.loads(terms))}
 
     def _apply_filters(
@@ -629,7 +656,7 @@ class INLABSSearcher(BaseSearcher):
             search_terms["artcategory"] = department
         if department_ignore:
             search_terms["artcategory_ignore"] = department_ignore
-        if terms_ignore:           
+        if terms_ignore:
             search_terms["terms_ignore"] = terms_ignore
         if pubtype:
             search_terms["arttype"] = pubtype
@@ -645,7 +672,7 @@ class INLABSSearcher(BaseSearcher):
     def _split_sql_terms(terms: Dict) -> List:
         """Split SQL terms into a list, removing duplicates.
         Get only the values from the first key of the Dict."""
-     
+
         first_key = next(iter(terms))
         return list(set(terms[first_key].values()))
 

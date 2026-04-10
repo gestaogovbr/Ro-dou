@@ -1,5 +1,6 @@
 import copy
 import re
+from html import unescape
 
 from abc import ABC, abstractmethod
 
@@ -71,3 +72,13 @@ def _fix_missing_spaces(string: str) -> str:
     new_string = START_PLACEHOLDER_REGEX.sub(" <%%>", string)
     new_string = END_PLACEHOLDER_REGEX.sub("</%%> ", new_string)
     return new_string
+
+
+def remove_html_tags(text: str) -> str:
+    if not text or not isinstance(text, str):
+        return text
+
+    text = re.sub(r"<[^>]+>", "", text)
+    text = unescape(text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text

@@ -13,32 +13,24 @@ import textwrap
 from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional, Union
 from functools import reduce
-import json
 
-import pandas as pd
 from airflow import DAG, Dataset
 from airflow.models.param import Param
 from airflow.utils.task_group import TaskGroup
-from airflow.hooks.base import BaseHook
+
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.providers.slack.notifications.slack import SlackNotifier
+
 from airflow.timetables.datasets import DatasetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
 
-try:
-    from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
-except ImportError:
-    MsSqlHook = None
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
+from utils.select_terms import TermSelector
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
-from airflow.utils.email import send_email
 
 from airflow.models import Variable
 
@@ -129,9 +121,10 @@ class DouDigestDagGenerator:
 
     def _notify_on_failure(self, specs: DAGConfig, context):
         """Function called when the task fails to send a notification to admin"""
-        try:
+        from notification.failure_sender import FailureSender
 
-            task_instance = context.get("task_instance")
+        try:
+            task_instance = context.get("task_instance") or context.get("ti")
             dag_run = context.get("dag_run")
             exception = context.get("exception")
 
@@ -139,79 +132,8 @@ class DouDigestDagGenerator:
                 logging.error("Missing required context: task_instance or dag_run")
                 return
 
-            # Determina lista de emails para notificação
-            email_list = []
-
-            if specs.callback and specs.callback.on_failure_callback:
-                # Usa emails configurados no .yaml
-                email_list = specs.callback.on_failure_callback
-            else:
-                # Usa email admin padrão
-                try:
-                    email_admin = Variable.get("email_admin", default_var=None)
-                    if email_admin:
-                        email_list = [email_admin]
-                    else:
-                        logging.warning("No email_admin variable found in Airflow")
-                except Exception as e:
-                    logging.error(f"Error getting email_admin variable: {str(e)}")
-
-            if not email_list:
-                logging.warning(
-                    "No email configured for failure notification (neither callback nor email_admin variable)"
-                )
-
-            # Envia email se houver destinatários
-            if email_list:
-                try:
-                    execution_date_str = (
-                        dag_run.execution_date.strftime("%d/%m/%Y %H:%M")
-                        if dag_run.execution_date
-                        else "N/A"
-                    )
-
-                    send_email(
-                        to=email_list,
-                        subject=f"Falha na DAG {dag_run.dag_id}",
-                        html_content=f"""
-                        <h3>Falha detectada</h3>
-                        <p><strong>DAG:</strong> {dag_run.dag_id}</p>
-                        <p><strong>Task:</strong> {task_instance.task_id}</p>
-                        <p><strong>Estado:</strong> {task_instance.state}</p>
-                        <p><strong>Data de execução:</strong> {execution_date_str}</p>
-                        <p><strong>Exceção:</strong> {exception}</p>
-                        <p><strong>Log:</strong> <a href="{task_instance.log_url}" target="_blank">Ver log completo</a></p>
-                        """,
-                    )
-                    logging.error(
-                        f"SUCCESS: Failure notification email sent to: {email_list}"
-                    )
-                except Exception as e:
-                    logging.error(
-                        f"ERROR: Failed to send failure notification email: {str(e)}",
-                        exc_info=True,
-                    )
-
-            # Tenta enviar notificação via Slack (se disponível)
-            try:
-                conn = BaseHook.get_connection(self.SLACK_CONN_ID)
-                description = json.loads(conn.description)
-                slack_notifier = SlackNotifier(
-                    slack_conn_id=self.SLACK_CONN_ID,
-                    text=(
-                        ":bomb: *Falha na DAG*"
-                        f"\n*DAG:* `{dag_run.dag_id}`"
-                        f"\n*Task:* `{task_instance.task_id}`"
-                        f"\n*State:* `{task_instance.state}`"
-                        f"\n*Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
-                        f"\n*Exception:* {exception}"
-                        f"\n*Log:* <{task_instance.log_url}|Ver log completo>"
-                    ),
-                    channel=description["channel"],
-                )
-                slack_notifier.notify(context)
-            except Exception as e:
-                logging.error(f"Slack notification not sent: {str(e)}")
+            failure_sender = FailureSender(specs=specs)
+            failure_sender.send(context, dag_run, task_instance, exception)
 
         except Exception as e:
             logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
@@ -473,87 +395,6 @@ class DouDigestDagGenerator:
         else:
             return "send_notification"
 
-    def select_terms_from_airflow_variable(self, variable: str):
-        """
-        Retrieves and processes a list of terms from an Apache Airflow variable.
-
-        This function searches for a specific Airflow variable and converts it into a list
-        of terms, supporting both JSON and line-delimited text formats.
-
-        Arguments:
-        variable (str): Name of the Airflow variable to be retrieved.
-
-        Returns:
-        list: List of terms extracted from the Airflow variable.
-
-        Raises:
-        KeyError: When a specified variable was not found in Airflow.
-
-        Examples:
-        >>> # For an Airflow variable containing JSON: ["term1", "term2", "term3"]
-        >>> terms = self.select_terms_from_airflow_variable("my_json_list")
-        >>> print(terms)
-        ['term1', 'term2', 'term3']
-
-        >>> # For a variable An Airflow variable containing text separated by lines:
-        >>>#term1
-        >>>#term2
-        >>>#term3
-        >>> terms = self.select_terms_from_airflow_variable("my_text_list")
-        >>> print (terms)
-        ['term1', 'term2', 'term3']
-
-        Note:
-        - If the variable value is a list (JSON), it will be parsed with json.loads()
-        - Otherwise, it will be treated as a string and split by line breaks
-        - Useful for configuring dynamic lists using Airflow variables
-        """
-
-        term_list = []
-        var_name = variable
-
-        try:
-            var_value = Variable.get(var_name)
-            # Se já é uma lista, retorna direto
-            if isinstance(var_value, list):
-                return var_value
-
-            if isinstance(var_value, str):
-                if var_value.strip().startswith("["):
-                    return ast.literal_eval(var_value)
-                else:
-                    # Trata como texto separado por linhas
-                    return var_value.splitlines()
-            return term_list
-
-        except KeyError:
-            raise KeyError(f"Airflow variable {var_name} not found.")
-
-    def select_terms_from_db(self, sql: str, conn_id: str):
-        """Queries the `sql` and return the list of terms that will be
-        used later in the DOU search. The first column of the select
-        must contain the terms to be searched. The second column, which
-        is optional, is a classifier that will be used to group and sort
-        the email report and the generated CSV.
-        """
-        conn_type = BaseHook.get_connection(conn_id).conn_type
-        if conn_type == "mssql":
-            if MsSqlHook is None:
-                raise RuntimeError(
-                    "MsSqlHook indisponível: instale 'apache-airflow-providers-microsoft-mssql' para usar recursos MSSQL."
-                )
-            db_hook = MsSqlHook(conn_id)
-        elif conn_type in ("postgresql", "postgres"):
-            db_hook = PostgresHook(conn_id)
-        else:
-            raise Exception("Tipo de banco de dados não suportado: ", conn_type)
-
-        terms_df = db_hook.get_pandas_df(sql)
-        # Remove unnecessary spaces and change null for ''
-        terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
-
-        return terms_df.to_json(orient="columns")
-
     def send_notification(
         self, num_searches: int, specs: DAGConfig, report_date: str, **context
     ) -> str:
@@ -619,6 +460,7 @@ class DouDigestDagGenerator:
 
                     # determine the terms list
                     term_list = []
+                    term_selector = TermSelector()
                     # is it a directly defined list of terms or is it a
                     # configuration for fetching terms from a data source?
                     if subsearch.terms is None:
@@ -629,7 +471,7 @@ class DouDigestDagGenerator:
                     elif terms_come_from_airflow_variable:
                         select_terms_from_airflow_variable_task = PythonOperator(
                             task_id=f"select_terms_from_airflow_variable_{counter}",
-                            python_callable=self.select_terms_from_airflow_variable,
+                            python_callable=term_selector.select_terms_from_airflow_variable,
                             op_kwargs={
                                 "variable": subsearch.terms.from_airflow_variable
                             },
@@ -643,7 +485,7 @@ class DouDigestDagGenerator:
                     elif terms_come_from_db:
                         select_terms_from_db_task = PythonOperator(
                             task_id=f"select_terms_from_db_{counter}",
-                            python_callable=self.select_terms_from_db,
+                            python_callable=term_selector.select_terms_from_db,
                             op_kwargs={
                                 "sql": subsearch.terms.from_db_select.sql,
                                 "conn_id": subsearch.terms.from_db_select.conn_id,
