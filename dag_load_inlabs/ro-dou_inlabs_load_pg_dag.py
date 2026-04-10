@@ -13,7 +13,8 @@ from airflow.decorators import dag, task
 from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 from airflow.models import Variable
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator
+
+# from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
 # from airflow.operators.python import BranchPythonOperator
 
@@ -30,7 +31,6 @@ STG_TABLE = "dou_inlabs.article_raw"
 # DAG
 
 default_args = {
-    # XXX update here
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
@@ -58,7 +58,7 @@ def load_inlabs():
     @task
     def get_date() -> str:
         """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context
+        from airflow.operators.python import get_current_context  # type: ignore
         from utils.date import get_trigger_date
 
         context = get_current_context()
@@ -70,7 +70,7 @@ def load_inlabs():
         from bs4 import BeautifulSoup
         import zipfile
         from urllib.parse import urljoin
-        from airflow.hooks.base import BaseHook
+        from airflow.hooks.base import BaseHook  # type: ignore
 
         def _create_directories():
             subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
@@ -117,7 +117,9 @@ def load_inlabs():
                 "origem": "736372697074",
             }
             files = _find_files(session, headers)
+
             if not files:
+                logging.error(f"Files not found for this date: {trigger_date}")
                 return False
 
             for file in files:
@@ -152,73 +154,81 @@ def load_inlabs():
         return files_exists
 
     @task
-    def load_data(trigger_date: str):
-        from bs4 import BeautifulSoup
-        import glob
-        import pandas as pd
-        from slugify import slugify
-        from airflow.providers.postgres.hooks.postgres import PostgresHook
+    def load_data(trigger_date: str) -> None:
 
-        def _read_files():
-            dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
-            df = pd.DataFrame()
-            for xml_file in glob.glob(
-                os.path.join(dest_path, trigger_date, "**/*.xml"), recursive=True
-            ):
-                df1 = pd.read_xml(xml_file)
-                df2 = pd.read_xml(xml_file, xpath="//body")
-                df = pd.concat([df, df1.join(df2)], ignore_index=True)
+        def _clean_index(date: str):
+            from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+            from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
 
-            df.columns = [slugify(col, separator="_") for col in df.columns]
-            df.drop(columns=["body"], inplace=True)
-            df["pubdate"] = pd.to_datetime(df["pubdate"], format="%d/%m/%Y")
-            df["assina"] = df["texto"].apply(_get_assina)
+            client = OpenSearchClient().get_client()
 
-            return df
+            if not client.indices.exists(index=INDEX_NAME):
+                client.indices.create(index=INDEX_NAME)
+                logging.info(f"Index {INDEX_NAME} created.")
+                return
 
-        def _get_assina(text):
-            soup = BeautifulSoup(text, "html.parser")
-            p_tags = soup.find_all("p", class_="assina")
-            return ", ".join([p.text for p in p_tags]) if p_tags else None
-
-        def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(
-                f"""
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.tables
-                    WHERE table_name = '{STG_TABLE.split(".")[1]}'
-                );
-            """
+            response = client.delete_by_query(
+                index=INDEX_NAME,
+                body={"query": {"term": {"pubdate": date}}},
             )
-            if table_exists[0]:
-                hook.run(
-                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
-                )
+            logging.info(
+                "Deleted %s documents with pubdate=%s from index %s.",
+                response.get("deleted", 0),
+                date,
+                INDEX_NAME,
+            )
 
-        df = _read_files()
-        hook = PostgresHook(DEST_CONN_ID)
-        _clean_db(hook)
-        df.to_sql(
-            name=STG_TABLE.split(".")[1],
-            schema=STG_TABLE.split(".", maxsplit=1)[0],
-            con=hook.get_sqlalchemy_engine(),
-            if_exists="append",
-            index=False,
+        def process_folder(folder_path, pipeline=None):
+            from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
+            from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
+
+            logging.info(f"Processing folder: {folder_path}")
+            files = [
+                os.path.join(root, f)
+                for root, _, fs in os.walk(folder_path)
+                for f in fs
+                if f.endswith(".xml")
+            ]
+
+            for xml_path in files:
+
+                with open(xml_path, "r", encoding="utf-8") as f:
+                    xml_str = f.read()
+
+                data = DOUXmlParser().parse_dou_xml(xml_str)
+                response = OpenSearchPipeline().send(data, pipeline=pipeline)
+
+                logging.info(f"[OK] {xml_path} → indexed: {response['_id']}")
+
+        dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR, trigger_date)
+        if not os.path.isdir(dest_path):
+            logging.warning(f"Directory {dest_path} not found, skipping load.")
+            return
+        logging.info(f"Starting to process folder: {dest_path}")
+        process_folder(dest_path, pipeline=None)
+        _clean_index(trigger_date)
+
+    @task
+    def check_loaded_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+        from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+
+        client = OpenSearchClient().get_client()
+        response = client.count(
+            index=INDEX_NAME,
+            body={"query": {"term": {"pubdate": trigger_date}}},
         )
-        logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
-
-    check_loaded_data = SQLCheckOperator(
-        task_id="check_loaded_data",
-        conn_id=DEST_CONN_ID,
-        sql=f"""
-            SELECT 1
-                FROM
-                    {STG_TABLE}
-                WHERE
-                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
-            """,
-    )
+        count = response.get("count", 0)
+        if count == 0:
+            raise ValueError(
+                f"No documents found in index '{INDEX_NAME}' for pubdate={trigger_date}."
+            )
+        logging.info(
+            "check_loaded_data: found %s documents for pubdate=%s in index %s.",
+            count,
+            trigger_date,
+            INDEX_NAME,
+        )
 
     @task.branch
     def check_if_first_run_of_day():
@@ -249,14 +259,14 @@ def load_inlabs():
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
-        logging.info("Directory %s removed.", dest_path)
+        logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
     trigger_date = get_date()
     (
         download_n_unzip_files(trigger_date)
-        >> load_data(trigger_date)
-        >> check_loaded_data
+        >> load_data(trigger_date)  # type: ignore
+        >> check_loaded_data(trigger_date)
         >> remove_directory()
         >> check_if_first_run_of_day()
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
