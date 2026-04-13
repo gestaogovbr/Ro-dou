@@ -358,13 +358,6 @@ class INLABSHook(BaseHook):
                     in self._normalize(row["assina"]),
                     axis=1,
                 )
-                df["texto"] = df.apply(
-                    lambda row: self._highlight_terms(
-                        [t for t in row["matches"].split(", ") if t],
-                        row["texto"],
-                    ),
-                    axis=1,
-                )
                 df["count_assina"] = df.apply(
                     lambda row: (
                         row["texto"].count(row["assina"])
@@ -400,21 +393,28 @@ class INLABSHook(BaseHook):
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=ai_custom_prompt,
+                        system_prompt=f'{ai_custom_prompt}. Enfatize a importância de {df.at[i, "matches"]} na publicação.',
                         max_tokens=ai_config.max_tokens,
                         temperature=ai_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
-            else:
-                if not full_text:
-                    df["texto"] = df["texto"].apply(self._trim_text)
+            if not full_text:
+                df.loc[~df["ai_generated"], "texto"] = df.loc[~df["ai_generated"], "texto"].apply(self._trim_text) 
 
-                if text_length is not None and text_length != 400:
-                    df["texto"] = df["texto"].apply(
-                        lambda x: self._trim_text(x, text_length)
-                    )
+            if text_length is not None and text_length != 400:
+                df["texto"] = df["texto"].apply(
+                    lambda x: self._trim_text(x, text_length)
+                )
 
             df["display_date_sortable"] = None
+            
+            df["texto"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["texto"],
+                    ),
+                    axis=1,
+                )
 
             cols_rename = {
                 "pubname": "section",
@@ -431,6 +431,7 @@ class INLABSHook(BaseHook):
             cols_output = list(cols_rename.values())
 
             print(self._group_to_dict(df, "matches", cols_output))
+
             return (
                 {}
                 if df.empty
