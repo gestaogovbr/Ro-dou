@@ -1,5 +1,7 @@
 ## Usuários internos e externos
 
+**A gestão das buscas do RO-DOU é de responsabilidade exclusiva das unidades internas do MGI. Para entidades externas ao Ministério, a instalação e configuração do RO-DOU deve ser realizada na infraestrutura de TI própria. Nesses casos, oferecemos apenas suporte técnico para esclarecimento de dúvidas.**
+
 ### Usuários do Ministério da Gestão e da Inovação em Serviços Públicos
 
 Para as unidades do Ministério da Gestão e da Inovação em Serviços Públicos que desejem solicitar a utilização de clippings via Ro-DOU, a Secretaria de Gestão e Inovação do MGI está disponível para auxiliá-las a configurar o serviço.
