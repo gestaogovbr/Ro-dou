@@ -49,9 +49,9 @@ class AIRunner:
             )
 
         if provider == "azure":
-            endpoint = Variable.get("AZURE_OPENAI_ENDPOINT", default_var=None)
-            api_version = Variable.get("AZURE_OPENAI_API_VERSION", default_var=None)
-            deployment = Variable.get("AZURE_OPENAI_DEPLOYMENT", default_var=None)
+            endpoint = Variable.get("AZURE_OPENAI_ENDPOINT")
+            api_version = Variable.get("AZURE_OPENAI_API_VERSION")
+            deployment = Variable.get("AZURE_OPENAI_DEPLOYMENT")
 
             if not all([api_key, endpoint, api_version, deployment]):
                 raise RuntimeError(

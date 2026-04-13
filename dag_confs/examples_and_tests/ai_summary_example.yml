@@ -17,12 +17,12 @@ dag:
     sources:
     - INLABS
     terms:
-      - dados abertos
+      - tecnologia da informação
     use_summary: True
     use_ai_summary: True
     ai_pub_limit: 5
-    ai_custom_prompt: |
-      Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
+    # ai_custom_prompt: |
+    #   Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
   report:
     emails:
       - destination@economia.gov.br
