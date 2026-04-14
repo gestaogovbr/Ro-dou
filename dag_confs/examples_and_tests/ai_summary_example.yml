@@ -8,21 +8,22 @@ dag:
   owner:
     - cdata
   ai_config:
-    provider: azure
-    api_key_var: AZURE_OPENAI_API_KEY
+    provider: openai
+    api_key_var: OPENAI_API_KEY
     model: gpt-4o-mini
     temperature: 0.2
     max_tokens: 2000
   search:
     sources:
-    - INLABS
+      - INLABS
     terms:
       - tecnologia da informação
+      - inovação
     use_summary: True
     use_ai_summary: True
     ai_pub_limit: 5
-    # ai_custom_prompt: |
-    #   Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
+    ai_custom_prompt: |
+      Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
   report:
     emails:
       - destination@economia.gov.br
