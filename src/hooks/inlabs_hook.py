@@ -65,7 +65,7 @@ class INLABSHook(BaseHook):
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
-        text_length: Optional[int],
+        text_length: int,
         use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
@@ -310,7 +310,7 @@ class INLABSHook(BaseHook):
             ai_pub_limit: int,
             ai_custom_prompt: str,
             full_text: bool = False,
-            text_length: Optional[int] = 400,
+            text_length: int = 400,
             use_summary: bool = False,
             use_ai_summary: bool = False,
         ) -> dict:
@@ -325,7 +325,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
-                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
+                text_length (int): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -398,15 +398,6 @@ class INLABSHook(BaseHook):
                         temperature=ai_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
-            if not full_text:
-                df.loc[~df["ai_generated"], "texto"] = df.loc[~df["ai_generated"], "texto"].apply(self._trim_text)
-
-            if text_length is not None and text_length != 400:
-                df["texto"] = df["texto"].apply(
-                    lambda x: self._trim_text(x, text_length)
-                )
-
-            df["display_date_sortable"] = None
 
             df["texto"] = df.apply(
                     lambda row: self._highlight_terms(
@@ -415,6 +406,15 @@ class INLABSHook(BaseHook):
                     ),
                     axis=1,
                 )
+
+            if not full_text:
+                # Only trim text that was not processed by AI
+                df.loc[~df["ai_generated"], "texto"] = \
+                    df.loc[~df["ai_generated"], "texto"].apply(lambda x: self._trim_text(x, text_length))
+
+            df["display_date_sortable"] = None
+
+
 
             cols_rename = {
                 "pubname": "section",
