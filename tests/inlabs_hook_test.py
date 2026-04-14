@@ -136,6 +136,19 @@ def test_rename_section(inlabs_hook, pub_name_in, pub_name_out):
             "Pellentesque vel elementum mauris, id semper tellus.",
             "Pellentesque vel <%%>elementum</%%> mauris, id semper <%%>tellus</%%>.",
         ),
+        (
+            # Term without accent matches accented text (e.g. user searches
+            # "Flavia" but DOU publishes "Flávia")
+            ["Flavia Teixeira Guerreiro"],
+            "Designar Flávia Teixeira Guerreiro para o cargo.",
+            "Designar <%%>Flávia Teixeira Guerreiro</%%> para o cargo.",
+        ),
+        (
+            # Term with accent matches non-accented text
+            ["Flávia"],
+            "Designar Flavia para o cargo.",
+            "Designar <%%>Flavia</%%> para o cargo.",
+        ),
     ],
 )
 def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
