@@ -414,7 +414,7 @@ class INLABSHook(BaseHook):
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=f'{ai_custom_prompt}. Enfatize a importância de {df.at[i, "matches"]} na publicação.',
+                        system_prompt=ai_custom_prompt.format({df.at[i, "matches"]}),
                         max_tokens=ai_config.max_tokens,
                         temperature=ai_config.temperature,
                     )
