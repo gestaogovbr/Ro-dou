@@ -257,7 +257,7 @@ class AIConfig(BaseModel):
         description="Nome do provedor da API de IA")
 
     api_key_var: str = Field(
-        description="Variável da chave da API de IA")
+        description="Variável do Airflow da chave da API de IA")
 
     model: str = Field(
         description="Modelo da API de IA")
@@ -328,15 +328,15 @@ class DAGConfig(BaseModel):
         """Add default tags to the list of tags."""
         tags_param.update({"dou", "generated_dag"})
         return tags_param
-    
-    @model_validator(mode='after') 
+
+    @model_validator(mode='after')
     def validate_ai_config(self):
         for search in self.search:
             if search.use_ai_summary and not self.ai_config:
                 raise ValueError(
                     "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True."
                 )
- 
+
         return self
 
 class RoDouConfig(BaseModel):
