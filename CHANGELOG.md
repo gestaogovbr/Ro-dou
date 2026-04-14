@@ -1,6 +1,15 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.9.0] - 2026-02-10
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* feat: integração com apprise - Possibilidade de envio do clipping por múltiplos canais by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/214
+* feat: adiciona suporte ao parâmetro terms_ignore para filtrar resultados by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/269
+### 🚀 Outros
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.2...0.9.0
+
 ## [0.8.2] - 2026-01-29
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

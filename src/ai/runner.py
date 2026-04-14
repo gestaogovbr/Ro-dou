@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import os
+
 from typing import Optional
+from ai.provider import AIProvider
 
 
 class AIRunner:
@@ -9,7 +10,7 @@ class AIRunner:
 
     @staticmethod
     def run(
-        provider: str,
+        provider: AIProvider,
         api_key: str,
         model: str,
         input_text: str,
@@ -21,7 +22,7 @@ class AIRunner:
         if not api_key:
             raise RuntimeError("API_KEY not set")
 
-        if provider == "openai":
+        if provider == AIProvider.openai:
             return AIRunner._run_openai(
                 api_key,
                 model,
@@ -32,12 +33,12 @@ class AIRunner:
                 timeout_seconds,
             )
 
-        if provider == "gemini":
+        if provider == AIProvider.gemini:
             return AIRunner._run_gemini(
                 api_key, model, input_text, system_prompt, max_tokens, temperature
             )
 
-        if provider == "claude":
+        if provider == AIProvider.claude:
             return AIRunner._run_claude(
                 api_key,
                 model,
@@ -48,23 +49,14 @@ class AIRunner:
                 timeout_seconds,
             )
 
-        if provider == "azure":
-            endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-            api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-            deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
-
-            if not all([api_key, endpoint, api_version, deployment]):
-                raise RuntimeError(
-                    "Missing Azure env vars: "
-                    "AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, "
-                    "AZURE_OPENAI_API_VERSION, AZURE_OPENAI_DEPLOYMENT"
-                )
+        if provider == AIProvider.azure:
+            config = provider.get_azure_config(api_key)
 
             return AIRunner._run_azure(
                 api_key,
-                endpoint,
-                api_version,
-                deployment,
+                config["endpoint"],
+                config["api_version"],
+                config["deployment"],
                 input_text,
                 system_prompt,
                 max_tokens,
@@ -87,16 +79,19 @@ class AIRunner:
         from openai import OpenAI
 
         client = OpenAI(api_key=api_key, timeout=timeout_seconds)
-        response = client.responses.create(
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": input_text})
+
+        response = client.chat.completions.create(
             model=model,
-            input=[
-                {"role": "system", "content": system_prompt} if system_prompt else None,
-                {"role": "user", "content": input_text},
-            ],
+            messages=messages,
             temperature=temperature,
-            max_output_tokens=max_tokens,
+            max_tokens=max_tokens,
         )
-        return response.output_text
+        return response.choices[0].message.content
 
     @staticmethod
     def _run_gemini(
@@ -171,11 +166,10 @@ class AIRunner:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": input_text})
 
-        response = client.responses.create(
+        response = client.chat.completions.create(
             model=deployment,
-            input=messages,
+            messages=messages,
             temperature=temperature,
-            max_output_tokens=max_tokens,
+            max_tokens=max_tokens,
         )
-
-        return response.output_text
+        return response.choices[0].message.content

@@ -1,0 +1,31 @@
+dag:
+  id: ai_summary_example
+  description: DAG de teste de geração de resumo com IA
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  dataset: inlabs
+  owner:
+    - cdata
+  ai_config:
+    provider: openai
+    api_key_var: OPENAI_API_KEY
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 2000
+  search:
+    sources:
+      - INLABS
+    terms:
+      - tecnologia da informação
+      - inovação
+    use_summary: True
+    use_ai_summary: True
+    ai_pub_limit: 5
+    ai_custom_prompt: |
+      Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou"

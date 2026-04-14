@@ -1,8 +1,6 @@
-import re
-
 import requests
 
-from notification.isender import ISender
+from notification.isender import ISender, remove_html_tags
 from schemas import ReportConfig
 
 
@@ -19,7 +17,7 @@ class DiscordSender(ISender):
     def send(self, search_report: list, report_date: str = None):
         """Parse the content, and send message to Discord"""
         if self.header_text:
-            header_text = self._remove_html_tags(self.header_text)
+            header_text = remove_html_tags(self.header_text)
             self.send_text(header_text)
 
         for search in search_report:
@@ -34,21 +32,22 @@ class DiscordSender(ISender):
                 for term, term_results in search_results.items():
                     if not self.hide_filters:
                         if not term_results:
-                            self.send_text(
-                                f"**{self.no_results_found_text}**"
-                            )
+                            self.send_text(f"**{self.no_results_found_text}**")
                         else:
                             if term != "all_publications":
                                 self.send_text(f"**Resultados para: {term}**")
 
                             for department, results in term_results.items():
-                                if not self.hide_filters and department != 'single_department':
+                                if (
+                                    not self.hide_filters
+                                    and department != "single_department"
+                                ):
                                     self.send_text(f"{department}")
 
                                 self.send_embeds(results)
 
         if self.footer_text:
-            footer_text = self._remove_html_tags(self.footer_text)
+            footer_text = remove_html_tags(self.footer_text)
             self.send_text(footer_text)
 
     def send_text(self, content):
@@ -69,12 +68,6 @@ class DiscordSender(ISender):
         )
 
     def send_data(self, data):
-        data["username"] = "Querido Prisma (rodou)"
+        data["username"] = "Ro-DOU Bot"
         result = requests.post(self.webhook_url, json=data)
         result.raise_for_status()
-
-    def _remove_html_tags(self, text):
-        # Define a regular expression pattern to match HTML tags
-        clean = re.compile('<.*?>')
-        # Substitute HTML tags with an empty string
-        return re.sub(clean, '', text)

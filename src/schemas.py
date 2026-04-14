@@ -22,7 +22,9 @@ from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from ai.provider import AIProvider
 from ai.config import prompt
+
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -212,6 +214,9 @@ class ReportConfig(BaseModel):
     discord: Optional[dict] = Field(
         default=None, description="Configuração do webhook do Discord para relatórios"
     )
+    notification: Optional[List[str]] = Field(
+        default=None, description="Configuração dos métodos de notificação para relatórios"
+    )
     emails: Optional[List[EmailStr]] = Field(
         default=None, description="Lista de endereços de e-mail para enviar o relatório"
     )
@@ -250,17 +255,22 @@ class ReportConfig(BaseModel):
 
 class AIConfig(BaseModel):
     """Represents the AI configuration in the YAML file."""
-    provider: Optional[str] = Field(
-        default=None,
+    provider: AIProvider = Field(
         description="Nome do provedor da API de IA")
 
-    api_key_var: Optional[str] = Field(
-        default=None,
-        description="Variável da chave da API de IA")
+    api_key_var: str = Field(
+        description="Variável do Airflow da chave da API de IA")
 
-    model: Optional[str] = Field(
-        default=None,
+    model: str = Field(
         description="Modelo da API de IA")
+
+    temperature: Optional[float] = Field(
+        default=0.2,
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+
+    max_tokens: Optional[int] = Field(
+        default=2000,
+        description="Número máximo de tokens para a resposta da IA.")
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -321,6 +331,15 @@ class DAGConfig(BaseModel):
         tags_param.update({"dou", "generated_dag"})
         return tags_param
 
+    @model_validator(mode='after')
+    def validate_ai_config(self):
+        for search in self.search:
+            if search.use_ai_summary and not self.ai_config:
+                raise ValueError(
+                    "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True."
+                )
+
+        return self
 
 class RoDouConfig(BaseModel):
     """Represents the overall configuration in the YAML file."""

@@ -9,9 +9,13 @@ import html2text
 
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable
 from typing import Optional
 from schemas import AIConfig
 from ai.runner import AIRunner
+
+from bs4 import BeautifulSoup
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -61,7 +65,7 @@ class INLABSHook(BaseHook):
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
-        text_length: Optional[int],
+        text_length: int,
         use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
@@ -229,16 +233,16 @@ class INLABSHook(BaseHook):
                     )
                     + ")"
                 )
-            elif key == 'terms_ignore':
+            elif key == "terms_ignore":
                 conditions.append(
-                    "(" +
-                    " AND ".join(
+                    "("
+                    + " AND ".join(
                         [
                             rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{value}\y')"
                             for value in values
                         ]
-                    ) +
-                    ")"
+                    )
+                    + ")"
                 )
             else:
                 conditions.append(
@@ -306,7 +310,7 @@ class INLABSHook(BaseHook):
             ai_pub_limit: int,
             ai_custom_prompt: str,
             full_text: bool = False,
-            text_length: Optional[int] = 400,
+            text_length: int = 400,
             use_summary: bool = False,
             use_ai_summary: bool = False,
         ) -> dict:
@@ -321,7 +325,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
-                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
+                text_length (int): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -333,17 +337,15 @@ class INLABSHook(BaseHook):
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
             # a publication.
-            # df.dropna(subset=["identifica"], inplace=True)
             df["pubname"] = df["pubname"].apply(self._rename_section)
             df["pubdate"] = df["pubdate"].dt.strftime("%d/%m/%Y")
-            df["texto"] = df["texto"].apply(self._remove_html_tags)
-            # Remove title duplicated
-            df["texto"] = df.apply(
-                lambda row: self._remove_duplicated_title(
-                    row["identifica"], row["texto"]
-                ),
-                axis=1,
-            )
+
+            # Remove duplicated title then strip HTML tags
+            df["texto"] = df["texto"].apply(self._remove_duplicated_title)
+
+            # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
+            df["texto"] = df["texto"].apply(self._remove_empty_tr)
+
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
@@ -354,12 +356,6 @@ class INLABSHook(BaseHook):
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
-                    axis=1,
-                )
-                df["texto"] = df.apply(
-                    lambda row: self._highlight_terms(
-                        row["matches"].split(", "), row["texto"]
-                    ),
                     axis=1,
                 )
                 df["count_assina"] = df.apply(
@@ -394,24 +390,31 @@ class INLABSHook(BaseHook):
                 for i in idx:
                     df.at[i, "texto"] = AIRunner.run(
                         provider=ai_config.provider,
-                        api_key=ai_config.api_key_var,
+                        api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=ai_custom_prompt,
-                        max_tokens=500,
-                        temperature=0.2,
+                        system_prompt=ai_custom_prompt.format(df.at[i, "matches"]),
+                        max_tokens=ai_config.max_tokens,
+                        temperature=ai_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
-            else:
-                if not full_text:
-                    df["texto"] = df["texto"].apply(self._trim_text)
 
-                if text_length is not None and text_length != 400:
-                    df["texto"] = df["texto"].apply(
-                        lambda x: self._trim_text(x, text_length)
-                    )
+            df["texto"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["texto"],
+                    ),
+                    axis=1,
+                )
+
+            if not full_text:
+                # Only trim text that was not processed by AI
+                df.loc[~df["ai_generated"], "texto"] = \
+                    df.loc[~df["ai_generated"], "texto"].apply(lambda x: self._trim_text(x, text_length))
 
             df["display_date_sortable"] = None
+
+
 
             cols_rename = {
                 "pubname": "section",
@@ -427,12 +430,14 @@ class INLABSHook(BaseHook):
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
 
-            print(self._group_to_dict(df, "matches", cols_output))
             return (
                 {}
                 if df.empty
                 else self._group_to_dict(
-                    df.sort_values(by=["matches", "section", "title"]),
+                    df.sort_values(
+                        by=["matches", "section", "ai_generated", "title"],
+                        ascending=[True, True, False, True]
+                    ),
                     "matches",
                     cols_output,
                 )
@@ -524,7 +529,9 @@ class INLABSHook(BaseHook):
                     and `</%%>`.
             """
 
-            escaped_terms = [re.escape(term) for term in terms]
+            escaped_terms = [re.escape(term) for term in terms if term]
+            if not escaped_terms:
+                return text
             pattern = rf"\b({'|'.join(escaped_terms)})\b"
             highlighted_text = re.sub(
                 pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE
@@ -533,58 +540,210 @@ class INLABSHook(BaseHook):
             return highlighted_text
 
         @staticmethod
+        def _visible_len(text: str) -> int:
+            """Return character count of `text` excluding HTML tags."""
+            return len(re.sub(r"<[^>]+>", "", text))
+
+        @staticmethod
+        def _cut_visible_start(text: str, n: int) -> str:
+            """Return the first `n` visible characters of `text`, preserving HTML tags."""
+            count = 0
+            i = 0
+            while i < len(text) and count < n:
+                if text[i] == "<":
+                    end = text.find(">", i)
+                    if end == -1:
+                        break
+                    i = end + 1
+                else:
+                    count += 1
+                    i += 1
+            return text[:i]
+
+        @staticmethod
+        def _cut_visible_end(text: str, n: int) -> str:
+            """Return the last `n` visible characters of `text`, preserving HTML tags."""
+            count = 0
+            i = len(text)
+            while i > 0 and count < n:
+                if text[i - 1] == ">":
+                    start = text.rfind("<", 0, i)
+                    if start == -1:
+                        break
+                    i = start
+                else:
+                    count += 1
+                    i -= 1
+            return text[i:]
+
+        @staticmethod
+        def _truncate_from_start(text: str, text_length: int) -> tuple:
+            """Take up to `text_length` non-table characters from the start of `text`.
+
+            Tables (``<table>…</table>``) are always included in full and their
+            characters are not counted toward `text_length`.
+
+            Args:
+                text (str): The source text (may contain HTML tables).
+                text_length (int): Maximum number of non-table characters to keep.
+
+            Returns:
+                tuple[str, bool]: (truncated_text, was_truncated)
+            """
+            special_re = re.compile(
+                r"<table[\s\S]*?</table>|<%%>[\s\S]*?</%%>", re.IGNORECASE
+            )
+            _vlen = INLABSHook.TextDictHandler._visible_len
+            _cut = INLABSHook.TextDictHandler._cut_visible_start
+            result = []
+            char_count = 0
+            last_end = 0
+
+            def _cut_at_word_boundary(segment, cut_text):
+                cut_pos = len(cut_text)
+                if cut_pos < len(segment) and segment[cut_pos].isalnum():
+                    cut_text = re.sub(r"\S+$", "", cut_text)
+                return cut_text.rstrip()
+
+            for m in special_re.finditer(text):
+                non_special = text[last_end : m.start()]
+                remaining = text_length - char_count
+                if _vlen(non_special) >= remaining:
+                    result.append(
+                        _cut_at_word_boundary(non_special, _cut(non_special, remaining))
+                    )
+                    return "".join(result), True
+                result.append(non_special)
+                char_count += _vlen(non_special)
+                result.append(m.group(0))
+                last_end = m.end()
+
+            tail = text[last_end:]
+            remaining = text_length - char_count
+            if _vlen(tail) > remaining:
+                result.append(_cut_at_word_boundary(tail, _cut(tail, remaining)))
+                return "".join(result), True
+
+            result.append(tail)
+            return "".join(result), False
+
+        @staticmethod
+        def _truncate_from_end(text: str, text_length: int) -> tuple:
+            """Keep the last `text_length` non-table characters of `text`.
+
+            Tables (``<table>…</table>``) are always included in full and their
+            characters are not counted toward `text_length`.
+
+            Highlight markers (``<%%>…</%%>``) are treated as atomic units:
+            never split in the middle; their visible characters count toward
+            `text_length`.
+
+            Args:
+                text (str): The source text (may contain HTML tables).
+                text_length (int): Maximum number of non-table characters to keep.
+
+            Returns:
+                tuple[str, bool]: (truncated_text, was_truncated)
+            """
+            table_re = re.compile(r"<table[\s\S]*?</table>", re.IGNORECASE)
+            marker_re = re.compile(r"<%%>[\s\S]*?</%%>")
+            _vlen = INLABSHook.TextDictHandler._visible_len
+            _cut = INLABSHook.TextDictHandler._cut_visible_end
+
+            # Split into (content, seg_type) segments where seg_type is
+            # 'text', 'marker', or 'table'.
+            boundaries = []
+            for m in table_re.finditer(text):
+                boundaries.append((m.start(), m.end(), "table", m.group(0)))
+            for m in marker_re.finditer(text):
+                boundaries.append((m.start(), m.end(), "marker", m.group(0)))
+            boundaries.sort()
+
+            segments = []
+            last_end = 0
+            for start, end, seg_type, content in boundaries:
+                if start > last_end:
+                    segments.append((text[last_end:start], "text"))
+                segments.append((content, seg_type))
+                last_end = end
+            if last_end < len(text):
+                segments.append((text[last_end:], "text"))
+
+            # Walk segments from the end, accumulating non-table chars
+            kept = []
+            char_count = 0
+            was_truncated = False
+
+            for content, seg_type in reversed(segments):
+                if seg_type == "table":
+                    kept.append(content)
+                    continue
+                if seg_type == "marker":
+                    if char_count < text_length:
+                        kept.append(content)
+                        char_count += _vlen(content)
+                    else:
+                        was_truncated = True
+                    continue
+                remaining = text_length - char_count
+                if remaining <= 0:
+                    was_truncated = True
+                    continue
+                if _vlen(content) > remaining:
+                    kept.append(_cut(content, remaining))
+                    char_count += remaining
+                    was_truncated = True
+                else:
+                    kept.append(content)
+                    char_count += _vlen(content)
+
+            kept.reverse()
+            return "".join(kept), was_truncated
+
+        @staticmethod
         def _trim_text(text: str, text_length: int = 400) -> str:
             """Truncates text while keeping the `<%%>` marker centered when present.
 
+            Tables (``<table>…</table>``) are excluded from the character count and
+            always rendered in full so that ``(...)`` is never inserted inside a table.
+
             If the text contains the `<%%>` marker, the function preserves this marker
-            in the center and keeps a specific number of characters before and after it.
-            Otherwise, it truncates the text from the beginning.
+            in the center and keeps up to `text_length` non-table characters before and
+            after it.  Otherwise, it truncates from the beginning.
 
             Args:
-                text (str): Text to be truncated
-                text_length (int, optional): Number of characters to keep on each side of
-                                    the `<%%>` marker.
+                text (str): Text to be truncated (may contain HTML).
+                text_length (int, optional): Max non-table characters to keep on each
+                    side of the ``<%%>`` marker. Defaults to 400.
 
             Returns:
-                str: Truncated text with "(...)" indicating removed parts
+                str: Truncated text with ``(...)`` indicating removed parts.
 
             Examples:
-                - With marker: "(...) last_N_chars<%%>first_N_chars (...)"
-                - Without marker: "first_N_chars (...)"
+                - With marker: ``"(...) last_N_chars<%%>first_N_chars (...)``"
+                - Without marker: ``"first_N_chars (...)``"
             """
-
-            parts = text.split("<%%>", 1)
             if text_length is False or text_length is None or text_length <= 0:
                 text_length = 400
 
+            _from_start = INLABSHook.TextDictHandler._truncate_from_start
+            _from_end = INLABSHook.TextDictHandler._truncate_from_end
+
+            parts = text.split("<%%>", 1)
+
             if len(parts) > 1:
-                # Texto tem o marcador <%%>
-                before_full = parts[0]
-                after_full = parts[1]
+                before_full, after_full = parts[0], parts[1]
 
-                # Determina se precisa truncar cada parte
-                before_truncated = len(before_full) > text_length
-                after_truncated = len(after_full) > text_length
+                before, before_cut = _from_end(before_full, text_length)
+                after, after_cut = _from_start(after_full, text_length)
 
-                # Processa a parte antes do marcador
-                if before_truncated:
-                    before = before_full[-text_length:]
-                    prefix = "(...) "
-                else:
-                    before = before_full
-                    prefix = ""
-
-                # Processa a parte depois do marcador
-                if after_truncated:
-                    after = after_full[:text_length].rstrip()
-                    suffix = " (...)"
-                else:
-                    after = after_full
-                    suffix = ""
+                prefix = "(...) " if before_cut else ""
+                suffix = " (...)" if after_cut else ""
 
                 return f"{prefix}{before}<%%>{after}{suffix}"
             else:
-                return f"{text[:text_length].rstrip()} (...)"
+                truncated, was_cut = _from_start(text, text_length)
+                return f"{truncated} (...)" if was_cut else text
 
         @staticmethod
         def _group_to_dict(df: pd.DataFrame, group_column: str, cols: list) -> dict:
@@ -609,33 +768,39 @@ class INLABSHook(BaseHook):
             )
 
         @staticmethod
-        def _remove_duplicated_title(title: str | None, abstract: str | None) -> str:
-            """
-            Remove the title from the beginning of the abstract if it is duplicated.
-            Args:
-                title (str): The document title.
-                abstract (str): The document abstract.
-            Returns:
-                str: The abstract without the duplicate title at the beginning.
-            """
-            import re
+        def _remove_empty_tr(text: str) -> str:
+            """Remove <tr> tags that contain no visible content."""
+            soup = BeautifulSoup(text, "html.parser")
 
-            if not title or not abstract:
+            for tr in soup.find_all("tr"):
+                if all(not td.get_text(strip=True) for td in tr.find_all("td")):
+                    tr.decompose()
+
+            return str(soup)
+
+        def _remove_duplicated_title(self, abstract: str | None) -> str:
+            """Remove HTML elements with class 'identifica' from the abstract.
+
+            The DOU the publication title both in the
+            'identifica' column and as a <p class="identifica"> tag within
+            the 'texto' column. This function removes the duplicated title
+            from the abstract HTML to avoid redundancy.
+
+            Args:
+                abstract (str | None): The document abstract as HTML string,
+                    or None.
+
+            Returns:
+                str: The abstract HTML without the 'identifica' paragraph,
+                    or an empty string if abstract is None/empty.
+            """
+
+            if not abstract:
                 return abstract or ""
 
-            # Remove os ** iniciais do título, se existirem (ex: **PORTARIA** -> PORTARIA)
-            title = re.sub(r"^\*\*(.*?)\*\*", r"\1", title.strip())
+            soup = BeautifulSoup(abstract, "html.parser")
 
-            # Remove os ** iniciais do abstract, se existirem (ex: **PORTARIA** -> PORTARIA)
-            abstract = re.sub(r"^\*\*(.*?)\*\*", r"\1", abstract.strip())
+            for tag in soup.find_all("p", class_="identifica"):
+                tag.decompose()
 
-            abstract = abstract.strip()
-
-            # Verifica se abstract começa com o título (case-insensitive)
-            title_lower = title.lower()
-            abstract_lower = abstract.lower()
-            if abstract_lower.startswith(title_lower):
-                # Remove o título e espaços iniciais restantes
-                return abstract[len(title) :].lstrip()
-
-            return abstract
+            return str(soup)

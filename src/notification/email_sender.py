@@ -2,7 +2,6 @@
 
 import os
 import sys
-import logging
 
 from tempfile import NamedTemporaryFile
 
@@ -27,7 +26,7 @@ from schemas import ReportConfig
 class EmailSender(ISender):
     """Prepare and send e-mails with the reports."""
 
-    highlight_tags = ("<span class='highlight' style='background:#FFA;'>", "</span>")
+    highlight_tags = ("<span class='highlight'>", "</span>")
 
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
@@ -205,7 +204,7 @@ class EmailSender(ISender):
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message,
         )
-    
+
     def get_csv_tempfile(self) -> NamedTemporaryFile:
         temp_file = NamedTemporaryFile(prefix="extracao_dou_", suffix=".csv")
         self.convert_report_to_dataframe().to_csv(temp_file, index=False)
