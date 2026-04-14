@@ -9,21 +9,37 @@ import pytest
 import yaml
 
 # add module path so we can import from other modules
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+_TESTS_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, _TESTS_DIR)
 from schemas import RoDouConfig
 
-YAMLS_DIR = "../dags/ro_dou/dag_confs"
+# Airflow layout (Docker) and repo-root `dag_confs` (dev / mount).
+_YAML_DIRS = [
+    os.path.normpath(os.path.join(_TESTS_DIR, "..", "dags", "ro_dou", "dag_confs")),
+    os.path.normpath(os.path.join(_TESTS_DIR, "..", "dag_confs")),
+]
+
+
+def _collect_yaml_files():
+    paths = []
+    for d in _YAML_DIRS:
+        if not os.path.isdir(d):
+            continue
+        paths.extend(glob.glob(os.path.join(d, "**", "*.yml"), recursive=True))
+        paths.extend(glob.glob(os.path.join(d, "**", "*.yaml"), recursive=True))
+    return sorted(set(paths))
+
+
+_ALL_YAML_FILES = _collect_yaml_files()
 
 
 @pytest.mark.parametrize(
     "data_file",
-    [
-        data_file
-        for data_file in glob.glob(f"{YAMLS_DIR}/**/*.yml", recursive=True)
-        + glob.glob(f"{YAMLS_DIR}/**/*.yaml", recursive=True)
-    ],
+    _ALL_YAML_FILES if _ALL_YAML_FILES else [pytest.param(None, id="no_yaml_dirs")],
 )
 def test_pydantic_validation(data_file):
+    if data_file is None:
+        pytest.skip("Nenhum diretório de YAML encontrado para validação.")
     with open(data_file) as data_fp:
         data = yaml.safe_load(data_fp)
     try:
