@@ -393,13 +393,13 @@ class INLABSHook(BaseHook):
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=f'{ai_custom_prompt}. Enfatize a importância de {df.at[i, "matches"]} na publicação.',
+                        system_prompt=ai_custom_prompt.format({df.at[i, "matches"]}),
                         max_tokens=ai_config.max_tokens,
                         temperature=ai_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
             if not full_text:
-                df.loc[~df["ai_generated"], "texto"] = df.loc[~df["ai_generated"], "texto"].apply(self._trim_text) 
+                df.loc[~df["ai_generated"], "texto"] = df.loc[~df["ai_generated"], "texto"].apply(self._trim_text)
 
             if text_length is not None and text_length != 400:
                 df["texto"] = df["texto"].apply(
@@ -407,7 +407,7 @@ class INLABSHook(BaseHook):
                 )
 
             df["display_date_sortable"] = None
-            
+
             df["texto"] = df.apply(
                     lambda row: self._highlight_terms(
                         [t for t in row["matches"].split(", ") if t],
