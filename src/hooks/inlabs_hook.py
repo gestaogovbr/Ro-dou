@@ -451,13 +451,14 @@ class INLABSHook(BaseHook):
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
 
-            print(self._group_to_dict(df, "matches", cols_output))
-
             return (
                 {}
                 if df.empty
                 else self._group_to_dict(
-                    df.sort_values(by=["matches", "section", "title"]),
+                    df.sort_values(
+                        by=["matches", "section", "ai_generated", "title"],
+                        ascending=[True, True, False, True]
+                    ),
                     "matches",
                     cols_output,
                 )
