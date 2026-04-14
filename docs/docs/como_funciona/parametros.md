@@ -42,17 +42,43 @@ Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem tod
 
 ## Parâmetros de IA (ai_config)
 
-- **ai_config**: Configurações do provedor de IA para geração de resumos automáticos.
-  - **provider**: Provedor de LLM a ser utilizado. Valor aceito: `openai` (compatível com Azure OpenAI).
+Os parâmetros de IA permitem configurar o uso de modelos de inteligência artificial no Ro-DOU para geração automática de resumos das publicações encontradas no Diário Oficial da União (D.O.U).
+
+### Configurações gerais
+
+  - **ai_config**: Configurações do provedor de IA para geração de resumos automáticos.
+  - **provider**: Provedor de LLM a ser utilizado. Valores aceitos: `openai`, `gemini`, `claude`, `azure`.
   - **api_key_var**: Nome da variável do Airflow que contém a chave de API do provedor.
+
+### Parâmetros de geração
 
 Os parâmetros abaixo, utilizados dentro do bloco `search`, controlam o comportamento da IA:
 
-- **use_ai_summary**: Habilita a geração de resumos automáticos com IA para as publicações encontradas. Valores: `True` ou `False`. Default: `False`. (Disponível apenas para INLABS)
+- **use_ai_summary**: Habilita a geração de resumos automáticos com IA para as publicações encontradas.  
+  Valores: `True` ou `False`.  
+  Default: `False`. (Disponível apenas para INLABS)
+
 - **ai_pub_limit**: Número máximo de publicações que serão resumidas por execução da DAG.
+
 - **ai_custom_prompt**: Prompt personalizado enviado ao modelo de IA para orientar a geração dos resumos.
 
-**Observação:** Para utilizar a funcionalidade de IA, é necessário configurar as variáveis de ambiente `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_DEPLOYMENT` e `AZURE_OPENAI_API_KEY` no Apache Airflow. Consulte a seção de [instalação](../como_utilizar/instalacao.md) para mais detalhes.
+- **temperature**: Parâmetro que controla o nível de criatividade das respostas da IA.  
+  Valores entre `0` e `1`.  
+  Default: `0.2`.
+
+- **max_tokens**: Número máximo de tokens que podem ser gerados na resposta da IA.  
+  Default: `2000`.
+
+### Observação
+
+Para utilizar o provider **Azure**, é necessário configurar as seguintes variáveis de ambiente no Apache Airflow:
+
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_VERSION`
+- `AZURE_OPENAI_DEPLOYMENT`
+- `AZURE_OPENAI_API_KEY`
+
+Consulte a seção de [instalação](../como_utilizar/instalacao.md) para mais detalhes.
 
 ## Parâmetros do Relatório (Report)
 O bloco `report` contém as informações de notificação. Não há validação estrita no esquema, mas **deve existir pelo menos um mecanismo de envio** (por exemplo `emails`, `slack_webhook`, `discord_webhook` ou `notification`).
