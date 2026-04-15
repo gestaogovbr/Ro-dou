@@ -56,6 +56,11 @@ class ISender(ABC):
                             .replace("<%%>", open_tag)
                             .replace("</%%>", close_tag)
                         )
+                        item["title"] = (
+                            item["title"]
+                            .replace("<%%>", open_tag)
+                            .replace("</%%>", close_tag)
+                        )
 
         return reports
 
