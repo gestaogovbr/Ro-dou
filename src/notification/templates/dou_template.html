@@ -373,7 +373,7 @@
                                         </div>
 
                                         {% if title %}
-                                            <h3><strong>Resultados para: </strong> {{ title }}</h3>
+                                            <h3><strong>Resultados para: </strong> {{ title | safe }}</h3>
                                         {% endif %}
 
                                     {% endif %}
@@ -390,10 +390,10 @@
                                         {% if document.url_new_tab %}target="_blank"{% endif %}>
                                             {{ document.title | safe }}
                                         </a>
-                                        <div class="section-marker">{{ department| safe }}</div>
+                                        <div class="section-marker">{{ department | safe }}</div>
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
-                                        <div class="abstract">{{ document.abstract | safe}}</div>
+                                        <div class="abstract">{{ document.abstract | safe }}</div>
 
                                         <div class="date">{{ document.date }}</div>
 

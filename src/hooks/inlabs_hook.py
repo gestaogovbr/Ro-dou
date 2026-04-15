@@ -337,7 +337,14 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
             if any(text_terms):
-                df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                # df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                df["matches"] = df.apply(
+                    lambda row: self._find_matches(
+                        row["texto"] + " " + row["identifica"],
+                        keys=text_terms,
+                    ),
+                    axis=1,
+                )
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
@@ -347,6 +354,13 @@ class INLABSHook(BaseHook):
                     lambda row: self._highlight_terms(
                         [t for t in row["matches"].split(", ") if t],
                         row["texto"],
+                    ),
+                    axis=1,
+                )
+                df["identifica"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["identifica"],
                     ),
                     axis=1,
                 )
@@ -476,8 +490,8 @@ class INLABSHook(BaseHook):
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
 
             Matching is done against a normalized (accent-stripped) version of
-            the text so that a search term like "Flavia" also highlights
-            "Flávia" in the original text.  Positions found in the normalized
+            the text so that a search term like "Ministerio" also highlights
+            "Ministério" in the original text.  Positions found in the normalized
             text are mapped back to the original text — this is safe because
             ``_normalize`` maps each source character to exactly one ASCII
             character (accented Latin letters, cedillas, etc.).  If the lengths
