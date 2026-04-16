@@ -102,19 +102,19 @@ class AIRunner:
         max_tokens: int | None,
         temperature: float,
     ) -> str:
-        import google.generativeai as genai
+        from google import genai 
+        from google.genai import types
 
-        genai.configure(api_key=api_key)
-        model_client = genai.GenerativeModel(
-            model_name=model,
-            system_instruction=system_prompt,
+        client=genai.Client(
+            api_key = api_key
         )
-        response = model_client.generate_content(
-            input_text,
-            generation_config={
-                "temperature": temperature,
-                "max_output_tokens": max_tokens,
-            },
+        response = client.models.generate_content(
+            model=model,
+            contents={'text':system_prompt},
+            config=types.GenerateContentConfig(
+                temperature = temperature,
+                max_output_tokens = max_tokens,
+            ),
         )
         return response.text
 
