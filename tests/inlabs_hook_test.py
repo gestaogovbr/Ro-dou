@@ -778,189 +778,207 @@ def test_remove_duplicated_title(inlabs_hook, abstract, result):
 
 
 @pytest.mark.parametrize(
-    "abstract, result",
+    "term_in, qs_out",
+    [
+        ("term1", '"term1"'),
+        ("term1 & term2", '"term1" AND "term2"'),
+        ("term1 | term2", '"term1" OR "term2"'),
+        ("term1 & term2 ! term3", '"term1" AND "term2" AND NOT "term3"'),
+        ("term1 & ( term2 | term3 )", '"term1" AND ( "term2" OR "term3" )'),
+    ],
+)
+def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
+    assert inlabs_hook._term_to_opensearch_qs(term_in) == qs_out
+
+
+@pytest.mark.parametrize(
+    "data_in, query_out",
     [
         (
-            """
-            <table>
-                <tr></tr>
-                <tr>
-                    <td colspan="1" rowspan="1">
-                        <p>QTD.</p>
-                    </td>
-                    <td colspan="1" rowspan="1">
-                        <p>NOME</p>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="1" rowspan="1">
-                        <p>01</p>
-                    </td>
-                    <td colspan="1" rowspan="1">
-                        <p>ANDREA COSTA CHAVES</p>
-                    </td>        
-                </tr>
-            </table>
-            """,
-            """
-            <table>                            
-                <tr>
-                    <td colspan="1" rowspan="1">
-                        <p>QTD.</p>
-                    </td>
-                    <td colspan="1" rowspan="1">
-                        <p>NOME</p>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="1" rowspan="1">
-                        <p>01</p>
-                    </td>
-                    <td colspan="1" rowspan="1">
-                        <p>ANDREA COSTA CHAVES</p>
-                    </td>        
-                </tr>
-            </table>
-            """,
-        )
-    ],
-)
-def test_remove_empty_tr(inlabs_hook, abstract, result):
-    from bs4 import BeautifulSoup
-
-    assert BeautifulSoup(
-        inlabs_hook.TextDictHandler()._remove_empty_tr(abstract), "html.parser"
-    ) == BeautifulSoup(result, "html.parser")
-
-
-@pytest.mark.parametrize(
-    "text, expected",
-    [
-        ("hello world", 11),
-        ("<b>hello</b> world", 11),
-        ("<%%>termo</%%>", 5),
-        ("<p class='x'>abc</p>", 3),
-        ("sem tags", 8),
-        ("", 0),
-    ],
-)
-def test_visible_len(inlabs_hook, text, expected):
-    assert inlabs_hook.TextDictHandler()._visible_len(text) == expected
-
-
-@pytest.mark.parametrize(
-    "text, n, expected_visible",
-    [
-        ("abcdef", 3, 3),
-        ("<b>abc</b>def", 3, 3),  # tags não contam, retém tag completa
-        ("<%%>ab</%%>cde", 4, 4),  # marcadores de destaque não contam
-        ("abc", 10, 3),  # n maior que o texto: retorna tudo
-        ("", 5, 0),
-    ],
-)
-def test_cut_visible_start_visible_len(inlabs_hook, text, n, expected_visible):
-    H = inlabs_hook.TextDictHandler()
-    result = H._cut_visible_start(text, n)
-    assert H._visible_len(result) == expected_visible
-
-
-@pytest.mark.parametrize(
-    "text, n, expected",
-    [
-        # tag HTML preservada no resultado
-        ("<b>hello</b> world", 7, "<b>hello</b> w"),
-        # marcador <%%> preservado
-        ("<%%>abc</%%> def", 5, "<%%>abc</%%> d"),
-    ],
-)
-def test_cut_visible_start_preserves_tags(inlabs_hook, text, n, expected):
-    assert inlabs_hook.TextDictHandler()._cut_visible_start(text, n) == expected
-
-
-@pytest.mark.parametrize(
-    "text, n, expected_visible",
-    [
-        ("abcdef", 3, 3),
-        ("abc<b>def</b>", 3, 3),  # tags não contam, retém tag completa
-        ("ab<%%>cd</%%>ef", 4, 4),
-        ("abc", 10, 3),  # n maior que o texto: retorna tudo
-        ("", 5, 0),
-    ],
-)
-def test_cut_visible_end_visible_len(inlabs_hook, text, n, expected_visible):
-    H = inlabs_hook.TextDictHandler()
-    result = H._cut_visible_end(text, n)
-    assert H._visible_len(result) == expected_visible
-
-
-@pytest.mark.parametrize(
-    "text, n, expected",
-    [
-        # tag HTML preservada no resultado
-        ("hello <b>world</b>", 7, "o <b>world</b>"),
-        # marcador <%%> preservado
-        ("abc <%%>def</%%>", 5, "c <%%>def</%%>"),
-    ],
-)
-def test_cut_visible_end_preserves_tags(inlabs_hook, text, n, expected):
-    assert inlabs_hook.TextDictHandler()._cut_visible_end(text, n) == expected
-
-
-@pytest.mark.parametrize(
-    "text, text_length, expected_text, expected_cut",
-    [
-        # sem tags: comportamento original
-        ("abcde fghij", 5, "abcde", True),
-        ("abc", 10, "abc", False),
-        # tags não contam: "<b>abc</b> de" → visível "abc de" (6 chars)
-        # limite 5 → deve cortar após 5 chars visíveis, preservando a tag
-        ("<b>abc</b> de", 5, "<b>abc</b>", True),
-        # marcador <%%> não conta
-        ("<%%>abc</%%> def ghi", 6, "<%%>abc</%%> def", True),
-        # texto com tabela HTML: tabela não entra na contagem e é preservada inteira
-        ("ab <table><tr><td>x</td></tr></table> cd", 2, "ab", True),
-    ],
-)
-def test_truncate_from_start(
-    inlabs_hook, text, text_length, expected_text, expected_cut
-):
-    result, was_cut = inlabs_hook.TextDictHandler()._truncate_from_start(
-        text, text_length
-    )
-
-    assert result == expected_text
-    assert was_cut == expected_cut
-
-
-@pytest.mark.parametrize(
-    "text, text_length, expected_text, expected_cut",
-    [
-        # sem tags: comportamento original
-        ("abcde fghij", 5, "fghij", True),
-        ("abc", 10, "abc", False),
-        # tags não contam
-        ("ab <b>cde</b>", 5, "b <b>cde</b>", True),
-        # marcador <%%> não conta
-        ("abc <%%>def</%%> ghi", 6, "<%%>def</%%> ghi", True),
-        # tabela preservada inteira e não contada
-        (
-            "ab <table><tr><td>x</td></tr></table> cd",
-            2,
-            "<table><tr><td>x</td></tr></table>cd",
-            True,
+            {
+                "texto": ["term1", "term2"],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
+                        "must": [
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "query_string": {
+                                                "query": '"term1"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term2"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
+                            {"match_phrase": {"pubname": "DO1"}},
+                        ],
+                    }
+                },
+                "size": 10000,
+            },
         ),
         (
-            "ab <table><tr><td>x</td></tr></table> cd",
-            4,
-            " <table><tr><td>x</td></tr></table> cd",
-            True,
+            {
+                "texto": ["term1 & term2 ! term3", "term4 & term5"],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
+                        "must": [
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "query_string": {
+                                                "query": '"term1" AND "term2" AND NOT "term3"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term4" AND "term5"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
+                            {"match_phrase": {"pubname": "DO1"}},
+                        ],
+                    }
+                },
+                "size": 10000,
+            },
+        ),
+        (
+            {
+                "pubname": ["DO1"],
+                "arttype": ["Portaria", "Resolução"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+            },
+            {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
+                        "must": [
+                            {"match_phrase": {"pubname": "DO1"}},
+                            {
+                                "bool": {
+                                    "should": [
+                                        {"match_phrase": {"arttype": "Portaria"}},
+                                        {"match_phrase": {"arttype": "Resolução"}},
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
+                        ],
+                    }
+                },
+                "size": 10000,
+            },
+        ),
+        (
+            {
+                "texto": ["term1", "term2"],
+                "pubname": ["DO1"],
+                "pubdate": ["2024-04-01", "2024-04-02"],
+                "artcategory": ["Ministério da Defesa"],
+                "artcategory_ignore": ["Ministério da Defesa/Comando da Marinha"],
+            },
+            {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "range": {
+                                    "pubdate": {
+                                        "gte": "2024-04-01",
+                                        "lte": "2024-04-02",
+                                    }
+                                }
+                            }
+                        ],
+                        "must": [
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "query_string": {
+                                                "query": '"term1"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": '"term2"',
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
+                            {"match_phrase": {"pubname": "DO1"}},
+                            {"match_phrase": {"artcategory": "Ministério da Defesa"}},
+                        ],
+                        "must_not": [
+                            {
+                                "match_phrase_prefix": {
+                                    "artcategory": "Ministério da Defesa/Comando da Marinha"
+                                }
+                            },
+                        ],
+                    }
+                },
+                "size": 10000,
+            },
         ),
     ],
 )
-def test_truncate_from_end(inlabs_hook, text, text_length, expected_text, expected_cut):
-    result, was_cut = inlabs_hook.TextDictHandler()._truncate_from_end(
-        text, text_length
-    )
-
-    assert result == expected_text
-    assert was_cut == expected_cut
+def test_generate_opensearch_query(inlabs_hook, data_in, query_out):
+    assert inlabs_hook._generate_opensearch_query(data_in) == query_out
