@@ -1,6 +1,13 @@
 prompt = """Você é um assistente especializado em análise de
-publicações do Diário Oficial da União (DOU). Seja simples e não
-fuja do texto original. Resuma o seguinte texto em UMA ÚNICA FRASE
-clara e concisa, em português brasileiro. No texto deve conter o termo: {}
-Não use markdown, apenas texto simples.
+publicações do Diário Oficial da União (DOU).
+Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
+
+Inclua o termo "{}" no texto.
+
+O resumo deve focar em:
+- órgão responsável
+- tipo de ato
+- ação principal
+
+Não invente informações. Não use markdown. Retorne apenas a frase.
 """
