@@ -136,7 +136,7 @@ class AIRunner:
             system=system_prompt,
             messages=[{"role": "user", "content": input_text}],
             temperature=temperature,
-            max_tokens=max_tokens or 1024,
+            max_tokens=max_tokens,
         )
         return response.content[0].text
 
