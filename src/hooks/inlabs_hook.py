@@ -657,8 +657,7 @@ class INLABSHook(BaseHook):
             kept.reverse()
             return "".join(kept), was_truncated
 
-        @staticmethod
-        def _trim_text(text: str, text_length: int = 400) -> str:
+        def _trim_text(self, text: str, text_length: int = 400) -> str:
             """Truncates text while keeping the `<%%>` marker centered when present.
 
             Tables (``<table>…</table>``) are excluded from the character count and
@@ -683,13 +682,52 @@ class INLABSHook(BaseHook):
             if text_length is False or text_length is None or text_length <= 0:
                 text_length = 400
 
-            _from_start = INLABSHook.TextDictHandler._truncate_from_start
-            _from_end = INLABSHook.TextDictHandler._truncate_from_end
+            _from_start = self._truncate_from_start
+            _from_end = self._truncate_from_end
 
             parts = text.split("<%%>", 1)
 
             if len(parts) > 1:
                 before_full, after_full = parts[0], parts[1]
+
+                # If <%%> is inside a table, the split above breaks the table.
+                # Detect unbalanced <table> tags and reconstruct the full table.
+                opens_before = len(re.findall(r"<table", before_full, re.IGNORECASE))
+                closes_before = len(re.findall(r"</table>", before_full, re.IGNORECASE))
+
+                if opens_before > closes_before:
+                    open_matches = list(
+                        re.finditer(r"<table", before_full, re.IGNORECASE)
+                    )
+                    enclosing_start = open_matches[closes_before].start()
+
+                    depth = opens_before - closes_before
+                    enclosing_end = None
+                    for m in re.finditer(r"</?table", after_full, re.IGNORECASE):
+                        if not m.group().startswith("</"):
+                            depth += 1
+                        else:
+                            depth -= 1
+                            if depth == 0:
+                                enclosing_end = m.end()
+                                break
+
+                    if enclosing_end is not None:
+                        full_table = (
+                            before_full[enclosing_start:]
+                            + "<%%>"
+                            + after_full[:enclosing_end]
+                        )
+                        before_full = before_full[:enclosing_start]
+                        after_full = after_full[enclosing_end:]
+
+                        before, before_cut = _from_end(before_full, text_length)
+                        after, after_cut = _from_start(after_full, text_length)
+
+                        prefix = "(...) " if before_cut else ""
+                        suffix = " (...)" if after_cut else ""
+
+                        return f"{prefix}{before}{full_table}{after}{suffix}"
 
                 before, before_cut = _from_end(before_full, text_length)
                 after, after_cut = _from_start(after_full, text_length)
