@@ -24,9 +24,9 @@
             font-size: 16px;
             font-weight: normal;
         }
-        
+
         .highlight {
-            background-color: #FFA;           
+            background-color: #FFA;
         }
 
         .ext_header {
@@ -247,7 +247,7 @@
             text-align: center;
             font-family: Arial, sans-serif;
         }
-      
+
         table tr:first-child td {
             background-color: #ddd;
             font-weight: bold;
@@ -286,7 +286,7 @@
                 flex-direction: column;
                 gap: 15px;
             }
-        }        
+        }
     </style>
 </head>
 
@@ -384,7 +384,7 @@
                                         </div>
 
                                         {% if title %}
-                                            <h3><strong>Resultados para: </strong> {{ title }}</h3>
+                                            <h3><strong>Resultados para: </strong> {{ title | safe }}</h3>
                                         {% endif %}
 
                                     {% endif %}
@@ -401,7 +401,7 @@
                                         {% if document.url_new_tab %}target="_blank"{% endif %}>
                                             {{ document.title | safe }}
                                         </a>
-                                        <div class="section-marker">{{ department| safe }}</div>
+                                        <div class="section-marker">{{ department | safe }}</div>
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}

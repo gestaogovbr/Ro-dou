@@ -111,6 +111,6 @@ class TermSelector:
 
         terms_df = db_hook.get_pandas_df(sql)
         # Remove unnecessary spaces and change null for ''
-        terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
+        terms_df = terms_df.map(lambda x: str.strip(x) if pd.notnull(x) else "")
 
         return terms_df.to_json(orient="columns")
