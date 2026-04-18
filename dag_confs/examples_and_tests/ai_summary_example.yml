@@ -12,7 +12,7 @@ dag:
     api_key_var: OPENAI_API_KEY
     model: gpt-4o-mini
     temperature: 0.2
-    max_tokens: 2000
+    max_tokens: 200
   search:
     sources:
       - INLABS
@@ -23,9 +23,20 @@ dag:
     use_ai_summary: True
     ai_pub_limit: 5
     ai_custom_prompt: |
-      Você é um assistente que cria resumos concisos e informativos de publicações oficiais.
+      Você é um assistente especializado em análise de
+      publicações do Diário Oficial da União (DOU).
+      Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
+
+      Inclua o termo "{}" no texto.
+
+      O resumo deve focar em:
+      - órgão responsável
+      - tipo de ato
+      - ação principal
+
+      Não invente informações. Não use markdown. Retorne apenas a frase.
   report:
     emails:
       - destination@economia.gov.br
     attach_csv: True
-    subject: "Teste do Ro-dou"
+    subject: "Teste do Ro-dou com IA"
