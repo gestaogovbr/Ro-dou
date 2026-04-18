@@ -15,10 +15,15 @@ library.
 """
 
 import textwrap
+import os
+import sys
 from typing import List, Optional, Set, Union
 from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 from pydantic import field_validator, model_validator
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from ai.provider import AIProvider
+from ai.config import prompt
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
@@ -149,6 +154,22 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    use_ai_summary: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibido um resumo gerado por IA. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_custom_prompt: Optional[str] = Field(
+        default=prompt,
+        description="Prompt do agente para geração do resumo por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ai_pub_limit: Optional[int] = Field(
+        default=None,
+        description="Número máximo de publicações a serem processadas por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
@@ -232,6 +253,26 @@ class ReportConfig(BaseModel):
         description="Texto a ser exibido quando não há resultados",
     )
 
+class AIConfig(BaseModel):
+    """Represents the AI configuration in the YAML file."""
+    provider: AIProvider = Field(
+        description="Nome do provedor da API de IA")
+
+    api_key_var: str = Field(
+        description="Variável do Airflow da chave da API de IA")
+
+    model: str = Field(
+        description="Modelo da API de IA")
+
+    temperature: Optional[float] = Field(
+        default=0.2,
+        ge=0.0,
+        le=1.0,
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+
+    max_tokens: Optional[int] = Field(
+        default=200,
+        description="Número máximo de tokens para a resposta da IA.")
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -254,6 +295,11 @@ class DAGConfig(BaseModel):
         description="Seção para definição dos endereços de e-mail de notificação"
     )
     doc_md: Optional[str] = Field(default=None, description="description")
+
+    ai_config: Optional[AIConfig] = Field(
+        default=None,
+        description="Configurações de IA"
+    )
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
         "`subject`, `skip_null`"
@@ -287,6 +333,15 @@ class DAGConfig(BaseModel):
         tags_param.update({"dou", "generated_dag"})
         return tags_param
 
+    @model_validator(mode='after')
+    def validate_ai_config(self):
+        for search in self.search:
+            if search.use_ai_summary and not self.ai_config:
+                raise ValueError(
+                    "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True."
+                )
+
+        return self
 
 class RoDouConfig(BaseModel):
     """Represents the overall configuration in the YAML file."""

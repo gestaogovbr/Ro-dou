@@ -550,6 +550,7 @@ class INLABSSearcher(BaseSearcher):
 
     def exec_search(
         self,
+        ai_config: dict,
         terms: Union[List[str], str],
         dou_sections: List[str],
         search_date: str,
@@ -560,6 +561,9 @@ class INLABSSearcher(BaseSearcher):
         full_text: bool,
         text_length: Optional[int],
         use_summary: bool,
+        use_ai_summary: bool,
+        ai_pub_limit: int,
+        ai_custom_prompt: str,
         pubtype: List[str],
         reference_date: datetime = datetime.now(),
     ) -> Dict:
@@ -604,7 +608,15 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text, text_length, use_summary
+            ai_config=ai_config,
+            search_terms=search_terms,
+            ignore_signature_match=ignore_signature_match,
+            full_text=full_text,
+            text_length=text_length,
+            use_summary=use_summary,
+            use_ai_summary=use_ai_summary,
+            ai_pub_limit=ai_pub_limit,
+            ai_custom_prompt=ai_custom_prompt,
         )
 
         group_results = self._group_results(search_results, terms, department)

@@ -33,7 +33,7 @@ from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 from airflow.models import Variable
-
+from ai.runner import AIRunner
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
@@ -124,16 +124,77 @@ class DouDigestDagGenerator:
         from notification.failure_sender import FailureSender
 
         try:
-            task_instance = context.get("task_instance") or context.get("ti")
-            dag_run = context.get("dag_run")
-            exception = context.get("exception")
+
+            task_instance = context.get('task_instance')
+            dag_run = context.get('dag_run')
+            exception = context.get('exception')
 
             if not task_instance or not dag_run:
                 logging.error("Missing required context: task_instance or dag_run")
                 return
 
-            failure_sender = FailureSender(specs=specs)
-            failure_sender.send(context, dag_run, task_instance, exception)
+            # Determina lista de emails para notificação
+            email_list = []
+
+            if specs.callback and specs.callback.on_failure_callback:
+                # Usa emails configurados no .yaml
+                email_list = specs.callback.on_failure_callback
+            else:
+                # Usa email admin padrão
+                try:
+                    email_admin = Variable.get('email_admin', default_var=None)
+                    if email_admin:
+                        email_list = [email_admin]
+                    else:
+                        logging.warning("No email_admin variable found in Airflow")
+                except Exception as e:
+                    logging.error(f"Error getting email_admin variable: {str(e)}")
+
+            if not email_list:
+                logging.warning("No email configured for failure notification (neither callback nor email_admin variable)")
+
+            # Envia email se houver destinatários
+            if email_list:
+                try:
+                    execution_date_str = dag_run.execution_date.strftime("%d/%m/%Y %H:%M") if dag_run.execution_date else "N/A"
+
+                    send_email(
+                        to=email_list,
+                        subject=f'Falha na DAG {dag_run.dag_id}',
+                        html_content=f'''
+                        <h3>Falha detectada</h3>
+                        <p><strong>DAG:</strong> {dag_run.dag_id}</p>
+                        <p><strong>Task:</strong> {task_instance.task_id}</p>
+                        <p><strong>Estado:</strong> {task_instance.state}</p>
+                        <p><strong>Data de execução:</strong> {execution_date_str}</p>
+                        <p><strong>Exceção:</strong> {exception}</p>
+                        <p><strong>Log:</strong> <a href="{task_instance.log_url}" target="_blank">Ver log completo</a></p>
+                        '''
+                    )
+                    logging.error(f"SUCCESS: Failure notification email sent to: {email_list}")
+                except Exception as e:
+                    logging.error(f"ERROR: Failed to send failure notification email: {str(e)}", exc_info=True)
+
+            # Tenta enviar notificação via Slack (se disponível)
+            try:
+                conn = BaseHook.get_connection(self.SLACK_CONN_ID)
+                description = json.loads(conn.description)
+                slack_notifier = SlackNotifier(
+                    slack_conn_id=self.SLACK_CONN_ID,
+                    text=(
+                        ":bomb: *Falha na DAG*"
+                        f"\n*DAG:* `{dag_run.dag_id}`"
+                        f"\n*Task:* `{task_instance.task_id}`"
+                        f"\n*State:* `{task_instance.state}`"
+                        f"\n*Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
+                        f"\n*Exception:* {exception}"
+                        f"\n*Log:* <{task_instance.log_url}|Ver log completo>"
+                    ),
+                    channel=description["channel"],
+                )
+                slack_notifier.notify(context)
+            except Exception as e:
+                logging.error(f"Slack notification not sent: {str(e)}")
 
         except Exception as e:
             logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
@@ -277,6 +338,7 @@ class DouDigestDagGenerator:
 
     def perform_searches(
         self,
+        ai_config,
         header,
         sources,
         territory_id,
@@ -290,6 +352,9 @@ class DouDigestDagGenerator:
         full_text: Optional[bool],
         text_length: Optional[int],
         use_summary: Optional[bool],
+        use_ai_summary: Optional[bool],
+        ai_pub_limit: Optional[int],
+        ai_custom_prompt: Optional[str],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -318,6 +383,7 @@ class DouDigestDagGenerator:
         elif "INLABS" in sources:
             terms = self._parse_term_list(term_list)
             inlabs_result = self.searchers["INLABS"].exec_search(
+                ai_config=ai_config,
                 terms=terms,
                 dou_sections=dou_sections,
                 search_date=search_date,
@@ -328,6 +394,9 @@ class DouDigestDagGenerator:
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                use_ai_summary=use_ai_summary,
+                ai_pub_limit=ai_pub_limit,
+                ai_custom_prompt=ai_custom_prompt,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -394,6 +463,89 @@ class DouDigestDagGenerator:
             return "skip_notification" if skip_notification else "send_notification"
         else:
             return "send_notification"
+
+    def select_terms_from_airflow_variable(self, variable: str):
+        """
+        Retrieves and processes a list of terms from an Apache Airflow variable.
+
+        This function searches for a specific Airflow variable and converts it into a list
+        of terms, supporting both JSON and line-delimited text formats.
+
+        Arguments:
+        variable (str): Name of the Airflow variable to be retrieved.
+
+        Returns:
+        list: List of terms extracted from the Airflow variable.
+
+        Raises:
+        KeyError: When a specified variable was not found in Airflow.
+
+        Examples:
+        >>> # For an Airflow variable containing JSON: ["term1", "term2", "term3"]
+        >>> terms = self.select_terms_from_airflow_variable("my_json_list")
+        >>> print(terms)
+        ['term1', 'term2', 'term3']
+
+        >>> # For a variable An Airflow variable containing text separated by lines:
+        >>>#term1
+        >>>#term2
+        >>>#term3
+        >>> terms = self.select_terms_from_airflow_variable("my_text_list")
+        >>> print (terms)
+        ['term1', 'term2', 'term3']
+
+        Note:
+        - If the variable value is a list (JSON), it will be parsed with json.loads()
+        - Otherwise, it will be treated as a string and split by line breaks
+        - Useful for configuring dynamic lists using Airflow variables
+        """
+
+        term_list = []
+        var_name = variable
+
+        try:
+            var_value = Variable.get(var_name)
+            # Se já é uma lista, retorna direto
+            if isinstance(var_value, list):
+                return var_value
+
+            if isinstance(var_value, str):
+                if var_value.strip().startswith('['):
+                    return ast.literal_eval(var_value)
+                else:
+                    # Trata como texto separado por linhas
+                    return var_value.splitlines()
+            return term_list
+
+        except (KeyError):
+            raise KeyError(
+                f"Airflow variable {var_name} not found."
+            )
+
+
+
+    def select_terms_from_db(self, sql: str, conn_id: str):
+        """Queries the `sql` and return the list of terms that will be
+        used later in the DOU search. The first column of the select
+        must contain the terms to be searched. The second column, which
+        is optional, is a classifier that will be used to group and sort
+        the email report and the generated CSV.
+        """
+        conn_type = BaseHook.get_connection(conn_id).conn_type
+        if conn_type == "mssql":
+            if MsSqlHook is None:
+                raise RuntimeError("MsSqlHook indisponível: instale 'apache-airflow-providers-microsoft-mssql' para usar recursos MSSQL.")
+            db_hook = MsSqlHook(conn_id)
+        elif conn_type in ("postgresql", "postgres"):
+            db_hook = PostgresHook(conn_id)
+        else:
+            raise Exception("Tipo de banco de dados não suportado: ", conn_type)
+
+        terms_df = db_hook.get_pandas_df(sql)
+        # Remove unnecessary spaces and change null for ''
+        terms_df = terms_df.applymap(lambda x: str.strip(x) if pd.notnull(x) else "")
+
+        return terms_df.to_json(orient="columns")
 
     def send_notification(
         self, num_searches: int, specs: DAGConfig, report_date: str, **context
@@ -501,6 +653,9 @@ class DouDigestDagGenerator:
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,
                         op_kwargs={
+                            "ai_config": specs.ai_config,
+                            # "api_key_var": specs.ai_config.api_key_var,
+                            # "model": specs.model,
                             "header": subsearch.header,
                             "sources": subsearch.sources,
                             "territory_id": subsearch.territory_id,
@@ -514,6 +669,9 @@ class DouDigestDagGenerator:
                             "full_text": subsearch.full_text,
                             "text_length": subsearch.text_length,
                             "use_summary": subsearch.use_summary,
+                            "use_ai_summary": subsearch.use_ai_summary,
+                            "ai_pub_limit": subsearch.ai_pub_limit,
+                            "ai_custom_prompt": subsearch.ai_custom_prompt,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,
@@ -556,6 +714,7 @@ class DouDigestDagGenerator:
             tg_exec_searchs >> has_matches_task
 
             has_matches_task >> [send_notification_task, skip_notification_task]
+
 
         return dag
 

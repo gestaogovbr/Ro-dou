@@ -24,9 +24,9 @@
             font-size: 16px;
             font-weight: normal;
         }
-        
+
         .highlight {
-            background-color: #FFA;           
+            background-color: #FFA;
         }
 
         .ext_header {
@@ -181,11 +181,22 @@
             line-height: 1.5;
         }
 
+        .summary-block {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f7ff;
+            border-left: 3px solid #06acff;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .date {
             color: #6c757d;
             font-size: 14px;
             font-weight: 500;
             text-align: right;
+            margin-top: 10px;
+            padding-top: 10px;
         }
 
         /* Rodapé fixo do sistema */
@@ -218,7 +229,7 @@
             border: none;
             height: 2px;
             background: linear-gradient(90deg, #06acff, #e9ecef, #06acff);
-            margin: 10px 0;
+            margin: 30px 0;
         }
 
         .no-results {
@@ -236,7 +247,7 @@
             text-align: center;
             font-family: Arial, sans-serif;
         }
-      
+
         table tr:first-child td {
             background-color: #ddd;
             font-weight: bold;
@@ -275,7 +286,7 @@
                 flex-direction: column;
                 gap: 15px;
             }
-        }        
+        }
     </style>
 </head>
 
@@ -393,7 +404,15 @@
                                         <div class="section-marker">{{ department | safe }}</div>
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
+                                        {% if document.abstract %}
                                         <div class="abstract">{{ document.abstract | safe }}</div>
+                                        {% endif %}
+
+                                        {% if document.ai_sufix %}
+                                        <div class="summary-block">
+                                            <em>{{ document.ai_sufix | safe }}</em>
+                                        </div>
+                                        {% endif %}
 
                                         <div class="date">{{ document.date }}</div>
 

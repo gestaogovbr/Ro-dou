@@ -12,6 +12,15 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
   * **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
 * **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
 * **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
+* **ai_config** *(opcional): Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
+  * **provider** *(obrigatório)*: Provedor de LLM a ser utilizado. Valores aceitos: `openai`, `gemini`, `claude`, `azure`.
+  * **api_key_var** *(obrigatório)*: Nome da variável do Airflow que contém a chave de API do provedor.
+  * **model** *(obrigatório)*: Modelo da API de IA suportado pelo provider.
+  * **temperature** *(opcional)*: Parâmetro de temperature para o gerador de IA. Valores entre 0.0 e 1.
+    - Valores mais baixos (próximos de 0.0) tornam as respostas mais determinísticas e consistentes.
+    - Valores mais altos (até 1.0) aumentam a diversidade e criatividade das respostas.
+  * **max_tokens**: Número máximo de tokens que podem ser gerados na resposta da IA.
+  Default: `200`.
 
 (Quando uma chave não é informada, é utilizada a configuração padrão definida pelo gerador: veja o código-fonte em `src/schemas.py` para os valores e comportamentos.)
 
@@ -31,6 +40,11 @@ Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem tod
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **text_length** *(opcional)*: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)
 - **use_summary** *(opcional)*: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **use_ai_summary**: Habilita a geração de resumos automáticos com IA para as publicações encontradas.
+  Valores: `True` ou `False`.
+  Default: `False`. (Disponível apenas para INLABS) [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
+- **ai_pub_limit**: Número máximo de publicações que serão resumidas por IA na execução da DAG. Default: 5
+- **ai_custom_prompt**: Prompt personalizado enviado ao modelo de IA para orientar a geração dos resumos.
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
 - **pubtype** *(opcional)*: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).
