@@ -337,7 +337,14 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
             if any(text_terms):
-                df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                # df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                df["matches"] = df.apply(
+                    lambda row: self._find_matches(
+                        row["texto"] + " " + row["identifica"],
+                        keys=text_terms,
+                    ),
+                    axis=1,
+                )
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
@@ -347,6 +354,13 @@ class INLABSHook(BaseHook):
                     lambda row: self._highlight_terms(
                         [t for t in row["matches"].split(", ") if t],
                         row["texto"],
+                    ),
+                    axis=1,
+                )
+                df["identifica"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["identifica"],
                     ),
                     axis=1,
                 )
@@ -472,9 +486,16 @@ class INLABSHook(BaseHook):
                 else ""
             )
 
-        @staticmethod
-        def _highlight_terms(terms: list, text: str) -> str:
+        def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
+
+            Matching is done against a normalized (accent-stripped) version of
+            the text so that a search term like "Ministerio" also highlights
+            "Ministério" in the original text.  Positions found in the normalized
+            text are mapped back to the original text — this is safe because
+            ``_normalize`` maps each source character to exactly one ASCII
+            character (accented Latin letters, cedillas, etc.).  If the lengths
+            diverge for any reason, the method falls back to direct matching.
 
             Args:
                 terms (list): List of terms to be wrapped on text.
@@ -486,15 +507,27 @@ class INLABSHook(BaseHook):
                     and `</%%>`.
             """
 
-            escaped_terms = [re.escape(term) for term in terms if term]
+            escaped_terms = [re.escape(self._normalize(term)) for term in terms if term]
             if not escaped_terms:
                 return text
             pattern = rf"\b({'|'.join(escaped_terms)})\b"
-            highlighted_text = re.sub(
-                pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE
-            )
 
-            return highlighted_text
+            normalized_text = self._normalize(text)
+
+            if len(normalized_text) != len(text):
+                # direct case-insensitive match on original text
+                direct_pattern = rf"\b({'|'.join(re.escape(t) for t in terms if t)})\b"
+                return re.sub(direct_pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE)
+
+            result = []
+            last_end = 0
+            for m in re.finditer(pattern, normalized_text, flags=re.IGNORECASE):
+                result.append(text[last_end : m.start()])
+                result.append(f"<%%>{text[m.start() : m.end()]}</%%>")
+                last_end = m.end()
+            result.append(text[last_end:])
+
+            return "".join(result)
 
         @staticmethod
         def _visible_len(text: str) -> int:
