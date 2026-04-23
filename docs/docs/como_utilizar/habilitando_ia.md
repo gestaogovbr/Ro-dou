@@ -25,15 +25,10 @@ O texto gerado por IA pode conter informações inverídicas, imprecisas ou inco
 
 
 ## Parâmetros da DAG
-* **ai_config** *(obrigatório)*: Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS)
-  * **provider** *(obrigatório)*: Provedor de LLM a ser utilizado. Valores aceitos: `openai`, `gemini`, `claude`, `azure`.
-  * **api_key_var** *(obrigatório)*: Nome da variável do Airflow que contém a chave de API do provedor.
-  * **model** *(obrigatório)*: Modelo da API de IA suportado pelo provider. (ex: gpt-4o-mini)
-  * **temperature** *(opcional)*: Parâmetro de temperature para o gerador de IA. Valores entre 0.0 e 1.
-    - Valores mais baixos (próximos de 0.0) tornam as respostas mais determinísticas e consistentes.
-    - Valores mais altos (até 1.0) aumentam a diversidade e criatividade das respostas.
-  * **max_tokens** *(opcional)*: Número máximo de tokens que podem ser gerados na resposta da IA.
-  Default: `200`.
+- **ai_config** *(obrigatório)*: Configurações do provedor de IA (Disponível apenas para INLABS)
+    - **provider** *(obrigatório)*: Provedor de LLM a ser utilizado. Valores aceitos: `openai`, `gemini`, `claude`, `azure`.
+    - **api_key_var** *(obrigatório)*: Nome da variável do Airflow que contém a chave de API do provedor.
+    - **model** *(obrigatório)*: Modelo da API de IA suportado pelo provider. (ex: gpt-4o-mini)
 
 ### Observação
 
@@ -45,10 +40,16 @@ Para o provider **Azure**, é necessário configurar, além dos parâmetros acim
 - `AZURE_OPENAI_API_KEY`
 
 ## Parâmetros da Pesquisa (Search)
-- **use_ai_summary** *(opcional)*: Habilita a geração de resumos automáticos com IA para as publicações encontradas.
-  Valores: `True` ou `False`. Default: `False`. (Disponível apenas para INLABS)
-- **ai_pub_limit** *(opcional)*: Número máximo de publicações que serão resumidas por IA na execução da DAG. Default: 5
-- **ai_custom_prompt** *(opcional)*: Prompt personalizado enviado ao modelo de IA para orientar a geração dos resumos.
+- **ai_config** *(obrigatório)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)
+    - **use_ai_summary** *(opcional)*: Habilita a geração de resumos automáticos com IA para as publicações encontradas.
+      Valores: `True` ou `False`. Default: `False`. (Disponível apenas para INLABS)
+    - **ai_pub_limit** *(opcional)*: Número máximo de publicações que serão resumidas por IA na execução da DAG. Default: 5
+    - **ai_custom_prompt** *(opcional)*: Prompt personalizado enviado ao modelo de IA para orientar a geração dos resumos.
+    - **temperature** *(opcional)*: Parâmetro de temperature para o gerador de IA. Valores entre 0.0 e 1.
+        - Valores mais baixos (próximos de 0.0) tornam as respostas mais determinísticas e consistentes.
+        - Valores mais altos (até 1.0) aumentam a diversidade e criatividade das respostas.
+    - **max_tokens** *(opcional)*: Número máximo de tokens que podem ser gerados na resposta da IA.
+    Default: `200`
 
 
 ### Prompt padrão (default)
@@ -66,3 +67,5 @@ O resumo deve focar em:
 Não invente informações. Não use markdown. Retorne apenas a frase.
 ```
 
+### Observações
+- Caso o use_summary esteja habilitado como True: Será considerado o campo da ementa e não será processado para geração de resumo por IA
