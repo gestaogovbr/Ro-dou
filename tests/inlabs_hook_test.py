@@ -232,11 +232,11 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. Sed ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
-            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
             voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
-            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
             adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
             dolore magnam aliquam quaerat voluptatem.
             """,
@@ -247,12 +247,12 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. Sed ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
-            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
             voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
-            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
-            adipisci velit, sed quia non numquam eius modi (...)"""
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
+            adipisci velit, sed quia non numquam eius modi tempora (...)"""
             ),
         ),
     ],
@@ -270,11 +270,11 @@ def test_trim_text_length(inlabs_hook, texto_in, texto_out):
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. Sed ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
-            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam 
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et
+            quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
             voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. 
-            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, 
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
             adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
             dolore magnam aliquam quaerat voluptatem.
             """,
@@ -282,7 +282,7 @@ def test_trim_text_length(inlabs_hook, texto_in, texto_out):
             (
                 """(...) d ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et 
+            totam rem aperiam, eaque ipsa <%%>Pellentesque</%%> quae ab illo inventore veritatis et
             quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam (...)"""
             ),
         ),
@@ -459,7 +459,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
+                        "abstract": "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet.",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -472,7 +472,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 2",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>.",
+                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%><%%>Pellentesque</%%></%%>.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -523,7 +523,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
                             "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
                             "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
                             "                        viverra finibus a et magna. Pellentesque vel elementum\n"
@@ -627,7 +627,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<p><%%>Lorem</%%> ipsum dolor sit amet.</p>",
+                        "abstract": "<p><%%><%%>Lorem</%%></%%> ipsum dolor sit amet.</p>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -761,7 +761,7 @@ def test_transform_search_results(
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%>Pellentesque</%%> Phasellus venenatis auctor mauris.",
+                        "abstract": "<%%><%%>Pellentesque</%%></%%> Phasellus venenatis auctor mauris.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -837,12 +837,12 @@ def test_remove_duplicated_title(inlabs_hook, abstract, result):
                     </td>
                     <td colspan="1" rowspan="1">
                         <p>ANDREA COSTA CHAVES</p>
-                    </td>        
+                    </td>
                 </tr>
             </table>
             """,
             """
-            <table>                            
+            <table>
                 <tr>
                     <td colspan="1" rowspan="1">
                         <p>QTD.</p>
@@ -857,7 +857,7 @@ def test_remove_duplicated_title(inlabs_hook, abstract, result):
                     </td>
                     <td colspan="1" rowspan="1">
                         <p>ANDREA COSTA CHAVES</p>
-                    </td>        
+                    </td>
                 </tr>
             </table>
             """,
