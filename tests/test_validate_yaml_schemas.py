@@ -125,3 +125,24 @@ def test_validate_no_terms(data):
             assert "Pelo menos um critério de busca deve ser fornecido" \
                 in str(exc_info.value)
 
+
+def test_validate_ai_config_requires_ai_config_when_use_ai_summary_true():
+    data = {
+        "dag": {
+            "id": "ai_summary_requires_ai_config",
+            "description": "DAG de teste para validação de ai_config",
+            "search": {
+                "sources": ["INLABS"],
+                "terms": ["teste"],
+                "ai_search_config": {"use_ai_summary": True},
+            },
+            "report": {
+                "emails": ["destination@economia.gov.br"],
+                "subject": "Teste AI summary sem ai_config",
+            },
+        }
+    }
+
+    exc_info = pytest.raises(ValidationError, RoDouConfig, **data)
+    assert "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True." \
+        in str(exc_info.value)
