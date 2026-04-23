@@ -11,11 +11,11 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.models import Variable
 from typing import Optional
+from schemas import AIConfig, AISearchConfig
+from ai.runner import AIRunner
 
 from bs4 import BeautifulSoup
 
-from schemas import AIConfig
-from ai.runner import AIRunner
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -59,9 +59,7 @@ class INLABSHook(BaseHook):
     def search_text(
         self,
         ai_config: dict,
-        ai_pub_limit: int,
-        use_ai_summary: bool,
-        ai_custom_prompt: str,
+        ai_search_config: dict,
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
@@ -110,15 +108,13 @@ class INLABSHook(BaseHook):
         return (
             self.TextDictHandler().transform_search_results(
                 ai_config=ai_config,
+                ai_search_config=ai_search_config,
                 response=all_results,
                 text_terms=filtered_text_terms,
                 ignore_signature_match=ignore_signature_match,
-                ai_pub_limit=ai_pub_limit,
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
-                use_ai_summary=use_ai_summary,
-                ai_custom_prompt=ai_custom_prompt,
             )
             if not all_results.empty
             else {}
@@ -304,15 +300,13 @@ class INLABSHook(BaseHook):
         def transform_search_results(
             self,
             ai_config: AIConfig,
+            ai_search_config: AISearchConfig,
             response: pd.DataFrame,
             text_terms: list,
             ignore_signature_match: bool,
-            ai_pub_limit: int,
-            ai_custom_prompt: str,
             full_text: bool = False,
             text_length: int = 400,
             use_summary: bool = False,
-            use_ai_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -399,7 +393,7 @@ class INLABSHook(BaseHook):
 
             df["ai_generated"] = False
 
-            if use_ai_summary:
+            if ai_search_config and ai_search_config.use_ai_summary:
                 if use_summary:
                     # AI only where ementa not exists
                     mask = df["ementa"].isnull()
@@ -407,16 +401,16 @@ class INLABSHook(BaseHook):
                     # AI on entire column
                     mask = df["texto"].notna()
 
-                idx = df.loc[mask].index[:ai_pub_limit]
+                idx = df.loc[mask].index[:ai_search_config.ai_pub_limit]
                 for i in idx:
                     df.at[i, "texto"] = AIRunner.run(
                         provider=ai_config.provider,
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=ai_custom_prompt.format(df.at[i, "matches"]),
-                        max_tokens=ai_config.max_tokens,
-                        temperature=ai_config.temperature,
+                        system_prompt=ai_search_config.ai_custom_prompt.format(df.at[i, "matches"]),
+                        max_tokens=ai_search_config.max_tokens,
+                        temperature=ai_search_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
 

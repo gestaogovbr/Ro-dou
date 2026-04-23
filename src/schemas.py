@@ -46,6 +46,38 @@ class FetchTermsConfig(BaseModel):
         "banco de dados",
     )
 
+class AISearchConfig(BaseModel):
+    """Represents the AI Search configuration in the YAML file."""
+
+    use_ai_summary: bool = Field(
+        default=False,
+        description="Define se no relatório será exibido um resumo gerado por IA. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    ai_custom_prompt: Optional[str] = Field(
+        default=prompt,
+        description="Prompt do agente para geração do resumo por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    ai_pub_limit: Optional[int] = Field(
+        default=10,
+        description="Número máximo de publicações a serem processadas por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    temperature: Optional[float] = Field(
+        default=0.2,
+        ge=0.0,
+        le=1.0,
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+
+    max_tokens: Optional[int] = Field(
+        default=200,
+        description="Número máximo de tokens para a resposta da IA.")
+
 
 class SearchField(BaseModel):
     """Represents the field for search in the YAML file."""
@@ -154,22 +186,6 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
-    use_ai_summary: Optional[bool] = Field(
-        default=False,
-        description="Define se no relatório será exibido um resumo gerado por IA. "
-        "Valores: True ou False. Default: False. "
-        "(Funcionalidade disponível apenas no INLABS)",
-    )
-    ai_custom_prompt: Optional[str] = Field(
-        default=prompt,
-        description="Prompt do agente para geração do resumo por IA. "
-        "(Funcionalidade disponível apenas no INLABS)",
-    )
-    ai_pub_limit: Optional[int] = Field(
-        default=None,
-        description="Número máximo de publicações a serem processadas por IA. "
-        "(Funcionalidade disponível apenas no INLABS)",
-    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
@@ -183,6 +199,12 @@ class SearchConfig(BaseModel):
         description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
         "(Funcionalidade disponível apenas no Querido Diário)"
     )
+    ai_search_config: Optional[AISearchConfig] = Field(
+        default=None,
+        description="Configuração específica para o uso de IA no relatório. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
 
     @model_validator(mode='after')
     def validate_search_criteria(self):
@@ -336,7 +358,11 @@ class DAGConfig(BaseModel):
     @model_validator(mode='after')
     def validate_ai_config(self):
         for search in self.search:
-            if search.use_ai_summary and not self.ai_config:
+            if (
+                search.ai_search_config is not None
+                and search.ai_search_config.use_ai_summary
+                and not self.ai_config
+            ):
                 raise ValueError(
                     "O campo 'ai_config' deve ser fornecido quando 'use_ai_summary' é True."
                 )
