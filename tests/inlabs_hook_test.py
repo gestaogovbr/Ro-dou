@@ -5,9 +5,9 @@ from datetime import datetime
 import importlib.util
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-
+from airflow.models import Variable
 from ai.provider import AIProvider
-from schemas import AIConfig
+from schemas import AIConfig, AISearchConfig
 
 # Same layout as Airflow image / conftest (mounted `src` as `dags.ro_dou_src`).
 _INLABS_HOOK = (
@@ -16,10 +16,16 @@ _INLABS_HOOK = (
     else "hooks.inlabs_hook"
 )
 
+Variable.set("KEY", "fake-key-for-tests")
+
 _MIN_AI_CONFIG = AIConfig(
     provider=AIProvider.openai,
-    api_key_var="OPENAI_API_KEY",
+    api_key_var="KEY",
     model="gpt-4o-mini",
+)
+
+_MIN_AI_SEARCH_CONFIG = AISearchConfig(
+    use_ai_summary=False,
 )
 
 @pytest.mark.parametrize(
@@ -698,12 +704,10 @@ def test_transform_search_results(
         response=df_in,
         text_terms=terms,
         ignore_signature_match=False,
-        ai_pub_limit=10,
-        ai_custom_prompt="Instrução base {0}",
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
         full_text=full_text,
         text_length=400,
         use_summary=use_summary,
-        use_ai_summary=False,
     )
     assert r == dict_out
 
@@ -772,12 +776,10 @@ def test_transform_search_results(
 def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
         response=df_in,
         text_terms=terms,
         ignore_signature_match=True,
-        ai_pub_limit=10,
-        ai_custom_prompt="Instrução base {0}",
-        use_ai_summary=False,
     )
     assert r == dict_out
 
@@ -1032,36 +1034,40 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
             _sample_row(id=3, identifica="Título 3", texto="Lorem " * 30),
         ]
     )
+    ai_search_config = AISearchConfig(
+        use_ai_summary=True,
+        ai_pub_limit=3,
+    )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo.") as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
+                ai_search_config=ai_search_config,
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
-                ai_pub_limit=2,
-                ai_custom_prompt="Ctx {0}",
-                use_ai_summary=True,
             )
-    assert mock_run.call_count == 2
+    assert mock_run.call_count == 3
 
 
 def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
     df = pd.DataFrame([_sample_row()])
+    ai_search_config = AISearchConfig(
+        use_ai_summary=True,
+        ai_custom_prompt="Enfatize {} na análise",
+    )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo.") as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
+                ai_search_config=ai_search_config,
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
-                ai_pub_limit=5,
-                ai_custom_prompt="Enfatize {0} na análise.",
-                use_ai_summary=True,
             )
     mock_run.assert_called_once()
     kwargs = mock_run.call_args.kwargs
-    assert kwargs["system_prompt"] == "Enfatize Lorem na análise."
+    assert kwargs["system_prompt"] == "Enfatize Lorem na análise"
     assert kwargs["provider"] == AIProvider.openai
     assert kwargs["model"] == "gpt-4o-mini"
 
@@ -1085,17 +1091,19 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
             ),
         ]
     )
+    ai_search_config = AISearchConfig(
+        use_ai_summary=True,
+        ai_pub_limit=3,
+    )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo IA.") as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
+                ai_search_config=ai_search_config,
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
-                ai_pub_limit=5,
-                ai_custom_prompt="P {0}",
                 use_summary=True,
-                use_ai_summary=True,
             )
     assert mock_run.call_count == 1
     kwargs = mock_run.call_args.kwargs
@@ -1104,16 +1112,17 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
 
 def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
     df = pd.DataFrame([_sample_row()])
+    ai_search_config = AISearchConfig(
+        use_ai_summary=True,
+    )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Texto só da IA."):
             out = inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
+                ai_search_config=ai_search_config,
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
-                ai_pub_limit=5,
-                ai_custom_prompt="Ctx {0}",
-                use_ai_summary=True,
             )
     items = [item for group in out.values() for item in group]
     assert len(items) == 1
