@@ -565,3 +565,51 @@ dag:
       - destination@economia.gov.br
     subject: "Teste do Ro-dou - Termos ignorados"
 ```
+
+### Exemplo 21
+Esta configuração permite que seja utilizado IA generativa para criação de resumos das
+publicações.
+```yaml
+dag:```yaml
+  id: ai_summary_example
+  description: DAG de teste de geração de resumo com IA
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  dataset: inlabs
+  owner:
+    - cdata
+  ai_config:
+    provider: openai
+    api_key_var: OPENAI_API_KEY
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 200
+  search:
+    sources:
+      - INLABS
+    terms:
+      - tecnologia da informação
+      - inovação
+    use_summary: True
+    use_ai_summary: True
+    ai_pub_limit: 5
+    ai_custom_prompt: |
+      Você é um assistente especializado em análise de
+      publicações do Diário Oficial da União (DOU).
+      Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
+
+      Inclua o termo "{}" no texto.
+
+      O resumo deve focar em:
+      - órgão responsável
+      - tipo de ato
+      - ação principal
+
+      Não invente informações. Não use markdown. Retorne apenas a frase.
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou com IA"
+```

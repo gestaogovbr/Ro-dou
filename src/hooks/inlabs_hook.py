@@ -9,7 +9,10 @@ import html2text
 
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable
 from typing import Optional
+from schemas import AIConfig, AISearchConfig
+from ai.runner import AIRunner
 
 from bs4 import BeautifulSoup
 
@@ -55,10 +58,12 @@ class INLABSHook(BaseHook):
 
     def search_text(
         self,
+        ai_config: dict,
+        ai_search_config: dict,
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
-        text_length: Optional[int],
+        text_length: int,
         use_summary: bool,
         conn_id: str = CONN_ID,
     ) -> dict:
@@ -102,12 +107,14 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results,
-                filtered_text_terms,
-                ignore_signature_match,
-                full_text,
-                text_length,
-                use_summary,
+                ai_config=ai_config,
+                ai_search_config=ai_search_config,
+                response=all_results,
+                text_terms=filtered_text_terms,
+                ignore_signature_match=ignore_signature_match,
+                full_text=full_text,
+                text_length=text_length,
+                use_summary=use_summary,
             )
             if not all_results.empty
             else {}
@@ -292,11 +299,13 @@ class INLABSHook(BaseHook):
 
         def transform_search_results(
             self,
+            ai_config: AIConfig,
+            ai_search_config: AISearchConfig,
             response: pd.DataFrame,
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
-            text_length: Optional[int] = 400,
+            text_length: int = 400,
             use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -310,7 +319,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
-                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
+                text_length (int): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -377,19 +386,50 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
-            if not full_text:
-                df["texto"] = df["texto"].apply(self._trim_text)
-
-            if text_length is not None and text_length != 400:
-                df["texto"] = df["texto"].apply(
-                    lambda x: self._trim_text(x, text_length)
-                )
 
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
 
+            df["ai_generated"] = False
+
+            if ai_search_config and ai_search_config.use_ai_summary:
+                if use_summary:
+                    # AI only where ementa not exists
+                    mask = df["ementa"].isnull()
+                else:
+                    # AI on entire column
+                    mask = df["texto"].notna()
+
+                idx = df.loc[mask].index[:ai_search_config.ai_pub_limit]
+                for i in idx:
+                    df.at[i, "texto"] = AIRunner.run(
+                        provider=ai_config.provider,
+                        api_key=Variable.get(ai_config.api_key_var),
+                        model=ai_config.model,
+                        input_text=df.at[i, "texto"],
+                        system_prompt=ai_search_config.ai_custom_prompt.format(df.at[i, "matches"]),
+                        max_tokens=ai_search_config.max_tokens,
+                        temperature=ai_search_config.temperature,
+                    )
+                    df.at[i, "ai_generated"] = True
+
+            df["texto"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["texto"],
+                    ),
+                    axis=1,
+                )
+
+            if not full_text:
+                # Only trim text that was not processed by AI
+                df.loc[~df["ai_generated"], "texto"] = \
+                    df.loc[~df["ai_generated"], "texto"].apply(lambda x: self._trim_text(x, text_length))
+
             df["display_date_sortable"] = None
+
+
 
             cols_rename = {
                 "pubname": "section",
@@ -400,6 +440,7 @@ class INLABSHook(BaseHook):
                 "id": "id",
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
+                "ai_generated": "ai_generated",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
@@ -408,7 +449,10 @@ class INLABSHook(BaseHook):
                 {}
                 if df.empty
                 else self._group_to_dict(
-                    df.sort_values(by=["matches", "section", "title"]),
+                    df.sort_values(
+                        by=["matches", "section", "ai_generated", "title"],
+                        ascending=[True, True, False, True]
+                    ),
                     "matches",
                     cols_output,
                 )

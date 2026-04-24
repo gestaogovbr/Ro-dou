@@ -10,6 +10,13 @@ create-inlabs-db-connection \
 create-inlabs-portal-connection \
 activate-inlabs-load-dag
 
+.PHONY: create-azure-openai-variables
+create-azure-openai-variables: \
+create-azure-openai-endpoint-variable \
+create-azure-openai-api-version-variable \
+create-azure-openai-deployment-variable \
+create-azure-openai-api-key-variable
+
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
 
@@ -124,6 +131,70 @@ activate-inlabs-load-dag:
 			-d '{ \
 			\"is_paused\": false \
 			}' > /dev/null;"
+
+create-azure-openai-endpoint-variable:	
+	@echo "Creating 'AZURE_OPENAI_ENDPOINT' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_ENDPOINT' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"AZURE_OPENAI_ENDPOINT\", \
+			\"value\": \"https://sumarizacao-de-textos.services.ai.azure.com/\" \
+			}' > /dev/null; \
+		fi"
+
+create-azure-openai-api-version-variable:
+	@echo "Creating 'AZURE_OPENAI_API_VERSION' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_API_VERSION' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"AZURE_OPENAI_API_VERSION\", \
+			\"value\": \"2024-02-01\" \
+			}' > /dev/null; \
+		fi"
+
+create-azure-openai-deployment-variable:
+	@echo "Creating 'AZURE_OPENAI_DEPLOYMENT' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_DEPLOYMENT' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"AZURE_OPENAI_DEPLOYMENT\", \
+			\"value\": \"gpt-4o-mini\" \
+			}' > /dev/null; \
+		fi"
+
+create-azure-openai-api-key-variable:
+	@echo "Creating 'AZURE_OPENAI_API_KEY' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_API_KEY' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"AZURE_OPENAI_API_KEY\", \
+			\"value\": \"<your-api-key>\" \
+			}' > /dev/null; \
+		fi"
 
 .PHONY: down
 down:
