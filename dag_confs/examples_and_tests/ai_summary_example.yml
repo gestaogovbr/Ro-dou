@@ -11,8 +11,6 @@ dag:
     provider: openai
     api_key_var: OPENAI_API_KEY
     model: gpt-4o-mini
-    temperature: 0.2
-    max_tokens: 200
   search:
     sources:
       - INLABS
@@ -36,6 +34,8 @@ dag:
         - ação principal
 
         Não invente informações. Não use markdown. Retorne apenas a frase.
+      temperature: 0.2
+      max_tokens: 200
   report:
     emails:
       - destination@economia.gov.br
