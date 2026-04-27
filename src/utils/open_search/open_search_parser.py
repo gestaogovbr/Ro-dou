@@ -18,7 +18,7 @@ class DOUXmlParser:
             str: Plain text with HTML tags removed and whitespace normalized.
         """
         cleaned = re.sub("<[^>]+>", " ", html_content)
-        cleaned = re.sub("\s+", " ", cleaned)
+        cleaned = re.sub("\s+", " ", cleaned)  # type: ignore
         return cleaned.strip()
 
     def _get_assina(self, html_content: str) -> str | None:

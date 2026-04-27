@@ -163,7 +163,16 @@ def load_inlabs():
             client = OpenSearchClient().get_client()
 
             if not client.indices.exists(index=INDEX_NAME):
-                client.indices.create(index=INDEX_NAME)
+                client.indices.create(
+                    index=INDEX_NAME,
+                    body={
+                        "mappings": {
+                            "properties": {
+                                "pubdate": {"type": "date", "format": "yyyy-MM-dd"}
+                            }
+                        }
+                    },
+                )
                 logging.info(f"Index {INDEX_NAME} created.")
                 return
 
@@ -198,15 +207,17 @@ def load_inlabs():
                 data = DOUXmlParser().parse_dou_xml(xml_str)
                 response = OpenSearchPipeline().send(data, pipeline=pipeline)
 
-                logging.info(f"[OK] {xml_path} → indexed: {response['_id']}")
+                logging.info(
+                    f"[OK] {xml_path} → indexed: {response['_id']} -> indexName: {response['_index']}"
+                )
 
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR, trigger_date)
         if not os.path.isdir(dest_path):
             logging.warning(f"Directory {dest_path} not found, skipping load.")
             return
         logging.info(f"Starting to process folder: {dest_path}")
-        process_folder(dest_path, pipeline=None)
         _clean_index(trigger_date)
+        process_folder(dest_path, pipeline=None)
 
     @task
     def check_loaded_data(trigger_date: str) -> None:
@@ -214,6 +225,7 @@ def load_inlabs():
         from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
 
         client = OpenSearchClient().get_client()
+
         response = client.count(
             index=INDEX_NAME,
             body={"query": {"term": {"pubdate": trigger_date}}},

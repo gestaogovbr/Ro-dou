@@ -1,8 +1,6 @@
 from .client_open_search import OpenSearchClient
 from .config import INDEX_NAME
 
-import logging
-
 
 class OpenSearchPipeline:
     """Handles document indexing operations against an OpenSearch cluster."""
