@@ -12,7 +12,8 @@ from airflow.hooks.base import BaseHook
 
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.models import Variable
-from typing import Optional
+
+# from typing import Optional
 from schemas import AIConfig, AISearchConfig
 from ai.runner import AIRunner
 

@@ -832,7 +832,7 @@ def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
 
 
 @pytest.mark.parametrize(
-    "data_in, query_out",
+    "abstract, result",
     [
         (
             """
@@ -987,22 +987,8 @@ def test_truncate_from_start(
 
 
 @pytest.mark.parametrize(
-    "text, text_length, expected_text, expected_cut",
+    "data_in, query_out",
     [
-        # sem tags: comportamento original
-        ("abcde fghij", 5, "fghij", True),
-        ("abc", 10, "abc", False),
-        # tags não contam
-        ("ab <b>cde</b>", 5, "b <b>cde</b>", True),
-        # marcador <%%> não conta
-        ("abc <%%>def</%%> ghi", 6, "<%%>def</%%> ghi", True),
-        # tabela preservada inteira e não contada
-        (
-            "ab <table><tr><td>x</td></tr></table> cd",
-            2,
-            "<table><tr><td>x</td></tr></table>cd",
-            True,
-        ),
         (
             {
                 "texto": ["term1 & term2 ! term3", "term4 & term5"],
@@ -1147,6 +1133,25 @@ def test_generate_opensearch_query(inlabs_hook, data_in, query_out):
     assert inlabs_hook._generate_opensearch_query(data_in) == query_out
 
 
+@pytest.mark.parametrize(
+    "text, text_length, expected_text, expected_cut",
+    [
+        # sem tags: comportamento original
+        ("abcde fghij", 5, "fghij", True),
+        ("abc", 10, "abc", False),
+        # tags não contam
+        ("ab <b>cde</b>", 5, "b <b>cde</b>", True),
+        # marcador <%%> não conta
+        ("abc <%%>def</%%> ghi", 6, "<%%>def</%%> ghi", True),
+        # tabela preservada inteira e não contada
+        (
+            "ab <table><tr><td>x</td></tr></table> cd",
+            2,
+            "<table><tr><td>x</td></tr></table>cd",
+            True,
+        ),
+    ],
+)
 def test_truncate_from_end(inlabs_hook, text, text_length, expected_text, expected_cut):
     result, was_cut = inlabs_hook.TextDictHandler()._truncate_from_end(
         text, text_length
