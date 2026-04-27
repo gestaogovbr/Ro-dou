@@ -33,7 +33,7 @@ from schemas import FetchTermsConfig
 from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 from airflow.models import Variable
-
+from ai.runner import AIRunner
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
@@ -277,6 +277,7 @@ class DouDigestDagGenerator:
 
     def perform_searches(
         self,
+        ai_config,
         header,
         sources,
         territory_id,
@@ -290,6 +291,7 @@ class DouDigestDagGenerator:
         full_text: Optional[bool],
         text_length: Optional[int],
         use_summary: Optional[bool],
+        ai_search_config: Optional[dict],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -318,6 +320,7 @@ class DouDigestDagGenerator:
         elif "INLABS" in sources:
             terms = self._parse_term_list(term_list)
             inlabs_result = self.searchers["INLABS"].exec_search(
+                ai_config=ai_config,
                 terms=terms,
                 dou_sections=dou_sections,
                 search_date=search_date,
@@ -328,6 +331,7 @@ class DouDigestDagGenerator:
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ai_search_config=ai_search_config,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -501,6 +505,9 @@ class DouDigestDagGenerator:
                         task_id=f"exec_search_{counter}",
                         python_callable=self.perform_searches,
                         op_kwargs={
+                            "ai_config": specs.ai_config,
+                            # "api_key_var": specs.ai_config.api_key_var,
+                            # "model": specs.model,
                             "header": subsearch.header,
                             "sources": subsearch.sources,
                             "territory_id": subsearch.territory_id,
@@ -514,6 +521,7 @@ class DouDigestDagGenerator:
                             "full_text": subsearch.full_text,
                             "text_length": subsearch.text_length,
                             "use_summary": subsearch.use_summary,
+                            "ai_search_config": subsearch.ai_search_config,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,
@@ -556,6 +564,7 @@ class DouDigestDagGenerator:
             tg_exec_searchs >> has_matches_task
 
             has_matches_task >> [send_notification_task, skip_notification_task]
+
 
         return dag
 

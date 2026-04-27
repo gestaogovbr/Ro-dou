@@ -9,9 +9,9 @@ nav:
     - Instalação do k8s: como_utilizar/instalacao_k8s.md
     - Instalação do WSL no Windows: como_utilizar/instalacao_wsl_windows.md
     - Habilitação do Docker no WSL: como_utilizar/habilitacao_docker_no_wsl.md
-
     - Usuários internos e externos: como_utilizar/usuarios.md
     - Notificação de erros: como_utilizar/notificacao_de_erros.md
+    - Habilitando IA nos resumos: como_utilizar/habilitando_ia.md
   - Como funciona:
     - Introdução: como_funciona/intro_funcionamento.md
     - Compreendendo a pesquisa no D.O.U.: como_funciona/pesquisa_dou.md
@@ -25,18 +25,19 @@ nav:
   - Oficinas e mídias:
     - Conteúdos sobre o Ro-DOU: oficinas_midias/oficinas_midias.md
   - Outros:
+    - Guia de Uso e Responsabilidade: outros/Guia_de_Uso.md
     - FAQ: outros/faq.md
     - Links relevantes: outros/links.md
     - Contato: outros/contato.md
   - CHANGELOG:
     - Changelog: changelog/changelog.md
-    
+
 theme:
   name: readthedocs
   custom_dir: overrides
-  
+
 plugins:
   - macros
 
 extra:
-  version: "versão atual: 0.9.0"  # Será substituído pelo workflow
+  version: "versão atual: 0.10.0"  # Será substituído pelo workflow

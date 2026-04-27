@@ -550,6 +550,8 @@ class INLABSSearcher(BaseSearcher):
 
     def exec_search(
         self,
+        ai_config: dict,
+        ai_search_config: dict,
         terms: Union[List[str], str],
         dou_sections: List[str],
         search_date: str,
@@ -568,6 +570,8 @@ class INLABSSearcher(BaseSearcher):
         transforming terms as needed.
 
         Args:
+            ai_config (dict): Configuration for AI provider.
+            ai_search_config (dict): Configuration for AI search behavior.
             terms (Union[List[str], str]): Search terms as a List or a
                 string formatted as a dict (when from sql query).
             dou_sections (List[str]): List of DOU sections to filter the search.
@@ -604,7 +608,13 @@ class INLABSSearcher(BaseSearcher):
         )
 
         search_results = inlabs_hook.search_text(
-            search_terms, ignore_signature_match, full_text, text_length, use_summary
+            ai_config=ai_config,
+            ai_search_config=ai_search_config,
+            search_terms=search_terms,
+            ignore_signature_match=ignore_signature_match,
+            full_text=full_text,
+            text_length=text_length,
+            use_summary=use_summary,
         )
 
         group_results = self._group_results(search_results, terms, department)

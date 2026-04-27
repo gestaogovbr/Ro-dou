@@ -12,6 +12,8 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
   * **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
 * **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
 * **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
+* **ai_config** *(opcional): Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
+
 
 (Quando uma chave não é informada, é utilizada a configuração padrão definida pelo gerador: veja o código-fonte em `src/schemas.py` para os valores e comportamentos.)
 
@@ -31,6 +33,7 @@ Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem tod
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **text_length** *(opcional)*: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)
 - **use_summary** *(opcional)*: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)-[Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
 - **pubtype** *(opcional)*: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).

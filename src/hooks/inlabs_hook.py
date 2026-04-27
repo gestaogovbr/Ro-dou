@@ -11,7 +11,10 @@ import html2text
 from airflow.hooks.base import BaseHook
 
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable
 from typing import Optional
+from schemas import AIConfig, AISearchConfig
+from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
 from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
@@ -62,10 +65,12 @@ class INLABSHook(BaseHook):
 
     def search_text(
         self,
+        ai_config: dict,
+        ai_search_config: dict,
         search_terms: dict,
         ignore_signature_match: bool,
         full_text: bool,
-        text_length: Optional[int],
+        text_length: int,
         use_summary: bool,
         conn_id: str = CONN_ID,
         client: OpenSearch = CLIENT,
@@ -175,12 +180,14 @@ class INLABSHook(BaseHook):
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
             self.TextDictHandler().transform_search_results(
-                all_results,
-                filtered_text_terms,
-                ignore_signature_match,
-                full_text,
-                text_length,
-                use_summary,
+                ai_config=ai_config,
+                ai_search_config=ai_search_config,
+                response=all_results,
+                text_terms=filtered_text_terms,
+                ignore_signature_match=ignore_signature_match,
+                full_text=full_text,
+                text_length=text_length,
+                use_summary=use_summary,
             )
             if not all_results.empty
             else {}
@@ -512,11 +519,13 @@ class INLABSHook(BaseHook):
 
         def transform_search_results(
             self,
+            ai_config: AIConfig,
+            ai_search_config: AISearchConfig,
             response: pd.DataFrame,
             text_terms: list,
             ignore_signature_match: bool,
             full_text: bool = False,
-            text_length: Optional[int] = 400,
+            text_length: int = 400,
             use_summary: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -530,7 +539,7 @@ class INLABSHook(BaseHook):
                     signature content.
                 full_text (bool):  If trim result text content.
                     Defaults to False.
-                text_length (int, optional): Size of the text to be sent in the message. The default is 400.
+                text_length (int): Size of the text to be sent in the message. The default is 400.
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
@@ -558,7 +567,14 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
             if any(text_terms):
-                df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                # df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+                df["matches"] = df.apply(
+                    lambda row: self._find_matches(
+                        row["texto"] + " " + row["identifica"],
+                        keys=text_terms,
+                    ),
+                    axis=1,
+                )
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
@@ -568,6 +584,13 @@ class INLABSHook(BaseHook):
                     lambda row: self._highlight_terms(
                         [t for t in row["matches"].split(", ") if t],
                         row["texto"],
+                    ),
+                    axis=1,
+                )
+                df["identifica"] = df.apply(
+                    lambda row: self._highlight_terms(
+                        [t for t in row["matches"].split(", ") if t],
+                        row["identifica"],
                     ),
                     axis=1,
                 )
@@ -584,20 +607,49 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
-            if not full_text:
-                df["texto"] = df["texto"].apply(self._trim_text)
-
-            if text_length is not None and text_length != 400:
-                df["texto"] = df["texto"].apply(
-                    lambda x: self._trim_text(x, text_length)
-                )
-
             if use_summary:
                 # If use_summary replace texto value by summary value
+                df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+
+            df["ai_generated"] = False
+
+            if ai_search_config and ai_search_config.use_ai_summary:
                 if use_summary:
-                    df["texto"] = df["texto"].where(
-                        df["ementa"].isnull() | (df["ementa"] == ""), df["ementa"]
+                    # AI only where ementa not exists
+                    mask = df["ementa"].isnull()
+                else:
+                    # AI on entire column
+                    mask = df["texto"].notna()
+
+                idx = df.loc[mask].index[: ai_search_config.ai_pub_limit]
+                for i in idx:
+                    df.at[i, "texto"] = AIRunner.run(
+                        provider=ai_config.provider,
+                        api_key=Variable.get(ai_config.api_key_var),
+                        model=ai_config.model,
+                        input_text=df.at[i, "texto"],
+                        system_prompt=ai_search_config.ai_custom_prompt.format(
+                            df.at[i, "matches"]
+                        ),
+                        max_tokens=ai_search_config.max_tokens,
+                        temperature=ai_search_config.temperature,
                     )
+                    df.at[i, "ai_generated"] = True
+
+            df["texto"] = df.apply(
+                lambda row: self._highlight_terms(
+                    [t for t in row["matches"].split(", ") if t],
+                    row["texto"],
+                ),
+                axis=1,
+            )
+
+            if not full_text:
+                # Only trim text that was not processed by AI
+                df.loc[~df["ai_generated"], "texto"] = df.loc[
+                    ~df["ai_generated"], "texto"
+                ].apply(lambda x: self._trim_text(x, text_length))
+
             df["display_date_sortable"] = None
 
             cols_rename = {
@@ -609,6 +661,7 @@ class INLABSHook(BaseHook):
                 "id": "id",
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
+                "ai_generated": "ai_generated",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
@@ -617,7 +670,10 @@ class INLABSHook(BaseHook):
                 {}
                 if df.empty
                 else self._group_to_dict(
-                    df.sort_values(by=["matches", "section", "title"]),
+                    df.sort_values(
+                        by=["matches", "section", "ai_generated", "title"],
+                        ascending=[True, True, False, True],
+                    ),
                     "matches",
                     cols_output,
                 )
@@ -695,9 +751,16 @@ class INLABSHook(BaseHook):
                 else ""
             )
 
-        @staticmethod
-        def _highlight_terms(terms: list, text: str) -> str:
+        def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
+
+            Matching is done against a normalized (accent-stripped) version of
+            the text so that a search term like "Ministerio" also highlights
+            "Ministério" in the original text.  Positions found in the normalized
+            text are mapped back to the original text — this is safe because
+            ``_normalize`` maps each source character to exactly one ASCII
+            character (accented Latin letters, cedillas, etc.).  If the lengths
+            diverge for any reason, the method falls back to direct matching.
 
             Args:
                 terms (list): List of terms to be wrapped on text.
@@ -709,15 +772,27 @@ class INLABSHook(BaseHook):
                     and `</%%>`.
             """
 
-            escaped_terms = [re.escape(term) for term in terms if term]
+            escaped_terms = [re.escape(self._normalize(term)) for term in terms if term]
             if not escaped_terms:
                 return text
             pattern = rf"\b({'|'.join(escaped_terms)})\b"
-            highlighted_text = re.sub(
-                pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE
-            )
 
-            return highlighted_text
+            normalized_text = self._normalize(text)
+
+            if len(normalized_text) != len(text):
+                # direct case-insensitive match on original text
+                direct_pattern = rf"\b({'|'.join(re.escape(t) for t in terms if t)})\b"
+                return re.sub(direct_pattern, r"<%%>\1</%%>", text, flags=re.IGNORECASE)
+
+            result = []
+            last_end = 0
+            for m in re.finditer(pattern, normalized_text, flags=re.IGNORECASE):
+                result.append(text[last_end : m.start()])
+                result.append(f"<%%>{text[m.start() : m.end()]}</%%>")
+                last_end = m.end()
+            result.append(text[last_end:])
+
+            return "".join(result)
 
         @staticmethod
         def _visible_len(text: str) -> int:
@@ -880,8 +955,7 @@ class INLABSHook(BaseHook):
             kept.reverse()
             return "".join(kept), was_truncated
 
-        @staticmethod
-        def _trim_text(text: str, text_length: int = 400) -> str:
+        def _trim_text(self, text: str, text_length: int = 400) -> str:
             """Truncates text while keeping the `<%%>` marker centered when present.
 
             Tables (``<table>…</table>``) are excluded from the character count and
@@ -906,13 +980,52 @@ class INLABSHook(BaseHook):
             if text_length is False or text_length is None or text_length <= 0:
                 text_length = 400
 
-            _from_start = INLABSHook.TextDictHandler._truncate_from_start
-            _from_end = INLABSHook.TextDictHandler._truncate_from_end
+            _from_start = self._truncate_from_start
+            _from_end = self._truncate_from_end
 
             parts = text.split("<%%>", 1)
 
             if len(parts) > 1:
                 before_full, after_full = parts[0], parts[1]
+
+                # If <%%> is inside a table, the split above breaks the table.
+                # Detect unbalanced <table> tags and reconstruct the full table.
+                opens_before = len(re.findall(r"<table", before_full, re.IGNORECASE))
+                closes_before = len(re.findall(r"</table>", before_full, re.IGNORECASE))
+
+                if opens_before > closes_before:
+                    open_matches = list(
+                        re.finditer(r"<table", before_full, re.IGNORECASE)
+                    )
+                    enclosing_start = open_matches[closes_before].start()
+
+                    depth = opens_before - closes_before
+                    enclosing_end = None
+                    for m in re.finditer(r"</?table", after_full, re.IGNORECASE):
+                        if not m.group().startswith("</"):
+                            depth += 1
+                        else:
+                            depth -= 1
+                            if depth == 0:
+                                enclosing_end = m.end()
+                                break
+
+                    if enclosing_end is not None:
+                        full_table = (
+                            before_full[enclosing_start:]
+                            + "<%%>"
+                            + after_full[:enclosing_end]
+                        )
+                        before_full = before_full[:enclosing_start]
+                        after_full = after_full[enclosing_end:]
+
+                        before, before_cut = _from_end(before_full, text_length)
+                        after, after_cut = _from_start(after_full, text_length)
+
+                        prefix = "(...) " if before_cut else ""
+                        suffix = " (...)" if after_cut else ""
+
+                        return f"{prefix}{before}{full_table}{after}{suffix}"
 
                 before, before_cut = _from_end(before_full, text_length)
                 after, after_cut = _from_start(after_full, text_length)

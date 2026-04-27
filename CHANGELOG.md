@@ -1,6 +1,25 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.10.0] - 2026-04-24
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Nova feature: Geração de resumos por IA by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/281
+
+### 🚀 Outros
+* Update CHANGELOG.md for 0.9.0 by @github-actions[bot] in https://github.com/gestaogovbr/Ro-dou/pull/273
+* feat: detect and convert markdown tables to HTML in publication texts by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/275
+* refactor: extrair lógica de notificação de falha para FailureSender by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/277
+* Fix/highlight terms accent insensitive by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/280
+* docs: add Ro-DOU usage and responsibility guide by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/282
+
+
+## New Contributors
+* @HenriqueLopes741 made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/282
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.9.0...0.10.0
+
 ## [0.9.0] - 2026-02-10
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
