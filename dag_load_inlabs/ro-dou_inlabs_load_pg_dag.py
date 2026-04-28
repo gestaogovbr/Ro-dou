@@ -155,6 +155,8 @@ def load_inlabs():
 
     @task
     def load_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+        from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
 
         def _clean_index(date: str):
             from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
@@ -199,6 +201,9 @@ def load_inlabs():
                 if f.endswith(".xml")
             ]
 
+            if not files:
+                raise ValueError(f"No XML files found in {folder_path}")
+
             for xml_path in files:
 
                 with open(xml_path, "r", encoding="utf-8") as f:
@@ -218,6 +223,9 @@ def load_inlabs():
         logging.info(f"Starting to process folder: {dest_path}")
         _clean_index(trigger_date)
         process_folder(dest_path, pipeline=None)
+
+        OpenSearchClient().get_client().indices.refresh(index=INDEX_NAME)
+        logging.info("Index %s refreshed after load.", INDEX_NAME)
 
     @task
     def check_loaded_data(trigger_date: str) -> None:
