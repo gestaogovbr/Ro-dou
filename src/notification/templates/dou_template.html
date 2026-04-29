@@ -224,12 +224,10 @@
         .footer a:hover {
             text-decoration: underline;
         }
-
+ 
         .separator {
-            border: none;
-            height: 2px;
-            background: linear-gradient(90deg, #06acff, #e9ecef, #06acff);
-            margin: 30px 0;
+            border:none;
+            border-top:2px solid #06acff;             
         }
 
         .no-results {
@@ -418,7 +416,7 @@
 
                                     {% endif %}
 
-                                    <div class="separator"></div>
+                                    <hr class="separator"></hr>
                                 </div>
 
                             {% endfor %}
