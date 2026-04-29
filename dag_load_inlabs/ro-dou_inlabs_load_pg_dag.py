@@ -180,7 +180,7 @@ def load_inlabs():
 
             response = client.delete_by_query(
                 index=INDEX_NAME,
-                body={"query": {"term": {"pubdate": date}}},
+                body={"query": {"range": {"pubdate": {"gte": date, "lte": date}}}},
             )
             logging.info(
                 "Deleted %s documents with pubdate=%s from index %s.",
@@ -236,7 +236,11 @@ def load_inlabs():
 
         response = client.count(
             index=INDEX_NAME,
-            body={"query": {"term": {"pubdate": trigger_date}}},
+            body={
+                "query": {
+                    "range": {"pubdate": {"gte": trigger_date, "lte": trigger_date}}
+                }
+            },
         )
         count = response.get("count", 0)
         if count == 0:
