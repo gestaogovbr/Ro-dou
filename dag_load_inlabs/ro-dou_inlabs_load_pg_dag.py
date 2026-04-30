@@ -14,10 +14,6 @@ from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 from airflow.models import Variable
 
-# from airflow.providers.common.sql.operators.sql import SQLCheckOperator
-
-# from airflow.operators.python import BranchPythonOperator
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Constants
@@ -159,22 +155,10 @@ def load_inlabs():
         from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
 
         def _clean_index(date: str):
-            from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-            from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
-
             client = OpenSearchClient().get_client()
 
             if not client.indices.exists(index=INDEX_NAME):
-                client.indices.create(
-                    index=INDEX_NAME,
-                    body={
-                        "mappings": {
-                            "properties": {
-                                "pubdate": {"type": "date", "format": "yyyy-MM-dd"}
-                            }
-                        }
-                    },
-                )
+                client.indices.create(index=INDEX_NAME)
                 logging.info(f"Index {INDEX_NAME} created.")
                 return
 
@@ -220,12 +204,10 @@ def load_inlabs():
         if not os.path.isdir(dest_path):
             logging.warning(f"Directory {dest_path} not found, skipping load.")
             return
+
         logging.info(f"Starting to process folder: {dest_path}")
         _clean_index(trigger_date)
         process_folder(dest_path, pipeline=None)
-
-        OpenSearchClient().get_client().indices.refresh(index=INDEX_NAME)
-        logging.info("Index %s refreshed after load.", INDEX_NAME)
 
     @task
     def check_loaded_data(trigger_date: str) -> None:
