@@ -20,6 +20,14 @@ create-azure-openai-api-key-variable
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
 
+
+AI_PROVIDERS ?=
+
+build:
+	@echo "AI_PROVIDERS=$(AI_PROVIDERS)" 
+	docker build \
+		--build-arg AI_PROVIDERS="$(AI_PROVIDERS)" .
+
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans
 
