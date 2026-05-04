@@ -145,43 +145,6 @@ Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por
 make down
 ```
 
-### Configurando o ambiente de produção
-
-#### Requisitos
-
-* 4Gb de memória RAM
-* 2Gb de espaço em disco
-* Sistema operacional Linux ou Windows com WSL
-* Docker
-
-Para instalação em um cluster kubernetes, [clique aqui](instalacao_k8s.md)
-
-
-1. Clonar o repositório do código no Github
-[https://github.com/gestaogovbr/Ro-dou](https://github.com/gestaogovbr/Ro-dou). Abra o terminal e execute os comandos abaixo:
-
-```bash
-git clone https://github.com/gestaogovbr/Ro-dou
-cd Ro-Dou
-```
-Para utilizar o Ro-DOU em ambiente de produção, é necessário que o servidor tenha disponível um serviço SMTP que será utilizado pelo Apache Airflow para envio de mensagens de e-mail pela Internet, ou configurar um webhook com Slack ou Discord. Siga os seguintes passos:
-
-2. Utilize as credenciais do serviço SMTP (host, usuário, senha, porta etc.)
-para editar o arquivo `docker-compose.yml`, substituindo as variáveis referentes ao serviço SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
-
-3. Ao final do arquivo `docker-compose.yml`, remova as linhas que declaram o serviço **smtp4dev**, uma vez que ele não será mais necessário.
-
-4. O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:
-
-```bash
-make run
-```
-Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
-
-5. Opcional: Configurando o INLABS como fonte de dados:
-
-**Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
-que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
