@@ -3,6 +3,10 @@ O Ro-DOU permite a utilização de modelos de inteligência artificial generativ
 
 Essa funcionalidade é especialmente útil para reduzir o tempo de análise, destacando rapidamente o conteúdo mais relevante de cada publicação. Além disso, permite a customização do prompt, possibilitando adaptar o formato do resumo conforme a necessidade do usuário — como apresentação em tópicos, nível de detalhamento, tipo de linguagem, entre outros (parâmetro ai_custom_prompt).
 
+Neste vídeo, demonstramos na prática como configurar e habilitar a integração com IA Generativa no Ro-DOU, utilizando a fonte de dados INLABS para automação de resumos.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/tP18HtsI-0g?si=MTjvx_0GOMVYF_Hb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 Atualmente, são suportados os seguintes provedores de IA:
 
 * OpenAI
