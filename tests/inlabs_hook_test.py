@@ -24,9 +24,8 @@ _MIN_AI_CONFIG = AIConfig(
     model="gpt-4o-mini",
 )
 
-_MIN_AI_SEARCH_CONFIG = AISearchConfig(
-    use_ai_summary=False,
-)
+_MIN_AI_SEARCH_CONFIG = AISearchConfig(use_ai_summary=False, has_ementa=False)
+
 
 @pytest.mark.parametrize(
     "text_terms_in, text_terms_out",
@@ -202,8 +201,7 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista
             """,
             # texto_out
-            (
-                """(...) . Sed ut perspiciatis
+            ("""(...) . Sed ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
             totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
@@ -213,8 +211,7 @@ def test_highlight_terms(inlabs_hook, term, texto_in, texto_out):
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
             facilisis posuere elit. Proin consectetur tincidunt urna.
             Cras tincidunt nunc vestibulum velit pellentesque facilisis.
-            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""
-            ),
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""),
         ),
     ],
 )
@@ -241,8 +238,7 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
             dolore magnam aliquam quaerat voluptatem.
             """,
             # texto_out
-            (
-                """Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            ("""Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
             ultrices iaculis. Donec et enim mauris. Sed vel massa eget est
             viverra finibus a et magna. Sed ut perspiciatis
@@ -252,8 +248,7 @@ def test_trim_text(inlabs_hook, texto_in, texto_out):
             voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
             consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
             Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
-            adipisci velit, sed quia non numquam eius modi tempora (...)"""
-            ),
+            adipisci velit, sed quia non numquam eius modi tempora (...)"""),
         ),
     ],
 )
@@ -315,8 +310,7 @@ def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):
             Brasília/DF, 15 de março de 2024.  Pessoa 1  Analista
             """,
             # texto_out
-            (
-                """(...) . Sed ut perspiciatis
+            ("""(...) . Sed ut perspiciatis
             unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
             totam rem aperiam, eaque ipsa Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Phasellus venenatis auctor mauris. Integer id neque quis urna
@@ -326,8 +320,7 @@ def test_trim_text_length_less_than_400(inlabs_hook, texto_in, texto_out):
             fermentum. Nulla mollis cursus ipsum vel interdum. Mauris
             facilisis posuere elit. Proin consectetur tincidunt urna.
             Cras tincidunt nunc vestibulum velit pellentesque facilisis.
-            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""
-            ),
+            Aenean sollicitudin ante elit, vitae vehicula nisi congue id. (...)"""),
         ),
     ],
 )
@@ -413,7 +406,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
 
 
 @pytest.mark.parametrize(
-    "terms, df_in, dict_out, full_text, use_summary",
+    "terms, df_in, dict_out, full_text, use_summary, has_ementa",
     [
         (
             ["Pellentesque", "Lorem"],
@@ -465,6 +458,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ],
                 "Pellentesque": [
@@ -478,9 +472,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ],
             },
+            False,
             False,
             False,
         ),
@@ -540,10 +536,12 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ],
             },
             True,
+            False,
             False,
         ),
         (
@@ -592,11 +590,13 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": True,
                     }
                 ],
             },
             True,
             True,
+            False,
         ),
         # HTML texto with identifica tag — title must not appear in abstract
         (
@@ -633,9 +633,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ],
             },
+            False,
             False,
             False,
         ),
@@ -687,16 +689,18 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ],
             },
+            False,
             False,
             False,
         ),
     ],
 )
 def test_transform_search_results(
-    inlabs_hook, terms, df_in, dict_out, full_text, use_summary
+    inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa
 ):
 
     r = inlabs_hook.TextDictHandler().transform_search_results(
@@ -708,12 +712,13 @@ def test_transform_search_results(
         full_text=full_text,
         text_length=400,
         use_summary=use_summary,
+        has_ementa=has_ementa,
     )
     assert r == dict_out
 
 
 @pytest.mark.parametrize(
-    "terms, df_in, dict_out",
+    "terms, df_in, dict_out, has_ementa",
     [
         (  # terms
             ["Pellentesque", "Pessoa 1"],
@@ -767,16 +772,19 @@ def test_transform_search_results(
                         "display_date_sortable": None,
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
+                        "has_ementa": False,
                     }
                 ]
             },
+            False,
         )
     ],
 )
-def test_ignore_signature(inlabs_hook, terms, df_in, dict_out):
+def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa):
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
         ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        has_ementa=has_ementa,
         response=df_in,
         text_terms=terms,
         ignore_signature_match=True,
@@ -1029,9 +1037,13 @@ def _sample_row(**overrides):
 def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
     df = pd.DataFrame(
         [
-            _sample_row(id=1, texto="Lorem " * 30),
-            _sample_row(id=2, identifica="Título 2", texto="Lorem " * 30),
-            _sample_row(id=3, identifica="Título 3", texto="Lorem " * 30),
+            _sample_row(id=1, texto="Lorem " * 30, has_ementa=False),
+            _sample_row(
+                id=2, identifica="Título 2", texto="Lorem " * 30, has_ementa=False
+            ),
+            _sample_row(
+                id=3, identifica="Título 3", texto="Lorem " * 30, has_ementa=False
+            ),
         ]
     )
     ai_search_config = AISearchConfig(
@@ -1051,7 +1063,7 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
 
 
 def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
-    df = pd.DataFrame([_sample_row()])
+    df = pd.DataFrame([_sample_row(has_ementa=False)])
     ai_search_config = AISearchConfig(
         use_ai_summary=True,
         ai_custom_prompt="Enfatize {} na análise",
@@ -1082,6 +1094,7 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
                 identifica="Com ementa",
                 ementa="Resumo já existente.",
                 texto="Lorem corpo original.",
+                has_ementa=True,
             ),
             _sample_row(
                 id=2,
@@ -1096,7 +1109,9 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
         ai_pub_limit=3,
     )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
-        with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo IA.") as mock_run:
+        with patch(
+            f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo IA."
+        ) as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
                 ai_search_config=ai_search_config,
@@ -1111,10 +1126,8 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
 
 
 def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
-    df = pd.DataFrame([_sample_row()])
-    ai_search_config = AISearchConfig(
-        use_ai_summary=True,
-    )
+    df = pd.DataFrame([_sample_row(has_ementa=False)])
+    ai_search_config = AISearchConfig(use_ai_summary=True)
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Texto só da IA."):
             out = inlabs_hook.TextDictHandler().transform_search_results(
@@ -1128,3 +1141,4 @@ def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
     assert len(items) == 1
     assert items[0]["ai_generated"] is True
     assert items[0]["abstract"] == "Texto só da IA."
+    assert items[0]["has_ementa"] is False
