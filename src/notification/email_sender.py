@@ -175,11 +175,7 @@ class EmailSender(ISender):
                             if result.get("ai_generated"):
                                 # Inlabs_hook sets ai_generated when the AI summary is used.
                                 # We don't need has_ementa in EmailSender anymore.
-                                ai_sufix = (
-                                    "Resumo gerado por IA (pode conter erros)."
-                                    if display_abstract
-                                    else "Resumo gerado por IA (pode conter erros)."
-                                )
+                                ai_sufix = True
 
                             term_data["search_terms"]["items"].append(
                                 {
@@ -191,6 +187,7 @@ class EmailSender(ISender):
                                     "abstract": display_abstract,
                                     "date": result["date"],
                                     "ai_sufix": ai_sufix,
+                                    "has_ementa": result.get("has_ementa", False),
                                 }
                             )
 

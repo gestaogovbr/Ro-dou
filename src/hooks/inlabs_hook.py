@@ -386,10 +386,11 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
-
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+                # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
+                df["has_ementa"] = df["ementa"].notna()
 
             df["ai_generated"] = False
 
@@ -401,35 +402,36 @@ class INLABSHook(BaseHook):
                     # AI on entire column
                     mask = df["texto"].notna()
 
-                idx = df.loc[mask].index[:ai_search_config.ai_pub_limit]
+                idx = df.loc[mask].index[: ai_search_config.ai_pub_limit]
                 for i in idx:
                     df.at[i, "texto"] = AIRunner.run(
                         provider=ai_config.provider,
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
                         input_text=df.at[i, "texto"],
-                        system_prompt=ai_search_config.ai_custom_prompt.format(df.at[i, "matches"]),
+                        system_prompt=ai_search_config.ai_custom_prompt.format(
+                            df.at[i, "matches"]
+                        ),
                         max_tokens=ai_search_config.max_tokens,
                         temperature=ai_search_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
 
             df["texto"] = df.apply(
-                    lambda row: self._highlight_terms(
-                        [t for t in row["matches"].split(", ") if t],
-                        row["texto"],
-                    ),
-                    axis=1,
-                )
+                lambda row: self._highlight_terms(
+                    [t for t in row["matches"].split(", ") if t],
+                    row["texto"],
+                ),
+                axis=1,
+            )
 
             if not full_text:
                 # Only trim text that was not processed by AI
-                df.loc[~df["ai_generated"], "texto"] = \
-                    df.loc[~df["ai_generated"], "texto"].apply(lambda x: self._trim_text(x, text_length))
+                df.loc[~df["ai_generated"], "texto"] = df.loc[
+                    ~df["ai_generated"], "texto"
+                ].apply(lambda x: self._trim_text(x, text_length))
 
             df["display_date_sortable"] = None
-
-
 
             cols_rename = {
                 "pubname": "section",
@@ -441,6 +443,7 @@ class INLABSHook(BaseHook):
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
                 "ai_generated": "ai_generated",
+                "has_ementa": "has_ementa",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
@@ -451,7 +454,7 @@ class INLABSHook(BaseHook):
                 else self._group_to_dict(
                     df.sort_values(
                         by=["matches", "section", "ai_generated", "title"],
-                        ascending=[True, True, False, True]
+                        ascending=[True, True, False, True],
                     ),
                     "matches",
                     cols_output,
