@@ -307,6 +307,7 @@ class INLABSHook(BaseHook):
             full_text: bool = False,
             text_length: int = 400,
             use_summary: bool = False,
+            has_ementa: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -385,6 +386,9 @@ class INLABSHook(BaseHook):
                     df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
             else:
                 df["matches"] = ""
+
+            if "has_ementa" not in df.columns:
+                df["has_ementa"] = has_ementa
 
             if use_summary:
                 # If use_summary replace texto value by summary value
