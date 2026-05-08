@@ -207,6 +207,7 @@
             padding: 0.35em 0.65em;
             font-size: 0.75em;
             font-weight: 600;
+            color: #333;
             line-height: 1;           
             border-radius: 0.25rem;
             text-align: center;
@@ -220,8 +221,15 @@
         }
 
         .ementa {
-            background-color: #D0E4FC; 
-            color: #333;
+            background-color: #D0E4FC;             
+        }
+
+        .recort {
+            background-color: #ffebcc;
+        }
+
+        .full-text {
+            background-color: #e2f0d9;
         }
 
         .summary-block {
@@ -465,8 +473,14 @@
                                                 <div class="abstract">
                                                     <span class="tag ia">IA:</span> {{ document.abstract | safe }}
                                                 </div>
+                                            {% elif document.full_text %}
+                                                <div class="abstract">
+                                                    <span class="tag full-text">Texto Completo:</span> {{ document.abstract | safe }}
+                                                </div>
                                             {% else %}
-                                                <div class="abstract">{{ document.abstract | safe }}</div>
+                                                <div class="abstract">
+                                                    <span class="tag recort">Recorte:</span> {{ document.abstract | safe }}
+                                                </div>
                                             {% endif %}
                                         {% endif %}                                        
                                         <div class="date">{{ document.date | safe }}</div>

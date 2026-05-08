@@ -459,6 +459,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": False,
                     }
                 ],
                 "Pellentesque": [
@@ -473,6 +474,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": False,
                     }
                 ],
             },
@@ -537,6 +539,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": True,
                     }
                 ],
             },
@@ -591,6 +594,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": True,
+                        "full_text": True,
                     }
                 ],
             },
@@ -634,6 +638,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": False,
                     }
                 ],
             },
@@ -690,6 +695,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": False,
                     }
                 ],
             },
@@ -718,7 +724,7 @@ def test_transform_search_results(
 
 
 @pytest.mark.parametrize(
-    "terms, df_in, dict_out, has_ementa",
+    "terms, df_in, dict_out, has_ementa, full_text",
     [
         (  # terms
             ["Pellentesque", "Pessoa 1"],
@@ -773,18 +779,21 @@ def test_transform_search_results(
                         "hierarchyList": "Texto exemplo art_category",
                         "ai_generated": False,
                         "has_ementa": False,
+                        "full_text": False,
                     }
                 ]
             },
             False,
+            False,
         )
     ],
 )
-def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa):
+def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_text):
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
         ai_search_config=_MIN_AI_SEARCH_CONFIG,
         has_ementa=has_ementa,
+        full_text=full_text,
         response=df_in,
         text_terms=terms,
         ignore_signature_match=True,
@@ -1037,12 +1046,20 @@ def _sample_row(**overrides):
 def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
     df = pd.DataFrame(
         [
-            _sample_row(id=1, texto="Lorem " * 30, has_ementa=False),
+            _sample_row(id=1, texto="Lorem " * 30, has_ementa=False, full_text=False),
             _sample_row(
-                id=2, identifica="Título 2", texto="Lorem " * 30, has_ementa=False
+                id=2,
+                identifica="Título 2",
+                texto="Lorem " * 30,
+                has_ementa=False,
+                full_text=False,
             ),
             _sample_row(
-                id=3, identifica="Título 3", texto="Lorem " * 30, has_ementa=False
+                id=3,
+                identifica="Título 3",
+                texto="Lorem " * 30,
+                has_ementa=False,
+                full_text=False,
             ),
         ]
     )
@@ -1058,12 +1075,13 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
+                full_text=False,
             )
     assert mock_run.call_count == 3
 
 
 def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
-    df = pd.DataFrame([_sample_row(has_ementa=False)])
+    df = pd.DataFrame([_sample_row(has_ementa=False, full_text=False)])
     ai_search_config = AISearchConfig(
         use_ai_summary=True,
         ai_custom_prompt="Enfatize {} na análise",
@@ -1076,6 +1094,7 @@ def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
+                full_text=False,
             )
     mock_run.assert_called_once()
     kwargs = mock_run.call_args.kwargs
@@ -1095,6 +1114,7 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
                 ementa="Resumo já existente.",
                 texto="Lorem corpo original.",
                 has_ementa=True,
+                full_text=False,
             ),
             _sample_row(
                 id=2,
@@ -1119,6 +1139,7 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
                 use_summary=True,
+                full_text=False,
             )
     assert mock_run.call_count == 1
     kwargs = mock_run.call_args.kwargs
@@ -1126,7 +1147,7 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
 
 
 def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
-    df = pd.DataFrame([_sample_row(has_ementa=False)])
+    df = pd.DataFrame([_sample_row(has_ementa=False, full_text=False)])
     ai_search_config = AISearchConfig(use_ai_summary=True)
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Texto só da IA."):
@@ -1136,6 +1157,7 @@ def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
                 response=df,
                 text_terms=["Lorem"],
                 ignore_signature_match=False,
+                full_text=False,
             )
     items = [item for group in out.values() for item in group]
     assert len(items) == 1

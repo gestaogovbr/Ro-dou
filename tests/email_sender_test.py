@@ -106,7 +106,8 @@ class TestEmailSenderProcessing:
         footer = soup.find('div', class_='ext_footer')
         
         assert abstract is not None
-        assert abstract.text == 'ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...'
+        assert abstract.find("span", class_="recort") is not None
+        assert abstract.text.strip() == 'Recorte: ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...'
         assert date is not None
         assert date.text == '02/09/2021'
         assert footer is not None
