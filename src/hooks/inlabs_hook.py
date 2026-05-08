@@ -390,6 +390,9 @@ class INLABSHook(BaseHook):
             if "has_ementa" not in df.columns:
                 df["has_ementa"] = has_ementa
 
+            if "full_text" not in df.columns:
+                df["full_text"] = full_text
+
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
@@ -448,6 +451,7 @@ class INLABSHook(BaseHook):
                 "artcategory": "hierarchyList",
                 "ai_generated": "ai_generated",
                 "has_ementa": "has_ementa",
+                "full_text": "full_text",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
