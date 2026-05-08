@@ -1,6 +1,7 @@
 .PHONY: run
 run: \
 create-logs-dir \
+build \
 setup-containers \
 create-example-variable \
 create-email-admim-variable \
@@ -19,6 +20,14 @@ create-azure-openai-api-key-variable
 
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
+
+
+AI_PROVIDERS ?=
+
+build:
+	@echo "AI_PROVIDERS=$(AI_PROVIDERS)"
+	docker compose build \
+		--build-arg AI_PROVIDERS="$(AI_PROVIDERS)"
 
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans
@@ -132,7 +141,7 @@ activate-inlabs-load-dag:
 			\"is_paused\": false \
 			}' > /dev/null;"
 
-create-azure-openai-endpoint-variable:	
+create-azure-openai-endpoint-variable:
 	@echo "Creating 'AZURE_OPENAI_ENDPOINT' Airflow variable"
 	@docker exec airflow-webserver sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_ENDPOINT' --user \"airflow:airflow\" > /dev/null; \

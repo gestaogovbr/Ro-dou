@@ -1,0 +1,3 @@
+google-genai==1.73.1 # gemini
+anthropic==0.96.0    # claude
+openai==2.16.0       # openai
