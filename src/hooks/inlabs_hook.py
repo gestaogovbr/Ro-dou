@@ -387,9 +387,6 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
-            if "has_ementa" not in df.columns:
-                df["has_ementa"] = has_ementa
-
             if "full_text" not in df.columns:
                 df["full_text"] = full_text
 
