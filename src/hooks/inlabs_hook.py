@@ -99,6 +99,7 @@ class INLABSHook(BaseHook):
         _BATCH_SIZE = 500
         texto_terms = search_terms.get("texto", [])
 
+        logging.info(f"Text terms -> {texto_terms}")
         if len(texto_terms) > _BATCH_SIZE:
             batches = [
                 texto_terms[i : i + _BATCH_SIZE]
@@ -455,9 +456,10 @@ class INLABSHook(BaseHook):
 
             if use_summary:
                 # If use_summary replace texto value by summary value
-                df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+                ementa_has_content = df["ementa"].fillna("").str.strip().ne("")
+                df["texto"] = df["texto"].where(~ementa_has_content, df["ementa"])
                 # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
-                df["has_ementa"] = df["ementa"].notna()
+                df["has_ementa"] = ementa_has_content
 
             df["ai_generated"] = False
 
