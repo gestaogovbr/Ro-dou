@@ -1,6 +1,6 @@
 ## Instalação e configuração
 
-**⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com oa passos de instalação, certifique-se também de habilitar o [docker no WSL](https://learn.microsoft.com/pt-br/windows/wsl/tutorials/wsl-containers)
+**⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com os passos de instalação, certifique-se também de habilitar o [docker no WSL](https://learn.microsoft.com/pt-br/windows/wsl/tutorials/wsl-containers)
 
 * [Como instalar e configurar o WSL](instalacao_wsl_windows.md)
 * [Como habilitar o docker no WSL](habilitacao_docker_no_wsl.md)
@@ -71,7 +71,7 @@ Creating 'inlabs' database
 Creating 'dou_inlabs' schema
 ```
 
-1. Confirme se o serviço do Airflow — do qual o Ro-DOU depende — está funcionando, acessando-o pelo navegador no endereço:
+4. Confirme se o serviço do Airflow — do qual o Ro-DOU depende — está funcionando, acessando-o pelo navegador no endereço:
 
     [http://localhost:8080/](http://localhost:8080/)
 
@@ -97,11 +97,35 @@ que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
 8. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
 
-O Ro-DOU suporta geração de resumos automáticos de publicações utilizando modelos de linguagem (LLMs). Para habilitar essa funcionalidade, é necessário configurar as variáveis do provedor de IA no Apache Airflow.
+O Ro-DOU suporta geração de resumos automáticos de publicações utilizando modelos de linguagem (LLMs). Para habilitar essa funcionalidade, é necessário buildar a imagem com o(s) provedor(es) desejado(s) e configurar as variáveis de API no Apache Airflow.
 
-**Provedor suportado: Azure, OpenAI e Gemini**
+**Provedores suportados: Azure, OpenAI, Gemini e Claude**
 
-As seguintes variáveis precisam ser criadas no Airflow:
+**1. Build com o provedor desejado:**
+
+```bash
+# Build com um provedor
+make build AI_PROVIDERS="openai"
+
+# Build com múltiplos provedores
+make build AI_PROVIDERS="openai gemini"
+```
+
+Provedores disponíveis: `openai`, `gemini`, `claude`. Se nenhum provedor for especificado, as dependências de IA são ignoradas e a funcionalidade não estará disponível.
+
+**2. Configurando as variáveis de API no Airflow:**
+
+Para os provedores **OpenAI**, **Gemini** e **Claude**, basta criar uma variável no Airflow com a chave de API do provedor escolhido:
+
+| Variável | Descrição |
+|---|---|
+| `OPENAI_API_KEY` | Chave de API do OpenAI |
+| `GEMINI_API_KEY` | Chave de API do Gemini |
+| `ANTHROPIC_API_KEY` | Chave de API do Claude (Anthropic) |
+
+Para criar a variável, acesse a interface do Airflow em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/) e adicione a variável com o valor da sua chave.
+
+Para o provedor **Azure**, são necessárias variáveis adicionais:
 
 | Variável | Descrição | Exemplo |
 |---|---|---|
@@ -110,31 +134,27 @@ As seguintes variáveis precisam ser criadas no Airflow:
 | `AZURE_OPENAI_DEPLOYMENT` | Nome do deployment do modelo | `gpt-4o-mini` |
 | `AZURE_OPENAI_API_KEY` | Chave de API do Azure OpenAI | `<sua-chave>` |
 
-**Criando as variáveis automaticamente via Makefile:**
-
-Execute o comando abaixo para criar as variáveis com valores padrão (exceto a chave de API):
+**Criando as variáveis do Azure automaticamente via Makefile:**
 
 ```bash
 make create-azure-openai-variables
 ```
 
-A variável `AZURE_OPENAI_API_KEY` será criada com o valor `<your-api-key>`. Para inserir sua chave real, acesse a interface do Airflow em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/), localize a variável e edite o valor. Se preferir, você também pode criar todas as variáveis diretamente por essa interface, sem utilizar o Makefile.
+A variável `AZURE_OPENAI_API_KEY` será criada com o valor `<your-api-key>`. Para inserir sua chave real, acesse [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/), localize a variável e edite o valor.
 
-**Observação:** O uso do Makefile é a forma recomendada para criação das variáveis, pois garante que todas sejam criadas com os valores corretos e de forma consistente.
-
-**Configurando a DAG para usar IA:**
+**3. Configurando a DAG para usar IA:**
 
 No arquivo YAML da DAG, adicione o bloco `ai_config` com o provedor e o nome da variável que contém a chave de API:
 
 ```yaml
 search:
   use_ai_summary: True
-  ai_pub_limit: 5  # limite de publicações a serem resumidas por execução
+  ai_pub_limit: 5
   ai_custom_prompt: |
     Você é um assistente que cria resumos concisos de publicações oficiais.
 ai_config:
-  provider: openai
-  api_key_var: AZURE_OPENAI_API_KEY  # nome da variável do Airflow com a chave
+  provider: openai  # openai | gemini | claude | azure
+  api_key_var: OPENAI_API_KEY
 ```
 
 9. Desligando o ambiente:
@@ -145,43 +165,6 @@ Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por
 make down
 ```
 
-### Configurando o ambiente de produção
-
-#### Requisitos
-
-* 4Gb de memória RAM
-* 2Gb de espaço em disco
-* Sistema operacional Linux ou Windows com WSL
-* Docker
-
-Para instalação em um cluster kubernetes, [clique aqui](instalacao_k8s.md)
-
-
-1. Clonar o repositório do código no Github
-[https://github.com/gestaogovbr/Ro-dou](https://github.com/gestaogovbr/Ro-dou). Abra o terminal e execute os comandos abaixo:
-
-```bash
-git clone https://github.com/gestaogovbr/Ro-dou
-cd Ro-Dou
-```
-Para utilizar o Ro-DOU em ambiente de produção, é necessário que o servidor tenha disponível um serviço SMTP que será utilizado pelo Apache Airflow para envio de mensagens de e-mail pela Internet, ou configurar um webhook com Slack ou Discord. Siga os seguintes passos:
-
-2. Utilize as credenciais do serviço SMTP (host, usuário, senha, porta etc.)
-para editar o arquivo `docker-compose.yml`, substituindo as variáveis referentes ao serviço SMTP, a exemplo de `AIRFLOW__SMTP__SMTP_HOST`.
-
-3. Ao final do arquivo `docker-compose.yml`, remova as linhas que declaram o serviço **smtp4dev**, uma vez que ele não será mais necessário.
-
-4. O repositório já vem com comandos pré-definidos no Makefile. Para rodar o sistema, basta:
-
-```bash
-make run
-```
-Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários.
-
-5. Opcional: Configurando o INLABS como fonte de dados:
-
-**Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
-que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 

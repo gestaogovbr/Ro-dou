@@ -1,247 +1,162 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Falha detectada - Airflow</title>
+
     <style>
-        * {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            box-sizing: border-box;
-            line-height: 1.6;
-        }
-        
-        /* Reset e Base */
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
         }
 
-        /* Container Principal */
         .email-container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
         }
 
-        /* Header */
         .header {
             background-color: #cc0000;
-            color: white;
-            padding: 20px;
+            color: #ffffff;
             text-align: center;
+            padding: 20px;
         }
 
-        .header-icon {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* Content */
         .content {
-            padding: 30px;
+            padding: 20px;
         }
 
-        /* Alert Box */
         .alert {
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
             padding: 15px;
             margin-bottom: 20px;
-            border-radius: 4px;
         }
 
-        .alert p {
-            margin: 0;
-            color: #856404;
-            font-weight: 500;
-        }
-
-        /* Details Section */
-        .details {
-            margin-bottom: 25px;
-        }
-
-        .detail-item {
-            display: flex;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-weight: bold;
-            color: #333;
-            min-width: 180px;
-            flex-shrink: 0;
-        }
-
-        .detail-value {
-            color: #666;
-            flex-grow: 1;
-        }
-
-        .detail-value code {
-            background-color: #f8f9fa;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-        }
-
-        /* Action Button */
-        .action-section {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .btn-primary {
-            display: inline-block;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            text-decoration: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-        }
-
-        /* Info Box */
         .info-box {
             background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 15px;
             border-left: 4px solid #6c757d;
+            margin-top: 20px;
         }
 
-        .info-box h2 {
-            margin-top: 0;
-            color: #495057;
-            font-size: 18px;
-        }
-
-        .info-box ul {
-            margin-bottom: 0;
-            color: #6c757d;
-            padding-left: 20px;
-        }
-
-        .info-box li {
-            margin-bottom: 8px;
-        }
-
-        .info-box li:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Footer */
         .footer {
             background-color: #f8f9fa;
-            padding: 20px;
             text-align: center;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .footer p {
-            margin: 0;
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .footer small {
+            padding: 15px;
             font-size: 12px;
+            color: #6c757d;
         }
     </style>
 </head>
-<body>
-    <main class="email-container">
-        
-        <!-- Header -->
-        <header class="header">
-            <div class="header-icon">⚠️</div>
-            <h1>Falha Detectada</h1>
-        </header>
-        
-        <!-- Content -->
-        <article class="content">
-            <!-- Alert -->
-            <aside class="alert" role="alert">
-                <p>
-                    Uma task do Ro-DOU falhou durante a execução. Verifique os detalhes abaixo:
-                </p>
-            </aside>
-            
-            <!-- Details -->
-            <section class="details">
-                <div class="detail-item">
-                    <span class="detail-label">📋 Task ID:</span>
-                    <span class="detail-value">
-                        <code>{{ task_id }}</code>
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">📅 Data de Execução:</span>
-                    <span class="detail-value">
-                        {{ execution_date }}
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">📊 DAG Run ID:</span>
-                    <span class="detail-value">
-                        <code>{{ dag_run_id }}</code>
-                    </span>
-                </div>
-            </section>
 
-            <!-- Action Button -->
-            <section class="action-section">
-                <a href="{{ log_url }}"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="btn-primary">
-                    🔍 Ver Log Completo
-                </a>
-            </section>
-            
-            <!-- Additional Info -->
-            <aside class="info-box">
-                <h2>ℹ️ Próximos Passos:</h2>
-                <ul>
-                    <li>Verifique o log completo clicando no botão acima</li>
-                    <li>Analise a causa raiz do erro</li>
-                    <li>Corrija o problema e execute novamente a task</li>
-                    <li>Entre em contato com a equipe de dados se necessário</li>
-                </ul>
-            </aside>
-        </article>
-        
-        <!-- Footer -->
-        <footer class="footer">
-            <p>
-                📧 Este é um email automático do Apache Airflow<br>
-                <small>Gerado em {{ execution_date }}</small>
-            </p>
-        </footer>
-    </main>
+<body>
+
+    <!-- WRAPPER (Outlook safe) -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center">
+
+                <div class="email-container">
+
+                    <!-- HEADER -->
+                    <div class="header">
+                        <div style="font-size:22px;">⚠️</div>
+                        <div style="font-size:22px;font-weight:bold;">Falha Detectada</div>
+                    </div>
+
+                    <!-- CONTENT -->
+                    <div class="content">
+
+                        <!-- ALERT -->
+                        <div class="alert">
+                            Uma task do Ro-DOU falhou durante a execução. Verifique os detalhes abaixo:
+                        </div>
+
+                        <!-- DETAILS (TABELA = PARTE CRÍTICA) -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="border-collapse: collapse; margin-bottom:20px;">
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;width:180px;">
+                                    📋 Task ID:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    <code>{{ task_id }}</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;">
+                                    📅 Data de Execução:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    {{ execution_date }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;">
+                                    📊 DAG Run ID:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    <code>{{ dag_run_id }}</code>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- BOTÃO -->
+                        <div style="text-align:center; margin: 25px 0;">
+
+                            <!--[if mso]>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+                href="{{ log_url }}"
+                style="height:45px;v-text-anchor:middle;width:260px;"
+                arcsize="50%" stroke="f" fillcolor="#007bff">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial;font-size:16px;font-weight:bold;">
+                    Ver Log Completo
+                </center>
+            </v:roundrect>
+            <![endif]-->
+
+                            <![if !mso]>
+                            <a href="{{ log_url }}" target="_blank" style="display:inline-block;background-color:#007bff;color:#ffffff;
+               text-decoration:none;padding:12px 25px;border-radius:40px;
+               font-weight:bold;font-size:16px;">
+                                🔍 Ver Log Completo
+                            </a>
+                            <![endif]>
+
+                        </div>
+
+                        <!-- INFO -->
+                        <div class="info-box">
+                            <strong>ℹ️ Próximos Passos:</strong>
+                            <ul style="list-style-type:none; padding:0; margin:10px 0 0 0;">
+                                <li style="margin-bottom:8px;">Verifique o log completo</li>
+                                <li style="margin-bottom:8px;">Analise a causa do erro</li>
+                                <li style="margin-bottom:8px;">Corrija e execute novamente</li>
+                                <li>Acione a equipe se necessário</li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="footer">
+                        📧 Email automático do Apache Airflow<br>
+                        Gerado em {{ execution_date }}
+                    </div>
+
+                </div>
+
+            </td>
+        </tr>
+    </table>
+
 </body>
+
 </html>

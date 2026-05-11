@@ -366,6 +366,7 @@ class INLABSHook(BaseHook):
             full_text: bool = False,
             text_length: int = 400,
             use_summary: bool = False,
+            has_ementa: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -446,9 +447,17 @@ class INLABSHook(BaseHook):
             else:
                 df["matches"] = ""
 
+            if "has_ementa" not in df.columns:
+                df["has_ementa"] = has_ementa
+
+            if "full_text" not in df.columns:
+                df["full_text"] = full_text
+
             if use_summary:
                 # If use_summary replace texto value by summary value
                 df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+                # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
+                df["has_ementa"] = df["ementa"].notna()
 
             df["ai_generated"] = False
 
@@ -501,6 +510,8 @@ class INLABSHook(BaseHook):
                 "display_date_sortable": "display_date_sortable",
                 "artcategory": "hierarchyList",
                 "ai_generated": "ai_generated",
+                "has_ementa": "has_ementa",
+                "full_text": "full_text",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())

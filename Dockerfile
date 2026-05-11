@@ -22,3 +22,17 @@ RUN pip install --upgrade pip && \
 # Copy and install requirements.txt
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+ARG AI_PROVIDERS=""
+
+COPY requirements-ai.txt .
+
+RUN if [ -n "$AI_PROVIDERS" ]; then \
+  for provider in $AI_PROVIDERS; do \
+      grep "# $provider" requirements-ai.txt | cut -d'#' -f1 >> /tmp/filtered.txt; \
+  done && \
+  pip install -r /tmp/filtered.txt; \
+  fi
+
+
+

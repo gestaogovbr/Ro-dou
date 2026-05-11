@@ -101,6 +101,10 @@
             list-style: disc;
             list-style-position: inside;
         }
+        
+        ul li::marker {
+            color: #06acff;
+        }
 
         .results-section {
             margin-top: 0;
@@ -152,22 +156,39 @@
             margin: 0 4px 0 0;
         }
 
-        .document-link {
-            display: block;
+        .group-link {            
+            font-size: 14px;
+            max-width: 1200px;
+            margin: 5px auto;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-title {
+            display: inline-block;
             color: #0056b3;
             text-decoration: none;
             font-weight: 600;
-            font-size: 16px;
-            margin: 10px 0 0 0;
-            transition: color 0.3s ease;
+            font-size: 16px;   
         }
 
-        .document-link:hover {
+        .document-meta {
+            font-size: 13px;
+            padding: 6px;          
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .document-meta:hover {
             color: #003d82;
-            text-decoration: underline;
         }
 
-        .document-link:visited {
+        .document-meta:visited {
             color: #8e44ad;
         }
 
@@ -179,6 +200,36 @@
             text-align: justify;
             font-size: 15px;
             line-height: 1.5;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #333;
+            line-height: 1;           
+            border-radius: 0.25rem;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;            
+        }
+
+        .ia {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        .ementa {
+            background-color: #D0E4FC;             
+        }
+
+        .recort {
+            background-color: #ffebcc;
+        }
+
+        .full-text {
+            background-color: #e2f0d9;
         }
 
         .summary-block {
@@ -272,7 +323,7 @@
 
             .filter-list {
                 grid-template-columns: 1fr;
-            }
+            }            
 
             .result-header {
                 white-space: normal;
@@ -341,7 +392,7 @@
                                     {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
                                 </div>
                                 <ul class="filter-list">
-                                    {% for type in result_group.filters.publication_types['items'] %}
+                                    {% for type in result_group.filters.publication_types['items'] %}                                        
                                         <li>{{ type }}</li>
                                     {% endfor %}
                                 </ul>
@@ -371,6 +422,13 @@
                                     {% endif %}
                                 {% endif %}
 
+                                {% if document.ai_sufix %}
+                                    <div class="summary-block">
+                                        <em><strong>Atenção:</strong> Todos os textos marcados com a tag <span class="tag ia">IA</span> foram gerados por Inteligência Artificial e podem conter erros. </em>
+                                    </div>
+                                {% endif %}
+
+
                                 <!-- Corpo do resultado -->
                                 <div class="result-body">
 
@@ -394,25 +452,38 @@
                                             <p>Nenhum resultado encontrado para os critérios de pesquisa especificados.</p>
                                         {% endif %}
                                     {% else %}
+                                        <div class="group-link">
+                                            <span class="document-title">{{ document.title | safe }}</span>
+                                            <a href="{{ document.url }}" class="document-meta"
+                                                {% if document.url_new_tab %}target="_blank"{% endif %}>
+                                                <img width="16" height="16" style="vertical-align: middle" src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwNmFjZmYiIHN0cm9rZS13aWR0aD0iMiIgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdHlsZT0idmVydGljYWwtYWxpZ246bWlkZGxlOyBtYXJnaW4tcmlnaHQ6NHB4OyI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMTAgMTNhNSA1IDAgMCAxIDAtN2wxLjUtMS41YTUgNSAwIDAgMSA3IDdMMTcgMTIiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0xNCAxMWE1IDUgMCAwIDEgMCA3TDEyLjUgMTkuNWE1IDUgMCAwIDEtNy03TDcgMTIiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvc3ZnPgo='/>
+                                                Ver Íntegra
+                                            </a>
+                                        </div>
 
-                                        <a href="{{ document.url }}" class="document-link"
-                                        {% if document.url_new_tab %}target="_blank"{% endif %}>
-                                            {{ document.title | safe }}
-                                        </a>
                                         <div class="section-marker">{{ department | safe }}</div>
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}
-                                        <div class="abstract">{{ document.abstract | safe }}</div>
-                                        {% endif %}
-
-                                        {% if document.ai_sufix %}
-                                        <div class="summary-block">
-                                            <em>{{ document.ai_sufix | safe }}</em>
-                                        </div>
-                                        {% endif %}
-
-                                        <div class="date">{{ document.date }}</div>
+                                            {% if document.has_ementa %}
+                                                <div class="abstract">
+                                                    <span class="tag ementa">Ementa:</span> {{ document.abstract | safe }}
+                                                </div>
+                                            {% elif document.ai_sufix %}
+                                                <div class="abstract">
+                                                    <span class="tag ia">IA:</span> {{ document.abstract | safe }}
+                                                </div>
+                                            {% elif document.full_text %}
+                                                <div class="abstract">
+                                                    <span class="tag full-text">Texto Completo:</span> {{ document.abstract | safe }}
+                                                </div>
+                                            {% else %}
+                                                <div class="abstract">
+                                                    <span class="tag recort">Recorte:</span> {{ document.abstract | safe }}
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}                                        
+                                        <div class="date">{{ document.date | safe }}</div>
 
                                     {% endif %}
 
