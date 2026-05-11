@@ -1,114 +1,116 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Falha detectada - Airflow</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falha detectada - Airflow</title>
 
-<style>
-body {
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-    font-family: Arial, sans-serif;
-}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
 
-.email-container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #ffffff;
-}
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
 
-.header {
-    background-color: #cc0000;
-    color: #ffffff;
-    text-align: center;
-    padding: 20px;
-}
+        .header {
+            background-color: #cc0000;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
 
-.content {
-    padding: 20px;
-}
+        .content {
+            padding: 20px;
+        }
 
-.alert {
-    background-color: #fff3cd;
-    border-left: 4px solid #ffc107;
-    padding: 15px;
-    margin-bottom: 20px;
-}
+        .alert {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
 
-.info-box {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-left: 4px solid #6c757d;
-    margin-top: 20px;
-}
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #6c757d;
+            margin-top: 20px;
+        }
 
-.footer {
-    background-color: #f8f9fa;
-    text-align: center;
-    padding: 15px;
-    font-size: 12px;
-    color: #6c757d;
-}
-</style>
+        .footer {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- WRAPPER (Outlook safe) -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr>
-<td align="center">
+    <!-- WRAPPER (Outlook safe) -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center">
 
-<div class="email-container">
+                <div class="email-container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <div style="font-size:22px;">⚠️</div>
-        <div style="font-size:22px;font-weight:bold;">Falha Detectada</div>
-    </div>
+                    <!-- HEADER -->
+                    <div class="header">
+                        <div style="font-size:22px;">⚠️</div>
+                        <div style="font-size:22px;font-weight:bold;">Falha Detectada</div>
+                    </div>
 
-    <!-- CONTENT -->
-    <div class="content">
+                    <!-- CONTENT -->
+                    <div class="content">
 
-        <!-- ALERT -->
-        <div class="alert">
-            Uma task do Ro-DOU falhou durante a execução. Verifique os detalhes abaixo:
-        </div>
+                        <!-- ALERT -->
+                        <div class="alert">
+                            Uma task do Ro-DOU falhou durante a execução. Verifique os detalhes abaixo:
+                        </div>
 
-        <!-- DETAILS (TABELA = PARTE CRÍTICA) -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-bottom:20px;">
-            <tr>
-                <td style="padding:10px 0;font-weight:bold;width:180px;">
-                    📋 Task ID:
-                </td>
-                <td style="padding:10px 0;">
-                    <code>{{ task_id }}</code>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:10px 0;font-weight:bold;">
-                    📅 Data de Execução:
-                </td>
-                <td style="padding:10px 0;">
-                    {{ execution_date }}
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:10px 0;font-weight:bold;">
-                    📊 DAG Run ID:
-                </td>
-                <td style="padding:10px 0;">
-                    <code>{{ dag_run_id }}</code>
-                </td>
-            </tr>
-        </table>
+                        <!-- DETAILS (TABELA = PARTE CRÍTICA) -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="border-collapse: collapse; margin-bottom:20px;">
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;width:180px;">
+                                    📋 Task ID:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    <code>{{ task_id }}</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;">
+                                    📅 Data de Execução:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    {{ execution_date }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0;font-weight:bold;">
+                                    📊 DAG Run ID:
+                                </td>
+                                <td style="padding:10px 0;">
+                                    <code>{{ dag_run_id }}</code>
+                                </td>
+                            </tr>
+                        </table>
 
-        <!-- BOTÃO -->
-        <div style="text-align:center; margin: 25px 0;">
+                        <!-- BOTÃO -->
+                        <div style="text-align:center; margin: 25px 0;">
 
-            <!--[if mso]>
+                            <!--[if mso]>
             <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
                 href="{{ log_url }}"
                 style="height:45px;v-text-anchor:middle;width:260px;"
@@ -120,41 +122,41 @@ body {
             </v:roundrect>
             <![endif]-->
 
-            <![if !mso]>
-            <a href="{{ log_url }}" target="_blank"
-               style="display:inline-block;background-color:#007bff;color:#ffffff;
+                            <![if !mso]>
+                            <a href="{{ log_url }}" target="_blank" style="display:inline-block;background-color:#007bff;color:#ffffff;
                text-decoration:none;padding:12px 25px;border-radius:40px;
                font-weight:bold;font-size:16px;">
-               🔍 Ver Log Completo
-            </a>
-            <![endif]>
+                                🔍 Ver Log Completo
+                            </a>
+                            <![endif]>
 
-        </div>
+                        </div>
 
-        <!-- INFO -->
-        <div class="info-box">
-            <strong>ℹ️ Próximos Passos:</strong>
-            <ul style="list-style-type:none; padding:0; margin:10px 0 0 0;">
-                <li style="margin-bottom:8px;">Verifique o log completo</li>
-                <li style="margin-bottom:8px;">Analise a causa do erro</li>
-                <li style="margin-bottom:8px;">Corrija e execute novamente</li>
-                <li>Acione a equipe se necessário</li>
-            </ul>
-        </div>
+                        <!-- INFO -->
+                        <div class="info-box">
+                            <strong>ℹ️ Próximos Passos:</strong>
+                            <ul style="list-style-type:none; padding:0; margin:10px 0 0 0;">
+                                <li style="margin-bottom:8px;">Verifique o log completo</li>
+                                <li style="margin-bottom:8px;">Analise a causa do erro</li>
+                                <li style="margin-bottom:8px;">Corrija e execute novamente</li>
+                                <li>Acione a equipe se necessário</li>
+                            </ul>
+                        </div>
 
-    </div>
+                    </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        📧 Email automático do Apache Airflow<br>
-        Gerado em {{ execution_date }}
-    </div>
+                    <!-- FOOTER -->
+                    <div class="footer">
+                        📧 Email automático do Apache Airflow<br>
+                        Gerado em {{ execution_date }}
+                    </div>
 
-</div>
+                </div>
 
-</td>
-</tr>
-</table>
+            </td>
+        </tr>
+    </table>
 
 </body>
+
 </html>
