@@ -19,6 +19,7 @@ from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
 from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+from ro_dou_src.utils.open_search.query_builder import QueryBuilder  # type: ignore
 from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
@@ -179,151 +180,10 @@ class INLABSHook(BaseHook):
         )
 
     @staticmethod
-    def _term_to_opensearch_qs(term: str) -> str:
-        """Convert a term expression (possibly with operators &, !, |, (, )) to
-        OpenSearch query_string syntax.
-
-        Operator mapping:
-            & → AND
-            ! → AND NOT
-            | → OR
-            (, ) → preserved as grouping
-
-        Args:
-            term (str): A search term expression, e.g. "term1 & term2 ! term3".
-
-        Returns:
-            str: An OpenSearch query_string expression, e.g. '"term1" AND "term2" AND NOT "term3"'.
-        """
-        operator_chars = "&!|()"
-        sub_terms = re.split(rf"\s*([{re.escape(operator_chars)}])\s*", term)
-        sub_terms = [t for t in sub_terms if t.strip()]
-
-        parts = []
-        for sub_term in sub_terms:
-            if sub_term == "!":
-                parts.append("AND NOT")
-            elif sub_term == "&":
-                parts.append("AND")
-            elif sub_term == "|":
-                parts.append("OR")
-            elif sub_term in ("(", ")"):
-                parts.append(sub_term)
-            else:
-                escaped = sub_term.replace("\\", "\\\\").replace('"', '\\"')
-                parts.append(f'"{escaped}"')
-
-        return " ".join(parts)
-
-    def _generate_opensearch_query(self, payload: dict) -> dict:
-        """Generate an OpenSearch DSL query from a search payload dict.
-
-        Mirrors the logic of _generate_sql but produces an OpenSearch bool query.
-
-        Args:
-            payload (dict): A dictionary containing search parameters.
-                example = {
-                    "texto": ["Termo 1", "Termo 2 & Termo 3"],
-                    "pubdate": ["2024-04-01", "2024-04-01"],
-                    "pubname": ["DO1"],
-                    "artcategory_ignore": ["Ministério X/Órgão Y"],
-                    "terms_ignore": ["Termo Ignorado"],
-                }
-
-        Returns:
-            dict: An OpenSearch query body dict.
-        """
-        allowed_keys = [
-            "name",
-            "pubname",
-            "artcategory",
-            "artcategory_ignore",
-            "arttype",
-            "identifica",
-            "titulo",
-            "subtitulo",
-            "texto",
-            "terms_ignore",
-        ]
-
-        pub_date = payload.get("pubdate", [date.today().strftime("%Y-%m-%d")])
-        pub_date_from = pub_date[0]
-        pub_date_to = pub_date[1] if len(pub_date) > 1 else pub_date_from
-
-        filter_clauses = [
-            {"range": {"pubdate": {"gte": pub_date_from, "lte": pub_date_to}}}
-        ]
-        must_clauses = []
-        must_not_clauses = []
-
-        filtered_dict = {
-            k: payload[k] for k in payload if k in allowed_keys and payload[k]
-        }
-
-        for key, values in filtered_dict.items():
-            if key == "texto":
-                if any(values):
-                    qs_clauses = []
-                    for term in values:
-                        if not term or not term.strip():
-                            continue
-                        qs = self._term_to_opensearch_qs(term)
-                        if qs.strip():
-                            qs_clauses.append(
-                                {
-                                    "query_string": {
-                                        "query": qs,
-                                        "default_field": "texto_plain",
-                                    }
-                                }
-                            )
-                    if len(qs_clauses) == 1:
-                        must_clauses.append(qs_clauses[0])
-                    elif len(qs_clauses) > 1:
-                        must_clauses.append(
-                            {"bool": {"should": qs_clauses, "minimum_should_match": 1}}
-                        )
-
-            elif key == "artcategory_ignore":
-                must_not_clauses.extend(
-                    {"match_phrase_prefix": {"artcategory": value}}
-                    for value in values
-                    if value
-                )
-
-            elif key == "terms_ignore":
-                must_not_clauses.extend(
-                    {
-                        "query_string": {
-                            "query": f'"{value}"',
-                            "default_field": "texto_plain",
-                        }
-                    }
-                    for value in values
-                    if value
-                )
-
-            else:
-                should_clauses = [
-                    {"match_phrase": {key: value}} for value in values if value
-                ]
-                if len(should_clauses) == 1:
-                    must_clauses.append(should_clauses[0])
-                elif len(should_clauses) > 1:
-                    must_clauses.append(
-                        {"bool": {"should": should_clauses, "minimum_should_match": 1}}
-                    )
-
-        bool_query: dict = {"filter": filter_clauses}
-        if must_clauses:
-            bool_query["must"] = must_clauses
-        if must_not_clauses:
-            bool_query["must_not"] = must_not_clauses
-
-        logging.info("Generated OpenSearch Query:")
-        logging.info(bool_query)
-
-        return {"query": {"bool": bool_query}, "size": 10000}
+    def _generate_opensearch_query(payload: dict) -> dict:
+        qb = QueryBuilder()
+        qb.payload = payload
+        return qb.build()
 
     @staticmethod
     def _adapt_search_terms_to_extra(payload: dict) -> dict:
