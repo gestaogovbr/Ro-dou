@@ -36,11 +36,6 @@ class OpenSearchQueryBuilder:
     def __init__(self):
         self.payload: dict
 
-    def add_term(self, field, term):
-        if field not in self.payload:
-            self.payload[field] = []
-        self.payload[field].append(term)
-
     def build(self) -> dict:
         return self._generate_opensearch_query()
 
