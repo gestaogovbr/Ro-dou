@@ -73,6 +73,7 @@ MAPPING = {
             "subtitulo": {"type": "text"},
             "ementa": {"type": "text"},
             "texto": {"type": "text", "index": False},
+            "texto_plain": {"type": "text"},
             "assina": {"type": "text"},
         }
     }

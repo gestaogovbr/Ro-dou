@@ -1,10 +1,11 @@
 """Indexing pipeline for DOU articles from PostgreSQL into OpenSearch."""
 
+import logging
+import re
+
 from opensearchpy.helpers import bulk  # type: ignore
 from .client_open_search import OpenSearchClient  # type: ignore
 from .config import INDEX_NAME, MAPPING, COLUMNS_NAME  # type: ignore
-
-import logging
 
 
 class Indexer:
@@ -89,6 +90,10 @@ class Indexer:
             dict: Bulk action dict with ``_index``, ``_id``, and ``_source``.
         """
         for doc in docs:
+            texto = doc.get("texto") or ""
+            doc["texto_plain"] = re.sub(
+                r"\s+", " ", re.sub("<[^>]+>", " ", texto)
+            ).strip()
             yield {"_index": INDEX_NAME, "_id": doc["id"], "_source": doc}
 
     def run(self, pubdate: str, batch_size: int = 500):
