@@ -3,18 +3,18 @@
 import copy
 import re
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import unicodedata
 import pandas as pd
 import html2text
 
-from airflow.hooks.base import BaseHook
+from airflow.hooks.base import BaseHook  # type: ignore
 
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import Variable
+from airflow.models import Variable  # type: ignore
 
 # from typing import Optional
-from schemas import AIConfig, AISearchConfig
+from schemas import AIConfig, AISearchConfig  # type: ignore
 from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore

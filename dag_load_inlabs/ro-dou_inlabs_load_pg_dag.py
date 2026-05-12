@@ -3,16 +3,19 @@ Postgres db.
 """
 
 import os
+
 import sys
 import subprocess
 import logging
 from datetime import datetime, timedelta, date
 
-from airflow import Dataset
-from airflow.decorators import dag, task
-from airflow.models.param import Param
-from airflow.operators.python import get_current_context
-from airflow.models import Variable
+from airflow import Dataset  # type: ignore
+from airflow.decorators import dag, task  # type: ignore
+from airflow.models.param import Param  # type: ignore
+from airflow.operators.python import get_current_context  # type: ignore
+from airflow.models import Variable  # type: ignore
+
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -85,7 +88,7 @@ def load_inlabs():
                 headers=headers,
             )
             # Test if logged
-            if not session.cookies.get("inlabs_session_cookie", False):
+            if not session.cookies.get("inlabs_session_cookie", None):
                 raise ValueError("Auth failed")
             return session
 
@@ -151,90 +154,77 @@ def load_inlabs():
 
     @task
     def load_data(trigger_date: str) -> None:
-        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-        from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+        from bs4 import BeautifulSoup
+        import glob
+        import pandas as pd
+        from slugify import slugify  # type: ignore
+        from airflow.providers.postgres.hooks.postgres import PostgresHook  # type: ignore
 
-        def _clean_index(date: str):
-            client = OpenSearchClient().get_client()
+        def _read_files():
+            dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
+            df = pd.DataFrame()
+            for xml_file in glob.glob(
+                os.path.join(dest_path, trigger_date, "**/*.xml"), recursive=True
+            ):
+                df1 = pd.read_xml(xml_file)
+                df2 = pd.read_xml(xml_file, xpath="//body")
+                df = pd.concat([df, df1.join(df2)], ignore_index=True)
 
-            if not client.indices.exists(index=INDEX_NAME):
-                client.indices.create(index=INDEX_NAME)
-                logging.info(f"Index {INDEX_NAME} created.")
-                return
+            df.columns = [slugify(col, separator="_") for col in df.columns]
+            df.drop(columns=["body"], inplace=True)
+            df["pubdate"] = pd.to_datetime(df["pubdate"], format="%d/%m/%Y")
+            df["assina"] = df["texto"].apply(_get_assina)
 
-            response = client.delete_by_query(
-                index=INDEX_NAME,
-                body={"query": {"range": {"pubdate": {"gte": date, "lte": date}}}},
-            )
-            logging.info(
-                "Deleted %s documents with pubdate=%s from index %s.",
-                response.get("deleted", 0),
-                date,
-                INDEX_NAME,
-            )
+            return df
 
-        def process_folder(folder_path, pipeline=None):
-            from ro_dou_src.utils.open_search.open_search_parser import DOUXmlParser  # type: ignore
-            from ro_dou_src.utils.open_search.pipeline import OpenSearchPipeline  # type: ignore
+        def _get_assina(text):
+            soup = BeautifulSoup(text, "html.parser")
+            p_tags = soup.find_all("p", class_="assina")
+            return ", ".join([p.text for p in p_tags]) if p_tags else None
 
-            logging.info(f"Processing folder: {folder_path}")
-            files = [
-                os.path.join(root, f)
-                for root, _, fs in os.walk(folder_path)
-                for f in fs
-                if f.endswith(".xml")
-            ]
-
-            if not files:
-                raise ValueError(f"No XML files found in {folder_path}")
-
-            for xml_path in files:
-
-                with open(xml_path, "r", encoding="utf-8") as f:
-                    xml_str = f.read()
-
-                data = DOUXmlParser().parse_dou_xml(xml_str)
-                response = OpenSearchPipeline().send(data, pipeline=pipeline)
-
-                logging.info(
-                    f"[OK] {xml_path} → indexed: {response['_id']} -> indexName: {response['_index']}"
+        def _clean_db(hook: PostgresHook):
+            table_exists = hook.get_first(f"""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_name = '{STG_TABLE.split(".")[1]}'
+                );
+            """)
+            if table_exists[0]:
+                hook.run(
+                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
                 )
 
-        dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR, trigger_date)
-        if not os.path.isdir(dest_path):
-            logging.warning(f"Directory {dest_path} not found, skipping load.")
-            return
+        df = _read_files()
+        hook = PostgresHook(DEST_CONN_ID)
+        _clean_db(hook)
+        df.to_sql(
+            name=STG_TABLE.split(".")[1],
+            schema=STG_TABLE.split(".", maxsplit=1)[0],
+            con=hook.get_sqlalchemy_engine(),
+            if_exists="append",
+            index=False,
+        )
+        logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
 
-        logging.info(f"Starting to process folder: {dest_path}")
-        _clean_index(trigger_date)
-        process_folder(dest_path, pipeline=None)
+    check_loaded_data = SQLCheckOperator(
+        task_id="check_loaded_data",
+        conn_id=DEST_CONN_ID,
+        sql=f"""
+            SELECT 1
+                FROM
+                    {STG_TABLE}
+                WHERE
+                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
+            """,
+    )
 
     @task
-    def check_loaded_data(trigger_date: str) -> None:
-        from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-        from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+    def indexer_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.indexer import Indexer  # type: ignore
 
-        client = OpenSearchClient().get_client()
-
-        response = client.count(
-            index=INDEX_NAME,
-            body={
-                "query": {
-                    "range": {"pubdate": {"gte": trigger_date, "lte": trigger_date}}
-                }
-            },
-        )
-        count = response.get("count", 0)
-        if count == 0:
-            raise ValueError(
-                f"No documents found in index '{INDEX_NAME}' for pubdate={trigger_date}."
-            )
-        logging.info(
-            "check_loaded_data: found %s documents for pubdate=%s in index %s.",
-            count,
-            trigger_date,
-            INDEX_NAME,
-        )
+        indexer = Indexer(conn_id=DEST_CONN_ID)
+        indexer.run(trigger_date)
 
     @task.branch
     def check_if_first_run_of_day():
@@ -272,7 +262,8 @@ def load_inlabs():
     (
         download_n_unzip_files(trigger_date)
         >> load_data(trigger_date)  # type: ignore
-        >> check_loaded_data(trigger_date)
+        >> check_loaded_data
+        >> indexer_data(trigger_date)  # type: ignore
         >> remove_directory()
         >> check_if_first_run_of_day()
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]

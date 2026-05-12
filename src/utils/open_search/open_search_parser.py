@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 
 
-class DOUXmlParser:
+class DOUXmlParserOld:
     """Parser for Open Search XML responses from the DOU."""
 
     def _extract_plain_text(self, html_content: str) -> str:
