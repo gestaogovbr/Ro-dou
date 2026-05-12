@@ -19,7 +19,7 @@ from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
 from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
-from ro_dou_src.utils.open_search.query_builder import QueryBuilder  # type: ignore
+from ro_dou_src.utils.open_search.query_builder import OpenSearchQueryBuilder  # type: ignore
 from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
@@ -181,7 +181,7 @@ class INLABSHook(BaseHook):
 
     @staticmethod
     def _generate_opensearch_query(payload: dict) -> dict:
-        qb = QueryBuilder()
+        qb = OpenSearchQueryBuilder()
         qb.payload = payload
         return qb.build()
 

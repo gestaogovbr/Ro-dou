@@ -3,7 +3,7 @@ import re
 from datetime import date
 
 
-class QueryBuilder:
+class OpenSearchQueryBuilder:
     """Builds OpenSearch DSL query bodies from a structured search payload.
 
     The payload is a dictionary that maps search fields to lists of values.
