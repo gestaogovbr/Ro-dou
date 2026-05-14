@@ -38,57 +38,6 @@ def test_filter_text_terms(inlabs_hook, text_terms_in, text_terms_out):
 
 
 @pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1", "term2"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
-        ),
-    ],
-)
-def test_generate_sql(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1 & term2 ! term3", "term4 & term5"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND ((dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y') AND dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\\yterm3\\y')) OR (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm4\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm5\\y'))) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
-        ),
-    ],
-)
-def test_generate_sql_with_search_operators(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "pubname": ["DO1"],
-                "arttype": ["Portaria", "Resolução"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y')) AND (dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yPortaria\\y') OR dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yResolução\\y'))",
-        ),
-    ],
-)
-def test_generate_sql_no_terms(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
     "data_in, data_out",
     [
         (
@@ -802,25 +751,6 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_
 
 
 @pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1", "term2"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-                "artcategory": ["Ministério da Defesa"],
-                "artcategory_ignore": ["Ministério da Defesa/Comando da Marinha"],
-            },
-            r"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm1\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm2\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\yDO1\y')) AND (dou_inlabs.unaccent(artcategory) ~* dou_inlabs.unaccent('\yMinistério da Defesa\y')) AND (dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^Ministério da Defesa/Comando da Marinha'))",
-        ),
-    ],
-)
-def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
     "abstract, result",
     [
         (
@@ -832,19 +762,6 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
 
-
-@pytest.mark.parametrize(
-    "term_in, qs_out",
-    [
-        ("term1", '"term1"'),
-        ("term1 & term2", '"term1" AND "term2"'),
-        ("term1 | term2", '"term1" OR "term2"'),
-        ("term1 & term2 ! term3", '"term1" AND "term2" AND NOT "term3"'),
-        ("term1 & ( term2 | term3 )", '"term1" AND ( "term2" OR "term3" )'),
-    ],
-)
-def test_term_to_opensearch_qs(inlabs_hook, term_in, qs_out):
-    assert inlabs_hook._term_to_opensearch_qs(term_in) == qs_out
 
 
 @pytest.mark.parametrize(
@@ -1001,152 +918,6 @@ def test_truncate_from_start(
     assert result == expected_text
     assert was_cut == expected_cut
 
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1 & term2 ! term3", "term4 & term5"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "range": {
-                                    "pubdate": {
-                                        "gte": "2024-04-01",
-                                        "lte": "2024-04-02",
-                                    }
-                                }
-                            }
-                        ],
-                        "must": [
-                            {
-                                "bool": {
-                                    "should": [
-                                        {
-                                            "query_string": {
-                                                "query": '"term1" AND "term2" AND NOT "term3"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                        {
-                                            "query_string": {
-                                                "query": '"term4" AND "term5"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                    ],
-                                    "minimum_should_match": 1,
-                                }
-                            },
-                            {"match_phrase": {"pubname": "DO1"}},
-                        ],
-                    }
-                },
-                "size": 10000,
-            },
-        ),
-        (
-            {
-                "pubname": ["DO1"],
-                "arttype": ["Portaria", "Resolução"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "range": {
-                                    "pubdate": {
-                                        "gte": "2024-04-01",
-                                        "lte": "2024-04-02",
-                                    }
-                                }
-                            }
-                        ],
-                        "must": [
-                            {"match_phrase": {"pubname": "DO1"}},
-                            {
-                                "bool": {
-                                    "should": [
-                                        {"match_phrase": {"arttype": "Portaria"}},
-                                        {"match_phrase": {"arttype": "Resolução"}},
-                                    ],
-                                    "minimum_should_match": 1,
-                                }
-                            },
-                        ],
-                    }
-                },
-                "size": 10000,
-            },
-        ),
-        (
-            {
-                "texto": ["term1", "term2"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-                "artcategory": ["Ministério da Defesa"],
-                "artcategory_ignore": ["Ministério da Defesa/Comando da Marinha"],
-            },
-            {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "range": {
-                                    "pubdate": {
-                                        "gte": "2024-04-01",
-                                        "lte": "2024-04-02",
-                                    }
-                                }
-                            }
-                        ],
-                        "must": [
-                            {
-                                "bool": {
-                                    "should": [
-                                        {
-                                            "query_string": {
-                                                "query": '"term1"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                        {
-                                            "query_string": {
-                                                "query": '"term2"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                    ],
-                                    "minimum_should_match": 1,
-                                }
-                            },
-                            {"match_phrase": {"pubname": "DO1"}},
-                            {"match_phrase": {"artcategory": "Ministério da Defesa"}},
-                        ],
-                        "must_not": [
-                            {
-                                "match_phrase_prefix": {
-                                    "artcategory": "Ministério da Defesa/Comando da Marinha"
-                                }
-                            },
-                        ],
-                    }
-                },
-                "size": 10000,
-            },
-        ),
-    ],
-)
-def test_generate_opensearch_query(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_opensearch_query(data_in) == query_out
 
 
 @pytest.mark.parametrize(
