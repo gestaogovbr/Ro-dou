@@ -1,5 +1,4 @@
 import logging
-import re
 from datetime import date
 
 
@@ -88,27 +87,17 @@ class OpenSearchQueryBuilder:
 
         for key, values in filtered_dict.items():
             if key == "texto":
-                if any(values):
-                    qs_clauses = []
-                    for term in values:
-                        if not term or not term.strip():
-                            continue
-                        qs = self._term_to_opensearch_qs(term)
-                        if qs.strip():
-                            qs_clauses.append(
-                                {
-                                    "query_string": {
-                                        "query": qs,
-                                        "default_field": "texto_plain",
-                                    }
-                                }
-                            )
-                    if len(qs_clauses) == 1:
-                        must_clauses.append(qs_clauses[0])
-                    elif len(qs_clauses) > 1:
-                        must_clauses.append(
-                            {"bool": {"should": qs_clauses, "minimum_should_match": 1}}
-                        )
+                phrase_clauses = [
+                    {"match_phrase": {"texto_plain": term}}
+                    for term in values
+                    if term and term.strip()
+                ]
+                if len(phrase_clauses) == 1:
+                    must_clauses.append(phrase_clauses[0])
+                elif len(phrase_clauses) > 1:
+                    must_clauses.append(
+                        {"bool": {"should": phrase_clauses, "minimum_should_match": 1}}
+                    )
 
             elif key == "artcategory_ignore":
                 must_not_clauses.extend(
@@ -149,40 +138,9 @@ class OpenSearchQueryBuilder:
         logging.info("Generated OpenSearch Query:")
         logging.info(bool_query)
 
-        return {"query": {"bool": bool_query}, "size": 10000}
+        return {
+            "query": {"bool": bool_query},
+            "size": 10000,
+            "sort": [{"_score": "desc"}],
+        }
 
-    def _term_to_opensearch_qs(self, term: str) -> str:
-        """Convert a term expression (possibly with operators &, !, |, (, )) to
-        OpenSearch query_string syntax.
-
-        Operator mapping:
-            & → AND
-            ! → AND NOT
-            | → OR
-            (, ) → preserved as grouping
-
-        Args:
-            term (str): A search term expression, e.g. "term1 & term2 ! term3".
-
-        Returns:
-            str: An OpenSearch query_string expression, e.g. '"term1" AND "term2" AND NOT "term3"'.
-        """
-        operator_chars = "&!|()"
-        sub_terms = re.split(rf"\s*([{re.escape(operator_chars)}])\s*", term)
-        sub_terms = [t for t in sub_terms if t.strip()]
-
-        parts = []
-        for sub_term in sub_terms:
-            if sub_term == "!":
-                parts.append("AND NOT")
-            elif sub_term == "&":
-                parts.append("AND")
-            elif sub_term == "|":
-                parts.append("OR")
-            elif sub_term in ("(", ")"):
-                parts.append(sub_term)
-            else:
-                escaped = sub_term.replace("\\", "\\\\").replace('"', '\\"')
-                parts.append(f'"{escaped}"')
-
-        return " ".join(parts)

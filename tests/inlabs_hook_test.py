@@ -409,6 +409,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
                     }
                 ],
                 "Pellentesque": [
@@ -424,6 +425,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
                     }
                 ],
             },
@@ -489,6 +491,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": True,
+                        "score": None,
                     }
                 ],
             },
@@ -544,6 +547,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": True,
                         "full_text": True,
+                        "score": None,
                     }
                 ],
             },
@@ -588,6 +592,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
                     }
                 ],
             },
@@ -645,6 +650,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
                     }
                 ],
             },
@@ -729,6 +735,7 @@ def test_transform_search_results(
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
                     }
                 ]
             },

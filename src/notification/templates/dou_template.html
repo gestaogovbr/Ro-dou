@@ -196,7 +196,7 @@
             background-color: #f8f9fa;
             padding: 10px 0;
             border-radius: 6px;
-            margin: 15px 0;
+            margin-top: 2px;
             text-align: justify;
             font-size: 15px;
             line-height: 1.5;
@@ -228,6 +228,44 @@
             background-color: #ffebcc;
         }
 
+        .tag-alta-relevancia {
+            border-radius: 9999px;
+            border: 1px solid #F4B8B8;
+            background: #FCE8E8;
+            color: #B42323;
+        }
+
+        .tag-relevante {
+            border-radius: 9999px;
+            border: 1px solid #FCD9B8;
+            background: #FEF3E8;
+            color: #B45309;
+        }
+
+        .tag-pouco-relevante {
+            border-radius: 9999px;
+            border: 1px solid #FAF089;
+            background: #FFFBEB;
+            color: #713F12;
+        }
+
+        .tag-baixa-relevancia {
+            border-radius: 9999px;
+            border: 1px solid #D1D5DB;
+            background: #F9FAFB;
+            color: #6B7280;
+        }
+
+        .tag-alta-relevancia,
+        .tag-relevante,
+        .tag-pouco-relevante,
+        .tag-baixa-relevancia {
+            padding: 0.25rem 0.5rem;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
         .full-text {
             background-color: #e2f0d9;
         }
@@ -465,6 +503,18 @@
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}
+                                            {% if document.score is not none and document.score > 0 %}
+                                                {% set score = document.score | float %}
+                                                    {% if score > 20 %}
+                                                        <span class="tag-alta-relevancia">Alta relevancia</span>
+                                                    {% elif score > 10 %}
+                                                        <span class="tag-relevante">Relevante</span>
+                                                    {% elif score > 5 %}
+                                                        <span class="tag-pouco-relevante">Pouco relevante</span>
+                                                    {% else %}
+                                                        <span class="tag-baixa-relevancia">Relevancia baixa</span>
+                                                    {% endif %}
+                                            {% endif %}
                                             {% if document.has_ementa %}
                                                 <div class="abstract">
                                                     <span class="tag ementa">Ementa:</span> {{ document.abstract | safe }}

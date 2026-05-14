@@ -9,20 +9,6 @@ def query_builder() -> OpenSearchQueryBuilder:
 
 
 @pytest.mark.parametrize(
-    "term_in, qs_out",
-    [
-        ("term1", '"term1"'),
-        ("term1 & term2", '"term1" AND "term2"'),
-        ("term1 | term2", '"term1" OR "term2"'),
-        ("term1 & term2 ! term3", '"term1" AND "term2" AND NOT "term3"'),
-        ("term1 & ( term2 | term3 )", '"term1" AND ( "term2" OR "term3" )'),
-    ],
-)
-def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
-    assert query_builder._term_to_opensearch_qs(term_in) == qs_out
-
-
-@pytest.mark.parametrize(
     "data_in, query_out",
     [
         (
@@ -48,18 +34,8 @@ def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
                             {
                                 "bool": {
                                     "should": [
-                                        {
-                                            "query_string": {
-                                                "query": '"term1" AND "term2" AND NOT "term3"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                        {
-                                            "query_string": {
-                                                "query": '"term4" AND "term5"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
+                                        {"match_phrase": {"texto_plain": "term1 & term2 ! term3"}},
+                                        {"match_phrase": {"texto_plain": "term4 & term5"}},
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -69,6 +45,7 @@ def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
                     }
                 },
                 "size": 10000,
+                "sort": [{"_score": "desc"}],
             },
         ),
         (
@@ -105,6 +82,7 @@ def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
                     }
                 },
                 "size": 10000,
+                "sort": [{"_score": "desc"}],
             },
         ),
         (
@@ -132,18 +110,8 @@ def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
                             {
                                 "bool": {
                                     "should": [
-                                        {
-                                            "query_string": {
-                                                "query": '"term1"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
-                                        {
-                                            "query_string": {
-                                                "query": '"term2"',
-                                                "default_field": "texto_plain",
-                                            }
-                                        },
+                                        {"match_phrase": {"texto_plain": "term1"}},
+                                        {"match_phrase": {"texto_plain": "term2"}},
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -161,6 +129,7 @@ def test_term_to_opensearch_qs(query_builder, term_in, qs_out):
                     }
                 },
                 "size": 10000,
+                "sort": [{"_score": "desc"}],
             },
         ),
     ],

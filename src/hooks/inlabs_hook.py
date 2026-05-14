@@ -154,7 +154,7 @@ class INLABSHook(BaseHook):
 
         logging.info("Total hits after extra edition search: %s", len(hits))
 
-        main_search_results = [h["_source"] for h in hits]
+        main_search_results = [{**h["_source"], "score": h["_score"]} for h in hits]
         all_results = pd.DataFrame(main_search_results)
 
         if not all_results.empty:
@@ -362,6 +362,9 @@ class INLABSHook(BaseHook):
 
             df["display_date_sortable"] = None
 
+            if "score" not in df.columns:
+                df["score"] = None
+
             cols_rename = {
                 "pubname": "section",
                 "identifica": "title",
@@ -374,6 +377,7 @@ class INLABSHook(BaseHook):
                 "ai_generated": "ai_generated",
                 "has_ementa": "has_ementa",
                 "full_text": "full_text",
+                "score": "score",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
