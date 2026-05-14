@@ -3,19 +3,19 @@ Postgres db.
 """
 
 import os
+
 import sys
 import subprocess
 import logging
 from datetime import datetime, timedelta, date
 
-from airflow import Dataset
-from airflow.decorators import dag, task
-from airflow.models.param import Param
-from airflow.operators.python import get_current_context
-from airflow.models import Variable
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator
+from airflow import Dataset  # type: ignore
+from airflow.decorators import dag, task  # type: ignore
+from airflow.models.param import Param  # type: ignore
+from airflow.operators.python import get_current_context  # type: ignore
+from airflow.models import Variable  # type: ignore
 
-# from airflow.operators.python import BranchPythonOperator
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -30,7 +30,6 @@ STG_TABLE = "dou_inlabs.article_raw"
 # DAG
 
 default_args = {
-    # XXX update here
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
@@ -58,7 +57,7 @@ def load_inlabs():
     @task
     def get_date() -> str:
         """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context
+        from airflow.operators.python import get_current_context  # type: ignore
         from utils.date import get_trigger_date
 
         context = get_current_context()
@@ -70,7 +69,7 @@ def load_inlabs():
         from bs4 import BeautifulSoup
         import zipfile
         from urllib.parse import urljoin
-        from airflow.hooks.base import BaseHook
+        from airflow.hooks.base import BaseHook  # type: ignore
 
         def _create_directories():
             subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
@@ -89,7 +88,7 @@ def load_inlabs():
                 headers=headers,
             )
             # Test if logged
-            if not session.cookies.get("inlabs_session_cookie", False):
+            if not session.cookies.get("inlabs_session_cookie", None):
                 raise ValueError("Auth failed")
             return session
 
@@ -117,7 +116,9 @@ def load_inlabs():
                 "origem": "736372697074",
             }
             files = _find_files(session, headers)
+
             if not files:
+                logging.error(f"Files not found for this date: {trigger_date}")
                 return False
 
             for file in files:
@@ -152,12 +153,12 @@ def load_inlabs():
         return files_exists
 
     @task
-    def load_data(trigger_date: str):
+    def load_data(trigger_date: str) -> None:
         from bs4 import BeautifulSoup
         import glob
         import pandas as pd
-        from slugify import slugify
-        from airflow.providers.postgres.hooks.postgres import PostgresHook
+        from slugify import slugify  # type: ignore
+        from airflow.providers.postgres.hooks.postgres import PostgresHook  # type: ignore
 
         def _read_files():
             dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
@@ -182,15 +183,13 @@ def load_inlabs():
             return ", ".join([p.text for p in p_tags]) if p_tags else None
 
         def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(
-                f"""
+            table_exists = hook.get_first(f"""
                 SELECT EXISTS (
                     SELECT 1
                     FROM information_schema.tables
                     WHERE table_name = '{STG_TABLE.split(".")[1]}'
                 );
-            """
-            )
+            """)
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
@@ -219,6 +218,13 @@ def load_inlabs():
                     DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
             """,
     )
+
+    @task
+    def indexer_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.indexer import Indexer  # type: ignore
+
+        indexer = Indexer(conn_id=DEST_CONN_ID)
+        indexer.run(trigger_date)
 
     @task.branch
     def check_if_first_run_of_day():
@@ -249,14 +255,15 @@ def load_inlabs():
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
-        logging.info("Directory %s removed.", dest_path)
+        logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
     trigger_date = get_date()
     (
         download_n_unzip_files(trigger_date)
-        >> load_data(trigger_date)
+        >> load_data(trigger_date)  # type: ignore
         >> check_loaded_data
+        >> indexer_data(trigger_date)  # type: ignore
         >> remove_directory()
         >> check_if_first_run_of_day()
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
