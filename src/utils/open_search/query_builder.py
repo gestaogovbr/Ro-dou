@@ -39,22 +39,11 @@ class OpenSearchQueryBuilder:
         return self._generate_opensearch_query()
 
     def _generate_opensearch_query(self) -> dict:
-        """Generate an OpenSearch DSL query from a search payload dict.
+        """Build an OpenSearch bool query body from ``self.payload``.
 
-        Mirrors the logic of _generate_sql but produces an OpenSearch bool query.
-
-        Args:
-            payload (dict): A dictionary containing search parameters.
-                example = {
-                    "texto": ["Termo 1", "Termo 2 & Termo 3"],
-                    "pubdate": ["2024-04-01", "2024-04-01"],
-                    "pubname": ["DO1"],
-                    "artcategory_ignore": ["Ministério X/Órgão Y"],
-                    "terms_ignore": ["Termo Ignorado"],
-                }
-
-        Returns:
-            dict: An OpenSearch query body dict.
+        Returns a dict ready to be passed as the ``body`` argument to
+        ``client.search()``, with ``query``, ``size`` (10 000), and
+        ``sort`` (by ``_score`` desc) keys.
         """
         allowed_keys = [
             "name",
