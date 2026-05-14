@@ -503,10 +503,10 @@
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}
-                                            {% if document.score is not none and document.score > 0 %}
+                                            {% if document.score is not none and document.score > 0 and document.ai_sufix is none%}
                                                 {% set score = document.score | float %}
                                                     {% if score > 20 %}
-                                                        <span class="tag-alta-relevancia">Alta relevancia</span>
+                                                        <span class="tag-alta-relevancia">Alta relevância</span>
                                                     {% elif score > 10 %}
                                                         <span class="tag-relevante">Relevante</span>
                                                     {% elif score > 5 %}
