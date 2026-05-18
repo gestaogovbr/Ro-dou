@@ -1,4 +1,4 @@
-FROM apache/airflow:2.10.0-python3.10
+FROM apache/airflow:3.0.0-python3.10
 
 USER root
 
@@ -16,8 +16,7 @@ COPY requirements-uninstall.txt .
 RUN pip install --upgrade pip && \
   pip uninstall -y -r requirements-uninstall.txt && \
   pip install --no-cache-dir \
-  apache-airflow-providers-microsoft-mssql==3.9.0 \
-  apache-airflow-providers-common-sql==1.15.0
+  apache-airflow-providers-microsoft-mssql==4.5.2
 
 # Copy and install requirements.txt
 COPY requirements.txt .
