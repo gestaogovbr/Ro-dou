@@ -43,6 +43,24 @@ COLUMNS_NAME = [
 ]
 
 MAPPING = {
+    "settings": {
+        "analysis": {
+            "filter": {
+                "autocomplete_filter": {
+                    "type": "edge_ngram",
+                    "min_gram": 2,
+                    "max_gram": 15,
+                }
+            },
+            "analyzer": {
+                "autocomplete": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": ["lowercase", "asciifolding", "autocomplete_filter"],
+                }
+            },
+        }
+    },
     "mappings": {
         "properties": {
             "id": {"type": "keyword"},
@@ -55,7 +73,7 @@ MAPPING = {
                 "format": "yyyy-MM-dd||strict_date_optional_time",
             },
             "artclass": {"type": "keyword"},
-            "artcategory": {"type": "keyword"},
+            "artcategory": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
             "artsize": {"type": "integer"},
             "artnotes": {"type": "text"},
             "numberpage": {"type": "integer"},
@@ -73,8 +91,18 @@ MAPPING = {
             "subtitulo": {"type": "text"},
             "ementa": {"type": "text"},
             "texto": {"type": "text", "index": False},
-            "texto_plain": {"type": "text"},
+            "texto_plain": {
+                "type": "text",
+                "analyzer": "portuguese",
+                "fields": {
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "portuguese",
+                    }
+                },
+            },
             "assina": {"type": "text"},
         }
-    }
+    },
 }

@@ -129,7 +129,6 @@ class OpenSearchQueryBuilder:
 
         return {
             "query": {"bool": bool_query},
-            "size": 10000,
+            "size": 200,
             "sort": [{"_score": "desc"}],
         }
-
