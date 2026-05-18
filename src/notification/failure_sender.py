@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import json
+from datetime import datetime, date
 
 # Add parent folder to sys.path in order to be able to import
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,9 +82,12 @@ class FailureSender:
     def send_failure_email(self, email_list: List[str], dag_run, task_instance):
         """Sends failure notification email to the provided recipients."""
 
-        execution_date = getattr(dag_run, "logical_date", None) or getattr(
-            dag_run, "execution_date", None
-        )
+        execution_date = getattr(dag_run, "execution_date", None)
+        if not isinstance(execution_date, (datetime, date)):
+            execution_date = getattr(dag_run, "logical_date", None)
+        if not isinstance(execution_date, (datetime, date)):
+            execution_date = None
+
         execution_date_str = (
             execution_date.strftime("%d/%m/%Y %H:%M") if execution_date else "N/A"
         )
