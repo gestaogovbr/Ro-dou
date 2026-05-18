@@ -34,8 +34,16 @@ def query_builder() -> OpenSearchQueryBuilder:
                             {
                                 "bool": {
                                     "should": [
-                                        {"match_phrase": {"texto_plain": "term1 & term2 ! term3"}},
-                                        {"match_phrase": {"texto_plain": "term4 & term5"}},
+                                        {
+                                            "match_phrase": {
+                                                "texto_plain": "term1 & term2 ! term3"
+                                            }
+                                        },
+                                        {
+                                            "match_phrase": {
+                                                "texto_plain": "term4 & term5"
+                                            }
+                                        },
                                     ],
                                     "minimum_should_match": 1,
                                 }
@@ -44,7 +52,7 @@ def query_builder() -> OpenSearchQueryBuilder:
                         ],
                     }
                 },
-                "size": 10000,
+                "size": 200,
                 "sort": [{"_score": "desc"}],
             },
         ),
@@ -81,7 +89,7 @@ def query_builder() -> OpenSearchQueryBuilder:
                         ],
                     }
                 },
-                "size": 10000,
+                "size": 200,
                 "sort": [{"_score": "desc"}],
             },
         ),
@@ -128,7 +136,7 @@ def query_builder() -> OpenSearchQueryBuilder:
                         ],
                     }
                 },
-                "size": 10000,
+                "size": 200,
                 "sort": [{"_score": "desc"}],
             },
         ),
