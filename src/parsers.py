@@ -60,6 +60,7 @@ class YAMLParser:
             ) = self._get_terms_params(subsearch)
             proc_subsearch["territory_id"] = subsearch.get("territory_id", None)
             proc_subsearch["dou_sections"] = subsearch.get("dou_sections", ["TODOS"])
+            proc_subsearch["journals"] = subsearch.get("journals", None)
             proc_subsearch["search_date"] = subsearch.get("date", "DIA")
             proc_subsearch["field"] = subsearch.get("field", "TUDO")
             proc_subsearch["is_exact_search"] = subsearch.get("is_exact_search", True)
@@ -92,6 +93,7 @@ class YAMLParser:
         subject = report.get("subject", "Extraçao do DOU")
         attach_csv = report.get("attach_csv", False)
         hide_filters = report.get("hide_filters", False)
+        page_title = report.get("page_title", None)
         header_text = report.get("header_text", None)
         footer_text = report.get("footer_text", None)
         no_results_found_text = report.get(
@@ -116,6 +118,7 @@ class YAMLParser:
             dag_tags=set(dag_tags),
             owner=owner,
             hide_filters=hide_filters,
+            page_title=page_title,
             header_text=header_text,
             footer_text=footer_text,
             no_results_found_text=no_results_found_text,
