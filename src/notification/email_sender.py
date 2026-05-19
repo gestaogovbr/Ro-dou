@@ -198,6 +198,7 @@ class EmailSender(ISender):
             "dou_template.html",
             results=report_data,
             hide_filters=self.report_config.hide_filters,
+            page_title=self.report_config.page_title or "Pesquisa DOU",
             header_text=self.report_config.header_text or None,
             footer=self.report_config.footer_text or None,
             no_results_message=no_result_message,
