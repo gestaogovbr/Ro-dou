@@ -35,13 +35,15 @@ def query_builder() -> OpenSearchQueryBuilder:
                                 "bool": {
                                     "should": [
                                         {
-                                            "match_phrase": {
-                                                "texto_plain": "term1 & term2 ! term3"
+                                            "query_string": {
+                                                "query": "term1 & term2 ! term3",
+                                                "default_field": "texto_plain",
                                             }
                                         },
                                         {
-                                            "match_phrase": {
-                                                "texto_plain": "term4 & term5"
+                                            "query_string": {
+                                                "query": "term4 & term5",
+                                                "default_field": "texto_plain",
                                             }
                                         },
                                     ],
@@ -118,8 +120,18 @@ def query_builder() -> OpenSearchQueryBuilder:
                             {
                                 "bool": {
                                     "should": [
-                                        {"match_phrase": {"texto_plain": "term1"}},
-                                        {"match_phrase": {"texto_plain": "term2"}},
+                                        {
+                                            "query_string": {
+                                                "query": "term1",
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
+                                        {
+                                            "query_string": {
+                                                "query": "term2",
+                                                "default_field": "texto_plain",
+                                            }
+                                        },
                                     ],
                                     "minimum_should_match": 1,
                                 }
