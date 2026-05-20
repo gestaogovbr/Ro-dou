@@ -385,8 +385,8 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "search": [
                     {
                         "terms": [
-                            "designar & ( MGI | MINISTÉRIO FAZENDA)",
-                            "instituto & federal ! paraná",
+                            "designar AND (MGI OR \"MINISTÉRIO FAZENDA\")",
+                            "instituto AND federal NOT paraná",
                         ],
                         "header": None,
                         "sources": ["INLABS"],
