@@ -455,10 +455,10 @@ dag:
     - ro-dou
   search:
     sources:
-    - INLABS
+      - INLABS
     terms:
-    - designar & ( MGI | MINISTÉRIO FAZENDA)
-    - instituto & federal ! paraná
+      - designar AND (MGI OR "MINISTÉRIO FAZENDA")
+      - instituto AND federal NOT paraná
   report:
     emails:
       - destination@economia.gov.br
