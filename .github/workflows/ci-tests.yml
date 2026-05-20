@@ -32,4 +32,4 @@ jobs:
 
     - name: Show logs
       if: always()
-      run: docker compose logs
+      run: cd Ro-dou && docker compose logs
