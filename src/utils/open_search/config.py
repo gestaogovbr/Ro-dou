@@ -103,6 +103,7 @@ MAPPING = {
                 },
             },
             "assina": {"type": "text"},
-        }
+            "embedding": {"type": "knn_vector", "dimension": 384},
+        },
     },
 }

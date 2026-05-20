@@ -61,7 +61,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: '42'
     AIRFLOW__WEBSERVER__WORKERS: 1
 
-    _AIRFLOW_DB_UPGRADE: 'true'
+    #_AIRFLOW_DB_UPGRADE: 'true'
     _AIRFLOW_WWW_USER_CREATE: 'true'
     _AIRFLOW_WWW_USER_USERNAME: airflow
     _AIRFLOW_WWW_USER_PASSWORD: airflow

@@ -77,7 +77,7 @@ class OpenSearchQueryBuilder:
         for key, values in filtered_dict.items():
             if key == "texto":
                 phrase_clauses = [
-                    {"match_phrase": {"texto_plain": term}}
+                    {"query_string": {"query": term, "default_field": "texto_plain"}}
                     for term in values
                     if term and term.strip()
                 ]
