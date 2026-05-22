@@ -111,6 +111,7 @@ class DOESPHook(BaseHook):
         self,
         search_term: str,
         journals: List = None,  # expect list of caderno names or ids
+        sections: List = None,  # legacy alias accepted by callers/tests
         reference_date: datetime = datetime.now(),
         search_date=SearchDate.DIA,
         with_retry=True,
@@ -121,6 +122,10 @@ class DOESPHook(BaseHook):
         Returns list of dicts with keys similar to DOUHook.search_text results.
         """
         publish_from = calculate_from_datetime(reference_date, search_date)
+
+        # Backwards-compat: allow callers to pass 'sections' (tests), treat as journals if not provided
+        if sections and not journals:
+            journals = sections
 
         # Prepare journals parameter: map names to ids if possible
         journal_ids = []
