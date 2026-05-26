@@ -355,7 +355,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
 
 
 @pytest.mark.parametrize(
-    "terms, df_in, dict_out, full_text, use_summary, has_ementa",
+    "terms, df_in, dict_out, full_text, use_summary, has_ementa, show_relevancy",
     [
         (
             ["Pellentesque", "Lorem"],
@@ -410,6 +410,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": False,
                         "full_text": False,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ],
                 "Pellentesque": [
@@ -426,9 +427,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": False,
                         "full_text": False,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
+            False,
             False,
             False,
             False,
@@ -492,10 +495,12 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": False,
                         "full_text": True,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
             True,
+            False,
             False,
             False,
         ),
@@ -548,11 +553,13 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": True,
                         "full_text": True,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
             True,
             True,
+            False,
             False,
         ),
         # HTML texto with identifica tag — title must not appear in abstract
@@ -593,9 +600,11 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": False,
                         "full_text": False,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
+            False,
             False,
             False,
             False,
@@ -651,17 +660,19 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "has_ementa": False,
                         "full_text": False,
                         "score": None,
+                        "show_relevancy": True,
                     }
                 ],
             },
             False,
             False,
             False,
+            True,
         ),
     ],
 )
 def test_transform_search_results(
-    inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa
+    inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa, show_relevancy
 ):
 
     r = inlabs_hook.TextDictHandler().transform_search_results(
@@ -674,6 +685,7 @@ def test_transform_search_results(
         text_length=400,
         use_summary=use_summary,
         has_ementa=has_ementa,
+        show_relevancy=show_relevancy,
     )
     assert r == dict_out
 
@@ -736,6 +748,7 @@ def test_transform_search_results(
                         "has_ementa": False,
                         "full_text": False,
                         "score": None,
+                        "show_relevancy": False,
                     }
                 ]
             },
@@ -753,6 +766,7 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_
         response=df_in,
         text_terms=terms,
         ignore_signature_match=True,
+        show_relevancy=False,
     )
     assert r == dict_out
 

@@ -190,6 +190,7 @@ class EmailSender(ISender):
                                     "has_ementa": result.get("has_ementa", False),
                                     "full_text": result.get("full_text", False),
                                     "score": result.get("score"),
+                                    "show_relevancy": result.get("show_relevancy", False),
                                 }
                             )
 

@@ -204,6 +204,11 @@ class SearchConfig(BaseModel):
         description="Configuração específica para o uso de IA no relatório. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    show_relevancy: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibida a tag de relevância para cada resultado. "
+        "(Funcionalidade disponível apenas no INLABS)"
+    )
 
 
     @model_validator(mode='after')

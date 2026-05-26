@@ -74,6 +74,7 @@ class INLABSHook(BaseHook):
         full_text: bool,
         text_length: int,
         use_summary: bool,
+        show_relevancy: bool,
         conn_id: str = CONN_ID,
         client: OpenSearch = CLIENT,
     ) -> dict:
@@ -88,6 +89,7 @@ class INLABSHook(BaseHook):
             full_text (bool): If trim result text content
             text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
+            show_relevancy (bool): If True, include a relevancy tag in the report for each result
             conn_id (str): DOU Database Airflow conn id
 
         Returns:
@@ -174,6 +176,7 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                show_relevancy=show_relevancy,
             )
             if not all_results.empty
             else {}
@@ -228,6 +231,7 @@ class INLABSHook(BaseHook):
             text_length: int = 400,
             use_summary: bool = False,
             has_ementa: bool = False,
+            show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of text terms and signature matching.
@@ -360,12 +364,14 @@ class INLABSHook(BaseHook):
 
                 df.loc[mask, "texto"] = df.loc[mask, "texto"].apply(
                     lambda x: self._trim_text(x, text_length)
-                ) 
+                )
 
             df["display_date_sortable"] = None
 
             if "score" not in df.columns:
                 df["score"] = None
+            if "show_relevancy" not in df.columns:
+                df["show_relevancy"] = show_relevancy
 
             cols_rename = {
                 "pubname": "section",
@@ -380,6 +386,7 @@ class INLABSHook(BaseHook):
                 "has_ementa": "has_ementa",
                 "full_text": "full_text",
                 "score": "score",
+                "show_relevancy": "show_relevancy",
             }
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())

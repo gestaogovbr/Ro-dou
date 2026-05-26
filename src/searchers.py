@@ -562,6 +562,7 @@ class INLABSSearcher(BaseSearcher):
         full_text: bool,
         text_length: Optional[int],
         use_summary: bool,
+        show_relevancy: Optional[bool],
         pubtype: List[str],
         reference_date: datetime = datetime.now(),
     ) -> Dict:
@@ -586,6 +587,7 @@ class INLABSSearcher(BaseSearcher):
             full_text (bool): If trim result text content
             text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
+            show_relevancy (bool, optional): Flag to include relevancy tag in the results. Defaults to False.
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
                 search. Defaults to now.
@@ -615,6 +617,7 @@ class INLABSSearcher(BaseSearcher):
             full_text=full_text,
             text_length=text_length,
             use_summary=use_summary,
+            show_relevancy=show_relevancy,
         )
 
         group_results = self._group_results(search_results, terms, department)
