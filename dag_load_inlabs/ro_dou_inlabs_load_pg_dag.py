@@ -8,10 +8,10 @@ import subprocess
 import logging
 from datetime import datetime, timedelta, date
 
-from airflow import Dataset
+from airflow.sdk.definitions.asset import Dataset
 from airflow.decorators import dag, task
 from airflow.models.param import Param
-from airflow.operators.python import get_current_context
+from airflow.sdk import get_current_context
 from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
@@ -58,7 +58,7 @@ def load_inlabs():
     @task
     def get_date() -> str:
         """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context
+        from airflow.sdk import get_current_context
         from utils.date import get_trigger_date
 
         context = get_current_context()
@@ -263,4 +263,4 @@ def load_inlabs():
     )
 
 
-load_inlabs()
+dag = load_inlabs()

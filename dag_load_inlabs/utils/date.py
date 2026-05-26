@@ -5,6 +5,9 @@ import os
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 
+# Airflow 3: DagRunType is used to check if a run was manually triggered
+from airflow.utils.types import DagRunType
+
 AIRFLOW_TIMEZONE = os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE")
 
 def remove_template_indentation(text: str) -> str:
@@ -41,8 +44,11 @@ def get_reference_date(context: dict) -> datetime:
         datetime: reference date based on how dag was triggered
     """
 
+    # Airflow 3: external_trigger was removed; use run_type instead
+    is_manual = context["dag_run"].run_type == DagRunType.MANUAL
+
     # trigger manual, without variable reference_date defined
-    if context["dag_run"].external_trigger and \
+    if is_manual and \
         context["dag_run"].conf is not None and \
         "reference_date" not in context["dag_run"].conf:
         raise ValueError(
@@ -62,7 +68,7 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
     """ Calculate the start date of the DAG execution.
 
         If the execution is a scheduled execution,
-        the data_interval_end will be activated.In Airflow,
+        the data_interval_end will be activated. In Airflow,
         this represents the predetermined date when the DAG is executed.
         (It is equivalent to the logical_date plus the schedule interval).
 
@@ -93,9 +99,12 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
             "trigger_date", # Either a manual trigger with the variable specified,
             None # or a manual trigger where the variable is not specified.
         )
-    ) if context["dag_run"] and context["dag_run"].conf else None # This is a scheduled execution of the dag+
+    ) if context["dag_run"] and context["dag_run"].conf else None # This is a scheduled execution of the dag
 
-    if context["dag_run"].external_trigger:
+    # Airflow 3: external_trigger was removed; use run_type instead
+    is_manual = context["dag_run"].run_type == DagRunType.MANUAL
+
+    if is_manual:
         if trigger_date_conf: # manual execution with configuration specified
             trigger_date: datetime = datetime.fromisoformat(trigger_date_conf)
         else: # manual execution without configuration specified
@@ -126,11 +135,12 @@ def last_day_of_last_month(the_date: date):
 # Uses the same logic as "get_reference_date" to calculate the DAG's execution start date.
 
 # used to complete the following templates, don't use in dags!
+# Airflow 3: dag_run.external_trigger was removed; use dag_run.run_type == 'manual' instead
 base_template_reference_date = '''
 {% if dag_run.conf["reference_date"] is defined %}
     {% set the_date = macros.datetime.fromisoformat(dag_run.conf["reference_date"]) %}
 {% else %}
-    {% if dag_run.external_trigger %}
+    {% if dag_run.run_type == 'manual' %}
         {{ raise_exception_fazer_trigger_dag_somente_com_a_configuracao_reference_date }}
     {% else %}
         {% set the_date = logical_date %}
@@ -186,8 +196,9 @@ template_ano_mes_referencia_anterior = (
 
 # to be used in templates. Uses the same logic as "get_trigger_date"
 # to calculate the DAG's execution start date.
+# Airflow 3: dag_run.external_trigger was removed; use dag_run.run_type == 'manual' instead
 base_template_trigger_date = '''
-{% if dag_run.external_trigger is defined and dag_run.external_trigger %}
+{% if dag_run.run_type == 'manual' %}
     {% if dag_run.conf is defined %}
         {% if dag_run.conf["trigger_date"] is defined %}
             {% set the_date = macros.datetime.fromisoformat(dag_run.conf["trigger_date"]) %}
@@ -201,7 +212,7 @@ base_template_trigger_date = '''
 '''
 
 base_template_trigger_date_local_time = '''
-{% if dag_run.external_trigger is defined and dag_run.external_trigger %}
+{% if dag_run.run_type == 'manual' %}
     {% if dag_run.conf is defined %}
         {% if dag_run.conf["trigger_date"] is defined %}
             {% set the_date = macros.datetime.fromisoformat(dag_run.conf["trigger_date"]) %}

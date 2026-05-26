@@ -49,7 +49,7 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
         )
     ) if context["dag_run"] and context["dag_run"].conf else None # It's a predeterminated excution of the dag+
 
-    if context["dag_run"].external_trigger:
+    if context["dag_run"].run_type == "manual":
         if trigger_date_conf: # triggers manual execution when the configuration is specified
             trigger_date: datetime = datetime.fromisoformat(trigger_date_conf)
         else: # triggers manual execution when the configuration is not specified.
@@ -65,7 +65,7 @@ def get_trigger_date(context: dict, local_time: bool = False) -> datetime:
     return trigger_date
 
 base_template_trigger_date_local_time = '''
-{% if dag_run.external_trigger is defined and dag_run.external_trigger %}
+{% if dag_run.run_type == 'manual' %}
     {% if dag_run.conf is defined %}
         {% if dag_run.conf["trigger_date"] is defined %}
             {% set the_date = macros.datetime.fromisoformat(dag_run.conf["trigger_date"]) %}
