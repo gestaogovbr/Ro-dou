@@ -1,6 +1,20 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.10.1] - 2026-05-29
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Update CHANGELOG.md for 0.10.0 by @github-actions[bot] in https://github.com/gestaogovbr/Ro-dou/pull/284
+* fix: rewrite failure_template.html for better email client compatibility by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/286
+* isolate AI dependencies on build by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/285
+* feat: add ementa/IA tags and redesign document link layout in notific… by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/287
+* do not trim text if has_ementa by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/289
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.10.0...0.10.1
+
 ## [0.10.0] - 2026-04-24
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
