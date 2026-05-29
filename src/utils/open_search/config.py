@@ -1,12 +1,36 @@
 """Configuration for OpenSearch connection and index settings.
-This module loads environment variables for OpenSearch connection parameters and defines constants for index names and other settings.
+This module loads airflow/environment variables for OpenSearch connection
+parameters and defines constants for index names and other settings.
 """
 
 import os
+from airflow.models import Variable
 
-OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", "http://localhost:9200")
-OPENSEARCH_USER = os.getenv("OPENSEARCH_USER", None)
-OPENSEARCH_PASS = os.getenv("OPENSEARCH_PASS", None)
+
+# Try to load OpenSearch connection parameters from Airflow Variables, falling
+# back to environment variables if not set in Airflow.
+OPENSEARCH_HOST = Variable.get(
+    "OPENSEARCH_HOST",
+    default_var=os.getenv("OPENSEARCH_HOST", "http://localhost:9200"),
+)
+
+OPENSEARCH_USER = Variable.get(
+    "OPENSEARCH_USER",
+    default_var=os.getenv("OPENSEARCH_USER"),
+)
+
+OPENSEARCH_PASS = Variable.get(
+    "OPENSEARCH_PASS",
+    default_var=os.getenv("OPENSEARCH_PASS"),
+)
+OPENSEARCH_SSL = Variable.get(
+    "OPENSEARCH_SSL",
+    default_var=os.getenv("OPENSEARCH_SSL", False),
+)
+OPENSEARCH_VERIFY_CERTS = Variable.get(
+    "OPENSEARCH_VERIFY_CERTS",
+    default_var=os.getenv("OPENSEARCH_VERIFY_CERTS", False),
+)
 
 if not OPENSEARCH_HOST:
     raise EnvironmentError("Environment variable OPENSEARCH_HOST not found!")

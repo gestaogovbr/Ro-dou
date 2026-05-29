@@ -2,7 +2,8 @@
 This module provides a wrapper class for creating and managing connections"""
 
 from opensearchpy import OpenSearch  # type: ignore
-from .config import OPENSEARCH_HOST, OPENSEARCH_USER, OPENSEARCH_PASS
+from .config import OPENSEARCH_HOST, OPENSEARCH_USER, OPENSEARCH_PASS, \
+    OPENSEARCH_SSL, OPENSEARCH_VERIFY_CERTS  # type: ignore
 
 
 class OpenSearchClient:
@@ -18,8 +19,8 @@ class OpenSearchClient:
             hosts=[OPENSEARCH_HOST],
             http_compress=True,
             http_auth=auth,
-            use_ssl=False,
-            verify_certs=False,
+            use_ssl=OPENSEARCH_SSL,
+            verify_certs=OPENSEARCH_VERIFY_CERTS,
         )
 
     def get_client(self) -> OpenSearch:
