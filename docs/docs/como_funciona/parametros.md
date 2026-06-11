@@ -23,11 +23,14 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
 Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem todos precisam ser informados, mas existe uma **validação interna** que exige pelo menos um dos critérios `terms`, `department` ou `pubtype`. Além disso, se `sources` incluir `QD` (Querido Diário), o uso de `terms` torna‑se obrigatório.
 
+Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser informado para restringir a busca a cadernos específicos do Diário Oficial do Estado de São Paulo.
+
 - **date** *(opcional)*: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA.
 - **department** *(opcional)*: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.
 - **department_ignore** *(opcional)*: Lista de unidades e subordinadas a serem desconsideradas na busca. O nome deve ser idêntico ao da publicação.
 - **terms_ignore** *(opcional)*: Lista de termos serem desconsideradas na busca. O nome deve ser idêntico ao da publicação. **(O recurso está disponível para DOU – limitado ao excerto – e INLABS)**
 - **dou_sections** *(opcional)*: Lista de seções do DOU onde a busca deverá ser realizada. Valores aceitos: SECAO_1, SECAO_2, SECAO_3, EDICAO_EXTRA, EDICAO_SUPLEMENTAR, TODOS. Default: TODOS.
+- **journals** *(opcional)*: Lista de cadernos do Diário Oficial do Estado de São Paulo (DOE-SP) onde a busca deverá ser realizada. Disponível apenas para `DOESP`.
 - **field** *(opcional)*: Campos dos quais os termos devem ser pesquisados. Valores: TUDO, TITULO, CONTEUDO. Default: TUDO.
 - **force_rematch** *(opcional)*: Indica que a busca deve ser forçada, mesmo que já tenha sido feita anteriormente. Valores: True ou False. Default: False.
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
@@ -37,7 +40,7 @@ Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem tod
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
 - **pubtype** *(opcional)*: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).
-- **sources** *(opcional)*: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS. Default: DOU.
+- **sources** *(opcional)*: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS, DOESP. Default: DOU.
 - **terms** *(condicionalmente obrigatório)*: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se `QD` estiver na lista de `sources`, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios `terms`, `department` ou `pubtype`.
 - **territory_id** *(opcional)*: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.
 - **excerpt_size** *(opcional)*: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)
