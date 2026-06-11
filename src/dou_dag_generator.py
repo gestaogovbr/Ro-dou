@@ -34,6 +34,7 @@ from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
 
 from airflow.models import Variable
 from ai.runner import AIRunner
+
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
@@ -117,7 +118,7 @@ class DouDigestDagGenerator:
         }
 
         self.on_failure_callback = self._notify_on_failure
-        self.on_retry_callback = None
+        # self.on_retry_callback = None
 
     def _notify_on_failure(self, specs: DAGConfig, context):
         """Function called when the task fails to send a notification to admin"""
@@ -153,14 +154,12 @@ class DouDigestDagGenerator:
         # options that won't show in the "DAG Docs"
         del config["description"]
         del config["doc_md"]
-        doc_md = specs.doc_md + textwrap.dedent(
-            f"""
+        doc_md = specs.doc_md + textwrap.dedent(f"""
 
             **Configuração da dag definida no arquivo `{config_file}`**:
 
 
-            """
-        )
+            """)
         for key, value in config.items():
             doc_md += f"\n**{key.replace('_', ' ').capitalize()}**\n"
 
@@ -403,11 +402,22 @@ class DouDigestDagGenerator:
         self, num_searches: int, specs: DAGConfig, report_date: str, **context
     ) -> str:
         """Send user notification using class Notifier"""
+        ti = context["ti"]
         search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
+
+        already_succeeded = set(
+            ti.xcom_pull(task_ids=ti.task_id, key="succeeded_senders") or []
+        )
 
         notifier = Notifier(specs)
 
-        notifier.send_notification(search_report=search_report, report_date=report_date)
+        succeeded, _ = notifier.send_notification(
+            search_report=search_report,
+            report_date=report_date,
+            skip_senders=already_succeeded,
+        )
+
+        ti.xcom_push(key="succeeded_senders", value=list(already_succeeded | succeeded))
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
@@ -424,7 +434,7 @@ class DouDigestDagGenerator:
             "depends_on_past": False,
             "retries": 10,
             "retry_delay": timedelta(minutes=2),
-            "on_retry_callback": self.on_retry_callback,
+            # "on_retry_callback": self.on_retry_callback,
             "on_failure_callback": lambda context: self._notify_on_failure(
                 specs, context
             ),
@@ -564,7 +574,6 @@ class DouDigestDagGenerator:
             tg_exec_searchs >> has_matches_task
 
             has_matches_task >> [send_notification_task, skip_notification_task]
-
 
         return dag
 
