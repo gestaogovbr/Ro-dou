@@ -1,0 +1,15 @@
+dag:
+  id: doesp_example
+  description: "Example DAG searching Diário Oficial do Estado de São Paulo (DOE-SP)"
+  search:
+    sources:
+      - DOESP
+    terms:
+      - unicamp
+      - edital
+    journals:
+      - Executivo
+    date: DIA
+  report:
+    emails:
+      - destination@economia.gov.br
