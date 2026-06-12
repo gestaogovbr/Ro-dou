@@ -133,6 +133,10 @@ class SearchConfig(BaseModel):
         """
         ),
     )
+    journals: Optional[List[Union[str, dict]]] = Field(
+        default=None,
+        description="Lista de cadernos (seções) do DOE-SP para filtrar a pesquisa.",
+    )
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )

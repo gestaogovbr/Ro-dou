@@ -199,9 +199,10 @@ class EmailSender(ISender):
         return tm.renderizar(
             "dou_template.html",
             results=report_data,
-            hide_filters=self.report_config.hide_filters,
-            header_text=self.report_config.header_text or None,
-            footer=self.report_config.footer_text or None,
+            hide_filters=getattr(self.report_config, "hide_filters", False),
+            page_title=getattr(self.report_config, "page_title", None) or "Pesquisa DOU",
+            header_text=getattr(self.report_config, "header_text", None),
+            footer=getattr(self.report_config, "footer_text", None),
             no_results_message=no_result_message,
         )
 

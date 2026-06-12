@@ -22,12 +22,14 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from hooks.dou_hook import DOUHook
 from hooks.inlabs_hook import INLABSHook
+from hooks.doesp_hook import DOESPHook
 from utils.search_domains import (
     Field,
     SearchDate,
     Section,
     SectionINLABS,
     calculate_from_datetime,
+    SectionDOESP,
 )
 
 
@@ -700,3 +702,75 @@ class INLABSSearcher(BaseSearcher):
         """
 
         return list({SectionINLABS[section].value for section in sections})
+
+class DOESPSearcher(BaseSearcher):
+    """Searcher for Diário Oficial do Estado de São Paulo (DOESP).
+
+    Uses DOESPHook to perform searches. The `dou_sections` parameter expected by
+    existing YAML/DAGs may contain journal NAMES (e.g. "Executivo"). These are
+    mapped to journal IDs via SectionDOESP.fetch_sections().
+    """
+
+    doesp_hook = DOESPHook()
+
+    def exec_search(
+        self,
+        term_list,
+        journals: List[str],
+        search_date,
+        ignore_signature_match: bool,
+        force_rematch: bool,
+        department: List[str],
+        department_ignore: List[str],
+        terms_ignore: List[str],
+        pubtype: List[str],
+        reference_date: datetime,
+    ):
+        term_list = self._cast_term_list(term_list)
+        search_results = {}
+
+        # Map section names to DOESP journal ids
+        journal_map = SectionDOESP.fetch_sections() or {}
+        journal_names = []
+        if journals:
+            if "Todos" in journals:
+                journal_names = []
+            else:
+                for s in journals:
+                    # prefer exact match by name, fallback to given value
+                    journal_names.append(journal_map.get(s, s))
+
+        logging.info("DOESP: starting search for term: %s", ", ".join(term_list))
+        results = []
+        try:
+            results = self.doesp_hook.search_text(
+                search_term=term_list,
+                journals=journal_names,
+                reference_date=reference_date,
+                search_date=SearchDate[search_date],
+            )
+        except Exception as e:
+            logging.error("DOESP search error for '%s': %s", ", ".join(term_list), e)
+
+        if results:
+            # Apply same post-filters as DOUSearcher
+            if ignore_signature_match:
+                results = [r for r in results if not self._is_signature(", ".join(term_list), r.get("abstract"))]
+            if force_rematch:
+                results = [r for r in results if self._really_matched(", ".join(term_list), r.get("abstract"))]
+            if department or department_ignore:
+                self._match_department(results, department, department_ignore)
+            if terms_ignore:
+                self._match_terms_ignore(results, terms_ignore)
+            if pubtype:
+                self._match_pubtype(results, pubtype)
+            # set section description if missing
+            for r in results:
+                if not r.get("section"):
+                    r["section"] = "DOESP"
+            search_key = "all_publications" if ", ".join(term_list) == "" else ", ".join(term_list)
+            search_results[search_key] = results
+
+        time.sleep(self.SCRAPPING_INTERVAL * random() * 2)
+
+        return self._group_results(search_results, term_list)
