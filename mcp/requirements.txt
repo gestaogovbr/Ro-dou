@@ -1,0 +1,11 @@
+anthropic>=0.54.0
+fastapi>=0.115.0
+google-genai>=1.20.0
+httpx>=0.28.0
+mcp>=1.9.0
+openai>=1.86.0
+opensearch-py>=3.1.0
+psycopg[binary]>=3.2.0
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
+uvicorn[standard]>=0.30.0

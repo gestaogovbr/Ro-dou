@@ -1,0 +1,59 @@
+services:
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile.server
+    container_name: ro-dou-mcp-server
+    environment:
+      RO_DOU_MCP_HOST: 0.0.0.0
+      RO_DOU_MCP_PORT: 8100
+      RO_DOU_MCP_TRANSPORT: sse
+      ENABLE_OPENSEARCH: ${ENABLE_OPENSEARCH:-false}
+      OPENSEARCH_HOST: http://opensearch:9200
+      OPENSEARCH_USER: ${OPENSEARCH_USER:-}
+      OPENSEARCH_PASS: ${OPENSEARCH_PASS:-}
+      OPENSEARCH_INDEX: ${OPENSEARCH_INDEX:-dou}
+      INLABS_POSTGRES_DSN: ${INLABS_POSTGRES_DSN:-postgresql://airflow:airflow@postgres:5432/inlabs}
+      INLABS_TABLE: ${INLABS_TABLE:-dou_inlabs.article_raw}
+      RO_DOU_DAY_CONTEXT_PUBLICATION_LIMIT: ${RO_DOU_DAY_CONTEXT_PUBLICATION_LIMIT:-1000}
+      RO_DOU_AI_CONTEXT_BODY_CHARS: ${RO_DOU_AI_CONTEXT_BODY_CHARS:-300}
+      RO_DOU_AI_PROVIDER: ${RO_DOU_AI_PROVIDER:-}
+      RO_DOU_AI_MODEL: ${RO_DOU_AI_MODEL:-}
+      RO_DOU_AI_API_KEY: ${RO_DOU_AI_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-}
+    ports:
+      - 8100:8100
+    restart: always
+
+  mcp-backend:
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile.backend
+    container_name: ro-dou-chatbot-backend
+    environment:
+      RO_DOU_MCP_SERVER_URL: http://ro-dou-mcp-server:8100/sse
+      RO_DOU_CORS_ORIGINS: '["*"]'
+    ports:
+      - 8000:8000
+    depends_on:
+      - mcp-server
+    restart: always
+
+  mcp-frontend:
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile.frontend
+    container_name: ro-dou-chatbot-frontend
+    environment:
+      VITE_RO_DOU_API_URL: ${VITE_RO_DOU_API_URL:-http://localhost:8000}
+    ports:
+      - 5173:5173
+    depends_on:
+      - mcp-backend
+    restart: always
+
+networks:
+  default:
+    name: ${RO_DOU_DOCKER_NETWORK:-ro-dou_default}
+    external: true

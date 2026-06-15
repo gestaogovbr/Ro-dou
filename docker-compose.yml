@@ -85,8 +85,6 @@ x-airflow-common: &airflow-common
   depends_on:
     postgres:
       condition: service_healthy
-    opensearch:
-      condition: service_healthy
 
 services:
   postgres:
@@ -128,6 +126,8 @@ services:
   opensearch:
     image: opensearchproject/opensearch:2
     container_name: opensearch
+    profiles:
+      - enable_opensearch
     environment:
       - discovery.type=single-node
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=OPENSEARCH_PASS
