@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+import re
 from typing import Any
+from uuid import uuid4
 
 from mcp.server.fastmcp import FastMCP
 
@@ -30,6 +31,26 @@ def search_publications(
     """Busca publicações do Diário Oficial na base PostgreSQL do INLABS."""
     return search_service.search_postgres(
         query=query,
+        date_from=date_from,
+        date_to=date_to,
+        pubname=pubname,
+        size=size,
+    ).model_dump()
+
+
+@mcp.tool()
+def search_publications_by_field(
+    field: str,
+    value: str,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    pubname: list[str] | None = None,
+    size: int = 10,
+) -> dict[str, Any]:
+    """Busca publicações no PostgreSQL onde um campo textual contém um valor."""
+    return search_service.search_postgres_field_contains(
+        field=field,
+        value=value,
         date_from=date_from,
         date_to=date_to,
         pubname=pubname,
@@ -73,6 +94,38 @@ def answer_question(
     size: int = 5,
 ) -> dict[str, Any]:
     """Responde usando todas as publicações do dia recuperadas do PostgreSQL."""
+    direct_search = _parse_direct_field_search(question)
+    if direct_search:
+        field, value = direct_search
+        result = search_service.search_postgres_field_contains(
+            field=field,
+            value=value,
+            date_from=date_from,
+            date_to=date_to,
+            pubname=pubname,
+            size=size,
+        )
+        context = _context_from_search_result(
+            question=question,
+            context_date=date_from or date_to,
+            search_result=result,
+        )
+        return {
+            "answer": _direct_search_answer(
+                field=field,
+                value=value,
+                result=result,
+            ),
+            "sources": [_source_payload(item) for item in result.items],
+            "context_source": context.source,
+            "context_id": context.context_id,
+            "fresh_context": True,
+            "context_date": context.context_date,
+            "total_publications": context.total_publications,
+            "loaded_publications": len(context.publications),
+            "ai_used": False,
+        }
+
     context = _load_postgres_context(
         question=question,
         date_from=date_from,
@@ -90,6 +143,7 @@ def answer_question(
         "context_date": context.context_date,
         "total_publications": context.total_publications,
         "loaded_publications": len(context.publications),
+        "ai_used": True,
     }
 
 
@@ -147,6 +201,46 @@ def _source_payload(publication: Any) -> dict[str, Any]:
     payload = publication.model_dump()
     payload.pop("body", None)
     return payload
+
+
+def _parse_direct_field_search(question: str) -> tuple[str, str] | None:
+    """Parse simple database-only search intents from the chat text."""
+    pattern = re.compile(
+        r"\b(?:publications?|publicacoes|publicações|materias|matérias)\b"
+        r".*?\b(?:where|onde)\b\s+"
+        r"(?P<field>[a-zA-Z_]+)\s+"
+        r"(?P<op>contain|contains|containing|contem|cont[eé]m|contendo)\s+"
+        r"(?P<quote>['\"])(?P<value>.+?)(?P=quote)",
+        re.IGNORECASE,
+    )
+    match = pattern.search(question)
+    if not match:
+        return None
+    return match.group("field"), match.group("value")
+
+
+def _direct_search_answer(field: str, value: str, result: SearchResult) -> str:
+    lines = [
+        f"Busca no banco PostgreSQL por publicações onde `{field}` contém `{value}`.",
+        "",
+        f"Total encontrado: **{result.total}**.",
+    ]
+    if not result.items:
+        return "\n".join(lines)
+
+    lines.extend(["", "Resultados:"])
+    for publication in result.items:
+        title = publication.title or "Sem titulo"
+        label = f"{title} ({publication.id})"
+        if publication.url:
+            label = f"[{label}]({publication.url})"
+        meta = " - ".join(
+            item
+            for item in [publication.pubdate, publication.pubname, publication.article_type]
+            if item
+        )
+        lines.append(f"- {label}{f' - {meta}' if meta else ''}")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

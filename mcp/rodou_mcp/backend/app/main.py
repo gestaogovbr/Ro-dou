@@ -50,4 +50,5 @@ async def chat(request: ChatRequest) -> ChatResponse:
         context_date=result.get("context_date"),
         total_publications=result.get("total_publications"),
         loaded_publications=result.get("loaded_publications"),
+        ai_used=result.get("ai_used"),
     )

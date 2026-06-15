@@ -28,3 +28,4 @@ class ChatResponse(BaseModel):
     context_date: str | None = None
     total_publications: int | None = None
     loaded_publications: int | None = None
+    ai_used: bool | None = None

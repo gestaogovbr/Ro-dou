@@ -93,6 +93,70 @@ class DouSearchService:
         """Fetch one INLABS publication directly from PostgreSQL by id."""
         return self._get_publication_postgres(article_id=article_id)
 
+    def search_postgres_field_contains(
+        self,
+        field: str,
+        value: str,
+        date_from: str | None,
+        date_to: str | None,
+        pubname: list[str] | None,
+        size: int,
+    ) -> SearchResult:
+        """Search a safe text field with ILIKE directly in PostgreSQL."""
+        import psycopg
+
+        safe_field = self._safe_search_field(field)
+        bounded_size = max(1, min(size, 100))
+        clauses = [f"{safe_field} ILIKE %(pattern)s"]
+        params: dict[str, Any] = {
+            "pattern": f"%{value}%",
+            "limit": bounded_size,
+        }
+        if date_from:
+            clauses.append("pubdate::date >= %(date_from)s")
+            params["date_from"] = date_from
+        if date_to:
+            clauses.append("pubdate::date <= %(date_to)s")
+            params["date_to"] = date_to
+        if pubname:
+            clauses.append("pubname = ANY(%(pubname)s)")
+            params["pubname"] = pubname
+
+        where = " AND ".join(clauses)
+        sql = f"""
+            SELECT
+                {self._postgres_select_columns()}
+            FROM {self._settings.inlabs_table}
+            WHERE {where}
+            ORDER BY pubdate DESC NULLS LAST, id DESC
+            LIMIT %(limit)s
+        """
+        count_sql = (
+            f"SELECT count(*) AS total FROM {self._settings.inlabs_table} WHERE {where}"
+        )
+        with psycopg.connect(
+            self._settings.inlabs_postgres_dsn,
+            row_factory=dict_row,
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute(count_sql, params)
+                total = cur.fetchone()["total"]
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+
+        return SearchResult(
+            query=f"{safe_field} contains {value}",
+            total=int(total),
+            items=[
+                self._publication_from_source(
+                    row,
+                    score=None,
+                    article_id=str(row["id"]),
+                )
+                for row in rows
+            ],
+        )
+
     def resolve_postgres_context_date(
         self,
         date_from: str | None,
@@ -393,6 +457,7 @@ class DouSearchService:
         body = source.get("texto_plain") or DouSearchService._strip_html(
             source.get("texto"),
         )
+        pdfpage = source.get("pdfpage")
         return Publication(
             id=str(source.get("id") or article_id or ""),
             id_materia=str(id_materia) if id_materia else None,
@@ -403,7 +468,7 @@ class DouSearchService:
             category=source.get("artcategory"),
             article_type=source.get("arttype"),
             body=body,
-            url=DouSearchService._dou_publication_url(id_materia),
+            url=DouSearchService._dou_publication_url(pdfpage),
             score=score,
         )
 
@@ -418,6 +483,7 @@ class DouSearchService:
             pubdate::date::text AS pubdate,
             artcategory,
             artclass,
+            pdfpage,
             identifica,
             ementa,
             titulo,
@@ -429,10 +495,28 @@ class DouSearchService:
         """
 
     @staticmethod
-    def _dou_publication_url(id_materia: Any) -> str | None:
-        if not id_materia:
+    def _safe_search_field(field: str) -> str:
+        allowed_fields = {
+            "ementa",
+            "texto",
+            "titulo",
+            "subtitulo",
+            "identifica",
+            "name",
+            "artcategory",
+            "arttype",
+            "assina",
+        }
+        normalized = field.strip().lower()
+        if normalized not in allowed_fields:
+            raise ValueError(f"Unsupported search field: {field}")
+        return normalized
+
+    @staticmethod
+    def _dou_publication_url(pdfpage: Any) -> str | None:
+        if not pdfpage:
             return None
-        return f"https://www.in.gov.br/web/dou/-/{id_materia}"
+        return pdfpage
 
     @staticmethod
     def _strip_html(value: str | None) -> str | None:
