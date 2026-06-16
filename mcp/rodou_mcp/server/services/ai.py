@@ -92,10 +92,11 @@ class AIService:
         publications: list[Publication],
     ) -> str:
         provider = self._settings.ai_provider or "IA"
+        detail = self._provider_error_detail(error)
         lines = [
             f"O provedor `{provider}` recusou a chamada ou atingiu limite de uso.",
             "",
-            f"Detalhe técnico: `{type(error).__name__}`.",
+            f"Detalhe técnico: `{type(error).__name__}`{detail}.",
             "",
             "Enquanto isso, estas são algumas publicações do dia disponíveis para consulta:",
         ]
@@ -108,6 +109,20 @@ class AIService:
         return "\n".join(lines)
 
     @staticmethod
+    def _provider_error_detail(error: Exception) -> str:
+        """Return a short provider diagnostic without exposing credentials."""
+        status_code = getattr(error, "status_code", None)
+        message = getattr(error, "message", None) or str(error)
+        if not message:
+            return ""
+        safe_message = " ".join(message.split())
+        if len(safe_message) > 240:
+            safe_message = f"{safe_message[:237]}..."
+        if status_code:
+            return f" HTTP {status_code}: {safe_message}"
+        return f": {safe_message}"
+
+    @staticmethod
     def _markdown_title(publication: Publication) -> str:
         title = publication.title or "Sem titulo"
         if publication.url:
@@ -118,16 +133,15 @@ class AIService:
         from openai import OpenAI
 
         client = OpenAI(api_key=self._settings.ai_api_key)
-        response = client.chat.completions.create(
+        response = client.responses.create(
             model=self._settings.ai_model or "gpt-4.1-mini",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+            input=[
+                {"role": "developer", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=self._settings.ai_temperature,
-            max_tokens=self._settings.ai_max_tokens,
+            max_output_tokens=self._settings.ai_max_tokens,
         )
-        return response.choices[0].message.content or ""
+        return response.output_text or ""
 
     def _run_gemini(self, prompt: str) -> str:
         from google import genai

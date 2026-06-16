@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from mcp.server.fastmcp import FastMCP
 
@@ -94,6 +96,30 @@ def answer_question(
     size: int = 5,
 ) -> dict[str, Any]:
     """Responde usando todas as publicações do dia recuperadas do PostgreSQL."""
+    count_date = _parse_publication_count_date(question, date_from, date_to)
+    if count_date:
+        result = search_service.list_publications_by_day_postgres(
+            pubdate=count_date,
+            pubname=pubname,
+            size=1,
+        )
+        context = _context_from_search_result(
+            question=question,
+            context_date=count_date,
+            search_result=result,
+        )
+        return {
+            "answer": _count_answer(pubdate=count_date, total=result.total),
+            "sources": [],
+            "context_source": context.source,
+            "context_id": context.context_id,
+            "fresh_context": True,
+            "context_date": context.context_date,
+            "total_publications": context.total_publications,
+            "loaded_publications": 0,
+            "ai_used": False,
+        }
+
     direct_search = _parse_direct_field_search(question)
     if direct_search:
         field, value = direct_search
@@ -133,6 +159,19 @@ def answer_question(
         pubname=pubname,
         size=size,
     )
+    if not context.publications:
+        return {
+            "answer": "Nao encontrei publicacoes do DOU relacionadas a essa pergunta.",
+            "sources": [],
+            "context_source": context.source,
+            "context_id": context.context_id,
+            "fresh_context": True,
+            "context_date": context.context_date,
+            "total_publications": context.total_publications,
+            "loaded_publications": 0,
+            "ai_used": False,
+        }
+
     answer = ai_service.answer(context=context)
     return {
         "answer": answer,
@@ -154,26 +193,19 @@ def _load_postgres_context(
     pubname: list[str] | None,
     size: int,
 ) -> PublicationContext:
-    """Load all AI context from PostgreSQL before any provider call."""
-    context_date = search_service.resolve_postgres_context_date(
+    """Load AI context from a PostgreSQL search filtered by the user's request."""
+    search_date_from, search_date_to, context_date = _resolve_search_dates(
+        question=question,
         date_from=date_from,
         date_to=date_to,
-        pubname=pubname,
     )
-    if context_date:
-        search_result = search_service.list_publications_by_day_postgres(
-            pubdate=context_date,
-            pubname=pubname,
-            size=None,
-        )
-    else:
-        search_result = search_service.search_postgres(
-            query=question,
-            date_from=date_from,
-            date_to=date_to,
-            pubname=pubname,
-            size=size,
-        )
+    search_result = search_service.search_postgres(
+        query=_database_query_from_question(question),
+        date_from=search_date_from,
+        date_to=search_date_to,
+        pubname=pubname,
+        size=_ai_context_size(size),
+    )
     return _context_from_search_result(
         question=question,
         context_date=context_date,
@@ -217,6 +249,146 @@ def _parse_direct_field_search(question: str) -> tuple[str, str] | None:
     if not match:
         return None
     return match.group("field"), match.group("value")
+
+
+def _parse_publication_count_date(
+    question: str,
+    date_from: str | None,
+    date_to: str | None,
+) -> str | None:
+    """Parse simple database-only count intents."""
+    normalized = question.strip().lower()
+    is_count = bool(
+        re.search(
+            r"\b(count|total|how many|quantas|quantos|contar|conte)\b",
+            normalized,
+        )
+    )
+    mentions_publications = bool(
+        re.search(
+            r"\b(publications?|publicacoes|publicações|materias|matérias)\b",
+            normalized,
+        )
+    )
+    if not (is_count and mentions_publications):
+        return None
+    if date_from and (not date_to or date_to == date_from):
+        return date_from
+    if date_to and not date_from:
+        return date_to
+    explicit_date = _parse_date_from_question(normalized)
+    if explicit_date:
+        return explicit_date
+    if re.search(r"\b(today|hoje)\b", normalized):
+        return datetime.now(ZoneInfo(settings.timezone)).date().isoformat()
+    return None
+
+
+def _parse_date_from_question(question: str) -> str | None:
+    """Extract a date from the question and normalize it to ISO format."""
+    for pattern, date_format in (
+        (r"\b(?P<date>\d{4}-\d{2}-\d{2})\b", "%Y-%m-%d"),
+        (r"\b(?P<date>\d{2}/\d{2}/\d{4})\b", "%d/%m/%Y"),
+        (r"\b(?P<date>\d{2}-\d{2}-\d{4})\b", "%d-%m-%Y"),
+    ):
+        match = re.search(pattern, question)
+        if not match:
+            continue
+        try:
+            return datetime.strptime(match.group("date"), date_format).date().isoformat()
+        except ValueError:
+            return None
+    return None
+
+
+def _resolve_search_dates(
+    question: str,
+    date_from: str | None,
+    date_to: str | None,
+) -> tuple[str | None, str | None, str | None]:
+    """Resolve optional date filters without falling back to a full-day context."""
+    if date_from or date_to:
+        context_date = date_from if date_from and date_from == date_to else None
+        return date_from, date_to, context_date
+
+    normalized = question.strip().lower()
+    explicit_date = _parse_date_from_question(normalized)
+    if explicit_date:
+        return explicit_date, explicit_date, explicit_date
+    if re.search(r"\b(today|hoje)\b", normalized):
+        today = datetime.now(ZoneInfo(settings.timezone)).date().isoformat()
+        return today, today, today
+    return None, None, None
+
+
+def _database_query_from_question(question: str) -> str:
+    """Extract a compact keyword query before building AI context."""
+    normalized = question.strip().lower()
+    if quoted := re.findall(r"['\"]([^'\"]+)['\"]", question):
+        return " ".join(item.strip() for item in quoted if item.strip())
+
+    normalized = re.sub(r"\b\d{4}-\d{2}-\d{2}\b", " ", normalized)
+    normalized = re.sub(r"\b\d{2}[/-]\d{2}[/-]\d{4}\b", " ", normalized)
+    normalized = re.sub(r"[^\wÀ-ÿ]+", " ", normalized)
+    stopwords = {
+        "a",
+        "as",
+        "about",
+        "and",
+        "com",
+        "da",
+        "das",
+        "de",
+        "do",
+        "dos",
+        "em",
+        "for",
+        "hoje",
+        "list",
+        "liste",
+        "me",
+        "mostre",
+        "o",
+        "of",
+        "on",
+        "os",
+        "para",
+        "por",
+        "publicacao",
+        "publicacoes",
+        "publicação",
+        "publicações",
+        "publication",
+        "publications",
+        "resuma",
+        "resumo",
+        "sobre",
+        "summarize",
+        "summary",
+        "the",
+        "today",
+        "with",
+    }
+    tokens = [
+        token
+        for token in normalized.split()
+        if len(token) > 1 and token not in stopwords
+    ]
+    if not tokens:
+        return "__ro_dou_no_ai_context_filter__"
+    return " ".join(tokens)
+
+
+def _ai_context_size(size: int) -> int:
+    return max(1, min(size, settings.ai_context_publication_limit))
+
+
+def _count_answer(pubdate: str, total: int) -> str:
+    return (
+        "Busca no banco PostgreSQL por contagem de publicações.\n\n"
+        f"Data: `{pubdate}`\n\n"
+        f"Total encontrado: **{total}**."
+    )
 
 
 def _direct_search_answer(field: str, value: str, result: SearchResult) -> str:

@@ -34,7 +34,12 @@ class Settings(BaseSettings):
         default=1000,
         alias="RO_DOU_DAY_CONTEXT_PUBLICATION_LIMIT",
     )
+    ai_context_publication_limit: int = Field(
+        default=20,
+        alias="RO_DOU_AI_CONTEXT_PUBLICATION_LIMIT",
+    )
     ai_context_body_chars: int = Field(default=300, alias="RO_DOU_AI_CONTEXT_BODY_CHARS")
+    timezone: str = Field(default="America/Sao_Paulo", alias="RO_DOU_TIMEZONE")
 
     ai_provider: Literal["openai", "gemini", "claude", "azure"] | None = Field(
         default=None,

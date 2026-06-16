@@ -79,7 +79,11 @@ Servidor MCP:
   `postgresql://airflow:airflow@localhost:5432/inlabs`
 - `INLABS_TABLE`, padrão `dou_inlabs.article_raw`
 - `RO_DOU_DAY_CONTEXT_PUBLICATION_LIMIT`, padrão `1000`. Define o limite de
-  publicações do dia carregadas no contexto da IA.
+  publicações retornadas pela ferramenta de listagem por dia. Esse limite não é
+  usado para montar contexto de IA.
+- `RO_DOU_AI_CONTEXT_PUBLICATION_LIMIT`, padrão `20`. Define o número máximo de
+  publicações previamente filtradas no PostgreSQL que podem entrar no contexto
+  de IA.
 - `RO_DOU_AI_CONTEXT_BODY_CHARS`, padrão `300`. Define quantos caracteres do
   texto de cada publicação entram no contexto.
 - `RO_DOU_AI_PROVIDER`, opcional: `openai`, `gemini`, `claude` ou `azure`
