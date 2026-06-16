@@ -1,6 +1,5 @@
 """Unit tests for FailureSender."""
 
-import json
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -13,6 +12,7 @@ from dags.ro_dou_src.notification.failure_sender import FailureSender
 def specs_with_callback():
     specs = MagicMock()
     specs.callback.on_failure_callback = ["dev@email.com", "ops@email.com"]
+    specs.report = None
     return specs
 
 
@@ -20,6 +20,7 @@ def specs_with_callback():
 def specs_without_callback():
     specs = MagicMock()
     specs.callback = None
+    specs.report = None
     return specs
 
 
@@ -27,6 +28,7 @@ def specs_without_callback():
 def specs_callback_empty_list():
     specs = MagicMock()
     specs.callback.on_failure_callback = []
+    specs.report = None
     return specs
 
 
@@ -104,6 +106,33 @@ class TestGetFailureEmailList:
             result = sender._get_failure_email_list()
 
         assert result == []
+
+    def test_falls_back_to_report_emails_when_email_admin_is_none(self):
+        specs = MagicMock()
+        specs.callback = None
+        specs.report.emails = ["report@email.com"]
+        sender = FailureSender(specs)
+        with patch(
+            "dags.ro_dou_src.notification.failure_sender.Variable.get",
+            return_value=None,
+        ):
+            result = sender._get_failure_email_list()
+
+        assert result == ["report@email.com"]
+
+    def test_report_emails_not_used_when_email_admin_is_set(self):
+        specs = MagicMock()
+        specs.callback = None
+        specs.report.emails = ["report@email.com"]
+        sender = FailureSender(specs)
+        with patch(
+            "dags.ro_dou_src.notification.failure_sender.Variable.get",
+            return_value="admin@email.com",
+        ):
+            result = sender._get_failure_email_list()
+
+        assert result == ["admin@email.com"]
+        assert "report@email.com" not in result
 
 
 class TestSendFailureEmail:
@@ -185,76 +214,27 @@ class TestSendFailureEmail:
         assert render_kwargs["execution_date"] == "N/A"
 
 
-class TestSendSlackFailureNotification:
-    def _make_slack_conn(self, channel="#alerts"):
-        conn = MagicMock()
-        conn.description = json.dumps({"channel": channel})
-        return conn
-
-    def test_sends_slack_notification_when_connection_exists(
-        self, specs_with_callback, dag_run, task_instance
-    ):
-        sender = FailureSender(specs_with_callback)
-        mock_notifier = MagicMock()
-
-        with patch(
-            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
-            return_value=self._make_slack_conn("#alerts"),
-        ), patch(
-            "dags.ro_dou_src.notification.failure_sender.SlackNotifier",
-            return_value=mock_notifier,
-        ):
-            sender.send_slack_failure_notification(
-                {}, dag_run, task_instance, Exception("boom")
-            )
-
-        mock_notifier.notify.assert_called_once()
-
-    def test_uses_channel_from_connection_description(
-        self, specs_with_callback, dag_run, task_instance
-    ):
-        sender = FailureSender(specs_with_callback)
-        mock_notifier = MagicMock()
-
-        with patch(
-            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
-            return_value=self._make_slack_conn("#my-channel"),
-        ), patch(
-            "dags.ro_dou_src.notification.failure_sender.SlackNotifier",
-            return_value=mock_notifier,
-        ) as MockSlack:
-            sender.send_slack_failure_notification(
-                {}, dag_run, task_instance, Exception("boom")
-            )
-
-        _, kwargs = MockSlack.call_args
-        assert kwargs["channel"] == "#my-channel"
-
-    def test_logs_error_when_connection_not_available(
-        self, specs_with_callback, dag_run, task_instance
-    ):
-        sender = FailureSender(specs_with_callback)
-
-        with patch(
-            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
-            side_effect=Exception("connection not found"),
-        ):
-            # Must not raise
-            sender.send_slack_failure_notification(
-                {}, dag_run, task_instance, Exception("boom")
-            )
-
-
 class TestSend:
-    def test_send_calls_both_email_and_slack(
+    def test_send_calls_email(
         self, specs_with_callback, dag_run, task_instance
     ):
         sender = FailureSender(specs_with_callback)
-        sender.send_slack_failure_notification = MagicMock()
         sender.send_failure_email = MagicMock()
         sender._get_failure_email_list = MagicMock(return_value=["dev@email.com"])
 
-        sender.send({}, dag_run, task_instance, Exception("boom"))
+        sender.send(dag_run, task_instance)
 
-        sender.send_slack_failure_notification.assert_called_once()
-        sender.send_failure_email.assert_called_once()
+        sender.send_failure_email.assert_called_once_with(
+            ["dev@email.com"], dag_run, task_instance
+        )
+
+    def test_send_resolves_email_list(
+        self, specs_with_callback, dag_run, task_instance
+    ):
+        sender = FailureSender(specs_with_callback)
+        sender.send_failure_email = MagicMock()
+        sender._get_failure_email_list = MagicMock(return_value=["dev@email.com"])
+
+        sender.send(dag_run, task_instance)
+
+        sender._get_failure_email_list.assert_called_once()
