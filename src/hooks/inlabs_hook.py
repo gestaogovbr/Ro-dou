@@ -425,15 +425,6 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
-        def _singularize(self, text):
-            """Apply naive Portuguese singularization rules to
-            improve matching across plural/singular inflections.
-            """
-            text = re.sub(r"ões\b", "ão", text)
-            text = re.sub(r"ais\b", "al", text)
-            text = re.sub(r"s\b", "", text)
-            return text
-
         def _find_matches(self, text: str, keys: list) -> str:
             """Find keys that match the text, considering normalization
             for matching and ensuring exact matches.
@@ -446,13 +437,16 @@ class INLABSHook(BaseHook):
             Returns:
                 str: A comma-separated string of unique keys found in the text.
             """
+            from utils.singularize_sentences import singularize_sentences
 
             normalized_text = self._normalize(text)
             matches = [
                 key
                 for key in keys
                 if re.search(
-                    r"\b" + re.escape(self._normalize(self._singularize(key))) + r"\b",
+                    r"\b"
+                    + re.escape(self._normalize(singularize_sentences(key)))
+                    + r"\b",
                     normalized_text,
                     re.IGNORECASE,
                 )
