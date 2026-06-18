@@ -156,7 +156,13 @@ class INLABSHook(BaseHook):
 
         logging.info("Total hits after extra edition search: %s", len(hits))
 
-        main_search_results = [{**h["_source"], "score": h["_score"]} for h in hits]
+        main_search_results = [
+            {
+                **h["_source"],
+                "score": h["_score"],
+            }
+            for h in hits
+        ]
         all_results = pd.DataFrame(main_search_results)
 
         if not all_results.empty:
@@ -263,7 +269,6 @@ class INLABSHook(BaseHook):
             # Remove duplicated title then strip HTML tags
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
-            # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
 
             # Fill NaN identifica with name column value
@@ -272,7 +277,6 @@ class INLABSHook(BaseHook):
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
             if any(text_terms):
-                # df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
                 df["matches"] = df.apply(
                     lambda row: self._find_matches(
                         row["texto"] + " " + row["identifica"],
@@ -350,14 +354,6 @@ class INLABSHook(BaseHook):
                     )
                     df.at[i, "ai_generated"] = True
 
-                    df["texto"] = df.apply(
-                        lambda row: self._highlight_terms(
-                            [t for t in row["matches"].split(", ") if t],
-                            row["texto"],
-                        ),
-                        axis=1,
-                    )
-
             if not full_text:
                 # Only trim text that was not processed by AI and does not have ementa
                 mask = (~df["ai_generated"]) & (~df["has_ementa"])
@@ -429,6 +425,15 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
+        def _singularize(self, text):
+            """Apply naive Portuguese singularization rules to
+            improve matching across plural/singular inflections.
+            """
+            text = re.sub(r"ões\b", "ão", text)
+            text = re.sub(r"ais\b", "al", text)
+            text = re.sub(r"s\b", "", text)
+            return text
+
         def _find_matches(self, text: str, keys: list) -> str:
             """Find keys that match the text, considering normalization
             for matching and ensuring exact matches.
@@ -447,7 +452,7 @@ class INLABSHook(BaseHook):
                 key
                 for key in keys
                 if re.search(
-                    r"\b" + re.escape(self._normalize(key)) + r"\b",
+                    r"\b" + re.escape(self._normalize(self._singularize(key))) + r"\b",
                     normalized_text,
                     re.IGNORECASE,
                 )

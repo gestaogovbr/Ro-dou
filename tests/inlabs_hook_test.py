@@ -401,7 +401,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet.",
+                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -418,7 +418,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 2",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%><%%>Pellentesque</%%></%%>.",
+                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -475,7 +475,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
                             "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
                             "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
                             "                        viverra finibus a et magna. Pellentesque vel elementum\n"
@@ -591,7 +591,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<p><%%><%%>Lorem</%%></%%> ipsum dolor sit amet.</p>",
+                        "abstract": "<p><%%>Lorem</%%> ipsum dolor sit amet.</p>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -739,7 +739,7 @@ def test_transform_search_results(
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%><%%>Pellentesque</%%></%%> Phasellus venenatis auctor mauris.",
+                        "abstract": "<%%>Pellentesque</%%> Phasellus venenatis auctor mauris.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
