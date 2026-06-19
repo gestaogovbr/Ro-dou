@@ -152,8 +152,11 @@ class EmailSender(ISender):
                                 term_data["search_terms"]["group"] = group
 
                         # Add the specific term
-                        if term != "all_publications":
-                            term_data["search_terms"]["terms"].append(f"{term}")
+                        if not self.report_config.hide_filters:
+                            if term != "all_publications":
+                                term_data["search_terms"]["terms"].append(f"{term}")
+                            else:
+                                term_data["search_terms"]["terms"].append(f"{term}")
 
                         # Add department to terms list if not default
                         if department != "single_department":
@@ -195,7 +198,8 @@ class EmailSender(ISender):
             "dou_template.html",
             results=report_data,
             hide_filters=getattr(self.report_config, "hide_filters", False),
-            page_title=getattr(self.report_config, "page_title", None) or "Pesquisa DOU",
+            page_title=getattr(self.report_config, "page_title", None)
+            or "Pesquisa DOU",
             header_text=getattr(self.report_config, "header_text", None),
             footer=getattr(self.report_config, "footer_text", None),
             no_results_message=no_result_message,
