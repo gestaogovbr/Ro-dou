@@ -424,21 +424,13 @@ class INLABSHook(BaseHook):
                     )
                     df.at[i, "ai_generated"] = True
 
-            df["texto"] = df.apply(
-                lambda row: self._highlight_terms(
-                    [t for t in row["matches"].split(", ") if t],
-                    row["texto"],
-                ),
-                axis=1,
-            )
-
             if not full_text:
                 # Only trim text that was not processed by AI and does not have ementa
                 mask = (~df["ai_generated"]) & (~df["has_ementa"])
 
                 df.loc[mask, "texto"] = df.loc[mask, "texto"].apply(
                     lambda x: self._trim_text(x, text_length)
-                ) 
+                )
 
             df["display_date_sortable"] = None
 
