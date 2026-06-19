@@ -152,11 +152,8 @@ class EmailSender(ISender):
                                 term_data["search_terms"]["group"] = group
 
                         # Add the specific term
-                        if not self.report_config.hide_filters:
-                            if term != "all_publications":
-                                term_data["search_terms"]["terms"].append(f"{term}")
-                            else:
-                                term_data["search_terms"]["terms"].append(f"{term}")
+                        if term != "all_publications":
+                            term_data["search_terms"]["terms"].append(f"{term}")
 
                         # Add department to terms list if not default
                         if department != "single_department":

@@ -348,7 +348,7 @@
     {% endif %}
 
     <!-- Verifica se algum resultado foi encontrado -->
-    {% if not results or results|length == 0 %}
+    {% if not results or results | length == 0 %}
 
         <div class="no-results">
             <p>{{ no_results_message | default('Nenhum resultado foi encontrado para os critérios de pesquisa especificados.') }}</p>
@@ -360,7 +360,7 @@
         {% for result_group in results %}
             {% if loop.first %}
                 <!-- Filtros da Seção -->
-                {% if result_group.filters|default({})|length > 0 %}
+                {% if result_group.filters|default({}) | length > 0 %}
                     <section>
                         <div class="filters-section">
                             <div class="filter-title">
@@ -406,17 +406,17 @@
                 <!-- Resultados da Seção -->
                 <section>
                     <div class="results-section">
-                        {% if result_group.search_terms.get('terms', [])|length > 0 or
-                        result_group.search_terms.get('items',[])|length > 0 %}
+                        {% if result_group.search_terms.get('terms', []) | length > 0 or
+                        result_group.search_terms.get('items',[]) | length > 0 %}
 
                             {% set title = result_group.search_terms.terms | join(', ') %}
                             {% set department = result_group.search_terms.department %}
 
                             {% for document in result_group.search_terms['items'] %}
 
-                                {% if loop.changed(document.header_title|trim) %}
+                                {% if loop.changed(document.header_title | trim) %}
                                     {% if document.header_title %}
-                                        <div class="result-header" title="{{ header_title }}">
+                                        <div class="result-header" title="{{ document.header_title }}">
                                             {{ document.header_title | safe }}
                                         </div>
                                     {% endif %}
