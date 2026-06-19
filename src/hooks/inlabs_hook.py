@@ -24,6 +24,9 @@ from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
 
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -425,6 +428,8 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
+        lemmatizer = WordNetLemmatizer()
+
         def _find_matches(self, text: str, keys: list) -> str:
             """Find keys that match the text, considering normalization
             for matching and ensuring exact matches.
@@ -437,16 +442,15 @@ class INLABSHook(BaseHook):
             Returns:
                 str: A comma-separated string of unique keys found in the text.
             """
-            from utils.singularize_sentences import singularize_sentences
+            from utils.singularize_sentences import singularize
 
-            normalized_text = self._normalize(text)
+            normalized_text = self._normalize(singularize(text))
+
             matches = [
                 key
                 for key in keys
                 if re.search(
-                    r"\b"
-                    + re.escape(self._normalize(singularize_sentences(key)))
-                    + r"\b",
+                    r"\b" + re.escape(self._normalize(singularize(key))) + r"\b",
                     normalized_text,
                     re.IGNORECASE,
                 )

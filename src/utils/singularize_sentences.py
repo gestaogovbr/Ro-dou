@@ -2,7 +2,7 @@ import re
 import unidecode
 
 
-def singularize_sentences(original_text: str) -> str:
+def singularize(original_text: str) -> str:
     list_str = []
     # Remove acentos e deixa tudo minuscula
     for word in original_text.split():
