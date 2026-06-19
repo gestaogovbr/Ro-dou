@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import date
 
 
@@ -37,6 +38,13 @@ class OpenSearchQueryBuilder:
 
     def build(self) -> dict:
         return self._generate_opensearch_query()
+
+    @staticmethod
+    def _preprocess_texto(term: str) -> str:
+        term = re.sub(r"&{1,2}", " AND ", term)
+        term = re.sub(r"\|{1,2}", " OR ", term)
+        term = re.sub(r"(?:(?<=\s)|(?<=\()|^)!", " NOT ", term)
+        return re.sub(r"\s+", " ", term).strip()
 
     def _generate_opensearch_query(self) -> dict:
         """Build an OpenSearch bool query body from ``self.payload``.
@@ -77,7 +85,12 @@ class OpenSearchQueryBuilder:
         for key, values in filtered_dict.items():
             if key == "texto":
                 phrase_clauses = [
-                    {"query_string": {"query": term, "default_field": "texto_plain"}}
+                    {
+                        "query_string": {
+                            "query": self._preprocess_texto(term),
+                            "default_field": "texto_plain",
+                        }
+                    }
                     for term in values
                     if term and term.strip()
                 ]
@@ -99,7 +112,7 @@ class OpenSearchQueryBuilder:
                 must_not_clauses.extend(
                     {
                         "query_string": {
-                            "query": f'"{value}"',
+                            "query": value,
                             "default_field": "texto_plain",
                         }
                     }

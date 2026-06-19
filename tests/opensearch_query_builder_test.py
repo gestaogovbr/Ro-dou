@@ -36,13 +36,13 @@ def query_builder() -> OpenSearchQueryBuilder:
                                     "should": [
                                         {
                                             "query_string": {
-                                                "query": "term1 & term2 ! term3",
+                                                "query": "term1 AND term2 NOT term3",
                                                 "default_field": "texto_plain",
                                             }
                                         },
                                         {
                                             "query_string": {
-                                                "query": "term4 & term5",
+                                                "query": "term4 AND term5",
                                                 "default_field": "texto_plain",
                                             }
                                         },
