@@ -75,18 +75,19 @@ def test_build_keeps_non_text_filters(query_builder):
     }
 
 
-def test_build_simple_text_query_uses_named_match_phrase(query_builder):
-    """Build a simple phrase search as a named ``match_phrase`` clause."""
+def test_build_simple_text_query_uses_named_match_with_and_operator(query_builder):
+    """Build unquoted multi-word text as a named ``match`` clause."""
     query_builder.payload = {
         "texto": ["estrutura regimental"],
         "pubdate": ["2024-04-01"],
     }
 
     assert _texto_clause(query_builder.build()) == {
-        "match_phrase": {
+        "match": {
             "texto_plain": {
                 "query": "estrutura regimental",
                 "_name": "estrutura regimental",
+                "operator": "and",
             }
         }
     }
@@ -168,6 +169,19 @@ def test_build_quoted_phrase_preserves_single_named_term(query_builder):
             ]
         }
     }
+
+
+def test_build_terms_ignore_uses_match_phrase(query_builder):
+    """Exclude ignored terms as exact phrases, not broad query strings."""
+    query_builder.payload = {
+        "texto": ["Estrutura regimental"],
+        "terms_ignore": ["Programa de Gestão de Desempenho"],
+        "pubdate": ["2024-04-01"],
+    }
+
+    assert query_builder.build()["query"]["bool"]["must_not"] == [
+        {"match_phrase": {"texto_plain": "Programa de Gestão de Desempenho"}}
+    ]
 
 
 def test_build_parentheses_preserve_boolean_precedence(query_builder):
