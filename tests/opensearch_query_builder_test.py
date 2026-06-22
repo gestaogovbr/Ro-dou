@@ -93,6 +93,29 @@ def test_build_simple_text_query_uses_named_match_with_and_operator(query_builde
     }
 
 
+def test_build_morphological_text_query_delegates_variations_to_opensearch(
+    query_builder,
+):
+    """Allow OpenSearch analyzer to match plural variants of a singular term."""
+    query_builder.payload = {
+        "texto": ["Estrutura regimental"],
+        "pubdate": ["2026-06-22"],
+    }
+
+    text_clause = _texto_clause(query_builder.build())
+
+    assert "match_phrase" not in text_clause
+    assert text_clause == {
+        "match": {
+            "texto_plain": {
+                "query": "Estrutura regimental",
+                "_name": "Estrutura regimental",
+                "operator": "and",
+            }
+        }
+    }
+
+
 def test_build_and_query_uses_named_must_clauses(query_builder):
     """Build AND expressions as named ``must`` clauses."""
     query_builder.payload = {
