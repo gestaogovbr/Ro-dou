@@ -94,6 +94,9 @@ class INLABSHook(BaseHook):
 
         Returns:
             dict: A dictionary of processed search results.
+                Terms found in each hit are taken from OpenSearch
+                ``matched_queries`` and propagated to ``matched_terms`` and the
+                legacy ``matches`` field.
         """
 
         logging.info("Search term in INLABS HOOK.")
@@ -156,11 +159,9 @@ class INLABSHook(BaseHook):
 
         logging.info("Total hits after extra edition search: %s", len(hits))
 
+        searched_expression = ", ".join(search_terms.get("texto", []))
         main_search_results = [
-            {
-                **h["_source"],
-                "score": h["_score"],
-            }
+            self._map_opensearch_hit(h, searched_expression=searched_expression)
             for h in hits
         ]
         all_results = pd.DataFrame(main_search_results)
@@ -190,9 +191,35 @@ class INLABSHook(BaseHook):
 
     @staticmethod
     def _generate_opensearch_query(payload: dict) -> dict:
+        """Build the OpenSearch query body for an INLABS search payload."""
         qb = OpenSearchQueryBuilder()
         qb.payload = payload
         return qb.build()
+
+    @staticmethod
+    def _matched_terms_from_hit(hit: dict) -> list:
+        """Return sorted matched terms reported by OpenSearch for one hit."""
+        return sorted(set(hit.get("matched_queries", [])), key=str.lower)
+
+    @classmethod
+    def _map_opensearch_hit(cls, hit: dict, searched_expression: str = "") -> dict:
+        """Map an OpenSearch hit to the dataframe shape used by notifications.
+
+        Matched terms come exclusively from ``hit["matched_queries"]``. The
+        legacy ``matches`` field is populated from the same source for backward
+        compatibility.
+        """
+        matched_terms = cls._matched_terms_from_hit(hit)
+        highlights = hit.get("highlight", {}).get("texto_plain", [])
+        return {
+            **hit.get("_source", {}),
+            "score": hit.get("_score"),
+            "searched_expression": searched_expression,
+            "matched_terms": matched_terms,
+            "matched_terms_text": ", ".join(matched_terms),
+            "matches": ", ".join(matched_terms),
+            "opensearch_highlights": highlights,
+        }
 
     @staticmethod
     def _adapt_search_terms_to_extra(payload: dict) -> dict:
@@ -240,11 +267,12 @@ class INLABSHook(BaseHook):
             show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
-            of text terms and signature matching.
+            of matched terms reported by OpenSearch and signature matching.
 
             Args:
                 response (pd.DataFrame): The dataframe of search results
-                    from the Database.
+                    from OpenSearch. When present, ``matched_terms`` must come
+                    from hit ``matched_queries``.
                 text_terms (list): The list of text terms used in the search.
                 ignore_signature_match (bool): Flag to ignore publication
                     signature content.
@@ -276,14 +304,22 @@ class INLABSHook(BaseHook):
             # Remove blank spaces and convert to uppercase
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
-            if any(text_terms):
-                df["matches"] = df.apply(
-                    lambda row: self._find_matches(
-                        row["texto"] + " " + row["identifica"],
-                        keys=text_terms,
-                    ),
-                    axis=1,
+            if "matched_terms" in df.columns:
+                df["matched_terms"] = df["matched_terms"].apply(
+                    lambda terms: (
+                        sorted(set(terms), key=str.lower)
+                        if isinstance(terms, list)
+                        else []
+                    )
                 )
+                df["matched_terms_text"] = df["matched_terms"].apply(
+                    lambda terms: ", ".join(terms)
+                )
+                df["matches"] = df["matched_terms_text"]
+            elif "matches" not in df.columns:
+                df["matches"] = ""
+
+            if "matched_terms" in df.columns:
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
@@ -313,8 +349,6 @@ class INLABSHook(BaseHook):
                 )
                 if ignore_signature_match:
                     df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
-            else:
-                df["matches"] = ""
 
             if "has_ementa" not in df.columns:
                 df["has_ementa"] = has_ementa
@@ -384,6 +418,12 @@ class INLABSHook(BaseHook):
                 "score": "score",
                 "show_relevancy": "show_relevancy",
             }
+            if "matched_terms" in df.columns:
+                cols_rename["matched_terms"] = "matched_terms"
+            if "matched_terms_text" in df.columns:
+                cols_rename["matched_terms_text"] = "matched_terms_text"
+            if "searched_expression" in df.columns:
+                cols_rename["searched_expression"] = "searched_expression"
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
 
