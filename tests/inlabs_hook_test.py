@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import pandas as pd
 import numpy as np
@@ -58,18 +60,47 @@ def test_adapt_search_terms_to_extra(inlabs_hook, data_in, data_out):
     assert inlabs_hook._adapt_search_terms_to_extra(data_in) == data_out
 
 
-@pytest.mark.parametrize(
-    "text, keys, matches",
-    [
-        (
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            ["lorem", "sit", "not_find"],
-            "lorem, sit",
-        ),
-    ],
-)
-def test_find_matches(inlabs_hook, text, keys, matches):
-    assert inlabs_hook.TextDictHandler()._find_matches(text, keys) == matches
+def test_map_opensearch_hit_uses_matched_queries(inlabs_hook):
+    """Map OpenSearch ``matched_queries`` into matched term fields."""
+    hit = {
+        "_id": "1",
+        "_score": 10.0,
+        "_source": {
+            "texto_plain": "Aprova as estruturas regimentais da SEGES.",
+            "texto": "Aprova as estruturas regimentais da SEGES.",
+        },
+        "matched_queries": ["estrutura regimental", "SEGES"],
+        "highlight": {
+            "texto_plain": [
+                "Aprova as <%%>estruturas regimentais</%%> da <%%>SEGES</%%>."
+            ]
+        },
+    }
+
+    mapped = inlabs_hook._map_opensearch_hit(
+        hit, searched_expression='"estrutura regimental" AND SEGES'
+    )
+
+    assert mapped["score"] == 10.0
+    assert mapped["searched_expression"] == '"estrutura regimental" AND SEGES'
+    assert mapped["matched_terms"] == ["estrutura regimental", "SEGES"]
+    assert mapped["matched_terms_text"] == "estrutura regimental, SEGES"
+    assert mapped["matches"] == "estrutura regimental, SEGES"
+    assert mapped["opensearch_highlights"] == [
+        "Aprova as <%%>estruturas regimentais</%%> da <%%>SEGES</%%>."
+    ]
+
+
+def test_map_opensearch_hit_without_matched_queries_returns_empty_terms(inlabs_hook):
+    """Return empty matched term fields when a hit has no ``matched_queries``."""
+    mapped = inlabs_hook._map_opensearch_hit(
+        {"_id": "1", "_score": 1.0, "_source": {"texto": "Sem destaque."}},
+        searched_expression="SEGES",
+    )
+
+    assert mapped["matched_terms"] == []
+    assert mapped["matched_terms_text"] == ""
+    assert mapped["matches"] == ""
 
 
 @pytest.mark.parametrize(
@@ -352,6 +383,34 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
     r = inlabs_hook.TextDictHandler()._group_to_dict(df_in, "matches", cols)
 
     assert r == dict_out
+
+
+def _terms_from_group(group_name):
+    """Convert a grouped matches key into a list of matched terms."""
+    return [term for term in group_name.split(", ") if term]
+
+
+def _add_matched_terms_from_expected(df_in, expected):
+    """Add fake OpenSearch matched terms to old transform fixtures."""
+    id_to_terms = {}
+    for group_name, items in expected.items():
+        for item in items:
+            id_to_terms[item["id"]] = _terms_from_group(group_name)
+
+    df = df_in.copy()
+    df["matched_terms"] = df["id"].apply(lambda row_id: id_to_terms.get(row_id, []))
+    return df
+
+
+def _add_matched_terms_to_expected(expected):
+    """Add matched term fields expected in transformed output fixtures."""
+    updated = copy.deepcopy(expected)
+    for group_name, items in updated.items():
+        terms = _terms_from_group(group_name)
+        for item in items:
+            item["matched_terms"] = terms
+            item["matched_terms_text"] = ", ".join(terms)
+    return updated
 
 
 @pytest.mark.parametrize(
@@ -674,6 +733,10 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
 def test_transform_search_results(
     inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa, show_relevancy
 ):
+    """Transform results using matched terms supplied by OpenSearch hits."""
+    if terms:
+        df_in = _add_matched_terms_from_expected(df_in, dict_out)
+        dict_out = _add_matched_terms_to_expected(dict_out)
 
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
@@ -758,6 +821,11 @@ def test_transform_search_results(
     ],
 )
 def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_text):
+    """Ignore signature-only matches using OpenSearch matched terms."""
+    df_in = df_in.copy()
+    df_in["matched_terms"] = [["Pessoa 1"], ["Pellentesque"]]
+    dict_out = _add_matched_terms_to_expected(dict_out)
+
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
         ai_search_config=_MIN_AI_SEARCH_CONFIG,
@@ -1028,7 +1096,10 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
 
 
 def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
-    df = pd.DataFrame([_sample_row(has_ementa=False, full_text=False)])
+    """Use OpenSearch matched terms when formatting the AI system prompt."""
+    df = pd.DataFrame(
+        [_sample_row(has_ementa=False, full_text=False, matched_terms=["Lorem"])]
+    )
     ai_search_config = AISearchConfig(
         use_ai_summary=True,
         ai_custom_prompt="Enfatize {} na análise",
