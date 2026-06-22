@@ -48,19 +48,36 @@ class OpenSearchQueryBuilder:
         return re.sub(r"\s+", " ", term).strip()
 
     @staticmethod
-    def build_named_match_clause(field: str, term: str) -> dict:
+    def build_named_match_clause(
+        field: str, term: str, match_phrase: bool = False
+    ) -> dict:
         """Build a match clause named with the original configured term.
 
         OpenSearch returns this name in ``matched_queries`` when the clause
         contributes to a hit, allowing callers to report matched terms without
         re-running local text matching.
         """
-        query_type = "match_phrase" if " " in term.strip() else "match"
+        if match_phrase:
+            return {
+                "match_phrase": {
+                    field: {
+                        "query": term,
+                        "_name": term,
+                    }
+                }
+            }
+
+        match_params = {
+            "query": term,
+            "_name": term,
+        }
+        if " " in term.strip():
+            match_params["operator"] = "and"
+
         return {
-            query_type: {
+            "match": {
                 field: {
-                    "query": term,
-                    "_name": term,
+                    **match_params,
                 }
             }
         }
@@ -95,7 +112,7 @@ class OpenSearchQueryBuilder:
                     end = len(expression)
                 value = expression[position + 1 : end].strip()
                 if value:
-                    tokens.append(("TERM", value))
+                    tokens.append(("TERM", value, True))
                 position = end + 1
                 continue
 
@@ -140,7 +157,7 @@ class OpenSearchQueryBuilder:
                 position += 1
             value = expression[start:position].strip()
             if value:
-                tokens.append(("TERM", value))
+                tokens.append(("TERM", value, False))
 
         return tokens
 
@@ -176,7 +193,7 @@ class OpenSearchQueryBuilder:
                 return None
             if token[0] == "TERM":
                 consume("TERM")
-                return ("TERM", token[1])
+                return ("TERM", token[1], token[2])
             if token[0] == "LPAREN":
                 consume("LPAREN")
                 node = parse_or()
@@ -225,7 +242,9 @@ class OpenSearchQueryBuilder:
 
         node_type = node[0]
         if node_type == "TERM":
-            return cls.build_named_match_clause(field, node[1])
+            return cls.build_named_match_clause(
+                field, node[1], match_phrase=node[2]
+            )
 
         if node_type == "NOT":
             clause = cls._texto_node_to_clause(node[1], field)
@@ -325,12 +344,7 @@ class OpenSearchQueryBuilder:
 
             elif key == "terms_ignore":
                 must_not_clauses.extend(
-                    {
-                        "query_string": {
-                            "query": value,
-                            "default_field": "texto_plain",
-                        }
-                    }
+                    {"match_phrase": {"texto_plain": value}}
                     for value in values
                     if value
                 )
