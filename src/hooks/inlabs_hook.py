@@ -298,6 +298,12 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
+            if "opensearch_highlights" in df.columns:
+                df["_has_opensearch_highlight"] = df[
+                    "opensearch_highlights"
+                ].apply(self._has_opensearch_highlight)
+            else:
+                df["_has_opensearch_highlight"] = False
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
@@ -326,9 +332,14 @@ class INLABSHook(BaseHook):
                     axis=1,
                 )
                 df["texto"] = df.apply(
-                    lambda row: self._highlight_terms(
+                    lambda row: self._highlight_search_text(
                         [t for t in row["matches"].split(", ") if t],
                         row["texto"],
+                        (
+                            row["opensearch_highlights"]
+                            if row["_has_opensearch_highlight"]
+                            else []
+                        ),
                     ),
                     axis=1,
                 )
@@ -485,6 +496,39 @@ class INLABSHook(BaseHook):
                 if isinstance(text, str)
                 else ""
             )
+
+        @staticmethod
+        def _has_opensearch_highlight(highlights) -> bool:
+            """Return True when OpenSearch returned at least one highlight."""
+            return isinstance(highlights, list) and any(highlights)
+
+        @classmethod
+        def _opensearch_highlight_excerpt(cls, text: str, highlights) -> str:
+            """Return OpenSearch highlighted snippets when available.
+
+            OpenSearch highlights mark the actual analyzed match in the
+            document, including morphological variants such as a plural form
+            matched by a singular search term. Keeping those markers allows
+            ``_trim_text`` to center the notification excerpt on the real hit.
+            """
+            if not cls._has_opensearch_highlight(highlights):
+                return text
+            return " (...) ".join(highlights)
+
+        def _highlight_search_text(
+            self, terms: list, text: str, opensearch_highlights=None
+        ) -> str:
+            """Highlight matched terms, falling back to OpenSearch snippets.
+
+            Local highlighting is preferred to avoid OpenSearch highlighter
+            marking broad analyzer tokens from the whole query. The OpenSearch
+            highlight is used only when local highlighting cannot mark the
+            configured term, which covers morphological variants.
+            """
+            highlighted_text = self._highlight_terms(terms, text)
+            if "<%%>" in highlighted_text:
+                return highlighted_text
+            return self._opensearch_highlight_excerpt(text, opensearch_highlights)
 
         def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
@@ -717,6 +761,23 @@ class INLABSHook(BaseHook):
 
             _from_start = self._truncate_from_start
             _from_end = self._truncate_from_end
+
+            marker_match = re.search(r"<%%>[\s\S]*?</%%>", text)
+            if marker_match and self._visible_len(marker_match.group(0)) > text_length:
+                before_full = text[: marker_match.start()]
+                opens_before = len(re.findall(r"<table", before_full, re.IGNORECASE))
+                closes_before = len(re.findall(r"</table>", before_full, re.IGNORECASE))
+
+                if opens_before == closes_before:
+                    marker = marker_match.group(0)
+                    after_full = text[marker_match.end() :]
+                    before, before_cut = _from_end(before_full, text_length)
+                    after, after_cut = _from_start(after_full, text_length)
+
+                    prefix = "(...) " if before_cut else ""
+                    suffix = " (...)" if after_cut else ""
+
+                    return f"{prefix}{before}{marker}{after}{suffix}"
 
             parts = text.split("<%%>", 1)
 
