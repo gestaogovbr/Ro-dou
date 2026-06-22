@@ -465,34 +465,6 @@ class INLABSHook(BaseHook):
                 return text
             return ""
 
-        def _find_matches(self, text: str, keys: list) -> str:
-            """Find keys that match the text, considering normalization
-            for matching and ensuring exact matches.
-
-            Args:
-                text (str): The text in which to search for keys.
-                keys (list): A list of keys to be searched for in the text.
-                    It's assumed that keys are strings.
-
-            Returns:
-                str: A comma-separated string of unique keys found in the text.
-            """
-            from utils.singularize_sentences import singularize
-
-            normalized_text = self._normalize(singularize(text))
-
-            matches = [
-                key
-                for key in keys
-                if re.search(
-                    r"\b" + re.escape(self._normalize(singularize(key))) + r"\b",
-                    normalized_text,
-                    re.IGNORECASE,
-                )
-            ]
-
-            return ", ".join(sorted(set(matches), key=str.lower))
-
         @staticmethod
         def _normalize(text: str) -> str:
             """Normalize text by removing accents and converting to
