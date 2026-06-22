@@ -34,7 +34,7 @@ default_args = {
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
-    "retries": 2,
+    "retries": 6,
     "retry_delay": timedelta(minutes=5),
 }
 
@@ -182,15 +182,13 @@ def load_inlabs():
             return ", ".join([p.text for p in p_tags]) if p_tags else None
 
         def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(
-                f"""
+            table_exists = hook.get_first(f"""
                 SELECT EXISTS (
                     SELECT 1
                     FROM information_schema.tables
                     WHERE table_name = '{STG_TABLE.split(".")[1]}'
                 );
-            """
-            )
+            """)
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
