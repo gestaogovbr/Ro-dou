@@ -21,7 +21,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 
-from airflow.timetables.datasets import DatasetOrTimeSchedule
+from airflow.timetables.assets import AssetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
@@ -200,24 +200,24 @@ class DouDigestDagGenerator:
 
     def _update_schedule_with_dataset(
         self, dataset: str, schedule: str, is_default_schedule: bool
-    ) -> Union[Dataset, DatasetOrTimeSchedule]:
+    ) -> Union[Dataset, AssetOrTimeSchedule]:
         """If a dataset is provide, the schedule will be update
         to make execution conditional on the Dataset or
-        DatasetOrTimeSchedule
+        AssetOrTimeSchedule
         (if the value of schedule is specified in the YAML information).
         """
         if not is_default_schedule:
-            return DatasetOrTimeSchedule(
+            return AssetOrTimeSchedule(
                 timetable=CronTriggerTimetable(
                     schedule, timezone=os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE")
                 ),
-                datasets=[Dataset(dataset)],
+                assets=[Dataset(dataset)],
             )
         return [Dataset(dataset)]
 
     def _update_schedule(
         self, specs: DAGConfig
-    ) -> Union[str, Union[Dataset, DatasetOrTimeSchedule]]:
+    ) -> Union[str, Union[Dataset, AssetOrTimeSchedule]]:
         """The DAG will update the value of schedule to
         the default value or to a Dataset, if that option is specified.
         """
@@ -444,10 +444,12 @@ class DouDigestDagGenerator:
             "depends_on_past": False,
             "retries": 10,
             "retry_delay": timedelta(minutes=2),
-            "on_retry_callback": self.on_retry_callback,
-            "on_failure_callback": lambda context: self._notify_on_failure(
-                specs, context
-            ),
+            # TODO: re-enable when Airflow 3 implements task callbacks
+            # https://github.com/apache/airflow/issues/44354
+            # "on_retry_callback": self.on_retry_callback,
+            # "on_failure_callback": lambda context: self._notify_on_failure(
+            #     specs, context
+            # ),
         }
 
         schedule = self._update_schedule(specs)

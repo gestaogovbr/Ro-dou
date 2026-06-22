@@ -40,7 +40,8 @@ x-airflow-common: &airflow-common
   build:
     context: .
   environment: &airflow-common-env
-    AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+    #AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
@@ -56,17 +57,26 @@ x-airflow-common: &airflow-common
     AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
     # AIRFLOW__SMTP__SMTP_USER:
     # AIRFLOW__SMTP__SMTP_PASSWORD:
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
 
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
-    AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-    AIRFLOW__WEBSERVER__WORKERS: 1
+    AIRFLOW__WEBSERVER__SECRET_KEY: "super-secret-airflow-key-2026"
+    AIRFLOW__API_AUTH__JWT_SECRET: "super-jwt-secret-2026"
 
+    AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+    AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT: 8793
+    AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+    AIRFLOW__LOGGING__HOSTNAME_CALLABLE: airflow.utils.net.get_host_ip_address
+    
     _AIRFLOW_DB_UPGRADE: 'true'
     _AIRFLOW_WWW_USER_CREATE: 'true'
     _AIRFLOW_WWW_USER_USERNAME: airflow
     _AIRFLOW_WWW_USER_PASSWORD: airflow
 
+    
+
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
 
@@ -74,7 +84,7 @@ x-airflow-common: &airflow-common
     - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
     - ./mnt/airflow-logs:/opt/airflow/logs
     - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs
-    - ./dag_load_inlabs:/opt/airflow/dags/dag_load_inlabs
+    - ./dag_load_inlabs:/opt/airflow/dags/ro_dou/dag_load_inlabs
     - ./tests:/opt/airflow/tests # for test purpose
     - ./schemas:/opt/airflow/schemas # for test purpose
   user: "${AIRFLOW_UID:-50000}:0"
@@ -103,11 +113,11 @@ services:
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow-webserver
-    command: webserver
+    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow api-server'
     ports:
       - 8080:8080
     healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health" ]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -116,7 +126,7 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow-scheduler
-    command: scheduler
+    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow scheduler'
     restart: always
 
   smtp4dev:
@@ -130,9 +140,13 @@ services:
       - smtp4dev-data:/smtp4dev
     environment:
       - ServerOptions__HostName=smtp4dev
-# selenium:
-#     image: ghcr.io/gestaogovbr/selenium:ro-dou
-#     volumes:
-#       - /dev/shm:/dev/shm
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: airflow-dag-processor
+    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow dag-processor'
+    restart: always
+    depends_on:
+      - postgres
 volumes:
   smtp4dev-data:
