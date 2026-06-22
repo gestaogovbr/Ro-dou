@@ -1058,6 +1058,83 @@ def _sample_row(**overrides):
     return base
 
 
+def test_transform_search_results_uses_opensearch_highlight_for_morphological_variant(
+    inlabs_hook,
+):
+    """Center the excerpt on the actual variant highlighted by OpenSearch."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                texto=(
+                    "Texto inicial distante. " * 20
+                    + "Aprova as estruturas regimentais da SEGES."
+                ),
+                matched_terms=["estrutura regimental"],
+                opensearch_highlights=[
+                    "Aprova as <%%>estruturas regimentais</%%> da SEGES."
+                ],
+            )
+        ]
+    )
+
+    result = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["estrutura regimental"],
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=20,
+    )
+
+    item = result["estrutura regimental"][0]
+    assert item["abstract"] == (
+        "Aprova as <%%>estruturas regimentais</%%> da SEGES."
+    )
+    assert item["matched_terms"] == ["estrutura regimental"]
+    assert item["matched_terms_text"] == "estrutura regimental"
+
+
+def test_transform_search_results_prefers_local_highlight_over_broad_opensearch_tokens(
+    inlabs_hook,
+):
+    """Avoid highlighting extra analyzer tokens when the configured term exists."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                texto=(
+                    "MINISTERIO DA GESTAO E DA INOVACAO EM SERVICOS PUBLICOS "
+                    "publica ato sobre GSISTE no Sistema de Pessoal Civil."
+                ),
+                matched_terms=["GSISTE"],
+                opensearch_highlights=[
+                    (
+                        "MINISTERIO DA <%%>GESTAO</%%> E DA INOVACAO EM SERVICOS "
+                        "PUBLICOS publica ato sobre <%%>GSISTE</%%> no Sistema "
+                        "<%%>de</%%> Pessoal Civil."
+                    )
+                ],
+            )
+        ]
+    )
+
+    result = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["GSISTE"],
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=400,
+    )
+
+    item = result["GSISTE"][0]
+    assert item["abstract"] == (
+        "MINISTERIO DA GESTAO E DA INOVACAO EM SERVICOS PUBLICOS publica ato "
+        "sobre <%%>GSISTE</%%> no Sistema de Pessoal Civil."
+    )
+
+
 def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
     df = pd.DataFrame(
         [
