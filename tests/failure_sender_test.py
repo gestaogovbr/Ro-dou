@@ -220,9 +220,12 @@ class TestSend:
     ):
         sender = FailureSender(specs_with_callback)
         sender.send_failure_email = MagicMock()
+        sender.send_slack_failure_notification = MagicMock()
         sender._get_failure_email_list = MagicMock(return_value=["dev@email.com"])
 
-        sender.send(dag_run, task_instance)
+        context = {"task_instance": task_instance, "dag_run": dag_run}
+        exception = Exception("test error")
+        sender.send(context, dag_run, task_instance, exception)
 
         sender.send_failure_email.assert_called_once_with(
             ["dev@email.com"], dag_run, task_instance
@@ -233,8 +236,11 @@ class TestSend:
     ):
         sender = FailureSender(specs_with_callback)
         sender.send_failure_email = MagicMock()
+        sender.send_slack_failure_notification = MagicMock()
         sender._get_failure_email_list = MagicMock(return_value=["dev@email.com"])
 
-        sender.send(dag_run, task_instance)
+        context = {"task_instance": task_instance, "dag_run": dag_run}
+        exception = Exception("test error")
+        sender.send(context, dag_run, task_instance, exception)
 
         sender._get_failure_email_list.assert_called_once()
