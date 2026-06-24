@@ -4,7 +4,7 @@ import os
 import sys
 import logging
 
-# import json
+import json
 
 # Add parent folder to sys.path in order to be able to import
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,10 +13,10 @@ sys.path.insert(0, parent_dir)
 
 from airflow.utils.email import send_email
 
-# from airflow.hooks.base import BaseHook
+from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 
-# from airflow.providers.slack.notifications.slack import SlackNotifier
+from airflow.providers.slack.notifications.slack import SlackNotifier
 
 from parsers import DAGConfig
 from typing import List
@@ -37,7 +37,7 @@ class FailureSender:
         tm (TemplateManager): HTML template manager for email rendering.
     """
 
-    # SLACK_CONN_ID = "slack_notify_rodou_dagrun"
+    SLACK_CONN_ID = "slack_notify_rodou_dagrun"
 
     def __init__(self, specs: DAGConfig) -> None:
         self.specs = specs
@@ -45,9 +45,9 @@ class FailureSender:
             template_dir=os.path.join(os.path.dirname(__file__), "templates")
         )
 
-    def send(self, dag_run, task_instance):
+    def send(self, context, dag_run, task_instance, exception):
         """Sends failure notification via email and Slack."""
-        # self.send_slack_failure_notification(context, dag_run, task_instance, exception)
+        self.send_slack_failure_notification(context, dag_run, task_instance, exception)
         self.send_failure_email(self._get_failure_email_list(), dag_run, task_instance)
 
     def _get_failure_email_list(self) -> List[str]:
@@ -116,26 +116,26 @@ class FailureSender:
                     exc_info=True,
                 )
 
-    # def send_slack_failure_notification(
-    #     self, context, dag_run, task_instance, exception
-    # ):
-    #     """Sends failure notification via Slack, if the connection is available."""
-    #     try:
-    #         conn = BaseHook.get_connection(self.SLACK_CONN_ID)
-    #         description = json.loads(conn.description)
-    #         slack_notifier = SlackNotifier(
-    #             slack_conn_id=self.SLACK_CONN_ID,
-    #             text=(
-    #                 ":bomb: *Falha na DAG*"
-    #                 f"\n📊 *DAG:* `{dag_run.dag_id}`"
-    #                 f"\n📋 *Task:* `{task_instance.task_id}`"
-    #                 f"\n*State:* `{task_instance.state}`"
-    #                 f"\n 📅 *Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
-    #                 f"\n📁 *Exception:* {exception}"
-    #                 f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
-    #             ),
-    #             channel=description["channel"],
-    #         )
-    #         slack_notifier.notify(context)
-    #     except Exception as e:
-    #         logging.error(f"Slack notification not sent: {str(e)}")
+    def send_slack_failure_notification(
+        self, context, dag_run, task_instance, exception
+    ):
+        """Sends failure notification via Slack, if the connection is available."""
+        try:
+            conn = BaseHook.get_connection(self.SLACK_CONN_ID)
+            description = json.loads(conn.description)
+            slack_notifier = SlackNotifier(
+                slack_conn_id=self.SLACK_CONN_ID,
+                text=(
+                    ":bomb: *Falha na DAG*"
+                    f"\n📊 *DAG:* `{dag_run.dag_id}`"
+                    f"\n📋 *Task:* `{task_instance.task_id}`"
+                    f"\n*State:* `{task_instance.state}`"
+                    f"\n 📅 *Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
+                    f"\n📁 *Exception:* {exception}"
+                    f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
+                ),
+                channel=description["channel"],
+            )
+            slack_notifier.notify(context)
+        except Exception as e:
+            logging.error(f"Slack notification not sent: {str(e)}")
