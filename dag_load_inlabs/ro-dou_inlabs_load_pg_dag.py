@@ -219,6 +219,21 @@ def load_inlabs():
             """,
     )
 
+    @task.branch
+    def check_if_should_run_indexer():
+        use_opensearch = os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", "false").lower() == "true"
+
+        if use_opensearch:
+            logging.info("OpenSearch enabled. Running indexer task.")
+            return "indexer_data"
+
+        logging.info("OpenSearch disabled. Skipping indexer task.")
+        return "skip_indexer_data"
+
+    @task
+    def skip_indexer_data():
+        logging.info("Indexer skipped because OpenSearch is disabled.")
+
     @task
     def indexer_data(trigger_date: str) -> None:
         from ro_dou_src.utils.open_search.indexer import Indexer  # type: ignore
@@ -251,7 +266,7 @@ def load_inlabs():
     def trigger_dataset_inlabs():
         pass
 
-    @task
+    @task(trigger_rule="none_failed_min_one_success")
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
@@ -259,13 +274,22 @@ def load_inlabs():
 
     ## Orchestration
     trigger_date = get_date()
+    run_indexer_task = check_if_should_run_indexer()
+    indexer_task = indexer_data(trigger_date)  # type: ignore
+    skip_indexer_task = skip_indexer_data()
+    remove_directory_task = remove_directory()
+    check_first_run_task = check_if_first_run_of_day()
+
     (
         download_n_unzip_files(trigger_date)
         >> load_data(trigger_date)  # type: ignore
         >> check_loaded_data
-        >> indexer_data(trigger_date)  # type: ignore
-        >> remove_directory()
-        >> check_if_first_run_of_day()
+        >> run_indexer_task
+    )
+    run_indexer_task >> [indexer_task, skip_indexer_task] >> remove_directory_task
+    (
+        remove_directory_task
+        >> check_first_run_task
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
     )
 
