@@ -110,7 +110,7 @@ class AIRunner:
         )
         response = client.models.generate_content(
             model=model,
-            contents={'text':system_prompt},
+            contents={'text': f"{system_prompt}\n\n{input_text}"},
             config=types.GenerateContentConfig(
                 temperature = temperature,
                 max_output_tokens = max_tokens,
