@@ -1,6 +1,7 @@
 """Apache Airflow Hook to execute DOU searches from INLABS source."""
 
 import copy
+import os
 import re
 import logging
 from datetime import datetime, timedelta
@@ -34,10 +35,10 @@ class INLABSHook(BaseHook):
     """
 
     CONN_ID = "inlabs_db"
-    CLIENT = OpenSearchClient().get_client()
 
     def __init__(self, *args, **kwargs):
         pass
+
 
     @staticmethod
     def _filter_text_terms(text_terms) -> list:
@@ -76,7 +77,7 @@ class INLABSHook(BaseHook):
         use_summary: bool,
         show_relevancy: bool,
         conn_id: str = CONN_ID,
-        client: OpenSearch = CLIENT,
+        client: OpenSearch | None = None,
     ) -> dict:
         """Searches the DOU Database with the provided search terms and processes
         the results.
@@ -98,6 +99,29 @@ class INLABSHook(BaseHook):
                 ``matched_queries`` and propagated to ``matched_terms`` and the
                 legacy ``matches`` field.
         """
+
+        use_opensearch = os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", "false").lower() == "true"
+
+        if not use_opensearch:
+            from .inlabs_hook_sql_mode import INLABSSQLModeHook
+
+            logging.info(
+                "OpenSearch disabled. Using INLABS SQL mode.",
+            )
+            return INLABSSQLModeHook().search_text(
+                ai_config=ai_config,
+                ai_search_config=ai_search_config,
+                search_terms=search_terms,
+                ignore_signature_match=ignore_signature_match,
+                full_text=full_text,
+                text_length=text_length,
+                use_summary=use_summary,
+                show_relevancy=show_relevancy,
+                conn_id=conn_id,
+            )
+
+        if client is None:
+            client = OpenSearchClient().get_client()
 
         logging.info("Search term in INLABS HOOK.")
         logging.info(f"Search terms -> {search_terms}")
@@ -310,6 +334,8 @@ class INLABSHook(BaseHook):
             # Remove blank spaces and convert to uppercase
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
+            should_process_matches = "matched_terms" in df.columns or any(text_terms)
+
             if "matched_terms" in df.columns:
                 df["matched_terms"] = df["matched_terms"].apply(
                     lambda terms: (
@@ -322,6 +348,18 @@ class INLABSHook(BaseHook):
                     lambda terms: ", ".join(terms)
                 )
                 df["matches"] = df["matched_terms_text"]
+            elif any(text_terms):
+                df["matches"] = df.apply(
+                    lambda row: self._find_matches(
+                        row["texto"] + " " + row["identifica"],
+                        keys=text_terms,
+                    ),
+                    axis=1,
+                )
+            elif "matches" not in df.columns:
+                df["matches"] = ""
+
+            if should_process_matches:
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
@@ -356,8 +394,6 @@ class INLABSHook(BaseHook):
                 )
                 if ignore_signature_match:
                     df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
-            elif "matches" not in df.columns:
-                df["matches"] = ""
 
             def _highlight_row_matches(row):
                 if "<%%>" in row["texto"]:
@@ -485,6 +521,21 @@ class INLABSHook(BaseHook):
                 text = re.sub(r"\s+", " ", text)
                 return text
             return ""
+
+        def _find_matches(self, text: str, keys: list) -> str:
+            """Find configured keys in text using normalized exact matching."""
+            normalized_text = self._normalize(text)
+            matches = [
+                key
+                for key in keys
+                if re.search(
+                    r"\b" + re.escape(self._normalize(key)) + r"\b",
+                    normalized_text,
+                    re.IGNORECASE,
+                )
+            ]
+
+            return ", ".join(sorted(set(matches), key=str.lower))
 
         @staticmethod
         def _normalize(text: str) -> str:
