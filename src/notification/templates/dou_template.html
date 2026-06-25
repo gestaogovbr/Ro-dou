@@ -24,9 +24,9 @@
             font-size: 16px;
             font-weight: normal;
         }
-        
+
         .highlight {
-            background-color: #FFA;           
+            background-color: #FFA;
         }
 
         .ext_header {
@@ -101,7 +101,7 @@
             list-style: disc;
             list-style-position: inside;
         }
-        
+
         ul li::marker {
             color: #06acff;
         }
@@ -156,7 +156,7 @@
             margin: 0 4px 0 0;
         }
 
-        .group-link {            
+        .group-link {
             font-size: 14px;
             max-width: 1200px;
             margin: 5px auto;
@@ -171,12 +171,12 @@
             color: #0056b3;
             text-decoration: none;
             font-weight: 600;
-            font-size: 16px;   
+            font-size: 16px;
         }
 
         .document-meta {
             font-size: 13px;
-            padding: 6px;          
+            padding: 6px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             background-color: #fafafa;
@@ -196,7 +196,7 @@
             background-color: #f8f9fa;
             padding: 10px 0;
             border-radius: 6px;
-            margin: 15px 0;
+            margin-top: 2px;
             text-align: justify;
             font-size: 15px;
             line-height: 1.5;
@@ -208,11 +208,11 @@
             font-size: 0.75em;
             font-weight: 600;
             color: #333;
-            line-height: 1;           
+            line-height: 1;
             border-radius: 0.25rem;
             text-align: center;
             white-space: nowrap;
-            vertical-align: baseline;            
+            vertical-align: baseline;
         }
 
         .ia {
@@ -221,13 +221,51 @@
         }
 
         .ementa {
-            background-color: #D0E4FC;             
+            background-color: #D0E4FC;
         }
 
         .recort {
             background-color: #ffebcc;
         }
 
+        .tag-alta-relevancia {
+            border-radius: 9999px;
+            border: 1px solid #F4B8B8;
+            background: #FCE8E8;
+            color: #B42323;
+        }
+
+        .tag-relevante {
+            border-radius: 9999px;
+            border: 1px solid #FCD9B8;
+            background: #FEF3E8;
+            color: #B45309;
+        }
+
+        .tag-pouco-relevante {
+            border-radius: 9999px;
+            border: 1px solid #FAF089;
+            background: #FFFBEB;
+            color: #713F12;
+        }
+
+        .tag-baixa-relevancia {
+            border-radius: 9999px;
+            border: 1px solid #D1D5DB;
+            background: #F9FAFB;
+            color: #6B7280;
+        }
+
+        .tag-alta-relevancia,
+        .tag-relevante,
+        .tag-pouco-relevante,
+        .tag-baixa-relevancia {
+            padding: 0.25rem 0.5rem;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
         .full-text {
             background-color: #e2f0d9;
         }
@@ -275,10 +313,10 @@
         .footer a:hover {
             text-decoration: underline;
         }
- 
+
         .separator {
             border:none;
-            border-top:2px solid #06acff;             
+            border-top:2px solid #06acff;
         }
 
         .no-results {
@@ -296,7 +334,7 @@
             text-align: center;
             font-family: Arial, sans-serif;
         }
-      
+
         table tr:first-child td {
             background-color: #ddd;
             font-weight: bold;
@@ -323,7 +361,7 @@
 
             .filter-list {
                 grid-template-columns: 1fr;
-            }            
+            }
 
             .result-header {
                 white-space: normal;
@@ -335,7 +373,7 @@
                 flex-direction: column;
                 gap: 15px;
             }
-        }        
+        }
     </style>
 </head>
 
@@ -392,7 +430,7 @@
                                     {{ result_group.filters.publication_types.title | default('Tipos de publicações:') }}
                                 </div>
                                 <ul class="filter-list">
-                                    {% for type in result_group.filters.publication_types['items'] %}                                        
+                                    {% for type in result_group.filters.publication_types['items'] %}
                                         <li>{{ type }}</li>
                                     {% endfor %}
                                 </ul>
@@ -456,7 +494,7 @@
                                             <span class="document-title">{{ document.title | safe }}</span>
                                             <a href="{{ document.url }}" class="document-meta"
                                                 {% if document.url_new_tab %}target="_blank"{% endif %}>
-                                                🔗
+                                                <span style="color: #06acff; vertical-align: middle; margin-right: 4px;">&#8599;</span>
                                                 Ver Íntegra
                                             </a>
                                         </div>
@@ -465,6 +503,20 @@
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}
+                                            {% if document.show_relevancy %}
+                                                {% if document.score is not none and document.score > 0%}
+                                                    {% set score = document.score | float %}
+                                                        {% if score > 20 %}
+                                                            <span class="tag-alta-relevancia">Alta relevância</span>
+                                                        {% elif score > 10 %}
+                                                            <span class="tag-relevante">Relevante</span>
+                                                        {% elif score > 5 %}
+                                                            <span class="tag-pouco-relevante">Pouco relevante</span>
+                                                        {% else %}
+                                                            <span class="tag-baixa-relevancia">Relevancia baixa</span>
+                                                        {% endif %}
+                                                {% endif %}
+                                            {% endif %}
                                             {% if document.has_ementa %}
                                                 <div class="abstract">
                                                     <span class="tag ementa">Ementa:</span> {{ document.abstract | safe }}
@@ -482,7 +534,7 @@
                                                     <span class="tag recort">Recorte:</span> {{ document.abstract | safe }}
                                                 </div>
                                             {% endif %}
-                                        {% endif %}                                        
+                                        {% endif %}
                                         <div class="date">{{ document.date | safe }}</div>
 
                                     {% endif %}

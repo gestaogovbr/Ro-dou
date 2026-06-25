@@ -294,6 +294,7 @@ class DouDigestDagGenerator:
         text_length: Optional[int],
         use_summary: Optional[bool],
         ai_search_config: Optional[dict],
+        show_relevancy: Optional[bool],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -303,6 +304,7 @@ class DouDigestDagGenerator:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
+
         """Performs the search in each source and merge the results"""
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
@@ -334,6 +336,7 @@ class DouDigestDagGenerator:
                 text_length=text_length,
                 use_summary=use_summary,
                 ai_search_config=ai_search_config,
+                show_relevancy=show_relevancy,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -543,6 +546,7 @@ class DouDigestDagGenerator:
                             "text_length": subsearch.text_length,
                             "use_summary": subsearch.use_summary,
                             "ai_search_config": subsearch.ai_search_config,
+                            "show_relevancy": subsearch.show_relevancy,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,
