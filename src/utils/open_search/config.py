@@ -6,7 +6,6 @@ parameters and defines constants for index names and other settings.
 import os
 from airflow.models import Variable
 
-
 # Try to load OpenSearch connection parameters from Airflow Variables, falling
 # back to environment variables if not set in Airflow.
 OPENSEARCH_HOST = Variable.get(
@@ -102,7 +101,7 @@ MAPPING = {
             "artnotes": {"type": "text"},
             "numberpage": {"type": "integer"},
             "pdfpage": {"type": "keyword"},
-            "editionnumber": {"type": "integer"},
+            "editionnumber": {"type": "text"},
             "highlighttype": {"type": "keyword"},
             "highlightpriority": {"type": "integer"},
             "highlight": {"type": "text"},
