@@ -69,7 +69,6 @@ x-airflow-common: &airflow-common
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
-    RO_DOU_INLABS_USE_OPENSEARCH: 'false'
     OPENSEARCH_HOST: http://opensearch:9200
     OPENSEARCH_USER: OPENSEARCH_USER
     OPENSEARCH_PASS: OPENSEARCH_PASS
