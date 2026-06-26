@@ -105,7 +105,7 @@ MAPPING = {
             "highlighttype": {"type": "keyword"},
             "highlightpriority": {"type": "integer"},
             "highlight": {"type": "text"},
-            "highlightimage": {"type": "keyword"},
+            "highlightimage": {"type": "binary", "index": False},
             "idmateria": {"type": "keyword"},
             "midias": {"type": "text"},
             "identifica": {"type": "text"},
