@@ -11,7 +11,7 @@ from airflow.models import Variable
 
 RO_DOU_INLABS_USE_OPENSEARCH = Variable.get(
     "RO_DOU_INLABS_USE_OPENSEARCH",
-    default_var=os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", False),
+    default_var=os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", 'false'),
 )
 
 OPENSEARCH_HOST = Variable.get(

@@ -223,7 +223,7 @@ def load_inlabs():
     @task.branch
     def check_if_should_run_indexer():
 
-        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != 'true':
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == 'true':
             logging.info("OpenSearch enabled. Running indexer task.")
             return "indexer_data"
 
