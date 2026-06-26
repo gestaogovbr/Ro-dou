@@ -129,6 +129,23 @@ create-inlabs-portal-connection:
 			}' > /dev/null; \
 		fi"
 
+create-opensearch-variable:
+	@echo "Creating 'opensearch' Airflow variable"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/ro_dou_inlabs_use_opensearch' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"RO_DOU_INLABS_USE_OPENSEARCH\", \
+			\"value\": \"False\" \
+			}' > /dev/null; \
+		fi"
+
+
 activate-inlabs-load-dag:
 	@echo "Activating 'dou_inlabs_load_pg' Airflow DAG"
 	@docker exec airflow-webserver sh -c \

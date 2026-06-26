@@ -17,6 +17,7 @@ from airflow.models import Variable  # type: ignore
 
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
 
+from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Constants
@@ -221,9 +222,8 @@ def load_inlabs():
 
     @task.branch
     def check_if_should_run_indexer():
-        use_opensearch = os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", "false").lower() == "true"
 
-        if use_opensearch:
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != 'true':
             logging.info("OpenSearch enabled. Running indexer task.")
             return "indexer_data"
 

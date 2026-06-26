@@ -9,6 +9,12 @@ from airflow.models import Variable
 
 # Try to load OpenSearch connection parameters from Airflow Variables, falling
 # back to environment variables if not set in Airflow.
+
+RO_DOU_INLABS_USE_OPENSEARCH = Variable.get(
+    "RO_DOU_INLABS_USE_OPENSEARCH",
+    default_var=os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", False),
+)
+
 OPENSEARCH_HOST = Variable.get(
     "OPENSEARCH_HOST",
     default_var=os.getenv("OPENSEARCH_HOST", "http://localhost:9200"),

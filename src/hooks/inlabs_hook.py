@@ -19,7 +19,7 @@ from schemas import AIConfig, AISearchConfig  # type: ignore
 from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-from ro_dou_src.utils.open_search.config import INDEX_NAME  # type: ignore
+from ro_dou_src.utils.open_search.config import INDEX_NAME, RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
 from ro_dou_src.utils.open_search.query_builder import OpenSearchQueryBuilder  # type: ignore
 from opensearchpy import OpenSearch  # type: ignore
 
@@ -100,9 +100,7 @@ class INLABSHook(BaseHook):
                 legacy ``matches`` field.
         """
 
-        use_opensearch = os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", "false").lower() == "true"
-
-        if not use_opensearch:
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != 'true':
             from .inlabs_hook_sql_mode import INLABSSQLModeHook
 
             logging.info(
