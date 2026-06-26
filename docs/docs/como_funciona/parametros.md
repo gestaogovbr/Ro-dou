@@ -43,7 +43,7 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **sources** *(opcional)*: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS, DOESP. Default: DOU.
 - **terms** *(condicionalmente obrigatório)*: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se `QD` estiver na lista de `sources`, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios `terms`, `department` ou `pubtype`.
 - **show_relevancy** *(opcional)*: Exibe a relevância da publicação baseado no score do indexador de buscas.
-Default: False. (Funcionalidade disponível apenas no INLABS)
+Default: False. (Funcionalidade disponível apenas no INLABS com o OpenSearch)
 - **territory_id** *(opcional)*: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.
 - **excerpt_size** *(opcional)*: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)
 - **number_of_excerpts** *(opcional)*: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário‑QD)
