@@ -112,8 +112,13 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 | Variável | Valor padrão | Descrição |
 |---|---|---|
 | `RO_DOU_INLABS_USE_OPENSEARCH` | `False` | Define o backend de busca do INLABS. Use `False` para PostgreSQL (SQL) ou `True` para OpenSearch. |
+| `OPENSEARCH_HOST` | `http://opensearch:9200` | Endereço do serviço OpenSearch (definido no docker-compose). |
+| `OPENSEARCH_USER` | `OPENSEARCH_USER` | Usuário para autenticação no OpenSearch. |
+| `OPENSEARCH_PASS` | `OPENSEARCH_PASS` | Senha para autenticação no OpenSearch. |
 
 > **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
+
+> **Observação:** No ambiente de desenvolvimento local (docker-compose), o plugin de segurança do OpenSearch vem desabilitado (`DISABLE_SECURITY_PLUGIN=true`), por isso `OPENSEARCH_USER` e `OPENSEARCH_PASS` utilizam valores placeholder. Em produção, esses valores devem ser substituídos por credenciais reais.
 
 9. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
 
