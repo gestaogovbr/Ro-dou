@@ -47,7 +47,10 @@ class FailureSender:
 
     def send(self, context, dag_run, task_instance, exception):
         """Sends failure notification via email and Slack."""
-        self.send_slack_failure_notification(context, dag_run, task_instance, exception)
+        if self.SLACK_CONN_ID:
+            self.send_slack_failure_notification(
+                context, dag_run, task_instance, exception
+            )
         self.send_failure_email(self._get_failure_email_list(), dag_run, task_instance)
 
     def _get_failure_email_list(self) -> List[str]:
