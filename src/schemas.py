@@ -190,6 +190,13 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    ignore_attachments: Optional[bool] = Field(
+        default=False,
+        description="Define se os conteúdos anexos à matéria (tabelas, quadros, "
+        "anexos) devem ser suprimidos do relatório. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )

@@ -25,6 +25,9 @@ from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
 
+# arttype values that identify annexes/attachments in the INLABS index.
+_ATTACHMENT_ARTTYPE = frozenset({"ANEXO", "QUADRO", "TABELA"})
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -75,7 +78,8 @@ class INLABSHook(BaseHook):
         full_text: bool,
         text_length: int,
         use_summary: bool,
-        show_relevancy: bool,
+        ignore_attachments: bool = False,
+        show_relevancy: bool = False,
         conn_id: str = CONN_ID,
         client: OpenSearch | None = None,
     ) -> dict:
@@ -114,6 +118,7 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ignore_attachments=ignore_attachments,
                 show_relevancy=show_relevancy,
                 conn_id=conn_id,
             )
@@ -205,6 +210,7 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ignore_attachments=ignore_attachments,
                 show_relevancy=show_relevancy,
             )
             if not all_results.empty
@@ -286,6 +292,7 @@ class INLABSHook(BaseHook):
             text_length: int = 400,
             use_summary: bool = False,
             has_ementa: bool = False,
+            ignore_attachments: bool = False,
             show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -326,6 +333,19 @@ class INLABSHook(BaseHook):
                 ].apply(self._has_opensearch_highlight)
             else:
                 df["_has_opensearch_highlight"] = False
+
+            if ignore_attachments:
+                # A blank/null `identifica` means this record is a table or
+                # other fragment attached to a publication, not the
+                # publication itself (see comment above). This is the
+                # authoritative signal; `arttype` is kept as a secondary,
+                # defense-in-depth check.
+                _is_attachment = df["identifica"].isna() | (
+                    df["identifica"].astype(str).str.strip() == ""
+                ) | df["arttype"].str.upper().isin(_ATTACHMENT_ARTTYPE)
+                df = df[~_is_attachment]
+                if df.empty:
+                    return {}
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])

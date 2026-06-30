@@ -1316,3 +1316,234 @@ def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
     assert items[0]["ai_generated"] is True
     assert items[0]["abstract"] == "Texto só da IA."
     assert items[0]["has_ementa"] is False
+
+
+# ---------------------------------------------------------------------------
+# ignore_attachments
+# ---------------------------------------------------------------------------
+
+def _all_titles(out: dict) -> list:
+    """Flatten all 'title' values from transform_search_results output."""
+    return [item["title"] for group in out.values() for item in group]
+
+
+def test_ignore_attachments_removes_known_arttype(inlabs_hook):
+    """Verdadeiro-positivo: artigos com arttype ANEXO, QUADRO ou TABELA são
+    removidos do relatório quando ignore_attachments=True (sinal secundário,
+    usado em conjunto com o critério de identifica em branco)."""
+    df = pd.DataFrame([
+        _sample_row(
+            id=1,
+            arttype="PORTARIA",
+            identifica="PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=2,
+            arttype="ANEXO",
+            identifica="ANEXO I",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=3,
+            arttype="QUADRO",
+            identifica="QUADRO DE VAGAS",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=4,
+            arttype="TABELA",
+            identifica="TABELA DE PREÇOS",
+            matched_terms=["saúde"],
+        ),
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_attachments=True,
+    )
+
+    titles = _all_titles(out)
+    assert "PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024" in titles
+    assert "ANEXO I" not in titles
+    assert "QUADRO DE VAGAS" not in titles
+    assert "TABELA DE PREÇOS" not in titles
+
+
+def test_ignore_attachments_removes_blank_identifica_fragment(inlabs_hook):
+    """Verdadeiro-positivo: o sinal autoritativo de fragmento/anexo é o campo
+    `identifica` vazio ou nulo, independentemente do texto de `name`
+    (ex: '11609 PARTE 1 CREDENCIA MUNICIPI', 'RESOLUCAO_2448_2026 COAFE_002')."""
+    df = pd.DataFrame([
+        _sample_row(
+            id=1,
+            arttype="PORTARIA",
+            identifica="PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=2,
+            arttype="PORTARIA",
+            identifica=None,
+            name="11609 PARTE 1 CREDENCIA MUNICIPI",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=3,
+            arttype="RESOLUCAO",
+            identifica="",
+            name="RESOLUCAO_2448_2026 COAFE_002",
+            matched_terms=["saúde"],
+        ),
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_attachments=True,
+    )
+
+    titles = _all_titles(out)
+    assert "PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024" in titles
+    assert "11609 PARTE 1 CREDENCIA MUNICIPI" not in titles
+    assert "RESOLUCAO_2448_2026 COAFE_002" not in titles
+
+
+def test_ignore_attachments_real_world_multi_part_publication(inlabs_hook):
+    """Reproduz o caso real do issue #299: vários registros compartilham o
+    mesmo `name`/`arttype` ('10979 REPUBLICACAO PT 10979 de 2', 'Portaria'),
+    mas só o registro com `identifica` preenchido é o ato principal — os
+    demais são fragmentos de uma tabela extensa e devem ser removidos."""
+    df = pd.DataFrame([
+        _sample_row(
+            id=1,
+            arttype="Portaria",
+            identifica="PORTARIA GM/MS Nº 10.979, DE 30 DE ABRIL DE 2026",
+            name="10979 REPUBLICACAO PT 10979 de 2",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=2,
+            arttype="Portaria",
+            identifica=None,
+            name="10979 REPUBLICACAO PT 10979 de 2",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=3,
+            arttype="Portaria",
+            identifica=None,
+            name="10979 REPUBLICACAO PT 10979 de 2",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=4,
+            arttype="Portaria",
+            identifica=None,
+            name="10979 REPUBLICACAO PT 10979 de 2",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=5,
+            arttype="Portaria",
+            identifica=None,
+            name="10979 REPUBLICACAO PT 10979 de 2",
+            matched_terms=["saúde"],
+        ),
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_attachments=True,
+    )
+
+    titles = _all_titles(out)
+    assert titles == ["PORTARIA GM/MS Nº 10.979, DE 30 DE ABRIL DE 2026"]
+
+
+def test_ignore_attachments_preserves_main_act(inlabs_hook):
+    """Falso-positivo: atos principais com `identifica` preenchido NÃO são
+    removidos, mesmo que o texto contenha palavras associadas a fragmentos
+    (ex: 'PARTE') ou números, já que o critério é estrutural, não textual."""
+    df = pd.DataFrame([
+        _sample_row(
+            id=1,
+            arttype="RESOLUCAO",
+            identifica="RESOLUÇÃO Nº 2448, DE 10 DE MARÇO DE 2026",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=2,
+            arttype="PORTARIA",
+            identifica="PORTARIA Nº 1001, DE 5 DE FEVEREIRO DE 2026",
+            matched_terms=["saúde"],
+        ),
+        # identifica preenchido contendo "PARTE" não deve ser removido
+        _sample_row(
+            id=3,
+            arttype="PORTARIA",
+            identifica="PORTARIA QUE TRATA DA PARTE ADMINISTRATIVA",
+            matched_terms=["saúde"],
+        ),
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_attachments=True,
+    )
+
+    titles = _all_titles(out)
+    assert "RESOLUÇÃO Nº 2448, DE 10 DE MARÇO DE 2026" in titles
+    assert "PORTARIA Nº 1001, DE 5 DE FEVEREIRO DE 2026" in titles
+    assert "PORTARIA QUE TRATA DA PARTE ADMINISTRATIVA" in titles
+
+
+def test_ignore_attachments_disabled_by_default_keeps_all(inlabs_hook):
+    """ignore_attachments=False (padrão) mantém anexos e fragmentos no resultado."""
+    df = pd.DataFrame([
+        _sample_row(
+            id=1,
+            arttype="PORTARIA",
+            identifica="PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024",
+            matched_terms=["saúde"],
+        ),
+        _sample_row(
+            id=2,
+            arttype="ANEXO",
+            identifica="ANEXO I",
+            matched_terms=["saúde"],
+        ),
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_attachments=False,
+    )
+
+    titles = _all_titles(out)
+    assert "PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024" in titles
+    assert "ANEXO I" in titles
