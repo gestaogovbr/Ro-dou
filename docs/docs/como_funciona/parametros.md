@@ -36,6 +36,7 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **text_length** *(opcional)*: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)
 - **use_summary** *(opcional)*: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ignore_attachments** *(opcional)*: Define se os conteúdos anexos à matéria (tabelas, quadros e anexos) devem ser suprimidos do relatório. Útil quando a fonte INLABS retorna fragmentos extensos de publicações maiores (ex: planilhas credenciadoras, anexos de resoluções) que poluem o e-mail de clipping. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)-[Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
