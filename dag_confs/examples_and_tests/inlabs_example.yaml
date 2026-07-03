@@ -1,24 +1,21 @@
 dag:
-  id: saude_dou_resumo_diario
-  description: "Resumo diário de publicações do Ministério da Saúde"   # ← adicionar
-  schedule: "0 8 * * MON-FRI"
-
+  id: inlabs_example
+  description: DAG de teste
+  tags:
+    - inlabs
+  schedule: 0 8 * * MON-FRI
+  dataset: inlabs
+  owner:
+    - cdata
   search:
     sources:
-      - INLABS
-    department:
-      - Ministério da Saúde
-    date: DIA
-    dou_sections:
-      - TODOS
-    full_text: false
-    text_length: 1000
-    use_summary: true
-    #ignore_attachments: true
-
+    - INLABS
+    terms:
+      - tecnologia
+      - informação
+    use_summary: True
   report:
     emails:
       - destination@economia.gov.br
-    subject: "DOU Saúde — Resumo diário"
-    skip_null: false
-    attach_csv: true
+    attach_csv: True
+    subject: "Teste do Ro-dou"

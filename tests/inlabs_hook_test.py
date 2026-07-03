@@ -3,6 +3,7 @@ import copy
 import pytest
 import pandas as pd
 import numpy as np
+from bs4 import BeautifulSoup
 from datetime import datetime
 import importlib.util
 from datetime import datetime
@@ -1547,3 +1548,162 @@ def test_ignore_attachments_disabled_by_default_keeps_all(inlabs_hook):
     titles = _all_titles(out)
     assert "PORTARIA Nº 100, DE 1º DE JANEIRO DE 2024" in titles
     assert "ANEXO I" in titles
+
+
+# ---------------------------------------------------------------------------
+# ignore_inline_tables / _replace_inline_tables
+# ---------------------------------------------------------------------------
+
+_TABLE_LARGE = (
+    "<table>"
+    + "".join(
+        f"<tr><td>Nome {i}</td><td>CPF {i}</td></tr>" for i in range(10)
+    )
+    + "</table>"
+)
+
+_TABLE_SMALL = (
+    "<table>"
+    "<tr><td>Vigência</td><td>30 dias</td></tr>"
+    "<tr><td>Publicação</td><td>DOU</td></tr>"
+    "</table>"
+)
+
+
+@pytest.mark.parametrize(
+    "text, min_rows, expect_placeholder",
+    [
+        # Tabela grande (10 linhas) com min_table_rows=3 → deve ser substituída
+        (_TABLE_LARGE, 3, True),
+        # Tabela pequena (2 linhas) com min_table_rows=3 → deve ser mantida
+        (_TABLE_SMALL, 3, False),
+        # Threshold igual ao número de linhas → deve ser substituída
+        (_TABLE_SMALL, 2, True),
+        # Threshold maior que o número de linhas → deve ser mantida
+        (_TABLE_LARGE, 20, False),
+    ],
+)
+def test_replace_inline_tables_threshold(
+    inlabs_hook, text, min_rows, expect_placeholder
+):
+    H = inlabs_hook.TextDictHandler()
+    result = H._replace_inline_tables(text, min_rows)
+    assert expect_placeholder == ("omitida" in result)
+    assert expect_placeholder == ("<table>" not in result)
+
+
+def test_replace_inline_tables_placeholder_shows_row_count(inlabs_hook):
+    """O marcador deve indicar o número de linhas da tabela removida."""
+    H = inlabs_hook.TextDictHandler()
+    result = H._replace_inline_tables(_TABLE_LARGE, min_table_rows=3)
+    assert "[Tabela de 10 linhas omitida]" in result
+
+
+def test_replace_inline_tables_placeholder_is_highlighted(inlabs_hook):
+    """O marcador deve vir envolto em um <span> com estilo inline (efeito
+    marca-texto), para funcionar em clientes de e-mail sem depender de uma
+    classe CSS externa."""
+    H = inlabs_hook.TextDictHandler()
+    result = H._replace_inline_tables(_TABLE_LARGE, min_table_rows=3)
+
+    soup = BeautifulSoup(result, "html.parser")
+    span = soup.find("span", string="[Tabela de 10 linhas omitida]")
+    assert span is not None
+    assert "background-color" in span.get("style", "")
+
+
+def test_replace_inline_tables_preserves_surrounding_text(inlabs_hook):
+    """Texto antes e depois da tabela deve ser preservado."""
+    H = inlabs_hook.TextDictHandler()
+    text = f"Art. 1º Texto introdutório. {_TABLE_LARGE} Art. 2º Continuação."
+    result = H._replace_inline_tables(text, min_table_rows=3)
+    assert "Art. 1º Texto introdutório." in result
+    assert "Art. 2º Continuação." in result
+    assert "<table>" not in result
+
+
+def test_replace_inline_tables_multiple_tables(inlabs_hook):
+    """Quando há múltiplas tabelas, cada uma é avaliada individualmente."""
+    H = inlabs_hook.TextDictHandler()
+    text = f"início {_TABLE_LARGE} meio {_TABLE_SMALL} fim"
+    result = H._replace_inline_tables(text, min_table_rows=3)
+    # Tabela grande (10 linhas) → substituída
+    assert "[Tabela de 10 linhas omitida]" in result
+    # Tabela pequena (2 linhas) → mantida
+    assert "<table>" in result
+
+
+def test_ignore_inline_tables_via_transform(inlabs_hook):
+    """ignore_inline_tables=True no transform_search_results substitui tabelas
+    inline com ao menos min_table_rows linhas."""
+    texto_com_tabela = f"Art. 1º Introdução. {_TABLE_LARGE} Art. 2º Fim."
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto_com_tabela,
+            matched_terms=["saúde"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 10 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+    assert "background-color" in abstract
+
+
+def test_ignore_inline_tables_disabled_by_default(inlabs_hook):
+    """Sem o parâmetro (default False), tabelas inline são mantidas."""
+    texto_com_tabela = f"Texto. {_TABLE_LARGE}"
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto_com_tabela,
+            matched_terms=["saúde"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "<table>" in abstract
+
+
+def test_ignore_inline_tables_no_effect_when_full_text(inlabs_hook):
+    """ignore_inline_tables não deve ter efeito quando full_text=True."""
+    texto_com_tabela = f"Texto. {_TABLE_LARGE}"
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto_com_tabela,
+            matched_terms=["saúde"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=True,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "<table>" in abstract

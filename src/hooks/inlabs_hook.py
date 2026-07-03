@@ -28,6 +28,13 @@ from bs4 import BeautifulSoup
 # arttype values that identify annexes/attachments in the INLABS index.
 _ATTACHMENT_ARTTYPE = frozenset({"ANEXO", "QUADRO", "TABELA"})
 
+# Inline style (not a CSS class) so the inline-table placeholder renders
+# consistently across e-mail clients (Gmail, Outlook) and the web report,
+# none of which can be relied on to apply an external/head-defined class.
+_TABLE_PLACEHOLDER_STYLE = (
+    "background-color:#8ec9ff; padding:1px 4px; border-radius:2px;"
+)
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -79,6 +86,8 @@ class INLABSHook(BaseHook):
         text_length: int,
         use_summary: bool,
         ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 3,
         show_relevancy: bool = False,
         conn_id: str = CONN_ID,
         client: OpenSearch | None = None,
@@ -119,6 +128,8 @@ class INLABSHook(BaseHook):
                 text_length=text_length,
                 use_summary=use_summary,
                 ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
                 conn_id=conn_id,
             )
@@ -211,6 +222,8 @@ class INLABSHook(BaseHook):
                 text_length=text_length,
                 use_summary=use_summary,
                 ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
             )
             if not all_results.empty
@@ -293,6 +306,8 @@ class INLABSHook(BaseHook):
             use_summary: bool = False,
             has_ementa: bool = False,
             ignore_attachments: bool = False,
+            ignore_inline_tables: bool = False,
+            min_table_rows: int = 3,
             show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -327,6 +342,12 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
+
+            if ignore_inline_tables and not full_text:
+                df["texto"] = df["texto"].apply(
+                    lambda x: self._replace_inline_tables(x, min_table_rows)
+                )
+
             if "opensearch_highlights" in df.columns:
                 df["_has_opensearch_highlight"] = df[
                     "opensearch_highlights"
@@ -934,6 +955,27 @@ class INLABSHook(BaseHook):
                 .apply(lambda x: x[cols].apply(lambda y: y.to_dict(), axis=1).tolist())
                 .to_dict()
             )
+
+        @staticmethod
+        def _replace_inline_tables(text: str, min_table_rows: int = 3) -> str:
+            """Replace inline <table> blocks with a short placeholder.
+
+            Only tables with at least ``min_table_rows`` rows (after empty-row
+            removal) are replaced; smaller tables are kept intact because they
+            likely carry structural content (e.g. a two-column value/label pair).
+            """
+            soup = BeautifulSoup(text, "html.parser")
+            for table in soup.find_all("table"):
+                rows = table.find_all("tr")
+                if len(rows) >= min_table_rows:
+                    n = len(rows)
+                    label = f"[Tabela de {n} linhas omitida]"
+                    placeholder = BeautifulSoup(
+                        f'<p><span style="{_TABLE_PLACEHOLDER_STYLE}">{label}</span></p>',
+                        "html.parser",
+                    )
+                    table.replace_with(placeholder)
+            return str(soup)
 
         @staticmethod
         def _remove_empty_tr(text: str) -> str:

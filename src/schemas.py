@@ -197,6 +197,24 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    ignore_inline_tables: Optional[bool] = Field(
+        default=False,
+        description="Define se as tabelas HTML embutidas no corpo das publicações "
+        "devem ser substituídas por um marcador de texto no recorte. Útil quando o "
+        "texto da publicação contém tabelas extensas (ex: listas de beneficiários, "
+        "relação de aprovados) que poluem o recorte. "
+        "Aplica-se apenas ao recorte: não tem efeito quando full_text=True. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    min_table_rows: Optional[int] = Field(
+        default=3,
+        ge=1,
+        description="Número mínimo de linhas que uma tabela inline deve ter para ser "
+        "omitida quando ignore_inline_tables=True. Tabelas com menos linhas são "
+        "mantidas no recorte. Default: 3. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
