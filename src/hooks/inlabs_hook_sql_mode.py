@@ -28,6 +28,8 @@ class INLABSSQLModeHook(INLABSHook):
         text_length: int,
         use_summary: bool,
         ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 3,
         show_relevancy: bool = False,
         conn_id: str = INLABSHook.CONN_ID,
         client = None,
@@ -64,6 +66,8 @@ class INLABSSQLModeHook(INLABSHook):
                 text_length=text_length,
                 use_summary=use_summary,
                 ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
             )
             if not all_results.empty

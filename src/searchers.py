@@ -565,6 +565,8 @@ class INLABSSearcher(BaseSearcher):
         text_length: Optional[int],
         use_summary: bool,
         ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 3,
         show_relevancy: Optional[bool] = None,
         pubtype: List[str] = None,
         reference_date: datetime = datetime.now(),
@@ -592,6 +594,11 @@ class INLABSSearcher(BaseSearcher):
             use_summary (bool): If exists, use summary as excerpt or full text
             ignore_attachments (bool): If True, suppress attachments and tabular
                 content from the results. Defaults to False.
+            ignore_inline_tables (bool): If True, replace inline HTML tables in
+                the excerpt with a short placeholder. Has no effect when
+                full_text=True. Defaults to False.
+            min_table_rows (int): Minimum number of rows a table must have to
+                be replaced when ignore_inline_tables=True. Defaults to 3.
             show_relevancy (bool, optional): Flag to include relevancy tag in the results. Defaults to False.
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -623,6 +630,8 @@ class INLABSSearcher(BaseSearcher):
             text_length=text_length,
             use_summary=use_summary,
             ignore_attachments=ignore_attachments,
+            ignore_inline_tables=ignore_inline_tables,
+            min_table_rows=min_table_rows,
             show_relevancy=show_relevancy,
         )
 
