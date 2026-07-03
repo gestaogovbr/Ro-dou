@@ -2,6 +2,9 @@ import logging
 import re
 from datetime import date
 
+from .config import NEURAL_SEARCH_MIN_SCORE  # type: ignore
+from .embeddings import embed_query  # type: ignore
+
 
 class OpenSearchQueryBuilder:
     """Builds OpenSearch DSL query bodies from a structured search payload.
@@ -38,6 +41,26 @@ class OpenSearchQueryBuilder:
 
     def build(self) -> dict:
         return self._generate_opensearch_query()
+
+    @classmethod
+    def _redact_vectors_for_log(cls, value):
+        """Replace raw embedding vectors with a short placeholder for logging.
+
+        Embedding vectors have hundreds of floats each; logging them verbatim
+        drowns out everything else in the query log line.
+        """
+        if isinstance(value, dict):
+            return {
+                key: (
+                    f"<vector dim={len(val)}>"
+                    if key == "vector" and isinstance(val, list)
+                    else cls._redact_vectors_for_log(val)
+                )
+                for key, val in value.items()
+            }
+        if isinstance(value, list):
+            return [cls._redact_vectors_for_log(item) for item in value]
+        return value
 
     @staticmethod
     def _preprocess_texto(term: str) -> str:
@@ -240,9 +263,7 @@ class OpenSearchQueryBuilder:
 
         node_type = node[0]
         if node_type == "TERM":
-            return cls.build_named_match_clause(
-                field, node[1], match_phrase=node[2]
-            )
+            return cls.build_named_match_clause(field, node[1], match_phrase=node[2])
 
         if node_type == "NOT":
             clause = cls._texto_node_to_clause(node[1], field)
@@ -260,9 +281,7 @@ class OpenSearchQueryBuilder:
                 else:
                     bool_clause["must"].append(child_clause)
 
-            return {
-                "bool": {key: value for key, value in bool_clause.items() if value}
-            }
+            return {"bool": {key: value for key, value in bool_clause.items() if value}}
 
         if node_type == "OR":
             should = []
@@ -279,6 +298,63 @@ class OpenSearchQueryBuilder:
         """Build a named OpenSearch clause for one configured text expression."""
         node = cls._parse_texto_expression(expression)
         return cls._texto_node_to_clause(node)
+
+    @classmethod
+    def _extract_plain_terms(cls, expression: str) -> str:
+        """Strip boolean operators/parentheses from a texto expression.
+
+        Returns the configured search terms as plain natural-language text,
+        suitable for embedding (e.g. ``"Ministério & Saúde"`` -> ``"Ministério
+        Saúde"``).
+        """
+        tokens = cls._tokenize_texto_expression(expression)
+        return " ".join(token[1] for token in tokens if token[0] == "TERM").strip()
+
+    @classmethod
+    def build_semantic_clause(
+        cls, expression: str, min_score: float = NEURAL_SEARCH_MIN_SCORE
+    ) -> dict:
+        """Build a k-NN clause finding documents semantically close to ``expression``.
+
+        Returns an empty dict when the expression has no plain terms to embed
+        or when the embedding model is unavailable, so callers can fall back
+        to keyword-only matching instead of failing the whole search.
+
+        Deliberately omits ``filter`` here: combining it with radial search's
+        ``min_score`` triggers an upstream OpenSearch k-NN bug ("[knn]
+        requires exactly one of k, distance or score to be set") even though
+        it's documented as supported for the lucene engine
+        (https://github.com/opensearch-project/k-NN/issues/2836, still open
+        as of OpenSearch 2.19). Correctness isn't affected: the outer bool
+        query's ``filter``/``must`` clauses already restrict the final result
+        set regardless of which ``should`` clause matched.
+        """
+        plain_text = cls._extract_plain_terms(expression)
+        if not plain_text:
+            return {}
+        logging.info(
+            "Neural search: embedding query text=%r (min_score=%s)",
+            plain_text,
+            min_score,
+        )
+        try:
+            vector = embed_query(plain_text)
+        except Exception:
+            logging.warning(
+                "Failed to compute query embedding for semantic search, "
+                "falling back to keyword-only matching.",
+                exc_info=True,
+            )
+            return {}
+
+        return {
+            "knn": {
+                "embedding": {
+                    "vector": vector,
+                    "min_score": min_score,
+                }
+            }
+        }
 
     def _generate_opensearch_query(self) -> dict:
         """Build an OpenSearch bool query body from ``self.payload``.
@@ -302,6 +378,9 @@ class OpenSearchQueryBuilder:
             "terms_ignore",
         ]
 
+        neural_search = bool(self.payload.get("neural_search", False))
+        min_score = self.payload.get("min_score") or NEURAL_SEARCH_MIN_SCORE
+
         pub_date = self.payload.get("pubdate", [date.today().strftime("%Y-%m-%d")])
         pub_date_from = pub_date[0]
         pub_date_to = pub_date[1] if len(pub_date) > 1 else pub_date_from
@@ -317,23 +396,10 @@ class OpenSearchQueryBuilder:
             for k in self.payload
             if k in allowed_keys and self.payload[k]
         }
+        texto_values = filtered_dict.pop("texto", None)
 
         for key, values in filtered_dict.items():
-            if key == "texto":
-                phrase_clauses = [
-                    self.build_texto_clause(term)
-                    for term in values
-                    if term and term.strip()
-                ]
-                phrase_clauses = [clause for clause in phrase_clauses if clause]
-                if len(phrase_clauses) == 1:
-                    must_clauses.append(phrase_clauses[0])
-                elif len(phrase_clauses) > 1:
-                    must_clauses.append(
-                        {"bool": {"should": phrase_clauses, "minimum_should_match": 1}}
-                    )
-
-            elif key == "artcategory_ignore":
+            if key == "artcategory_ignore":
                 must_not_clauses.extend(
                     {"match_phrase_prefix": {"artcategory": value}}
                     for value in values
@@ -358,6 +424,49 @@ class OpenSearchQueryBuilder:
                         {"bool": {"should": should_clauses, "minimum_should_match": 1}}
                     )
 
+        if texto_values:
+            phrase_clauses = []
+            semantic_clauses = []
+            for term in texto_values:
+                if not term or not term.strip():
+                    continue
+                text_clause = self.build_texto_clause(term)
+                if text_clause:
+                    phrase_clauses.append(text_clause)
+                if neural_search:
+                    semantic_clause = self.build_semantic_clause(term, min_score)
+                    if semantic_clause:
+                        semantic_clauses.append(semantic_clause)
+
+            text_result = None
+            if len(phrase_clauses) == 1:
+                text_result = phrase_clauses[0]
+            elif len(phrase_clauses) > 1:
+                text_result = {
+                    "bool": {"should": phrase_clauses, "minimum_should_match": 1}
+                }
+
+            semantic_result = None
+            if len(semantic_clauses) == 1:
+                semantic_result = semantic_clauses[0]
+            elif len(semantic_clauses) > 1:
+                semantic_result = {
+                    "dis_max": {"queries": semantic_clauses, "tie_breaker": 0.0}
+                }
+
+            if text_result and semantic_result:
+                clause = {
+                    "bool": {
+                        "should": [text_result, semantic_result],
+                        "minimum_should_match": 1,
+                    }
+                }
+            else:
+                clause = text_result or semantic_result
+
+            if clause:
+                must_clauses.append(clause)
+
         bool_query: dict = {"filter": filter_clauses}
         if must_clauses:
             bool_query["must"] = must_clauses
@@ -365,7 +474,7 @@ class OpenSearchQueryBuilder:
             bool_query["must_not"] = must_not_clauses
 
         logging.info("Generated OpenSearch Query:")
-        logging.info(bool_query)
+        logging.info(self._redact_vectors_for_log(bool_query))
 
         return {
             "query": {"bool": bool_query},

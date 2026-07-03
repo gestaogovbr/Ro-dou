@@ -256,10 +256,18 @@
             color: #6B7280;
         }
 
+        .tag-semantico {
+            border-radius: 9999px;
+            border: 1px solid #BFDBFE;
+            background: #EFF6FF;
+            color: #1D4ED8;
+        }
+
         .tag-alta-relevancia,
         .tag-relevante,
         .tag-pouco-relevante,
-        .tag-baixa-relevancia {
+        .tag-baixa-relevancia,
+        .tag-semantico {
             padding: 0.25rem 0.5rem;
             font-size: 11px;
             font-weight: 700;
@@ -503,6 +511,9 @@
                                         <div class="section-marker">{{ document.section | safe }}</div>
 
                                         {% if document.abstract %}
+                                            {% if document.semantic_match %}
+                                                <span class="tag-semantico">Encontrado por similaridade</span>
+                                            {% endif %}
                                             {% if document.show_relevancy %}
                                                 {% if document.score is not none and document.score > 0%}
                                                     {% set score = document.score | float %}

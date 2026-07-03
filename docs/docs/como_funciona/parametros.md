@@ -44,6 +44,10 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **terms** *(condicionalmente obrigatório)*: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se `QD` estiver na lista de `sources`, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios `terms`, `department` ou `pubtype`.
 - **show_relevancy** *(opcional)*: Exibe a relevância da publicação baseado no score do indexador de buscas.
 Default: False. (Funcionalidade disponível apenas no INLABS)
+- **neural_search_config** *(opcional)*: Configurações da busca semântica (por similaridade vetorial), que combina a busca por palavras-chave com a busca por similaridade, retornando também publicações relacionadas ao termo pesquisado que não contenham o termo literal. (Funcionalidade disponível apenas no INLABS)
+  - **neural_search** *(opcional)*: Habilita a busca semântica. Valores: True ou False. Default: False.
+  - **score** *(opcional)*: Pontuação mínima (entre 0.5 e 0.98) para considerar um resultado relevante na busca semântica. Abaixo de ~0.75 a busca fica muito permissiva; acima de ~0.95 dificilmente algo além de texto quase idêntico é retornado. Default: 0.85.
+  - **max_semantic_results** *(opcional)*: Número máximo de resultados retornados exclusivamente pela busca semântica (sem correspondência por palavra-chave). Default: 10.
 - **territory_id** *(opcional)*: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.
 - **excerpt_size** *(opcional)*: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)
 - **number_of_excerpts** *(opcional)*: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário‑QD)

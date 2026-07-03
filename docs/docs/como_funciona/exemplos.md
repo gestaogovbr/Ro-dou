@@ -636,3 +636,27 @@ dag:
       - destination@economia.gov.br
 
 ```
+
+### Exemplo 23
+Esta configuração demonstra como realizar uma busca habilitando a busca semântica.
+
+```yaml
+dag:
+  id: basic_semantic_search_example
+  description: DAG de teste 
+  search:
+    sources:
+      - INLABS
+    terms:
+      - dados abertos
+      - governo aberto
+      - lei de acesso à informação   
+    neural_search_config:
+      neural_search: true
+      score: 0.85
+      max_semantic_results: 5
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"
+```

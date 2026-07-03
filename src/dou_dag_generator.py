@@ -29,11 +29,18 @@ from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
 from utils.select_terms import TermSelector
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
-from schemas import FetchTermsConfig
-from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher, DOESPSearcher
+from schemas import FetchTermsConfig, NeuralSearchConfig
+from searchers import (
+    BaseSearcher,
+    DOUSearcher,
+    QDSearcher,
+    INLABSSearcher,
+    DOESPSearcher,
+)
 
 from airflow.models import Variable
 from ai.runner import AIRunner
+
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
@@ -154,14 +161,12 @@ class DouDigestDagGenerator:
         # options that won't show in the "DAG Docs"
         del config["description"]
         del config["doc_md"]
-        doc_md = specs.doc_md + textwrap.dedent(
-            f"""
+        doc_md = specs.doc_md + textwrap.dedent(f"""
 
             **Configuração da dag definida no arquivo `{config_file}`**:
 
 
-            """
-        )
+            """)
         for key, value in config.items():
             doc_md += f"\n**{key.replace('_', ' ').capitalize()}**\n"
 
@@ -295,6 +300,7 @@ class DouDigestDagGenerator:
         use_summary: Optional[bool],
         ai_search_config: Optional[dict],
         show_relevancy: Optional[bool],
+        neural_search_config: Optional[NeuralSearchConfig],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -304,7 +310,6 @@ class DouDigestDagGenerator:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
-
         """Performs the search in each source and merge the results"""
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
@@ -337,6 +342,7 @@ class DouDigestDagGenerator:
                 use_summary=use_summary,
                 ai_search_config=ai_search_config,
                 show_relevancy=show_relevancy,
+                neural_search_config=neural_search_config,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -547,6 +553,7 @@ class DouDigestDagGenerator:
                             "use_summary": subsearch.use_summary,
                             "ai_search_config": subsearch.ai_search_config,
                             "show_relevancy": subsearch.show_relevancy,
+                            "neural_search_config": subsearch.neural_search_config,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,
@@ -589,7 +596,6 @@ class DouDigestDagGenerator:
             tg_exec_searchs >> has_matches_task
 
             has_matches_task >> [send_notification_task, skip_notification_task]
-
 
         return dag
 

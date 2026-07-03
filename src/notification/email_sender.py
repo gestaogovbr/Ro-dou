@@ -191,6 +191,7 @@ class EmailSender(ISender):
                                     "full_text": result.get("full_text", False),
                                     "score": result.get("score"),
                                     "show_relevancy": result.get("show_relevancy", False),
+                                    "semantic_match": result.get("semantic_match", False),
                                 }
                             )
 

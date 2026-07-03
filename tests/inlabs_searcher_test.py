@@ -3,6 +3,7 @@
 
 from datetime import datetime
 from collections import Counter
+from unittest.mock import MagicMock, patch
 import pytest
 
 
@@ -71,6 +72,40 @@ def test_prepare_search_terms(inlabs_searcher, terms, search_terms):
         assert Counter(search_terms_return[key]) == Counter(
             search_terms[key]
         ), f"The lists under the key '{key}' do not have the same content."
+
+
+def test_exec_search_forwards_neural_search_config_to_hook(inlabs_searcher):
+    """``neural_search_config`` must be forwarded unchanged to ``INLABSHook.search_text``."""
+    from dags.ro_dou_src.schemas import NeuralSearchConfig
+
+    fake_hook = MagicMock()
+    fake_hook.search_text.return_value = {}
+    neural_search_config = NeuralSearchConfig(neural_search=True)
+
+    with patch("dags.ro_dou_src.searchers.INLABSHook", return_value=fake_hook):
+        inlabs_searcher.exec_search(
+            ai_config={},
+            ai_search_config={},
+            terms=["a"],
+            dou_sections=["SECAO_1"],
+            search_date="DIA",
+            department=None,
+            department_ignore=None,
+            terms_ignore=None,
+            ignore_signature_match=False,
+            full_text=False,
+            text_length=400,
+            use_summary=False,
+            show_relevancy=False,
+            pubtype=None,
+            reference_date=datetime.now(),
+            neural_search_config=neural_search_config,
+        )
+
+    assert (
+        fake_hook.search_text.call_args.kwargs["neural_search_config"]
+        is neural_search_config
+    )
 
 
 @pytest.mark.parametrize(

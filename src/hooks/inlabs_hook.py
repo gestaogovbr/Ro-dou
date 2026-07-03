@@ -14,12 +14,15 @@ from airflow.hooks.base import BaseHook  # type: ignore
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.models import Variable  # type: ignore
 
-# from typing import Optional
-from schemas import AIConfig, AISearchConfig  # type: ignore
+from typing import Optional
+from schemas import AIConfig, AISearchConfig, NeuralSearchConfig  # type: ignore
 from ai.runner import AIRunner
 
 from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
-from ro_dou_src.utils.open_search.config import INDEX_NAME, RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
+from ro_dou_src.utils.open_search.config import (  # type: ignore
+    INDEX_NAME,
+    RO_DOU_INLABS_USE_OPENSEARCH,
+)
 from ro_dou_src.utils.open_search.query_builder import OpenSearchQueryBuilder  # type: ignore
 from opensearchpy import OpenSearch  # type: ignore
 
@@ -38,7 +41,6 @@ class INLABSHook(BaseHook):
 
     def __init__(self, *args, **kwargs):
         pass
-
 
     @staticmethod
     def _filter_text_terms(text_terms) -> list:
@@ -76,6 +78,7 @@ class INLABSHook(BaseHook):
         text_length: int,
         use_summary: bool,
         show_relevancy: bool,
+        neural_search_config: Optional[NeuralSearchConfig] = None,
         conn_id: str = CONN_ID,
         client: OpenSearch | None = None,
     ) -> dict:
@@ -91,6 +94,10 @@ class INLABSHook(BaseHook):
             text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
             show_relevancy (bool): If True, include a relevancy tag in the report for each result
+            neural_search_config (NeuralSearchConfig, optional): Controls whether
+                keyword matching is combined with semantic (vector) similarity
+                when querying OpenSearch, and the score threshold/result cap for
+                the semantic part. Defaults to a config with ``neural_search=False``.
             conn_id (str): DOU Database Airflow conn id
 
         Returns:
@@ -100,7 +107,7 @@ class INLABSHook(BaseHook):
                 legacy ``matches`` field.
         """
 
-        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != 'true':
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != "true":
             from .inlabs_hook_sql_mode import INLABSSQLModeHook
 
             logging.info(
@@ -120,6 +127,15 @@ class INLABSHook(BaseHook):
 
         if client is None:
             client = OpenSearchClient().get_client()
+
+        neural_config = neural_search_config or NeuralSearchConfig()
+        neural_search = bool(neural_config.neural_search)
+
+        search_terms = {
+            **search_terms,
+            "neural_search": neural_search,
+            "min_score": neural_config.score,
+        }
 
         logging.info("Search term in INLABS HOOK.")
         logging.info(f"Search terms -> {search_terms}")
@@ -152,7 +168,7 @@ class INLABSHook(BaseHook):
 
         # Fetching results for extra edition search terms
         seen_ids = {hit["_id"] for hit in hits}
-        logging.info("Seen IDs after main search: %s", seen_ids)
+
         extra_search_terms = self._adapt_search_terms_to_extra(
             copy.deepcopy(search_terms)
         )
@@ -183,9 +199,88 @@ class INLABSHook(BaseHook):
 
         searched_expression = ", ".join(search_terms.get("texto", []))
         main_search_results = [
-            self._map_opensearch_hit(h, searched_expression=searched_expression)
+            self._map_opensearch_hit(
+                h, searched_expression=searched_expression, neural_search=neural_search
+            )
             for h in hits
         ]
+
+        if neural_search and main_search_results:
+            # A hit's `_score` is the sum of whichever `should` clauses
+            # matched. Keyword (BM25-like) scores and the semantic knn score
+            # (0-1 range for cosinesimil) live on completely different
+            # scales, so they must be reported separately — mixing them into
+            # one min/max/mean makes the average meaningless for calibrating
+            # NEURAL_SEARCH_MIN_SCORE.
+            semantic_only_scores = [
+                r["score"]
+                for r in main_search_results
+                if not r.get("matched_terms") and r.get("score") is not None
+            ]
+            keyword_scores = [
+                r["score"]
+                for r in main_search_results
+                if r.get("matched_terms") and r.get("score") is not None
+            ]
+            logging.info(
+                "Neural search checkpoint: %d hits totais (%d via palavra-chave, "
+                "%d somente por similaridade semântica; score mínimo=%s)",
+                len(main_search_results),
+                len(keyword_scores),
+                len(semantic_only_scores),
+                neural_config.score,
+            )
+            if semantic_only_scores:
+                logging.info(
+                    "  score semântico (comparável ao threshold): min=%.3f "
+                    "max=%.3f mean=%.3f",
+                    min(semantic_only_scores),
+                    max(semantic_only_scores),
+                    sum(semantic_only_scores) / len(semantic_only_scores),
+                )
+            if keyword_scores:
+                logging.info(
+                    "  score com match textual (escala BM25, não comparável "
+                    "ao threshold): min=%.3f max=%.3f mean=%.3f",
+                    min(keyword_scores),
+                    max(keyword_scores),
+                    sum(keyword_scores) / len(keyword_scores),
+                )
+            # Per-hit breakdown, weakest score first: the borderline hits
+            # near the configured score threshold are what matters for tuning it.
+            for r in sorted(main_search_results, key=lambda r: r.get("score") or 0):
+                logging.info(
+                    "  score=%.3f matched_terms=%s id=%s identifica=%.80r",
+                    r.get("score") or 0.0,
+                    r.get("matched_terms") or "[]",
+                    r.get("id"),
+                    r.get("identifica"),
+                )
+
+            # Radial search has no result-count cap (mutually exclusive with
+            # `k` in OpenSearch), so cap semantic-only hits here, keeping
+            # only the highest-scoring ones. Keyword-matched hits are never
+            # affected.
+            max_semantic_results = neural_config.max_semantic_results
+            semantic_only_hits = [
+                r for r in main_search_results if not r.get("matched_terms")
+            ]
+            if len(semantic_only_hits) > max_semantic_results:
+                keyword_hits = [
+                    r for r in main_search_results if r.get("matched_terms")
+                ]
+                semantic_only_hits.sort(key=lambda r: r.get("score") or 0, reverse=True)
+                dropped = len(semantic_only_hits) - max_semantic_results
+                logging.info(
+                    "Neural search: descartados %d resultados somente "
+                    "semânticos além do limite de %d",
+                    dropped,
+                    max_semantic_results,
+                )
+                main_search_results = (
+                    keyword_hits + semantic_only_hits[:max_semantic_results]
+                )
+
         all_results = pd.DataFrame(main_search_results)
 
         if not all_results.empty:
@@ -206,6 +301,7 @@ class INLABSHook(BaseHook):
                 text_length=text_length,
                 use_summary=use_summary,
                 show_relevancy=show_relevancy,
+                neural_search=neural_search,
             )
             if not all_results.empty
             else {}
@@ -224,12 +320,18 @@ class INLABSHook(BaseHook):
         return sorted(set(hit.get("matched_queries", [])), key=str.lower)
 
     @classmethod
-    def _map_opensearch_hit(cls, hit: dict, searched_expression: str = "") -> dict:
+    def _map_opensearch_hit(
+        cls,
+        hit: dict,
+        searched_expression: str = "",
+        neural_search: bool = False,
+    ) -> dict:
         """Map an OpenSearch hit to the dataframe shape used by notifications.
 
         Matched terms come exclusively from ``hit["matched_queries"]``. The
         legacy ``matches`` field is populated from the same source for backward
-        compatibility.
+        compatibility. ``semantic_match`` is True when the hit has no keyword
+        match at all, i.e. it was only found through vector similarity.
         """
         matched_terms = cls._matched_terms_from_hit(hit)
         highlights = hit.get("highlight", {}).get("texto_plain", [])
@@ -241,6 +343,7 @@ class INLABSHook(BaseHook):
             "matched_terms_text": ", ".join(matched_terms),
             "matches": ", ".join(matched_terms),
             "opensearch_highlights": highlights,
+            "semantic_match": bool(neural_search and not matched_terms),
         }
 
     @staticmethod
@@ -287,6 +390,7 @@ class INLABSHook(BaseHook):
             use_summary: bool = False,
             has_ementa: bool = False,
             show_relevancy: bool = False,
+            neural_search: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
             of matched terms reported by OpenSearch and signature matching.
@@ -304,10 +408,14 @@ class INLABSHook(BaseHook):
                 use_summary (bool): If exists, use summary instead of
                     excerpt or full text.
                     Defaults to False
+                neural_search (bool): If True, the search will be performed using semantic search techniques (vectorization).
 
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
+            # Semantic hits may have no lexical `matched_terms`, so the
+            # relevancy tag becomes the only visible relevance signal.
+            show_relevancy = show_relevancy or neural_search
             logging.info(f"Search results: {response}")
             df = response.copy()
             # `identifica` column is the publication title. If None
@@ -321,9 +429,9 @@ class INLABSHook(BaseHook):
 
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
             if "opensearch_highlights" in df.columns:
-                df["_has_opensearch_highlight"] = df[
-                    "opensearch_highlights"
-                ].apply(self._has_opensearch_highlight)
+                df["_has_opensearch_highlight"] = df["opensearch_highlights"].apply(
+                    self._has_opensearch_highlight
+                )
             else:
                 df["_has_opensearch_highlight"] = False
 
@@ -413,9 +521,9 @@ class INLABSHook(BaseHook):
                 df["texto"] = df["texto"].where(~ementa_has_content, df["ementa"])
                 # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
                 df["has_ementa"] = ementa_has_content
-                df.loc[ementa_has_content, "texto"] = df.loc[
-                    ementa_has_content
-                ].apply(_highlight_row_matches, axis=1)
+                df.loc[ementa_has_content, "texto"] = df.loc[ementa_has_content].apply(
+                    _highlight_row_matches, axis=1
+                )
 
             df["ai_generated"] = False
 
@@ -457,6 +565,8 @@ class INLABSHook(BaseHook):
                 df["score"] = None
             if "show_relevancy" not in df.columns:
                 df["show_relevancy"] = show_relevancy
+            if "semantic_match" not in df.columns:
+                df["semantic_match"] = False
 
             cols_rename = {
                 "pubname": "section",
@@ -472,6 +582,7 @@ class INLABSHook(BaseHook):
                 "full_text": "full_text",
                 "score": "score",
                 "show_relevancy": "show_relevancy",
+                "semantic_match": "semantic_match",
             }
             if "matched_terms" in df.columns:
                 cols_rename["matched_terms"] = "matched_terms"

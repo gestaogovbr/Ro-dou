@@ -9,7 +9,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 from airflow.models import Variable
 from ai.provider import AIProvider
-from schemas import AIConfig, AISearchConfig
+from schemas import AIConfig, AISearchConfig, NeuralSearchConfig
 
 # Same layout as Airflow image / conftest (mounted `src` as `dags.ro_dou_src`).
 _INLABS_HOOK = (
@@ -101,6 +101,36 @@ def test_map_opensearch_hit_without_matched_queries_returns_empty_terms(inlabs_h
     assert mapped["matched_terms"] == []
     assert mapped["matched_terms_text"] == ""
     assert mapped["matches"] == ""
+
+
+def test_map_opensearch_hit_semantic_match_flag(inlabs_hook):
+    """``semantic_match`` is True only for neural hits with no keyword match."""
+    hit_no_keyword = {"_id": "1", "_score": 0.9, "_source": {"texto": "x"}}
+    hit_with_keyword = {
+        "_id": "2",
+        "_score": 9.3,
+        "_source": {"texto": "x"},
+        "matched_queries": ["SEGES"],
+    }
+
+    assert (
+        inlabs_hook._map_opensearch_hit(hit_no_keyword, neural_search=True)[
+            "semantic_match"
+        ]
+        is True
+    )
+    assert (
+        inlabs_hook._map_opensearch_hit(hit_with_keyword, neural_search=True)[
+            "semantic_match"
+        ]
+        is False
+    )
+    assert (
+        inlabs_hook._map_opensearch_hit(hit_no_keyword, neural_search=False)[
+            "semantic_match"
+        ]
+        is False
+    )
 
 
 @pytest.mark.parametrize(
@@ -470,6 +500,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": False,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ],
                 "Pellentesque": [
@@ -487,6 +518,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": False,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ],
             },
@@ -555,6 +587,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": True,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ],
             },
@@ -613,6 +646,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": True,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ],
             },
@@ -660,6 +694,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": False,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ],
             },
@@ -720,6 +755,7 @@ def _add_matched_terms_to_expected(expected):
                         "full_text": False,
                         "score": None,
                         "show_relevancy": True,
+                        "semantic_match": False,
                     }
                 ],
             },
@@ -751,6 +787,83 @@ def test_transform_search_results(
         show_relevancy=show_relevancy,
     )
     assert r == dict_out
+
+
+def test_transform_search_results_forces_show_relevancy_for_neural_search(inlabs_hook):
+    """Semantic hits may have no matched_terms, so relevancy must stay visible."""
+    df_in = pd.DataFrame(
+        [
+            {
+                "artcategory": "Texto exemplo art_category",
+                "arttype": "Publicação xxx",
+                "id": 1,
+                "assina": "Pessoa 1",
+                "data": "Brasília/DF, 15 de março de 2024.",
+                "ementa": "None",
+                "identifica": "Título da Publicação 1",
+                "name": "15.03.2024 bsb DOU xxx",
+                "pdfpage": "http://xxx.gov.br/",
+                "pubdate": datetime(2024, 3, 15),
+                "pubname": "DO1",
+                "subtitulo": "None",
+                "texto": "Lorem ipsum dolor sit amet.",
+                "titulo": "None",
+            },
+        ]
+    )
+
+    r = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        response=df_in,
+        text_terms=[],
+        ignore_signature_match=False,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        show_relevancy=False,
+        neural_search=True,
+    )
+
+    assert r[""][0]["show_relevancy"] is True
+
+
+def test_search_text_propagates_neural_search_flag(monkeypatch, inlabs_hook):
+    """``neural_search_config`` must reach the generated OpenSearch query payload."""
+    monkeypatch.setattr(
+        "dags.ro_dou_src.hooks.inlabs_hook.RO_DOU_INLABS_USE_OPENSEARCH", "true"
+    )
+
+    seen_payloads = []
+
+    def fake_generate_query(payload):
+        seen_payloads.append(payload)
+        return {}
+
+    monkeypatch.setattr(
+        inlabs_hook, "_generate_opensearch_query", fake_generate_query
+    )
+
+    fake_client = MagicMock()
+    fake_client.search.return_value = {"hits": {"hits": []}}
+
+    result = inlabs_hook.search_text(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        search_terms={
+            "texto": ["estrutura regimental"],
+            "pubdate": ["2024-04-01"],
+            "pubname": ["DO1"],
+        },
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=400,
+        use_summary=False,
+        show_relevancy=False,
+        neural_search_config=NeuralSearchConfig(neural_search=True, score=0.9),
+        client=fake_client,
+    )
+
+    assert result == {}
+    assert all(payload.get("neural_search") is True for payload in seen_payloads)
+    assert all(payload.get("min_score") == 0.9 for payload in seen_payloads)
 
 
 @pytest.mark.parametrize(
@@ -812,6 +925,7 @@ def test_transform_search_results(
                         "full_text": False,
                         "score": None,
                         "show_relevancy": False,
+                        "semantic_match": False,
                     }
                 ]
             },
