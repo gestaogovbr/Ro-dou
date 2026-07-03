@@ -1600,16 +1600,15 @@ def test_replace_inline_tables_placeholder_shows_row_count(inlabs_hook):
 
 
 def test_replace_inline_tables_placeholder_is_highlighted(inlabs_hook):
-    """O marcador deve vir envolto em um <span> com estilo inline (efeito
-    marca-texto), para funcionar em clientes de e-mail sem depender de uma
-    classe CSS externa."""
+    """O marcador deve vir envolto em um <span class="placeholder"> (efeito
+    marca-texto), estilizado centralmente em dou_template.html."""
     H = inlabs_hook.TextDictHandler()
     result = H._replace_inline_tables(_TABLE_LARGE, min_table_rows=3)
 
     soup = BeautifulSoup(result, "html.parser")
     span = soup.find("span", string="[Tabela de 10 linhas omitida]")
     assert span is not None
-    assert "background-color" in span.get("style", "")
+    assert span.get("class") == ["placeholder"]
 
 
 def test_replace_inline_tables_preserves_surrounding_text(inlabs_hook):
@@ -1658,7 +1657,7 @@ def test_ignore_inline_tables_via_transform(inlabs_hook):
     abstract = list(out.values())[0][0]["abstract"]
     assert "[Tabela de 10 linhas omitida]" in abstract
     assert "<table>" not in abstract
-    assert "background-color" in abstract
+    assert 'class="placeholder"' in abstract
 
 
 def test_ignore_inline_tables_disabled_by_default(inlabs_hook):
