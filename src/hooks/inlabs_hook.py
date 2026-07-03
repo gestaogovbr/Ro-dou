@@ -28,13 +28,6 @@ from bs4 import BeautifulSoup
 # arttype values that identify annexes/attachments in the INLABS index.
 _ATTACHMENT_ARTTYPE = frozenset({"ANEXO", "QUADRO", "TABELA"})
 
-# Inline style (not a CSS class) so the inline-table placeholder renders
-# consistently across e-mail clients (Gmail, Outlook) and the web report,
-# none of which can be relied on to apply an external/head-defined class.
-_TABLE_PLACEHOLDER_STYLE = (
-    "background-color:#8ec9ff; padding:1px 4px; border-radius:2px;"
-)
-
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -971,7 +964,7 @@ class INLABSHook(BaseHook):
                     n = len(rows)
                     label = f"[Tabela de {n} linhas omitida]"
                     placeholder = BeautifulSoup(
-                        f'<p><span style="{_TABLE_PLACEHOLDER_STYLE}">{label}</span></p>',
+                        f'<p><span class="placeholder">{label}</span></p>',
                         "html.parser",
                     )
                     table.replace_with(placeholder)
