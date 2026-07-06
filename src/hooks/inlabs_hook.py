@@ -80,7 +80,7 @@ class INLABSHook(BaseHook):
         use_summary: bool,
         ignore_attachments: bool = False,
         ignore_inline_tables: bool = False,
-        min_table_rows: int = 3,
+        min_table_rows: int = 1,
         show_relevancy: bool = False,
         conn_id: str = CONN_ID,
         client: OpenSearch | None = None,
@@ -300,7 +300,7 @@ class INLABSHook(BaseHook):
             has_ementa: bool = False,
             ignore_attachments: bool = False,
             ignore_inline_tables: bool = False,
-            min_table_rows: int = 3,
+            min_table_rows: int = 1,
             show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
@@ -336,7 +336,7 @@ class INLABSHook(BaseHook):
 
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
 
-            if ignore_inline_tables and not full_text:
+            if ignore_inline_tables:
                 df["texto"] = df["texto"].apply(
                     lambda x: self._replace_inline_tables(x, min_table_rows)
                 )
@@ -449,7 +449,7 @@ class INLABSHook(BaseHook):
                 # the top of this method, so re-apply it here; otherwise the
                 # placeholder inserted earlier would be discarded along with the
                 # original `texto`.
-                if ignore_inline_tables and not full_text:
+                if ignore_inline_tables:
                     df.loc[ementa_has_content, "texto"] = df.loc[
                         ementa_has_content, "texto"
                     ].apply(lambda x: self._replace_inline_tables(x, min_table_rows))
@@ -1012,12 +1012,14 @@ class INLABSHook(BaseHook):
             )
 
         @staticmethod
-        def _replace_inline_tables(text: str, min_table_rows: int = 3) -> str:
+        def _replace_inline_tables(text: str, min_table_rows: int = 1) -> str:
             """Replace inline <table> blocks with a short placeholder.
 
             Only tables with at least ``min_table_rows`` rows (after empty-row
-            removal) are replaced; smaller tables are kept intact because they
-            likely carry structural content (e.g. a two-column value/label pair).
+            removal) are replaced. With the default of 1, every table with
+            content is omitted; a higher ``min_table_rows`` keeps smaller tables
+            that likely carry structural content (e.g. a two-column value/label
+            pair). Applies regardless of ``full_text``.
             """
             soup = BeautifulSoup(text, "html.parser")
             for table in soup.find_all("table"):

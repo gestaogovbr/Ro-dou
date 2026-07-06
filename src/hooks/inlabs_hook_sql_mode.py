@@ -29,7 +29,7 @@ class INLABSSQLModeHook(INLABSHook):
         use_summary: bool,
         ignore_attachments: bool = False,
         ignore_inline_tables: bool = False,
-        min_table_rows: int = 3,
+        min_table_rows: int = 1,
         show_relevancy: bool = False,
         conn_id: str = INLABSHook.CONN_ID,
         client = None,
