@@ -445,6 +445,14 @@ class INLABSHook(BaseHook):
                 # If use_summary replace texto value by summary value
                 ementa_has_content = df["ementa"].fillna("").str.strip().ne("")
                 df["texto"] = df["texto"].where(~ementa_has_content, df["ementa"])
+                # The ementa replaces `texto` after the inline-table handling at
+                # the top of this method, so re-apply it here; otherwise the
+                # placeholder inserted earlier would be discarded along with the
+                # original `texto`.
+                if ignore_inline_tables and not full_text:
+                    df.loc[ementa_has_content, "texto"] = df.loc[
+                        ementa_has_content, "texto"
+                    ].apply(lambda x: self._replace_inline_tables(x, min_table_rows))
                 # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
                 df["has_ementa"] = ementa_has_content
                 df.loc[ementa_has_content, "texto"] = df.loc[
@@ -608,6 +616,38 @@ class INLABSHook(BaseHook):
                 return text
             return " (...) ".join(highlights)
 
+        @staticmethod
+        def _plain_text(text: str) -> str:
+            """De-tag and collapse whitespace, mirroring the ``texto_plain``
+            field indexed in OpenSearch (see ``open_search.indexer``)."""
+            return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text)).strip()
+
+        @classmethod
+        def _drop_omitted_table_highlights(cls, text: str, highlights):
+            """Discard OpenSearch highlight fragments whose content was removed
+            by ``ignore_inline_tables``.
+
+            OpenSearch highlights come from ``texto_plain`` (the fully de-tagged
+            document), so a term matched *inside* an omitted table would
+            otherwise resurface the table content and bypass the
+            ``[Tabela de N linhas omitida]`` placeholder. When a table was
+            omitted from ``text`` (the placeholder is present), keep only the
+            fragments whose text still exists in the cleaned ``text``.
+            """
+            if not cls._has_opensearch_highlight(highlights):
+                return highlights
+            if 'class="placeholder"' not in text:
+                return highlights
+            haystack = cls._normalize(cls._plain_text(text))
+            return [
+                h
+                for h in highlights
+                if cls._normalize(
+                    cls._plain_text(h.replace("<%%>", "").replace("</%%>", ""))
+                )
+                in haystack
+            ]
+
         def _highlight_search_text(
             self, terms: list, text: str, opensearch_highlights=None
         ) -> str:
@@ -621,7 +661,10 @@ class INLABSHook(BaseHook):
             highlighted_text = self._highlight_terms(terms, text)
             if "<%%>" in highlighted_text:
                 return highlighted_text
-            return self._opensearch_highlight_excerpt(text, opensearch_highlights)
+            highlights = self._drop_omitted_table_highlights(
+                text, opensearch_highlights
+            )
+            return self._opensearch_highlight_excerpt(text, highlights)
 
         def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
@@ -855,6 +898,25 @@ class INLABSHook(BaseHook):
             _from_start = self._truncate_from_start
             _from_end = self._truncate_from_end
 
+            # When there is no search highlight to center on (e.g. the match
+            # was inside a table removed by ``ignore_inline_tables``), anchor the
+            # excerpt on the omitted-table placeholder so the
+            # ``[Tabela de N linhas omitida]`` marker stays visible instead of
+            # being truncated away with the surrounding text.
+            if "<%%>" not in text:
+                placeholder_match = re.search(
+                    r'<p><span class="placeholder">\[[^\]]*\]</span></p>', text
+                )
+                if placeholder_match:
+                    before_full = text[: placeholder_match.start()]
+                    placeholder = placeholder_match.group(0)
+                    after_full = text[placeholder_match.end() :]
+                    before, before_cut = _from_end(before_full, text_length)
+                    after, after_cut = _from_start(after_full, text_length)
+                    prefix = "(...) " if before_cut else ""
+                    suffix = " (...)" if after_cut else ""
+                    return f"{prefix}{before}{placeholder}{after}{suffix}"
+
             marker_match = re.search(r"<%%>[\s\S]*?</%%>", text)
             if marker_match and self._visible_len(marker_match.group(0)) > text_length:
                 before_full = text[: marker_match.start()]
@@ -972,11 +1034,18 @@ class INLABSHook(BaseHook):
 
         @staticmethod
         def _remove_empty_tr(text: str) -> str:
-            """Remove <tr> tags that contain no visible content."""
+            """Remove <tr> tags that contain no visible content.
+
+            Both ``<td>`` and ``<th>`` cells are inspected so that a header row
+            (built only with ``<th>``) is not mistaken for an empty row. This
+            keeps such rows counted toward ``min_table_rows`` in
+            ``_replace_inline_tables``.
+            """
             soup = BeautifulSoup(text, "html.parser")
 
             for tr in soup.find_all("tr"):
-                if all(not td.get_text(strip=True) for td in tr.find_all("td")):
+                cells = tr.find_all(["td", "th"])
+                if all(not cell.get_text(strip=True) for cell in cells):
                     tr.decompose()
 
             return str(soup)
