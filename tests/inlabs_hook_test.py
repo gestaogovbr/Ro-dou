@@ -1725,9 +1725,10 @@ def test_ignore_inline_tables_disabled_by_default(inlabs_hook):
     assert "<table>" in abstract
 
 
-def test_ignore_inline_tables_no_effect_when_full_text(inlabs_hook):
-    """ignore_inline_tables não deve ter efeito quando full_text=True."""
-    texto_com_tabela = f"Texto. {_TABLE_LARGE}"
+def test_ignore_inline_tables_applies_with_full_text(inlabs_hook):
+    """ignore_inline_tables também omite tabelas quando full_text=True,
+    preservando o restante do texto completo."""
+    texto_com_tabela = f"Texto antes. {_TABLE_LARGE} Texto depois."
     df = pd.DataFrame([
         _sample_row(
             texto=texto_com_tabela,
@@ -1747,7 +1748,50 @@ def test_ignore_inline_tables_no_effect_when_full_text(inlabs_hook):
     )
 
     abstract = list(out.values())[0][0]["abstract"]
-    assert "<table>" in abstract
+    assert "[Tabela de 10 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+    assert "Texto antes." in abstract  # restante do texto completo preservado
+    assert "Texto depois." in abstract
+
+
+def test_ignore_inline_tables_default_min_omits_small_table(inlabs_hook):
+    """Com o default min_table_rows=1, até tabelas pequenas são omitidas."""
+    texto = f"Texto. {_TABLE_SMALL}"  # tabela de 2 linhas
+    df = pd.DataFrame([_sample_row(texto=texto, matched_terms=["saúde"])])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,  # min_table_rows não informado -> default 1
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 2 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+
+
+def test_ignore_inline_tables_empty_table_not_marked(inlabs_hook):
+    """Tabela sem linhas (0) não deve virar '[Tabela de 0 linhas omitida]'
+    com o default min_table_rows=1."""
+    texto = "Texto. <table></table> fim."
+    df = pd.DataFrame([_sample_row(texto=texto, matched_terms=["saúde"])])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "omitida" not in abstract
 
 
 def test_ignore_inline_tables_marks_table_inside_ementa_with_use_summary(inlabs_hook):
