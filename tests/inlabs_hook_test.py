@@ -910,6 +910,48 @@ def test_remove_empty_tr(inlabs_hook, abstract, result):
     ) == BeautifulSoup(result, "html.parser")
 
 
+def test_remove_empty_tr_keeps_header_row(inlabs_hook):
+    """Uma linha de cabeçalho só com <th> (com conteúdo) não deve ser tratada
+    como vazia, para continuar contando em min_table_rows."""
+    H = inlabs_hook.TextDictHandler()
+    html = (
+        "<table>"
+        "<tr><th>ETAPA</th><th>PERÍODO</th></tr>"  # cabeçalho, sem <td>
+        "<tr><td>Abertura</td><td>26/06</td></tr>"
+        "<tr><th></th><th>  </th></tr>"  # cabeçalho vazio -> removido
+        "</table>"
+    )
+    out = H._remove_empty_tr(html)
+    assert "ETAPA" in out and "PERÍODO" in out  # cabeçalho com conteúdo mantido
+    from bs4 import BeautifulSoup
+
+    rows = BeautifulSoup(out, "html.parser").find_all("tr")
+    assert len(rows) == 2  # cabeçalho vazio removido; header+dados mantidos
+
+
+def test_min_table_rows_counts_header_row(inlabs_hook):
+    """Tabela com cabeçalho <th> + N-1 linhas de dados deve contar N linhas."""
+    header = "<tr><th>Etapa</th><th>Data</th></tr>"
+    data = "".join(f"<tr><td>e{i}</td><td>0{i}/07</td></tr>" for i in range(4))
+    texto = f"<p>Intro saúde.</p><table>{header}{data}</table><p>Fim.</p>"
+    df = pd.DataFrame([_sample_row(texto=texto, matched_terms=["saúde"])])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,
+        min_table_rows=5,  # cabeçalho (1) + dados (4) = 5
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 5 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+
+
 @pytest.mark.parametrize(
     "text, expected",
     [
@@ -1706,3 +1748,154 @@ def test_ignore_inline_tables_no_effect_when_full_text(inlabs_hook):
 
     abstract = list(out.values())[0][0]["abstract"]
     assert "<table>" in abstract
+
+
+def test_ignore_inline_tables_marks_table_inside_ementa_with_use_summary(inlabs_hook):
+    """Com use_summary=True, o excerto passa a ser a ementa. Se a ementa
+    contém tabela, o marcador deve ser inserido nela (regressão: antes o
+    marcador era gerado em `texto` e descartado pelo swap da ementa)."""
+    df = pd.DataFrame([
+        _sample_row(
+            texto="Texto original com tabela irrelevante aqui.",
+            ementa=f"Resumo oficial. {_TABLE_LARGE} Fim do resumo.",
+            matched_terms=["saúde"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        use_summary=True,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 10 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+
+
+def test_ignore_inline_tables_plain_ementa_has_no_marker_with_use_summary(inlabs_hook):
+    """Com use_summary=True e ementa sem tabela, nenhum marcador é inserido:
+    a tabela do `texto` foi superada pelo resumo, não omitida."""
+    df = pd.DataFrame([
+        _sample_row(
+            texto=f"Texto original. {_TABLE_LARGE} Fim.",
+            ementa="Resumo oficial curto, sem tabela.",
+            matched_terms=["saúde"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["saúde"],
+        ignore_signature_match=False,
+        full_text=False,
+        use_summary=True,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "omitida" not in abstract
+    assert "<table>" not in abstract
+    assert "Resumo oficial curto" in abstract
+
+
+def test_ignore_inline_tables_marker_not_bypassed_by_opensearch_highlight(inlabs_hook):
+    """Quando o termo casa DENTRO da tabela, o highlight do OpenSearch (vindo de
+    texto_plain, sem tags) não deve ressuscitar o conteúdo da tabela e passar
+    por cima do marcador (regressão)."""
+    texto = f"<p>Art. 1º Divulgar o cronograma.</p>{_TABLE_LARGE}<p>Art. 2º Fim.</p>"
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto,
+            matched_terms=["CPF"],
+            # highlight do OpenSearch carrega o texto da tabela (Nome/CPF)
+            opensearch_highlights=["cronograma Nome 3 <%%>CPF</%%> 3 Nome 4 CPF 4"],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["CPF"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 10 linhas omitida]" in abstract
+    assert "<table>" not in abstract
+    assert "Nome" not in abstract  # conteúdo da tabela não vazou
+
+
+def test_opensearch_highlight_kept_for_body_match_when_table_omitted(inlabs_hook):
+    """Um highlight do OpenSearch cujo conteúdo está no CORPO (não na tabela
+    removida) deve ser preservado mesmo com ignore_inline_tables."""
+    texto = (
+        "<p>Aprova as estruturas regimentais da SEGES.</p>"
+        f"{_TABLE_LARGE}<p>Disposições finais.</p>"
+    )
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto,
+            matched_terms=["estrutura regimental"],
+            opensearch_highlights=["Aprova as <%%>estruturas regimentais</%%> da SEGES."],
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["estrutura regimental"],
+        ignore_signature_match=False,
+        full_text=False,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "<%%>estruturas regimentais</%%>" in abstract
+    assert "<table>" not in abstract
+
+
+def test_ignore_inline_tables_marker_survives_trim_with_long_preamble(inlabs_hook):
+    """Sem highlight (match estava na tabela removida) e com preâmbulo longo, o
+    excerto deve ancorar no marcador em vez de truncar antes dele (regressão)."""
+    preamble = "<p>" + ("Preâmbulo longo com muito texto antes da tabela. " * 12) + "</p>"
+    texto = f"{preamble}{_TABLE_LARGE}<p>Art. 2º Disposições finais.</p>"
+    df = pd.DataFrame([
+        _sample_row(
+            texto=texto,
+            matched_terms=["CPF"],
+            opensearch_highlights=["Nome 3 <%%>CPF</%%> 3 Nome 4 CPF 4"],  # só na tabela
+        )
+    ])
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["CPF"],
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=200,
+        ignore_inline_tables=True,
+        min_table_rows=3,
+    )
+
+    abstract = list(out.values())[0][0]["abstract"]
+    assert "[Tabela de 10 linhas omitida]" in abstract
+    assert "Art. 2º Disposições finais." in abstract  # contexto após o marcador
+    assert "Nome" not in abstract
