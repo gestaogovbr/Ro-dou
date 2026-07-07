@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de DAGs — Ro-DOU</title>
+<style>
+  :root {
+    --azul-gov: #1351B4;
+    --azul-escuro: #071D41;
+    --azul-claro: #C5D4EB;
+    --amarelo-gov: #FFCD07;
+    --verde-ok: #168821;
+    --vermelho-erro: #E52207;
+    --fundo: #F3F5F9;
+    --painel: #FFFFFF;
+    --tinta: #1B1B1B;
+    --tinta-suave: #555C66;
+    --borda: #D8DEE8;
+    --code-bg: #0B1626;
+    --code-key: #7EB3FF;
+    --code-str: #FFD37E;
+    --code-bool: #7EE0A3;
+    --code-comment: #5B6B84;
+    --radius: 8px;
+    --fonte-ui: "IBM Plex Sans", system-ui, sans-serif;
+    --fonte-display: "Archivo", var(--fonte-ui);
+    --fonte-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--fonte-ui);
+    background: var(--fundo);
+    color: var(--tinta);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ---------- Cabeçalho ---------- */
+  header.gerador-topo {
+    background: var(--azul-escuro);
+    color: #fff;
+    padding: 28px 24px 24px;
+    border-bottom: 4px solid var(--amarelo-gov);
+  }
+  .topo-inner { max-width: 1200px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--fonte-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--azul-claro);
+    margin: 0 0 6px;
+  }
+  header.gerador-topo h1 {
+    font-family: var(--fonte-display);
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  header.gerador-topo p {
+    margin: 0;
+    color: #C9D6EA;
+    max-width: 640px;
+    font-size: 14px;
+  }
+
+  /* ---------- Layout ---------- */
+  main.gerador-corpo {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    main.gerador-corpo { grid-template-columns: 1fr; }
+    .preview-coluna { position: static !important; }
+  }
+
+  /* ---------- Formulário ---------- */
+  .form-coluna { display: flex; flex-direction: column; gap: 20px; }
+  fieldset.bloco {
+    background: var(--painel);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .bloco legend { display: none; }
+  .bloco-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: linear-gradient(to right, #F7F9FC, #fff);
+    border-bottom: 1px solid var(--borda);
+  }
+  .bloco-titulo .selo {
+    font-family: var(--fonte-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--azul-gov);
+    background: #E7EEFA;
+    border: 1px solid var(--azul-claro);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+  .bloco-titulo h2 {
+    font-family: var(--fonte-display);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .bloco-conteudo { padding: 18px; display: grid; gap: 16px; }
+
+  .campo { display: flex; flex-direction: column; gap: 5px; }
+  .campo label {
+    font-weight: 600;
+    font-size: 13.5px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .obrigatorio { color: var(--vermelho-erro); font-weight: 600; }
+  .dica { font-size: 12.5px; color: var(--tinta-suave); font-weight: 400; }
+  .campo input[type="text"],
+  .campo input[type="number"],
+  .campo textarea,
+  .campo select {
+    font-family: var(--fonte-ui);
+    font-size: 14px;
+    padding: 9px 11px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--tinta);
+    width: 100%;
+  }
+  .campo textarea { font-family: var(--fonte-mono); font-size: 13px; resize: vertical; min-height: 74px; }
+  .campo input:focus, .campo textarea:focus, .campo select:focus {
+    outline: 2px solid var(--azul-gov);
+    outline-offset: 1px;
+    border-color: var(--azul-gov);
+  }
+  .linha-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .linha-dupla { grid-template-columns: 1fr; } }
+
+  .grupo-check { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .check-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-item input { accent-color: var(--azul-gov); width: 16px; height: 16px; cursor: pointer; }
+
+  .toggle-avancado {
+    background: none;
+    border: none;
+    color: var(--azul-gov);
+    font-family: var(--fonte-ui);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+    text-align: left;
+  }
+  .toggle-avancado:hover { text-decoration: underline; }
+  .avancado[hidden] { display: none; }
+  .avancado { display: grid; gap: 16px; border-top: 1px dashed var(--borda); padding-top: 16px; }
+
+  /* ---------- Preview YAML ---------- */
+  .preview-coluna {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .preview-caixa {
+    background: var(--code-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid #1E2C44;
+    box-shadow: 0 8px 28px rgba(7, 29, 65, 0.18);
+  }
+  .preview-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #101E36;
+    border-bottom: 1px solid #1E2C44;
+  }
+  .preview-barra .arquivo {
+    font-family: var(--fonte-mono);
+    font-size: 12.5px;
+    color: #9FB4D6;
+  }
+  .preview-acoes { display: flex; gap: 8px; }
+  .btn {
+    font-family: var(--fonte-ui);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn:focus-visible { outline: 2px solid var(--amarelo-gov); outline-offset: 1px; }
+  .btn-primario { background: var(--azul-gov); color: #fff; }
+  .btn-primario:hover { background: #0F419A; }
+  .btn-fantasma { background: transparent; color: #C9D6EA; border-color: #33456A; }
+  .btn-fantasma:hover { background: #182948; }
+
+  pre.yaml-saida {
+    margin: 0;
+    padding: 16px 18px 20px;
+    font-family: var(--fonte-mono);
+    font-size: 12.8px;
+    line-height: 1.62;
+    color: #DDE7F5;
+    overflow-x: auto;
+    min-height: 320px;
+    max-height: 72vh;
+    overflow-y: auto;
+    white-space: pre;
+  }
+  .yk { color: var(--code-key); }
+  .ys { color: var(--code-str); }
+  .yb { color: var(--code-bool); }
+  .yc { color: var(--code-comment); font-style: italic; }
+
+  /* ---------- Validações ---------- */
+  .validacoes { display: flex; flex-direction: column; gap: 8px; }
+  .aviso {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13px;
+    padding: 10px 13px;
+    border-radius: 6px;
+    border: 1px solid;
+  }
+  .aviso-erro { background: #FDEDEB; border-color: #F5B5AC; color: #8B1A08; }
+  .aviso-ok { background: #EAF6EC; border-color: #B7DFC0; color: #0F5C1A; }
+  .aviso .icone { flex-shrink: 0; margin-top: 1px; font-weight: 700; }
+
+  footer.gerador-rodape {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 24px 32px;
+    font-size: 12.5px;
+    color: var(--tinta-suave);
+  }
+  footer.gerador-rodape a { color: var(--azul-gov); }
+
+  /* ---------- Rótulo simples + nome técnico ---------- */
+  .campo label .tec, .grupo-check .tec {
+    font-family: var(--fonte-mono);
+    font-weight: 400;
+    font-size: 11.5px;
+    color: var(--tinta-suave);
+    background: #EEF1F6;
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  .selo-opcional {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    background: #EEF1F6;
+    border-radius: 20px;
+    padding: 2px 9px;
+  }
+
+  /* ---------- Glossário acessível (clique/teclado, não só hover) ---------- */
+  .glossario { position: relative; display: inline-flex; }
+  .glossario > button {
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 1px solid var(--azul-claro);
+    background: #E7EEFA; color: var(--azul-gov);
+    font-size: 11px; font-weight: 700; line-height: 1;
+    cursor: pointer; padding: 0;
+  }
+  .glossario > button:hover { background: var(--azul-claro); }
+  .glossario > .balao {
+    display: none;
+    position: absolute; z-index: 30; left: 0; top: 130%;
+    width: min(260px, 76vw);
+    background: var(--painel);
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(7,29,65,0.15);
+    padding: 10px 12px;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--tinta);
+    line-height: 1.5;
+  }
+  .glossario.aberto > .balao { display: block; }
+  .balao code {
+    font-family: var(--fonte-mono);
+    font-size: 11.5px;
+    background: #EEF1F6;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ---------- Barra de ações rápidas ---------- */
+  .acoes-rapidas { display: flex; gap: 10px; flex-wrap: wrap; }
+  .acoes-rapidas .btn-fantasma { color: var(--azul-gov); border-color: var(--azul-claro); background: #fff; }
+  .acoes-rapidas .btn-fantasma:hover { background: #E7EEFA; }
+
+  /* ---------- Chamada de próximo passo ---------- */
+  .proximo-passo {
+    font-size: 13px;
+    color: var(--tinta-suave);
+    padding: 12px 14px;
+    border: 1px dashed var(--borda);
+    border-radius: 6px;
+    background: #F7F9FC;
+  }
+  .proximo-passo strong { color: var(--tinta); }
+  .proximo-passo code { background: #E7EEFA; color: var(--azul-gov); padding: 1px 6px; border-radius: 4px; }
+
+  .campo-opcional[hidden] { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="gerador-topo">
+  <div class="topo-inner">
+    <p class="eyebrow">Ro-DOU · Ferramenta interativa</p>
+    <h1>Monte sua busca no Diário Oficial</h1>
+    <p>Preencha o formulário abaixo para criar o arquivo que faz o robô do Ro-DOU monitorar o Diário Oficial e avisar você por e-mail quando encontrar algo. Não é preciso saber programar — em poucos minutos o arquivo fica pronto.</p>
+  </div>
+</header>
+
+<main class="gerador-corpo">
+  <div class="form-coluna">
+
+    <div class="acoes-rapidas">
+      <button type="button" class="btn btn-fantasma" id="btn-exemplo">✨ Preencher com exemplo</button>
+      <button type="button" class="btn btn-fantasma" id="btn-limpar">Limpar tudo</button>
+    </div>
+
+    <!-- ============ DAG ============ -->
+    <fieldset class="bloco" id="bloco-dag">
+      <legend>Identificação da busca</legend>
+      <div class="bloco-titulo"><span class="selo">dag</span><h2>1. Identificação</h2></div>
+      <div class="bloco-conteudo">
+        <div class="campo">
+          <label for="f-id">Nome desta busca <span class="obrigatorio">*</span> <span class="tec">id</span></label>
+          <div class="dica">Um apelido curto, sem espaços nem acentos, para você reconhecer esta busca depois.</div>
+          <input type="text" id="f-id" placeholder="ex.: monitoramento_dados_abertos" autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="f-description">Para que serve esta busca <span class="obrigatorio">*</span> <span class="tec">description</span></label>
+          <div class="dica">Explique em uma frase o objetivo, para outras pessoas entenderem.</div>
+          <input type="text" id="f-description" placeholder="ex.: Monitora publicações sobre dados abertos no Diário Oficial da União">
+        </div>
+        <div class="campo">
+          <label for="f-schedule">Quando a busca deve rodar <span class="tec">schedule</span></label>
+          <div class="dica">Com que frequência o robô repete a busca automaticamente.</div>
+          <select id="f-schedule">
+            <option value="">Padrão do Ro-DOU (todo dia, de madrugada)</option>
+            <option value="0 8 * * MON-FRI">Dias úteis, de manhã (8h)</option>
+            <option value="0 8 * * *">Todo dia, de manhã (8h)</option>
+            <option value="0 6 * * MON-FRI">Dias úteis, cedo (6h)</option>
+            <option value="0 8 * * MON">Toda segunda-feira (8h)</option>
+            <option value="0 8 1 * *">Todo dia 1º do mês (8h)</option>
+            <option value="__custom">Personalizado (expressão cron)…</option>
+          </select>
+          <div class="dica">Não existe opção "rodar só manualmente": se você não escolher um horário, o Ro-DOU roda a busca automaticamente todo dia de madrugada (o minuto exato varia por busca, para não sobrecarregar o sistema).</div>
+          <input type="text" id="f-schedule-custom" placeholder="0 8 * * MON-FRI" class="campo-opcional" hidden style="margin-top:6px">
+        </div>
+
+        <button type="button" class="toggle-avancado" id="btn-avancado-dag" aria-expanded="false">▸ Mais detalhes desta busca <span class="selo-opcional">opcional</span></button>
+        <div class="avancado" id="painel-avancado-dag" hidden>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="f-owner">Responsáveis <span class="tec">owner</span></label>
+              <div class="dica">Nomes de quem cuida desta busca, separados por vírgula.</div>
+              <input type="text" id="f-owner" placeholder="ex.: Maria Silva, João Souza">
+            </div>
+            <div class="campo">
+              <label for="f-tags">Etiquetas <span class="tec">tags</span></label>
+              <div class="dica">Ajudam a organizar as buscas no sistema, separadas por vírgula.</div>
+              <input type="text" id="f-tags" placeholder="ex.: projeto_a, departamento_x">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="f-failcb">Avisar por e-mail se a busca falhar <span class="tec">on_failure_callback</span></label>
+            <div class="dica">E-mails que recebem aviso caso o robô dê erro, separados por vírgula.</div>
+            <input type="text" id="f-failcb" placeholder="ex.: admin@orgao.gov.br">
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ============ SEARCH ============ -->
+    <fieldset class="bloco" id="bloco-search">
+      <legend>O que e onde monitorar</legend>
+      <div class="bloco-titulo"><span class="selo">search</span><h2>2. O que monitorar</h2></div>
+      <div class="bloco-conteudo">
+        <div class="campo">
+          <label>
+            Palavras ou expressões que você quer monitorar <span class="tec">terms</span>
+            <span class="glossario">
+              <button type="button" aria-expanded="false" aria-label="Como combinar palavras na busca">?</button>
+              <span class="balao" role="tooltip">
+                Normalmente cada linha é uma busca separada. Mas dá para combinar palavras na mesma linha:<br>
+                <strong>E</strong>: <code>MGI AND designar</code> (as duas devem aparecer)<br>
+                <strong>OU</strong>: <code>MGI OR designar</code> (qualquer uma)<br>
+                <strong>Excluir</strong>: <code>designar NOT temporário</code><br>
+                <strong>Expressão exata</strong>: <code>"instituto federal"</code>
+              </span>
+            </span>
+          </label>
+          <div class="dica">Escreva <strong>uma por linha</strong>. O robô avisa você toda vez que qualquer uma delas aparecer no Diário. Obrigatório se a busca incluir o Querido Diário.</div>
+          <textarea id="f-terms" placeholder="dados abertos&#10;governo aberto&#10;lei de acesso à informação"></textarea>
+        </div>
+        <div class="campo">
+          <label>Onde buscar <span class="tec">sources</span></label>
+          <div class="dica">Você pode marcar mais de uma opção. Na dúvida, deixe apenas o DOU.</div>
+          <div class="grupo-check" id="f-sources">
+            <label class="check-item"><input type="checkbox" value="DOU" checked> Diário Oficial da União (DOU)</label>
+            <label class="check-item">
+              <input type="checkbox" value="INLABS"> INLABS — base oficial completa do DOU
+              <span class="glossario">
+                <button type="button" aria-expanded="false" aria-label="O que é INLABS">?</button>
+                <span class="balao" role="tooltip">Base de dados oficial mais rica do DOU: permite mostrar texto completo, ementa e resumo por IA. Requer acesso configurado pela equipe técnica.</span>
+              </span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" value="QD"> Querido Diário (QD) — diários de municípios
+              <span class="glossario">
+                <button type="button" aria-expanded="false" aria-label="O que é Querido Diário">?</button>
+                <span class="balao" role="tooltip">Base de diários oficiais de prefeituras, mantida pelo projeto Querido Diário. Use para monitorar publicações municipais — exige informar o código do município abaixo.</span>
+              </span>
+            </label>
+            <label class="check-item"><input type="checkbox" value="DOESP"> DOESP — Diário Oficial do Estado de SP</label>
+          </div>
+        </div>
+        <button type="button" class="toggle-avancado" id="btn-avancado" aria-expanded="false">▸ Opções avançadas <span class="selo-opcional">opcional</span></button>
+        <div class="avancado" id="painel-avancado" hidden>
+          <p class="dica" style="margin:0 0 -4px">Você não precisa mexer aqui para a busca funcionar. Ajuste apenas se souber o que quer.</p>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="f-date">Período de cada busca <span class="tec">date</span></label>
+              <div class="dica">Quanto tempo para trás o robô procura a cada execução.</div>
+              <select id="f-date">
+                <option value="">Somente o dia atual</option>
+                <option value="SEMANA">Última semana</option>
+                <option value="MES">Último mês</option>
+                <option value="ANO">Último ano</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="f-field">Onde procurar o termo <span class="tec">field</span></label>
+              <select id="f-field">
+                <option value="">No texto inteiro (título e conteúdo)</option>
+                <option value="TITULO">Somente no título</option>
+                <option value="CONTEUDO">Somente no conteúdo</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label>
+              Seções do DOU <span class="tec">dou_sections</span>
+              <span class="glossario">
+                <button type="button" aria-expanded="false" aria-label="O que são seções do DOU">?</button>
+                <span class="balao" role="tooltip">O Diário Oficial da União é dividido em seções: a <strong>Seção 1</strong> traz atos normativos (leis, decretos), a <strong>Seção 2</strong> traz atos de pessoal e a <strong>Seção 3</strong> traz contratos e licitações. Deixe tudo desmarcado para buscar em todas.</span>
+              </span>
+            </label>
+            <div class="dica">Marque as seções onde procurar. Se nenhuma for marcada, busca em todas.</div>
+            <div class="grupo-check" id="f-sections">
+              <label class="check-item"><input type="checkbox" value="SECAO_1"> Seção 1 — atos normativos</label>
+              <label class="check-item"><input type="checkbox" value="SECAO_2"> Seção 2 — pessoal</label>
+              <label class="check-item"><input type="checkbox" value="SECAO_3"> Seção 3 — contratos e licitações</label>
+              <label class="check-item"><input type="checkbox" value="EDICAO_EXTRA"> Edição extra</label>
+              <label class="check-item"><input type="checkbox" value="EDICAO_SUPLEMENTAR"> Edição suplementar</label>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="f-terms-ignore">Palavras a ignorar <span class="tec">terms_ignore</span></label>
+            <div class="dica">Resultados que contenham estas palavras são descartados (uma por linha).</div>
+            <textarea id="f-terms-ignore" placeholder="Sanções Administrativas"></textarea>
+          </div>
+          <div class="campo">
+            <label for="f-department">Filtrar por órgão/unidade <span class="tec">department</span></label>
+            <div class="dica">Uma unidade por linha, com o nome idêntico ao usado na publicação.</div>
+            <textarea id="f-department" placeholder="Ministério da Gestão e da Inovação em Serviços Públicos"></textarea>
+          </div>
+          <div class="campo">
+            <label for="f-department-ignore">Ignorar órgãos/unidades <span class="tec">department_ignore</span></label>
+            <textarea id="f-department-ignore"></textarea>
+          </div>
+          <div class="campo">
+            <label for="f-pubtype">Filtrar por tipo de publicação <span class="tec">pubtype</span></label>
+            <div class="dica">Um tipo por linha, escrito exatamente como no <a href="https://gestaogovbr.github.io/Ro-dou/como_funciona/tipos_de_publicacoes/" target="_blank" rel="noopener">lista oficial de tipos de publicação</a>, ex.: Portaria, Despacho, Edital, Ato, Resolução.</div>
+            <textarea id="f-pubtype" placeholder="Portaria"></textarea>
+          </div>
+          <div class="grupo-check" style="flex-direction:column;align-items:flex-start">
+            <label class="check-item"><input type="checkbox" id="f-igsig"> Ignorar quando o termo aparece só na assinatura <span class="tec">ignore_signature_match</span></label>
+            <label class="check-item"><input type="checkbox" id="f-rematch"> Refazer a busca mesmo se já tiver sido feita <span class="tec">force_rematch</span></label>
+          </div>
+          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do INLABS</span> só valem se você marcou essa fonte acima.</p>
+          <div class="grupo-check" style="flex-direction:column;align-items:flex-start">
+            <label class="check-item"><input type="checkbox" id="f-fulltext"> Mostrar o texto completo no relatório <span class="tec">full_text</span></label>
+            <label class="check-item"><input type="checkbox" id="f-usesummary"> Mostrar a ementa (resumo oficial), quando existir <span class="tec">use_summary</span></label>
+            <label class="check-item"><input type="checkbox" id="f-relevancy"> Mostrar a relevância de cada resultado <span class="tec">show_relevancy</span></label>
+          </div>
+          <div class="campo">
+            <label for="f-textlength">Tamanho do trecho exibido <span class="tec">text_length</span></label>
+            <div class="dica">Apenas INLABS. Padrão: 400 caracteres.</div>
+            <input type="number" id="f-textlength" min="1" placeholder="400">
+          </div>
+
+          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do Querido Diário</span> só valem se você marcou essa fonte acima.</p>
+          <div class="campo">
+            <label for="f-territory">Código do município no Querido Diário <span class="tec">territory_id</span></label>
+            <div class="dica">Código IBGE do município (ex.: 4106902 = Curitiba/PR). Pode informar mais de um, separados por vírgula.</div>
+            <input type="text" id="f-territory" placeholder="ex.: 4106902">
+          </div>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="f-excerptsize">Tamanho do trecho exibido <span class="tec">excerpt_size</span></label>
+              <input type="number" id="f-excerptsize" min="1" placeholder="500">
+            </div>
+            <div class="campo">
+              <label for="f-numexcerpts">Máx. de trechos por edição <span class="tec">number_of_excerpts</span></label>
+              <input type="number" id="f-numexcerpts" min="1" placeholder="5">
+            </div>
+          </div>
+
+          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do DOESP</span> só valem se você marcou essa fonte acima.</p>
+          <div class="campo">
+            <label for="f-journals">Cadernos do Diário Oficial do Estado de SP <span class="tec">journals</span></label>
+            <div class="dica">Um caderno por linha, ex.: Executivo, Legislativo. Se nenhum for informado, busca em todos.</div>
+            <textarea id="f-journals" placeholder="Executivo"></textarea>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ============ REPORT ============ -->
+    <fieldset class="bloco" id="bloco-report">
+      <legend>Para quem enviar</legend>
+      <div class="bloco-titulo"><span class="selo">report</span><h2>3. Para quem enviar o resultado</h2></div>
+      <div class="bloco-conteudo">
+        <div class="campo">
+          <label for="f-emails">E-mails que vão receber o relatório <span class="tec">emails</span></label>
+          <div class="dica">Escreva <strong>um por linha</strong>.</div>
+          <textarea id="f-emails" placeholder="fulano@orgao.gov.br&#10;equipe@orgao.gov.br"></textarea>
+        </div>
+        <div class="campo">
+          <label for="f-subject">Assunto do e-mail <span class="tec">subject</span></label>
+          <input type="text" id="f-subject" placeholder="ex.: Alerta Ro-DOU — Dados abertos">
+        </div>
+        <div class="campo">
+          <label class="check-item" style="font-weight:600">
+            <input type="checkbox" id="f-noskip">
+            Enviar e-mail mesmo quando nada for encontrado <span class="tec">skip_null</span>
+          </label>
+          <div class="dica">Deixe desmarcado para receber e-mail só quando houver resultados.</div>
+        </div>
+
+        <button type="button" class="toggle-avancado" id="btn-avancado-report" aria-expanded="false">▸ Outras opções de envio <span class="selo-opcional">opcional</span></button>
+        <div class="avancado" id="painel-avancado-report" hidden>
+          <div class="campo">
+            <label class="check-item"><input type="checkbox" id="f-csv"> Anexar planilha (CSV) com os resultados <span class="tec">attach_csv</span></label>
+            <div class="dica">Útil para guardar ou analisar os achados em uma planilha.</div>
+          </div>
+          <div class="campo">
+            <label class="check-item"><input type="checkbox" id="f-hidefilters"> Ocultar os filtros no relatório <span class="tec">hide_filters</span></label>
+          </div>
+          <p class="dica" style="margin:6px 0 -4px">Enviar também para outros canais, além do e-mail:</p>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="f-discord">Webhook do Discord</label>
+              <input type="text" id="f-discord" placeholder="https://discord.com/api/webhooks/…">
+            </div>
+            <div class="campo">
+              <label for="f-slack">
+                Webhook do Slack
+                <span class="glossario">
+                  <button type="button" aria-expanded="false" aria-label="O que é webhook">?</button>
+                  <span class="balao" role="tooltip">Um "webhook" é um endereço (URL) que o Slack ou o Discord fornecem para receber mensagens automáticas em um canal. A equipe que administra o canal consegue gerar esse endereço.</span>
+                </span>
+              </label>
+              <input type="text" id="f-slack" placeholder="https://hooks.slack.com/services/…">
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- ============ PREVIEW ============ -->
+  <div class="preview-coluna">
+    <div class="validacoes" id="validacoes" aria-live="polite"></div>
+    <div class="preview-caixa">
+      <div class="preview-barra">
+        <span class="arquivo" id="nome-arquivo">minha_dag.yaml</span>
+        <div class="preview-acoes">
+          <button type="button" class="btn btn-fantasma" id="btn-baixar">Baixar .yaml</button>
+          <button type="button" class="btn btn-primario" id="btn-copiar">Copiar YAML</button>
+        </div>
+      </div>
+      <pre class="yaml-saida" id="saida" tabindex="0"></pre>
+    </div>
+    <div class="proximo-passo">
+      <strong>E agora?</strong> Baixe ou copie o arquivo acima e salve-o na pasta <code>dag_confs/</code> do Ro-DOU, ou envie-o para o responsável técnico da sua equipe.
+    </div>
+  </div>
+</main>
+
+<footer class="gerador-rodape">
+  <p style="margin:0 0 6px">Este gerador cobre o caminho mais comum de uso do Ro-DOU. Alguns recursos avançados e documentados não estão aqui — se precisar de algum deles, peça apoio da equipe técnica:
+  resumo automático por Inteligência Artificial, termos de busca vindos de um banco de dados ou de uma variável do Airflow, notificação via outros aplicativos de mensagem (Apprise) e múltiplas buscas dentro do mesmo arquivo.</p>
+  <p style="margin:0">Dúvidas sobre cada parâmetro? Consulte a <a href="https://gestaogovbr.github.io/Ro-dou/">documentação completa</a>.</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const linhas = (id) => $(id).value.split("\n").map(s => s.trim()).filter(Boolean);
+  const csv = (id) => $(id).value.split(",").map(s => s.trim()).filter(Boolean);
+  const checks = (id) => Array.from($(id).querySelectorAll("input:checked")).map(i => i.value);
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Aspas quando o valor pode confundir o parser YAML
+  // (@ não entra aqui: só é um indicador reservado no YAML quando é o primeiro
+  // caractere do valor, e nunca é nessa posição em e-mails)
+  function yamlVal(v) {
+    if (/[:#{}\[\],&*?|>'"%`]|^\s|\s$/.test(v) || v === "") return `'${v.replace(/'/g, "''")}'`;
+    return v;
+  }
+
+  function push(out, indent, key, value, tipo) {
+    const pad = "  ".repeat(indent);
+    if (tipo === "bool" || tipo === "num") {
+      out.push(`${pad}<span class="yk">${key}</span>: <span class="yb">${value}</span>`);
+    } else {
+      out.push(`${pad}<span class="yk">${key}</span>: <span class="ys">${esc(yamlVal(value))}</span>`);
+    }
+  }
+  function pushList(out, indent, key, items) {
+    const pad = "  ".repeat(indent);
+    out.push(`${pad}<span class="yk">${key}</span>:`);
+    for (const item of items) {
+      out.push(`${pad}  - <span class="ys">${esc(yamlVal(item))}</span>`);
+    }
+  }
+  function pushNested(out, indent, key, subkey, value) {
+    const pad = "  ".repeat(indent);
+    out.push(`${pad}<span class="yk">${key}</span>:`);
+    out.push(`${pad}  <span class="yk">${subkey}</span>: <span class="ys">${esc(yamlVal(value))}</span>`);
+  }
+
+  function slug(s) {
+    return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  }
+
+  function scheduleValue() {
+    const sel = $("f-schedule").value;
+    return sel === "__custom" ? $("f-schedule-custom").value.trim() : sel;
+  }
+
+  function gerar() {
+    const out = [];
+    const erros = [];
+
+    const id = $("f-id").value.trim();
+    const desc = $("f-description").value.trim();
+    const terms = linhas("f-terms");
+    const dept = linhas("f-department");
+    const pubtype = linhas("f-pubtype");
+    const sources = checks("f-sources");
+    const emails = linhas("f-emails");
+    const failcb = csv("f-failcb");
+    const discord = $("f-discord").value.trim();
+    const slack = $("f-slack").value.trim();
+    const territory = csv("f-territory");
+
+    // ---- validações — dizem o que fazer, não só o que está errado ----
+    if (!id) erros.push("Dê um nome para esta busca, sem espaços (ex.: <strong>monitoramento_dados_abertos</strong>).");
+    if (!desc) erros.push("Escreva uma breve descrição do que esta busca faz.");
+    if (!terms.length && !dept.length && !pubtype.length)
+      erros.push("Adicione pelo menos uma palavra ou expressão para monitorar.");
+    if (sources.includes("QD") && !terms.length)
+      erros.push("Para buscar no Querido Diário (QD), informe pelo menos uma palavra para monitorar.");
+    if (territory.length && !sources.includes("QD"))
+      erros.push("O código do município só é necessário quando a fonte Querido Diário (QD) está marcada.");
+    if (sources.includes("QD") && !territory.length)
+      erros.push("Informe o código do município para buscar no Querido Diário (QD).");
+    const emailsInvalidos = emails.filter(e => !EMAIL_RE.test(e));
+    if (emailsInvalidos.length)
+      erros.push(`Verifique o e-mail "${esc(emailsInvalidos[0])}" — use o formato nome@orgao.gov.br.`);
+    if (!emails.length && !discord && !slack)
+      erros.push("Informe pelo menos um e-mail para receber o relatório (ou configure Slack/Discord nas opções avançadas).");
+    const failcbInvalidos = failcb.filter(e => !EMAIL_RE.test(e));
+    if (failcbInvalidos.length)
+      erros.push(`Verifique o e-mail de aviso de falha "${esc(failcbInvalidos[0])}".`);
+
+    // ---- dag ----
+    out.push(`<span class="yk">dag</span>:`);
+    push(out, 1, "id", id || "minha_busca");
+    push(out, 1, "description", desc || "Descrição da busca");
+
+    const tags = csv("f-tags");
+    if (tags.length) pushList(out, 1, "tags", tags);
+    const owner = csv("f-owner");
+    if (owner.length) pushList(out, 1, "owner", owner);
+    const sched = scheduleValue();
+    if (sched) push(out, 1, "schedule", sched);
+
+    // ---- search ----
+    out.push(`  <span class="yk">search</span>:`);
+    if (sources.length && !(sources.length === 1 && sources[0] === "DOU")) {
+      pushList(out, 2, "sources", sources);
+    }
+    if (terms.length) pushList(out, 2, "terms", terms);
+    const termsIgnore = linhas("f-terms-ignore");
+    if (termsIgnore.length) pushList(out, 2, "terms_ignore", termsIgnore);
+    if (dept.length) pushList(out, 2, "department", dept);
+    const deptIgnore = linhas("f-department-ignore");
+    if (deptIgnore.length) pushList(out, 2, "department_ignore", deptIgnore);
+    if (pubtype.length) pushList(out, 2, "pubtype", pubtype);
+
+    const date = $("f-date").value;
+    if (date) push(out, 2, "date", date);
+    const field = $("f-field").value;
+    if (field) push(out, 2, "field", field);
+    const sections = checks("f-sections");
+    if (sections.length) pushList(out, 2, "dou_sections", sections);
+
+    if ($("f-igsig").checked) push(out, 2, "ignore_signature_match", "true", "bool");
+    if ($("f-rematch").checked) push(out, 2, "force_rematch", "true", "bool");
+    if ($("f-fulltext").checked) push(out, 2, "full_text", "true", "bool");
+    if ($("f-usesummary").checked) push(out, 2, "use_summary", "true", "bool");
+    if ($("f-relevancy").checked) push(out, 2, "show_relevancy", "true", "bool");
+    const tlen = $("f-textlength").value.trim();
+    if (tlen) push(out, 2, "text_length", tlen, "num");
+    if (territory.length === 1) push(out, 2, "territory_id", territory[0], "num");
+    else if (territory.length > 1) pushList(out, 2, "territory_id", territory);
+    const excerptSize = $("f-excerptsize").value.trim();
+    if (excerptSize) push(out, 2, "excerpt_size", excerptSize, "num");
+    const numExcerpts = $("f-numexcerpts").value.trim();
+    if (numExcerpts) push(out, 2, "number_of_excerpts", numExcerpts, "num");
+    const journals = linhas("f-journals");
+    if (journals.length) pushList(out, 2, "journals", journals);
+
+    // ---- callback (avisos de falha) ----
+    if (failcb.length) {
+      out.push(`  <span class="yk">callback</span>:`);
+      pushList(out, 2, "on_failure_callback", failcb);
+    }
+
+    // ---- report ----
+    out.push(`  <span class="yk">report</span>:`);
+    if (emails.length) pushList(out, 2, "emails", emails);
+    const subject = $("f-subject").value.trim();
+    if (subject) push(out, 2, "subject", subject);
+    if ($("f-noskip").checked) push(out, 2, "skip_null", "false", "bool");
+    if ($("f-csv").checked) push(out, 2, "attach_csv", "true", "bool");
+    if ($("f-hidefilters").checked) push(out, 2, "hide_filters", "true", "bool");
+    if (discord) pushNested(out, 2, "discord", "webhook", discord);
+    if (slack) pushNested(out, 2, "slack", "webhook", slack);
+
+    // ---- render ----
+    $("saida").innerHTML = out.join("\n");
+    $("nome-arquivo").textContent = (id ? slug(id) : "minha_busca") + ".yaml";
+
+    const painel = $("validacoes");
+    if (erros.length) {
+      painel.innerHTML = `<div class="aviso aviso-erro"><span class="icone">✕</span><div><strong>Antes de baixar, ajuste:</strong><ul style="margin:4px 0 0;padding-left:18px">`
+        + erros.map(e => `<li>${e}</li>`).join("") + `</ul></div></div>`;
+    } else {
+      painel.innerHTML = `<div class="aviso aviso-ok"><span class="icone">✓</span><span>Tudo certo — pronto para baixar.</span></div>`;
+    }
+    return erros.length === 0;
+  }
+
+  function textoYaml() {
+    return $("saida").innerText;
+  }
+
+  // ---- ações principais ----
+  $("btn-copiar").addEventListener("click", async () => {
+    const btn = $("btn-copiar");
+    try {
+      await navigator.clipboard.writeText(textoYaml());
+      btn.textContent = "Copiado ✓";
+    } catch {
+      // fallback para iframes sem permissão de clipboard
+      const ta = document.createElement("textarea");
+      ta.value = textoYaml();
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      btn.textContent = "Copiado ✓";
+    }
+    setTimeout(() => { btn.textContent = "Copiar YAML"; }, 1800);
+  });
+
+  $("btn-baixar").addEventListener("click", () => {
+    const blob = new Blob([textoYaml()], { type: "text/yaml;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = $("nome-arquivo").textContent;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // ---- painéis "opções avançadas" ----
+  function wireToggle(btnId, painelId, rotulo) {
+    const btn = $(btnId), painel = $(painelId);
+    btn.addEventListener("click", () => {
+      const aberto = !painel.hidden;
+      painel.hidden = aberto;
+      btn.setAttribute("aria-expanded", String(!aberto));
+      btn.innerHTML = (aberto ? "▸" : "▾") + " " + rotulo;
+    });
+  }
+  wireToggle("btn-avancado-dag", "painel-avancado-dag", 'Mais detalhes desta busca <span class="selo-opcional">opcional</span>');
+  wireToggle("btn-avancado", "painel-avancado", 'Opções avançadas <span class="selo-opcional">opcional</span>');
+  wireToggle("btn-avancado-report", "painel-avancado-report", 'Outras opções de envio <span class="selo-opcional">opcional</span>');
+
+  // ---- select de agendamento (cron amigável) ----
+  $("f-schedule").addEventListener("change", () => {
+    $("f-schedule-custom").hidden = $("f-schedule").value !== "__custom";
+  });
+
+  // ---- glossário acessível (clique/teclado, funciona no touch) ----
+  document.querySelectorAll(".glossario > button").forEach(btn => {
+    const wrap = btn.parentElement;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const vaiAbrir = !wrap.classList.contains("aberto");
+      document.querySelectorAll(".glossario.aberto").forEach(w => {
+        w.classList.remove("aberto");
+        w.querySelector("button").setAttribute("aria-expanded", "false");
+      });
+      if (vaiAbrir) { wrap.classList.add("aberto"); btn.setAttribute("aria-expanded", "true"); }
+    });
+  });
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll(".glossario.aberto").forEach(w => {
+      if (!w.contains(e.target)) { w.classList.remove("aberto"); w.querySelector("button").setAttribute("aria-expanded", "false"); }
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.querySelectorAll(".glossario.aberto").forEach(w => {
+      w.classList.remove("aberto"); w.querySelector("button").setAttribute("aria-expanded", "false");
+    });
+  });
+
+  // ---- ajusta automaticamente o nome da busca (sem espaços/acentos) ----
+  $("f-id").addEventListener("blur", () => {
+    const antes = $("f-id").value;
+    const depois = slug(antes);
+    if (depois && depois !== antes) { $("f-id").value = depois; gerar(); }
+  });
+
+  // ---- preencher com exemplo / limpar tudo ----
+  const EXEMPLO = {
+    id: "monitoramento_dados_abertos",
+    description: "Monitora publicações sobre dados abertos e transparência no Diário Oficial da União",
+    terms: "dados abertos\ngoverno aberto\nlei de acesso à informação",
+    emails: "equipe.dados@orgao.gov.br",
+    subject: "Alerta Ro-DOU — Dados abertos",
+    schedule: "0 8 * * MON-FRI"
+  };
+  $("btn-exemplo").addEventListener("click", () => {
+    $("f-id").value = EXEMPLO.id;
+    $("f-description").value = EXEMPLO.description;
+    $("f-terms").value = EXEMPLO.terms;
+    $("f-emails").value = EXEMPLO.emails;
+    $("f-subject").value = EXEMPLO.subject;
+    $("f-schedule").value = EXEMPLO.schedule;
+    $("f-schedule-custom").hidden = true;
+    document.querySelectorAll("#f-sources input").forEach(cb => cb.checked = (cb.value === "DOU"));
+    gerar();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  $("btn-limpar").addEventListener("click", () => {
+    if (!confirm("Limpar todos os campos preenchidos?")) return;
+    ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-terms", "f-terms-ignore",
+      "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-territory",
+      "f-excerptsize", "f-numexcerpts", "f-journals",
+      "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom"
+    ].forEach(id => { $(id).value = ""; });
+    $("f-schedule").selectedIndex = 0;
+    $("f-schedule-custom").hidden = true;
+    $("f-date").selectedIndex = 0;
+    $("f-field").selectedIndex = 0;
+    document.querySelectorAll("#f-sources input").forEach(cb => cb.checked = (cb.value === "DOU"));
+    document.querySelectorAll("#f-sections input").forEach(cb => cb.checked = false);
+    ["f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-csv", "f-hidefilters", "f-noskip"]
+      .forEach(id => { $(id).checked = false; });
+    gerar();
+  });
+
+  document.querySelectorAll("input, textarea, select").forEach(el => {
+    el.addEventListener("input", gerar);
+    el.addEventListener("change", gerar);
+  });
+
+  gerar();
+})();
+</script>
+</body>
+</html>
