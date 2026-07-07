@@ -5,6 +5,7 @@ nav:
   - O que é Ro-DOU?: definicao/rodou.md
   - Como utilizar:
     - Introdução: como_utilizar/intro_utilizacao.md
+    - Gerador de configuração (YAML): gerador_yaml.html
     - Instalação e configuração: como_utilizar/instalacao.md
     - Instalação do k8s: como_utilizar/instalacao_k8s.md
     - Instalação do WSL no Windows: como_utilizar/instalacao_wsl_windows.md
