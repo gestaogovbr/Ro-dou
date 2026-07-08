@@ -76,7 +76,8 @@ x-airflow-common: &airflow-common
     
 
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
-    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
+    PYTHONPATH: /opt/airflow/dags:/opt/airflow
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
     OPENSEARCH_HOST: http://opensearch:9200
@@ -117,21 +118,12 @@ services:
 
   airflow-api-server:
     <<: *airflow-common
-<<<<<<< Updated upstream
-    container_name: airflow-webserver
-    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow api-server'
-    ports:
-      - 8080:8080
-    healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health" ]
-=======
     container_name: airflow-api-server
     command: api-server
     ports:
       - 8080:8080
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
->>>>>>> Stashed changes
       interval: 10s
       timeout: 10s
       retries: 5
