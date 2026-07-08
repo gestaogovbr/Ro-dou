@@ -24,7 +24,7 @@
 # The following variables are supported:
 #
 # AIRFLOW_IMAGE_NAME         - Docker image name used to run Airflow.
-#                              Default: apache/airflow:master-python3.8
+#                              Default: apache/airflow:3.0.1-python3.11
 # AIRFLOW_UID                - User ID in Airflow containers
 #                              Default: 50000
 # AIRFLOW_GID                - Group ID in Airflow containers
@@ -110,14 +110,23 @@ services:
       retries: 5
     restart: always
 
-  airflow-webserver:
+  airflow-api-server:
     <<: *airflow-common
+<<<<<<< Updated upstream
     container_name: airflow-webserver
     command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow api-server'
     ports:
       - 8080:8080
     healthcheck:
       test: [ "CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health" ]
+=======
+    container_name: airflow-api-server
+    command: api-server
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+>>>>>>> Stashed changes
       interval: 10s
       timeout: 10s
       retries: 5
