@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-FROM apache/airflow:3.0.0-python3.10
-=======
 FROM apache/airflow:3.1.8-python3.11
->>>>>>> Stashed changes
 
 USER root
 
@@ -20,12 +16,8 @@ COPY requirements-uninstall.txt .
 RUN pip install --upgrade pip && \
   pip uninstall -y -r requirements-uninstall.txt && \
   pip install --no-cache-dir \
-<<<<<<< Updated upstream
-  apache-airflow-providers-microsoft-mssql==4.5.2
-=======
   apache-airflow-providers-microsoft-mssql \
   apache-airflow-providers-common-sql
->>>>>>> Stashed changes
 
 # Copy and install requirements.txt
 COPY requirements.txt .
