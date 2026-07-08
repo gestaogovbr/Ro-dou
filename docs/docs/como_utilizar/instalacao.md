@@ -95,7 +95,31 @@ Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/.
 **Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
 que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
-8. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
+8. Opcional: Configurando o backend de busca do INLABS (SQL ou OpenSearch):
+
+O OpenSearch é um mecanismo de busca e indexação utilizado pelo Ro-DOU para realizar pesquisas textuais nas publicações do INLABS.
+
+Por padrão, o Ro-DOU utiliza o **PostgreSQL (modo SQL)** como backend para as buscas do INLABS. Caso queira utilizar o **OpenSearch**, é possível alternar entre os dois modos por meio da variável do Airflow `RO_DOU_INLABS_USE_OPENSEARCH`.
+
+Para criar a variável automaticamente via Makefile, execute:
+
+```bash
+make create-opensearch-variable
+```
+
+Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/):
+
+| Variável | Valor padrão | Descrição |
+|---|---|---|
+| `RO_DOU_INLABS_USE_OPENSEARCH` | `False` | Define o backend de busca do INLABS. Use `False` para PostgreSQL (SQL) ou `True` para OpenSearch. |
+| `OPENSEARCH_HOST` | `http://opensearch:9200` | Endereço do serviço OpenSearch (definido no docker-compose). |
+| `OPENSEARCH_USER` | `OPENSEARCH_USER` | Usuário para autenticação no OpenSearch. |
+| `OPENSEARCH_PASS` | `OPENSEARCH_PASS` | Senha para autenticação no OpenSearch. |
+
+> **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
+
+
+9. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
 
 O Ro-DOU suporta geração de resumos automáticos de publicações utilizando modelos de linguagem (LLMs). Para habilitar essa funcionalidade, é necessário buildar a imagem com o(s) provedor(es) desejado(s) e configurar as variáveis de API no Apache Airflow.
 

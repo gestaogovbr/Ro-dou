@@ -455,10 +455,10 @@ dag:
     - ro-dou
   search:
     sources:
-    - INLABS
+      - INLABS
     terms:
-    - designar & ( MGI | MINISTÉRIO FAZENDA)
-    - instituto & federal ! paraná
+      - designar AND (MGI OR "MINISTÉRIO FAZENDA")
+      - instituto AND federal NOT paraná
   report:
     emails:
       - destination@economia.gov.br
@@ -581,7 +581,9 @@ dag:```yaml
     - cdata
   ai_config:
     provider: openai
-    api_key_var: OPENAI_API_KEY
+    api_key_var: Esta configuração permite que seja configurado uma lista de termos a serem ignorados
+na busca. No exemplo abaixo serão ignorados as publicações que tiverem o termo "deputados"
+no corpo do texto.OPENAI_API_KEY
     model: gpt-4o-mini
     temperature: 0.2
     max_tokens: 200
@@ -612,4 +614,25 @@ dag:```yaml
       - destination@economia.gov.br
     attach_csv: True
     subject: "Teste do Ro-dou com IA"
+```
+### Exemplo 22
+Esta configuração demonstra como realizar uma busca no Diário Oficial do Estado de São Paulo (DOE-SP), restringindo a pesquisa ao caderno Executivo.
+
+```yaml
+dag:
+  id: doesp_example
+  description: "Example DAG searching Diário Oficial do Estado de São Paulo (DOE-SP)"
+  search:
+    sources:
+      - DOESP
+    terms:
+      - unicamp
+      - edital
+    journals:
+      - Executivo
+    date: DIA
+  report:
+    emails:
+      - destination@economia.gov.br
+
 ```

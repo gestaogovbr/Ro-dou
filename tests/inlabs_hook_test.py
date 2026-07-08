@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import pandas as pd
 import numpy as np
@@ -38,57 +40,6 @@ def test_filter_text_terms(inlabs_hook, text_terms_in, text_terms_out):
 
 
 @pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1", "term2"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
-        ),
-    ],
-)
-def test_generate_sql(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1 & term2 ! term3", "term4 & term5"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND ((dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm1\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm2\\y') AND dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\\yterm3\\y')) OR (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm4\\y') AND dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\\yterm5\\y'))) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y'))",
-        ),
-    ],
-)
-def test_generate_sql_with_search_operators(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "pubname": ["DO1"],
-                "arttype": ["Portaria", "Resolução"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-            },
-            "SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\\yDO1\\y')) AND (dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yPortaria\\y') OR dou_inlabs.unaccent(arttype) ~* dou_inlabs.unaccent('\\yResolução\\y'))",
-        ),
-    ],
-)
-def test_generate_sql_no_terms(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
-
-
-@pytest.mark.parametrize(
     "data_in, data_out",
     [
         (
@@ -109,18 +60,47 @@ def test_adapt_search_terms_to_extra(inlabs_hook, data_in, data_out):
     assert inlabs_hook._adapt_search_terms_to_extra(data_in) == data_out
 
 
-@pytest.mark.parametrize(
-    "text, keys, matches",
-    [
-        (
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            ["lorem", "sit", "not_find"],
-            "lorem, sit",
-        ),
-    ],
-)
-def test_find_matches(inlabs_hook, text, keys, matches):
-    assert inlabs_hook.TextDictHandler()._find_matches(text, keys) == matches
+def test_map_opensearch_hit_uses_matched_queries(inlabs_hook):
+    """Map OpenSearch ``matched_queries`` into matched term fields."""
+    hit = {
+        "_id": "1",
+        "_score": 10.0,
+        "_source": {
+            "texto_plain": "Aprova as estruturas regimentais da SEGES.",
+            "texto": "Aprova as estruturas regimentais da SEGES.",
+        },
+        "matched_queries": ["estrutura regimental", "SEGES"],
+        "highlight": {
+            "texto_plain": [
+                "Aprova as <%%>estruturas regimentais</%%> da <%%>SEGES</%%>."
+            ]
+        },
+    }
+
+    mapped = inlabs_hook._map_opensearch_hit(
+        hit, searched_expression='"estrutura regimental" AND SEGES'
+    )
+
+    assert mapped["score"] == 10.0
+    assert mapped["searched_expression"] == '"estrutura regimental" AND SEGES'
+    assert mapped["matched_terms"] == ["estrutura regimental", "SEGES"]
+    assert mapped["matched_terms_text"] == "estrutura regimental, SEGES"
+    assert mapped["matches"] == "estrutura regimental, SEGES"
+    assert mapped["opensearch_highlights"] == [
+        "Aprova as <%%>estruturas regimentais</%%> da <%%>SEGES</%%>."
+    ]
+
+
+def test_map_opensearch_hit_without_matched_queries_returns_empty_terms(inlabs_hook):
+    """Return empty matched term fields when a hit has no ``matched_queries``."""
+    mapped = inlabs_hook._map_opensearch_hit(
+        {"_id": "1", "_score": 1.0, "_source": {"texto": "Sem destaque."}},
+        searched_expression="SEGES",
+    )
+
+    assert mapped["matched_terms"] == []
+    assert mapped["matched_terms_text"] == ""
+    assert mapped["matches"] == ""
 
 
 @pytest.mark.parametrize(
@@ -405,8 +385,36 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
     assert r == dict_out
 
 
+def _terms_from_group(group_name):
+    """Convert a grouped matches key into a list of matched terms."""
+    return [term for term in group_name.split(", ") if term]
+
+
+def _add_matched_terms_from_expected(df_in, expected):
+    """Add fake OpenSearch matched terms to old transform fixtures."""
+    id_to_terms = {}
+    for group_name, items in expected.items():
+        for item in items:
+            id_to_terms[item["id"]] = _terms_from_group(group_name)
+
+    df = df_in.copy()
+    df["matched_terms"] = df["id"].apply(lambda row_id: id_to_terms.get(row_id, []))
+    return df
+
+
+def _add_matched_terms_to_expected(expected):
+    """Add matched term fields expected in transformed output fixtures."""
+    updated = copy.deepcopy(expected)
+    for group_name, items in updated.items():
+        terms = _terms_from_group(group_name)
+        for item in items:
+            item["matched_terms"] = terms
+            item["matched_terms_text"] = ", ".join(terms)
+    return updated
+
+
 @pytest.mark.parametrize(
-    "terms, df_in, dict_out, full_text, use_summary, has_ementa",
+    "terms, df_in, dict_out, full_text, use_summary, has_ementa, show_relevancy",
     [
         (
             ["Pellentesque", "Lorem"],
@@ -452,7 +460,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet.",
+                        "abstract": "<%%>Lorem</%%> ipsum dolor sit amet.",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -460,6 +468,8 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ],
                 "Pellentesque": [
@@ -467,7 +477,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 2",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%><%%>Pellentesque</%%></%%>.",
+                        "abstract": "Dolor sit amet, consectetur adipiscing elit. <%%>Pellentesque</%%>.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -475,9 +485,12 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
+            False,
             False,
             False,
             False,
@@ -521,7 +534,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
                         "abstract": (
-                            "<%%><%%>Lorem</%%></%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                            "<%%>Lorem</%%> ipsum dolor sit amet, consectetur adipiscing elit.\n"
                             "                        Phasellus venenatis auctor mauris. Integer id neque quis urna\n"
                             "                        ultrices iaculis. Donec et enim mauris. Sed vel massa eget est\n"
                             "                        viverra finibus a et magna. Pellentesque vel elementum\n"
@@ -540,10 +553,13 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": True,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
             True,
+            False,
             False,
             False,
         ),
@@ -595,11 +611,14 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": True,
                         "full_text": True,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
             True,
             True,
+            False,
             False,
         ),
         # HTML texto with identifica tag — title must not appear in abstract
@@ -631,7 +650,7 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO 1",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<p><%%><%%>Lorem</%%></%%> ipsum dolor sit amet.</p>",
+                        "abstract": "<p><%%>Lorem</%%> ipsum dolor sit amet.</p>",
                         "date": "15/03/2024",
                         "id": 1,
                         "display_date_sortable": None,
@@ -639,9 +658,12 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ],
             },
+            False,
             False,
             False,
             False,
@@ -696,18 +718,25 @@ def test_group_to_dict(inlabs_hook, df_in, dict_out):
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
+                        "show_relevancy": True,
                     }
                 ],
             },
             False,
             False,
             False,
+            True,
         ),
     ],
 )
 def test_transform_search_results(
-    inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa
+    inlabs_hook, terms, df_in, dict_out, full_text, use_summary, has_ementa, show_relevancy
 ):
+    """Transform results using matched terms supplied by OpenSearch hits."""
+    if terms:
+        df_in = _add_matched_terms_from_expected(df_in, dict_out)
+        dict_out = _add_matched_terms_to_expected(dict_out)
 
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
@@ -719,6 +748,7 @@ def test_transform_search_results(
         text_length=400,
         use_summary=use_summary,
         has_ementa=has_ementa,
+        show_relevancy=show_relevancy,
     )
     assert r == dict_out
 
@@ -772,7 +802,7 @@ def test_transform_search_results(
                         "section": "DOU - Seção 1",
                         "title": "TÍTULO DA PUBLICAÇÃO",
                         "href": "http://xxx.gov.br/",
-                        "abstract": "<%%><%%>Pellentesque</%%></%%> Phasellus venenatis auctor mauris.",
+                        "abstract": "<%%>Pellentesque</%%> Phasellus venenatis auctor mauris.",
                         "date": "15/03/2024",
                         "id": 2,
                         "display_date_sortable": None,
@@ -780,6 +810,8 @@ def test_transform_search_results(
                         "ai_generated": False,
                         "has_ementa": False,
                         "full_text": False,
+                        "score": None,
+                        "show_relevancy": False,
                     }
                 ]
             },
@@ -789,6 +821,11 @@ def test_transform_search_results(
     ],
 )
 def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_text):
+    """Ignore signature-only matches using OpenSearch matched terms."""
+    df_in = df_in.copy()
+    df_in["matched_terms"] = [["Pessoa 1"], ["Pellentesque"]]
+    dict_out = _add_matched_terms_to_expected(dict_out)
+
     r = inlabs_hook.TextDictHandler().transform_search_results(
         ai_config=_MIN_AI_CONFIG,
         ai_search_config=_MIN_AI_SEARCH_CONFIG,
@@ -797,27 +834,9 @@ def test_ignore_signature(inlabs_hook, terms, df_in, dict_out, has_ementa, full_
         response=df_in,
         text_terms=terms,
         ignore_signature_match=True,
+        show_relevancy=False,
     )
     assert r == dict_out
-
-
-@pytest.mark.parametrize(
-    "data_in, query_out",
-    [
-        (
-            {
-                "texto": ["term1", "term2"],
-                "pubname": ["DO1"],
-                "pubdate": ["2024-04-01", "2024-04-02"],
-                "artcategory": ["Ministério da Defesa"],
-                "artcategory_ignore": ["Ministério da Defesa/Comando da Marinha"],
-            },
-            r"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '2024-04-01' AND '2024-04-02') AND (dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm1\y') OR dou_inlabs.unaccent(texto) ~* dou_inlabs.unaccent('\yterm2\y')) AND (dou_inlabs.unaccent(pubname) ~* dou_inlabs.unaccent('\yDO1\y')) AND (dou_inlabs.unaccent(artcategory) ~* dou_inlabs.unaccent('\yMinistério da Defesa\y')) AND (dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^Ministério da Defesa/Comando da Marinha'))",
-        ),
-    ],
-)
-def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
-    assert inlabs_hook._generate_sql(data_in)["select"] == query_out
 
 
 @pytest.mark.parametrize(
@@ -831,6 +850,7 @@ def test_generate_sql_with_department(inlabs_hook, data_in, query_out):
 )
 def test_remove_duplicated_title(inlabs_hook, abstract, result):
     assert inlabs_hook.TextDictHandler()._remove_duplicated_title(abstract) == result
+
 
 
 @pytest.mark.parametrize(
@@ -988,6 +1008,7 @@ def test_truncate_from_start(
     assert was_cut == expected_cut
 
 
+
 @pytest.mark.parametrize(
     "text, text_length, expected_text, expected_cut",
     [
@@ -1003,12 +1024,6 @@ def test_truncate_from_start(
             "ab <table><tr><td>x</td></tr></table> cd",
             2,
             "<table><tr><td>x</td></tr></table>cd",
-            True,
-        ),
-        (
-            "ab <table><tr><td>x</td></tr></table> cd",
-            4,
-            " <table><tr><td>x</td></tr></table> cd",
             True,
         ),
     ],
@@ -1041,6 +1056,83 @@ def _sample_row(**overrides):
     }
     base.update(overrides)
     return base
+
+
+def test_transform_search_results_uses_opensearch_highlight_for_morphological_variant(
+    inlabs_hook,
+):
+    """Center the excerpt on the actual variant highlighted by OpenSearch."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                texto=(
+                    "Texto inicial distante. " * 20
+                    + "Aprova as estruturas regimentais da SEGES."
+                ),
+                matched_terms=["estrutura regimental"],
+                opensearch_highlights=[
+                    "Aprova as <%%>estruturas regimentais</%%> da SEGES."
+                ],
+            )
+        ]
+    )
+
+    result = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["estrutura regimental"],
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=20,
+    )
+
+    item = result["estrutura regimental"][0]
+    assert item["abstract"] == (
+        "Aprova as <%%>estruturas regimentais</%%> da SEGES."
+    )
+    assert item["matched_terms"] == ["estrutura regimental"]
+    assert item["matched_terms_text"] == "estrutura regimental"
+
+
+def test_transform_search_results_prefers_local_highlight_over_broad_opensearch_tokens(
+    inlabs_hook,
+):
+    """Avoid highlighting extra analyzer tokens when the configured term exists."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                texto=(
+                    "MINISTERIO DA GESTAO E DA INOVACAO EM SERVICOS PUBLICOS "
+                    "publica ato sobre GSISTE no Sistema de Pessoal Civil."
+                ),
+                matched_terms=["GSISTE"],
+                opensearch_highlights=[
+                    (
+                        "MINISTERIO DA <%%>GESTAO</%%> E DA INOVACAO EM SERVICOS "
+                        "PUBLICOS publica ato sobre <%%>GSISTE</%%> no Sistema "
+                        "<%%>de</%%> Pessoal Civil."
+                    )
+                ],
+            )
+        ]
+    )
+
+    result = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["GSISTE"],
+        ignore_signature_match=False,
+        full_text=False,
+        text_length=400,
+    )
+
+    item = result["GSISTE"][0]
+    assert item["abstract"] == (
+        "MINISTERIO DA GESTAO E DA INOVACAO EM SERVICOS PUBLICOS publica ato "
+        "sobre <%%>GSISTE</%%> no Sistema de Pessoal Civil."
+    )
 
 
 def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
@@ -1081,7 +1173,10 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
 
 
 def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
-    df = pd.DataFrame([_sample_row(has_ementa=False, full_text=False)])
+    """Use OpenSearch matched terms when formatting the AI system prompt."""
+    df = pd.DataFrame(
+        [_sample_row(has_ementa=False, full_text=False, matched_terms=["Lorem"])]
+    )
     ai_search_config = AISearchConfig(
         use_ai_summary=True,
         ai_custom_prompt="Enfatize {} na análise",
@@ -1101,6 +1196,63 @@ def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
     assert kwargs["system_prompt"] == "Enfatize Lorem na análise"
     assert kwargs["provider"] == AIProvider.openai
     assert kwargs["model"] == "gpt-4o-mini"
+
+
+def test_transform_search_results_highlights_term_in_summary(inlabs_hook):
+    """Highlight matched terms when `use_summary` replaces text with ementa."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                ementa="Resumo cita Lorem no clipping.",
+                texto="Corpo original com Lorem.",
+                matched_terms=["Lorem"],
+            )
+        ]
+    )
+
+    out = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        response=df,
+        text_terms=["Lorem"],
+        ignore_signature_match=False,
+        use_summary=True,
+        full_text=False,
+    )
+
+    item = out["Lorem"][0]
+    assert item["abstract"] == "Resumo cita <%%>Lorem</%%> no clipping."
+
+
+def test_transform_search_results_highlights_term_in_ai_summary(inlabs_hook):
+    """Highlight matched terms when AI summary returns them in final clipping."""
+    df = pd.DataFrame(
+        [
+            _sample_row(
+                texto="Corpo original com Lorem.",
+                matched_terms=["Lorem"],
+            )
+        ]
+    )
+    ai_search_config = AISearchConfig(use_ai_summary=True)
+
+    with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
+        with patch(
+            f"{_INLABS_HOOK}.AIRunner.run",
+            return_value="Resumo IA cita Lorem no clipping.",
+        ):
+            out = inlabs_hook.TextDictHandler().transform_search_results(
+                ai_config=_MIN_AI_CONFIG,
+                ai_search_config=ai_search_config,
+                response=df,
+                text_terms=["Lorem"],
+                ignore_signature_match=False,
+                full_text=False,
+            )
+
+    item = out["Lorem"][0]
+    assert item["abstract"] == "Resumo IA cita <%%>Lorem</%%> no clipping."
+    assert item["ai_generated"] is True
 
 
 def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(

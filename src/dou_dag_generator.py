@@ -30,7 +30,7 @@ from utils.select_terms import TermSelector
 from notification.notifier import Notifier
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
-from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher
+from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher, DOESPSearcher
 
 from airflow.models import Variable
 from ai.runner import AIRunner
@@ -114,6 +114,7 @@ class DouDigestDagGenerator:
             "DOU": DOUSearcher(),
             "QD": QDSearcher(),
             "INLABS": INLABSSearcher(),
+            "DOESP": DOESPSearcher(),
         }
 
         self.on_failure_callback = self._notify_on_failure
@@ -283,6 +284,7 @@ class DouDigestDagGenerator:
         territory_id,
         term_list,
         dou_sections: List[str],
+        journals: List[str],
         search_date,
         field,
         is_exact_search: Optional[bool],
@@ -292,6 +294,7 @@ class DouDigestDagGenerator:
         text_length: Optional[int],
         use_summary: Optional[bool],
         ai_search_config: Optional[dict],
+        show_relevancy: Optional[bool],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -301,6 +304,7 @@ class DouDigestDagGenerator:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
+
         """Performs the search in each source and merge the results"""
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
@@ -332,6 +336,7 @@ class DouDigestDagGenerator:
                 text_length=text_length,
                 use_summary=use_summary,
                 ai_search_config=ai_search_config,
+                show_relevancy=show_relevancy,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -347,14 +352,32 @@ class DouDigestDagGenerator:
                 result_as_email=result_as_email,
             )
 
+        if "DOESP" in sources:
+            doesp_result = self.searchers["DOESP"].exec_search(
+                term_list=term_list,
+                journals=journals,
+                search_date=search_date,
+                ignore_signature_match=ignore_signature_match,
+                force_rematch=force_rematch,
+                department=department,
+                department_ignore=department_ignore,
+                terms_ignore=terms_ignore,
+                pubtype=pubtype,
+                reference_date=get_trigger_date(context, local_time=True),
+            )
+
         if "DOU" in sources and "QD" in sources:
             result = merge_results(qd_result, dou_result)
         elif "INLABS" in sources and "QD" in sources:
             result = merge_results(qd_result, inlabs_result)
+        elif "DOESP" in sources and "QD" in sources:
+            result = merge_results(qd_result, doesp_result)
         elif "DOU" in sources:
             result = dou_result
         elif "INLABS" in sources:
             result = inlabs_result
+        elif "DOESP" in sources:
+            result = doesp_result
         else:
             result = qd_result
 
@@ -515,6 +538,7 @@ class DouDigestDagGenerator:
                             "territory_id": subsearch.territory_id,
                             "term_list": term_list,
                             "dou_sections": subsearch.dou_sections,
+                            "journals": subsearch.journals,
                             "search_date": subsearch.date,
                             "field": subsearch.field,
                             "is_exact_search": subsearch.is_exact_search,
@@ -524,6 +548,7 @@ class DouDigestDagGenerator:
                             "text_length": subsearch.text_length,
                             "use_summary": subsearch.use_summary,
                             "ai_search_config": subsearch.ai_search_config,
+                            "show_relevancy": subsearch.show_relevancy,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,

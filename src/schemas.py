@@ -133,6 +133,10 @@ class SearchConfig(BaseModel):
         """
         ),
     )
+    journals: Optional[List[Union[str, dict]]] = Field(
+        default=None,
+        description="Lista de cadernos (seções) do DOE-SP para filtrar a pesquisa.",
+    )
     department: Optional[List[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )
@@ -203,6 +207,11 @@ class SearchConfig(BaseModel):
         default=None,
         description="Configuração específica para o uso de IA no relatório. "
         "(Funcionalidade disponível apenas no INLABS)",
+    )
+    show_relevancy: Optional[bool] = Field(
+        default=False,
+        description="Define se no relatório será exibida a tag de relevância para cada resultado. "
+        "(Funcionalidade disponível apenas no INLABS)"
     )
 
 

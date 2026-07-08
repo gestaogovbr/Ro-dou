@@ -3,6 +3,7 @@ Postgres db.
 """
 
 import os
+
 import sys
 import subprocess
 import logging
@@ -15,7 +16,8 @@ from airflow.sdk import get_current_context
 from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
-# from airflow.operators.python import BranchPythonOperator
+from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH
+
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -30,11 +32,10 @@ STG_TABLE = "dou_inlabs.article_raw"
 # DAG
 
 default_args = {
-    # XXX update here
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
-    "retries": 2,
+    "retries": 6,
     "retry_delay": timedelta(minutes=5),
 }
 
@@ -70,7 +71,7 @@ def load_inlabs():
         from bs4 import BeautifulSoup
         import zipfile
         from urllib.parse import urljoin
-        from airflow.hooks.base import BaseHook
+        from airflow.hooks.base import BaseHook  # type: ignore
 
         def _create_directories():
             subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
@@ -89,7 +90,7 @@ def load_inlabs():
                 headers=headers,
             )
             # Test if logged
-            if not session.cookies.get("inlabs_session_cookie", False):
+            if not session.cookies.get("inlabs_session_cookie", None):
                 raise ValueError("Auth failed")
             return session
 
@@ -117,7 +118,9 @@ def load_inlabs():
                 "origem": "736372697074",
             }
             files = _find_files(session, headers)
+
             if not files:
+                logging.error("Files not found for date %s", trigger_date)
                 return False
 
             for file in files:
@@ -147,17 +150,19 @@ def load_inlabs():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         _create_directories()
         files_exists = _download_files()
-        _unzip_files()
+        
+        if files_exists:
+            unzip_files()
 
         return files_exists
 
     @task
-    def load_data(trigger_date: str):
+    def load_data(trigger_date: str) -> None:
         from bs4 import BeautifulSoup
         import glob
         import pandas as pd
-        from slugify import slugify
-        from airflow.providers.postgres.hooks.postgres import PostgresHook
+        from slugify import slugify  # type: ignore
+        from airflow.providers.postgres.hooks.postgres import PostgresHook  # type: ignore
 
         def _read_files():
             dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
@@ -182,15 +187,13 @@ def load_inlabs():
             return ", ".join([p.text for p in p_tags]) if p_tags else None
 
         def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(
-                f"""
+            table_exists = hook.get_first(f"""
                 SELECT EXISTS (
                     SELECT 1
                     FROM information_schema.tables
                     WHERE table_name = '{STG_TABLE.split(".")[1]}'
                 );
-            """
-            )
+            """)
             if table_exists[0]:
                 hook.run(
                     f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
@@ -221,14 +224,37 @@ def load_inlabs():
     )
 
     @task.branch
+    def check_if_should_run_indexer():
+
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == "true":
+            logging.info("OpenSearch enabled. Running indexer task.")
+            return "indexer_data"
+
+        logging.info("OpenSearch disabled. Skipping indexer task.")
+        return "skip_indexer_data"
+
+    @task
+    def skip_indexer_data():
+        logging.info("Indexer skipped because OpenSearch is disabled.")
+
+    @task
+    def indexer_data(trigger_date: str) -> None:
+        from ro_dou_src.utils.open_search.indexer import Indexer  # type: ignore
+
+        indexer = Indexer(conn_id=DEST_CONN_ID)
+        indexer.run(trigger_date)
+
+    @task.branch
     def check_if_first_run_of_day():
         context = get_current_context()
-        execution_date = context["logical_date"]
-        prev_execution_date = context["prev_execution_date"]
-        logging.info("Execution_date: %s", execution_date)
-        logging.info("Prev_execution_date: %s", prev_execution_date)
+        logical_date = context["logical_date"]
+        dag_run = context["dag_run"]
+        prev_dag_run = dag_run.get_previous_dagrun()
+        prev_logical_date = prev_dag_run.logical_date if prev_dag_run else None
+        logging.info("Logical_date: %s", logical_date)
+        logging.info("Prev_logical_date: %s", prev_logical_date)
 
-        if execution_date.day == prev_execution_date.day:
+        if prev_logical_date and logical_date.day == prev_logical_date.day:
             logging.info("Não é a primeira execução do dia")
             logging.info("Triggering dataset edicao_extra")
             return "trigger_dataset_inlabs_edicao_extra"
@@ -245,20 +271,30 @@ def load_inlabs():
     def trigger_dataset_inlabs():
         pass
 
-    @task
+    @task(trigger_rule="none_failed_min_one_success")
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
-        logging.info("Directory %s removed.", dest_path)
+        logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
     trigger_date = get_date()
+    run_indexer_task = check_if_should_run_indexer()
+    indexer_task = indexer_data(trigger_date)  # type: ignore
+    skip_indexer_task = skip_indexer_data()
+    remove_directory_task = remove_directory()
+    check_first_run_task = check_if_first_run_of_day()
+
     (
         download_n_unzip_files(trigger_date)
-        >> load_data(trigger_date)
+        >> load_data(trigger_date)  # type: ignore
         >> check_loaded_data
-        >> remove_directory()
-        >> check_if_first_run_of_day()
+        >> run_indexer_task
+    )
+    run_indexer_task >> [indexer_task, skip_indexer_task] >> remove_directory_task
+    (
+        remove_directory_task
+        >> check_first_run_task
         >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
     )
 

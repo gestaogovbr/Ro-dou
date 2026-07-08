@@ -16,10 +16,12 @@ Nos arquivos YAML, é possível configurar os detalhes dos termos de pesquisa de
 
 ## Arquitetura
 
-A maneira como os diferentes componentes do Ro-DOU se relacionam pode ser sintetizada no diagrama abaixo. Para ampliar a imagem, [clique aqui](https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/rodou_arquitetura.png?raw=true).
 
-![Diagrama de arquitetura do Ro-DOU](https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/rodou_arquitetura.png?raw=true)
+A maneira como os diferentes componentes do Ro-DOU se relacionam pode ser sintetizada no diagrama abaixo.
 
-
+<img 
+  src="https://github.com/gestaogovbr/Ro-dou/blob/feat-add-OpenSearch-engine/docs/img/fluxo_add_opensearch.png?raw=true" 
+  alt="Diagrama de arquitetura do Ro-DOU"
+/>
 
 

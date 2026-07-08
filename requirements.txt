@@ -9,4 +9,5 @@ pydantic-ai-slim==1.54.0
 markdown==3.6.0
 apprise==1.9.7
 Jinja2==3.1.4
-
+opensearch-py>=3.1.0
+lxml>=6.0.2

@@ -1,18 +1,27 @@
 """Apache Airflow Hook to execute DOU searches from INLABS source."""
 
+import copy
+import os
 import re
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import unicodedata
 import pandas as pd
 import html2text
 
-from airflow.hooks.base import BaseHook
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import Variable
-from typing import Optional
-from schemas import AIConfig, AISearchConfig
+from airflow.hooks.base import BaseHook  # type: ignore
+
+# from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable  # type: ignore
+
+# from typing import Optional
+from schemas import AIConfig, AISearchConfig  # type: ignore
 from ai.runner import AIRunner
+
+from ro_dou_src.utils.open_search.client_open_search import OpenSearchClient  # type: ignore
+from ro_dou_src.utils.open_search.config import INDEX_NAME, RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
+from ro_dou_src.utils.open_search.query_builder import OpenSearchQueryBuilder  # type: ignore
+from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
 
@@ -29,6 +38,7 @@ class INLABSHook(BaseHook):
 
     def __init__(self, *args, **kwargs):
         pass
+
 
     @staticmethod
     def _filter_text_terms(text_terms) -> list:
@@ -65,7 +75,9 @@ class INLABSHook(BaseHook):
         full_text: bool,
         text_length: int,
         use_summary: bool,
+        show_relevancy: bool,
         conn_id: str = CONN_ID,
+        client: OpenSearch | None = None,
     ) -> dict:
         """Searches the DOU Database with the provided search terms and processes
         the results.
@@ -78,31 +90,109 @@ class INLABSHook(BaseHook):
             full_text (bool): If trim result text content
             text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
+            show_relevancy (bool): If True, include a relevancy tag in the report for each result
             conn_id (str): DOU Database Airflow conn id
 
         Returns:
             dict: A dictionary of processed search results.
+                Terms found in each hit are taken from OpenSearch
+                ``matched_queries`` and propagated to ``matched_terms`` and the
+                legacy ``matches`` field.
         """
 
-        hook = PostgresHook(conn_id)
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() != 'true':
+            from .inlabs_hook_sql_mode import INLABSSQLModeHook
+
+            logging.info(
+                "OpenSearch disabled. Using INLABS SQL mode.",
+            )
+            return INLABSSQLModeHook().search_text(
+                ai_config=ai_config,
+                ai_search_config=ai_search_config,
+                search_terms=search_terms,
+                ignore_signature_match=ignore_signature_match,
+                full_text=full_text,
+                text_length=text_length,
+                use_summary=use_summary,
+                show_relevancy=show_relevancy,
+                conn_id=conn_id,
+            )
+
+        if client is None:
+            client = OpenSearchClient().get_client()
 
         logging.info("Search term in INLABS HOOK.")
         logging.info(f"Search terms -> {search_terms}")
 
-        # Fetching results for main search terms
-        main_search_queries = self._generate_sql(search_terms)
-        hook.run(main_search_queries["create_extension"], autocommit=True)
-        main_search_results = hook.get_pandas_df(main_search_queries["select"])
+        _BATCH_SIZE = 500
+        texto_terms = search_terms.get("texto", [])
 
-        # Fetching results for yesterday extra search terms
-        extra_search_terms = self._adapt_search_terms_to_extra(search_terms)
-        extra_search_queries = self._generate_sql(extra_search_terms)
-        extra_search_results = hook.get_pandas_df(extra_search_queries["select"])
+        logging.info(f"Text terms -> {texto_terms}")
+        if len(texto_terms) > _BATCH_SIZE:
+            batches = [
+                texto_terms[i : i + _BATCH_SIZE]
+                for i in range(0, len(texto_terms), _BATCH_SIZE)
+            ]
+            seen_ids: set = set()
+            hits = []
+            for batch in batches:
+                batch_terms = {**search_terms, "texto": batch}
+                query = self._generate_opensearch_query(batch_terms)
+                response = client.search(body=query, index=INDEX_NAME)
+                for hit in response["hits"]["hits"]:
+                    if hit["_id"] not in seen_ids:
+                        seen_ids.add(hit["_id"])
+                        hits.append(hit)
+        else:
+            query = self._generate_opensearch_query(search_terms)
+            response = client.search(body=query, index=INDEX_NAME)
+            hits = response["hits"]["hits"]
 
-        # Combining main and extra search results
-        all_results = pd.concat(
-            [main_search_results, extra_search_results], ignore_index=True
+        logging.info("Total hits after batching: %s", len(hits))
+
+        # Fetching results for extra edition search terms
+        seen_ids = {hit["_id"] for hit in hits}
+        logging.info("Seen IDs after main search: %s", seen_ids)
+        extra_search_terms = self._adapt_search_terms_to_extra(
+            copy.deepcopy(search_terms)
         )
+        extra_texto_terms = extra_search_terms.get("texto", [])
+
+        if len(extra_texto_terms) > _BATCH_SIZE:
+            batches = [
+                extra_texto_terms[i : i + _BATCH_SIZE]
+                for i in range(0, len(extra_texto_terms), _BATCH_SIZE)
+            ]
+            for batch in batches:
+                batch_terms = {**extra_search_terms, "texto": batch}
+                query = self._generate_opensearch_query(batch_terms)
+                response = client.search(body=query, index=INDEX_NAME)
+                for hit in response["hits"]["hits"]:
+                    if hit["_id"] not in seen_ids:
+                        seen_ids.add(hit["_id"])
+                        hits.append(hit)
+        else:
+            query = self._generate_opensearch_query(extra_search_terms)
+            response = client.search(body=query, index=INDEX_NAME)
+            for hit in response["hits"]["hits"]:
+                if hit["_id"] not in seen_ids:
+                    seen_ids.add(hit["_id"])
+                    hits.append(hit)
+
+        logging.info("Total hits after extra edition search: %s", len(hits))
+
+        searched_expression = ", ".join(search_terms.get("texto", []))
+        main_search_results = [
+            self._map_opensearch_hit(h, searched_expression=searched_expression)
+            for h in hits
+        ]
+        all_results = pd.DataFrame(main_search_results)
+
+        if not all_results.empty:
+            all_results["pubdate"] = pd.to_datetime(
+                all_results["pubdate"], format="%Y-%m-%d", errors="coerce"
+            )
+
         # Remove the words that suceeds the delimitator !
         filtered_text_terms = self._filter_text_terms(search_terms["texto"])
         return (
@@ -115,155 +205,43 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                show_relevancy=show_relevancy,
             )
             if not all_results.empty
             else {}
         )
 
     @staticmethod
-    def _generate_sql(payload: dict) -> str:
-        """Generates SQL query based on a dictionary of lists. The
-        dictionary key is the table column and the dictionary values
-        are a list of the terms to filter.
+    def _generate_opensearch_query(payload: dict) -> dict:
+        """Build the OpenSearch query body for an INLABS search payload."""
+        qb = OpenSearchQueryBuilder()
+        qb.payload = payload
+        return qb.build()
 
-        Args:
-            payload (dict): A dictionary containing search parameters.
-                example = {
-                    "texto": ["Termo 1", "Termo 2"],
-                    "pubdate": ["2024-04-01", "2024-04-01"]
-                    "pubname": ["DO1"]
-                }
+    @staticmethod
+    def _matched_terms_from_hit(hit: dict) -> list:
+        """Return sorted matched terms reported by OpenSearch for one hit."""
+        return sorted(set(hit.get("matched_queries", [])), key=str.lower)
 
-        Returns:
-            str: The generated SQL query.
+    @classmethod
+    def _map_opensearch_hit(cls, hit: dict, searched_expression: str = "") -> dict:
+        """Map an OpenSearch hit to the dataframe shape used by notifications.
+
+        Matched terms come exclusively from ``hit["matched_queries"]``. The
+        legacy ``matches`` field is populated from the same source for backward
+        compatibility.
         """
-
-        allowed_keys = [
-            "name",
-            "pubname",
-            "artcategory",
-            "artcategory_ignore",
-            "arttype",
-            "identifica",
-            "titulo",
-            "subtitulo",
-            "texto",
-            "terms_ignore",
-        ]
-        filtered_dict = {k: payload[k] for k in payload if k in allowed_keys}
-
-        pub_date = payload.get("pubdate", [date.today().strftime("%Y-%m-%d")])
-        pub_date_from = pub_date[0]
-        try:
-            pub_date_to = pub_date[1]
-        except IndexError:
-            pub_date_to = pub_date_from
-
-        query = f"SELECT * FROM dou_inlabs.article_raw WHERE (pubdate BETWEEN '{pub_date_from}' AND '{pub_date_to}')"
-
-        # Term search operators
-        term_operators = ["&", "!", "|", "(", ")"]
-
-        conditions = []
-        for key, values in filtered_dict.items():
-
-            if key == "texto":
-                if any(values):
-                    key_conditions = []
-                    for term in values:
-                        if any(operator in term for operator in term_operators):
-                            operator_str = "".join(term_operators)
-                            # split the string based on the operators
-                            sub_terms = re.split(rf"\s*([{operator_str}])\s*", term)
-                            # remove blank items
-                            sub_terms = [
-                                sub_term for sub_term in sub_terms if sub_term.strip()
-                            ]
-
-                            sub_conditions = []
-                            # If the previous operator in the string is different from '!', the ilike is inclusive
-                            like_positive = True
-                            for sub_term in sub_terms:
-
-                                if sub_term in term_operators:
-                                    if sub_term in {"&", "!"}:
-                                        # If the previous operator in the string is equal to '!',
-                                        # the ilike is exlusive
-                                        like_positive = sub_term != "!"
-                                        # If the previous operator in the string is '&' or '!', the operator is 'OR'
-                                        operator = " AND "
-                                    # If the previous operator in the string is '|', the operator is 'OR'
-                                    elif sub_term == "|":
-                                        like_positive = True
-                                        operator = " OR "
-                                    elif sub_term in {"(", ")"}:
-                                        like_positive = True
-                                        operator = sub_term
-                                    sub_conditions.append(operator)
-                                else:
-                                    sub_conditions.append(
-                                        rf"dou_inlabs.unaccent({key}) {'~*' if like_positive else '!~*'} dou_inlabs.unaccent('\y{sub_term}\y')",
-                                    )
-
-                            statement = "".join(sub_conditions)
-
-                            # Add the parentheses-enclosed statement to key_conditions
-                            key_conditions.append("(" + statement + ")")
-
-                        else:
-                            # If there isn't operator in the string
-                            key_conditions.append(
-                                rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')"
-                            )
-
-                    conditions.append("(" + " OR ".join(key_conditions) + ")")
-
-            elif key == "artcategory_ignore":
-                conditions.append(
-                    "("
-                    + " AND ".join(
-                        [
-                            rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
-                            for value in values
-                        ]
-                    )
-                    + ")"
-                )
-            elif key == "terms_ignore":
-                conditions.append(
-                    "("
-                    + " AND ".join(
-                        [
-                            rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{value}\y')"
-                            for value in values
-                        ]
-                    )
-                    + ")"
-                )
-            else:
-                conditions.append(
-                    "("
-                    + " OR ".join(
-                        [
-                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
-                            for value in values
-                        ]
-                    )
-                    + ")"
-                )
-
-        if conditions:
-            query = f"{query} AND {' AND '.join(conditions)}"
-
-        logging.info("Generated SQL Query:")
-        logging.info(query)
-
-        queries = {
-            "create_extension": "CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA dou_inlabs",
-            "select": query,
+        matched_terms = cls._matched_terms_from_hit(hit)
+        highlights = hit.get("highlight", {}).get("texto_plain", [])
+        return {
+            **hit.get("_source", {}),
+            "score": hit.get("_score"),
+            "searched_expression": searched_expression,
+            "matched_terms": matched_terms,
+            "matched_terms_text": ", ".join(matched_terms),
+            "matches": ", ".join(matched_terms),
+            "opensearch_highlights": highlights,
         }
-
-        return queries
 
     @staticmethod
     def _adapt_search_terms_to_extra(payload: dict) -> dict:
@@ -308,13 +286,15 @@ class INLABSHook(BaseHook):
             text_length: int = 400,
             use_summary: bool = False,
             has_ementa: bool = False,
+            show_relevancy: bool = False,
         ) -> dict:
             """Transforms and sorts the search results based on the presence
-            of text terms and signature matching.
+            of matched terms reported by OpenSearch and signature matching.
 
             Args:
                 response (pd.DataFrame): The dataframe of search results
-                    from the Database.
+                    from OpenSearch. When present, ``matched_terms`` must come
+                    from hit ``matched_queries``.
                 text_terms (list): The list of text terms used in the search.
                 ignore_signature_match (bool): Flag to ignore publication
                     signature content.
@@ -328,6 +308,7 @@ class INLABSHook(BaseHook):
             Returns:
                 dict: A dictionary of sorted and processed search results.
             """
+            logging.info(f"Search results: {response}")
             df = response.copy()
             # `identifica` column is the publication title. If None
             # can be a table or other text content that is not inside
@@ -338,16 +319,34 @@ class INLABSHook(BaseHook):
             # Remove duplicated title then strip HTML tags
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
-            # df["texto"] = df["texto"].apply(self._remove_html_tags, full_text=full_text)
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
+            if "opensearch_highlights" in df.columns:
+                df["_has_opensearch_highlight"] = df[
+                    "opensearch_highlights"
+                ].apply(self._has_opensearch_highlight)
+            else:
+                df["_has_opensearch_highlight"] = False
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
             # Remove blank spaces and convert to uppercase
             df["identifica"] = df["identifica"].str.strip().str.upper()
 
-            if any(text_terms):
-                # df["matches"] = df["texto"].apply(self._find_matches, keys=text_terms)
+            should_process_matches = "matched_terms" in df.columns or any(text_terms)
+
+            if "matched_terms" in df.columns:
+                df["matched_terms"] = df["matched_terms"].apply(
+                    lambda terms: (
+                        sorted(set(terms), key=str.lower)
+                        if isinstance(terms, list)
+                        else []
+                    )
+                )
+                df["matched_terms_text"] = df["matched_terms"].apply(
+                    lambda terms: ", ".join(terms)
+                )
+                df["matches"] = df["matched_terms_text"]
+            elif any(text_terms):
                 df["matches"] = df.apply(
                     lambda row: self._find_matches(
                         row["texto"] + " " + row["identifica"],
@@ -355,15 +354,24 @@ class INLABSHook(BaseHook):
                     ),
                     axis=1,
                 )
+            elif "matches" not in df.columns:
+                df["matches"] = ""
+
+            if should_process_matches:
                 df["matches_assina"] = df.apply(
                     lambda row: self._normalize(row["matches"])
                     in self._normalize(row["assina"]),
                     axis=1,
                 )
                 df["texto"] = df.apply(
-                    lambda row: self._highlight_terms(
+                    lambda row: self._highlight_search_text(
                         [t for t in row["matches"].split(", ") if t],
                         row["texto"],
+                        (
+                            row["opensearch_highlights"]
+                            if row["_has_opensearch_highlight"]
+                            else []
+                        ),
                     ),
                     axis=1,
                 )
@@ -384,8 +392,14 @@ class INLABSHook(BaseHook):
                 )
                 if ignore_signature_match:
                     df = df[~((df["matches_assina"]) & (df["count_assina"] == 1))]
-            else:
-                df["matches"] = ""
+
+            def _highlight_row_matches(row):
+                if "<%%>" in row["texto"]:
+                    return row["texto"]
+                return self._highlight_terms(
+                    [t for t in row["matches"].split(", ") if t],
+                    row["texto"],
+                )
 
             if "has_ementa" not in df.columns:
                 df["has_ementa"] = has_ementa
@@ -395,9 +409,13 @@ class INLABSHook(BaseHook):
 
             if use_summary:
                 # If use_summary replace texto value by summary value
-                df["texto"] = df["texto"].where(df["ementa"].isnull(), df["ementa"])
+                ementa_has_content = df["ementa"].fillna("").str.strip().ne("")
+                df["texto"] = df["texto"].where(~ementa_has_content, df["ementa"])
                 # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
-                df["has_ementa"] = df["ementa"].notna()
+                df["has_ementa"] = ementa_has_content
+                df.loc[ementa_has_content, "texto"] = df.loc[
+                    ementa_has_content
+                ].apply(_highlight_row_matches, axis=1)
 
             df["ai_generated"] = False
 
@@ -423,14 +441,7 @@ class INLABSHook(BaseHook):
                         temperature=ai_search_config.temperature,
                     )
                     df.at[i, "ai_generated"] = True
-
-            df["texto"] = df.apply(
-                lambda row: self._highlight_terms(
-                    [t for t in row["matches"].split(", ") if t],
-                    row["texto"],
-                ),
-                axis=1,
-            )
+                    df.at[i, "texto"] = _highlight_row_matches(df.loc[i])
 
             if not full_text:
                 # Only trim text that was not processed by AI and does not have ementa
@@ -438,9 +449,14 @@ class INLABSHook(BaseHook):
 
                 df.loc[mask, "texto"] = df.loc[mask, "texto"].apply(
                     lambda x: self._trim_text(x, text_length)
-                ) 
+                )
 
             df["display_date_sortable"] = None
+
+            if "score" not in df.columns:
+                df["score"] = None
+            if "show_relevancy" not in df.columns:
+                df["show_relevancy"] = show_relevancy
 
             cols_rename = {
                 "pubname": "section",
@@ -454,7 +470,15 @@ class INLABSHook(BaseHook):
                 "ai_generated": "ai_generated",
                 "has_ementa": "has_ementa",
                 "full_text": "full_text",
+                "score": "score",
+                "show_relevancy": "show_relevancy",
             }
+            if "matched_terms" in df.columns:
+                cols_rename["matched_terms"] = "matched_terms"
+            if "matched_terms_text" in df.columns:
+                cols_rename["matched_terms_text"] = "matched_terms_text"
+            if "searched_expression" in df.columns:
+                cols_rename["searched_expression"] = "searched_expression"
             df.rename(columns=cols_rename, inplace=True)
             cols_output = list(cols_rename.values())
 
@@ -497,18 +521,7 @@ class INLABSHook(BaseHook):
             return ""
 
         def _find_matches(self, text: str, keys: list) -> str:
-            """Find keys that match the text, considering normalization
-            for matching and ensuring exact matches.
-
-            Args:
-                text (str): The text in which to search for keys.
-                keys (list): A list of keys to be searched for in the text.
-                    It's assumed that keys are strings.
-
-            Returns:
-                str: A comma-separated string of unique keys found in the text.
-            """
-
+            """Find configured keys in text using normalized exact matching."""
             normalized_text = self._normalize(text)
             matches = [
                 key
@@ -542,6 +555,39 @@ class INLABSHook(BaseHook):
                 if isinstance(text, str)
                 else ""
             )
+
+        @staticmethod
+        def _has_opensearch_highlight(highlights) -> bool:
+            """Return True when OpenSearch returned at least one highlight."""
+            return isinstance(highlights, list) and any(highlights)
+
+        @classmethod
+        def _opensearch_highlight_excerpt(cls, text: str, highlights) -> str:
+            """Return OpenSearch highlighted snippets when available.
+
+            OpenSearch highlights mark the actual analyzed match in the
+            document, including morphological variants such as a plural form
+            matched by a singular search term. Keeping those markers allows
+            ``_trim_text`` to center the notification excerpt on the real hit.
+            """
+            if not cls._has_opensearch_highlight(highlights):
+                return text
+            return " (...) ".join(highlights)
+
+        def _highlight_search_text(
+            self, terms: list, text: str, opensearch_highlights=None
+        ) -> str:
+            """Highlight matched terms, falling back to OpenSearch snippets.
+
+            Local highlighting is preferred to avoid OpenSearch highlighter
+            marking broad analyzer tokens from the whole query. The OpenSearch
+            highlight is used only when local highlighting cannot mark the
+            configured term, which covers morphological variants.
+            """
+            highlighted_text = self._highlight_terms(terms, text)
+            if "<%%>" in highlighted_text:
+                return highlighted_text
+            return self._opensearch_highlight_excerpt(text, opensearch_highlights)
 
         def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
@@ -774,6 +820,23 @@ class INLABSHook(BaseHook):
 
             _from_start = self._truncate_from_start
             _from_end = self._truncate_from_end
+
+            marker_match = re.search(r"<%%>[\s\S]*?</%%>", text)
+            if marker_match and self._visible_len(marker_match.group(0)) > text_length:
+                before_full = text[: marker_match.start()]
+                opens_before = len(re.findall(r"<table", before_full, re.IGNORECASE))
+                closes_before = len(re.findall(r"</table>", before_full, re.IGNORECASE))
+
+                if opens_before == closes_before:
+                    marker = marker_match.group(0)
+                    after_full = text[marker_match.end() :]
+                    before, before_cut = _from_end(before_full, text_length)
+                    after, after_cut = _from_start(after_full, text_length)
+
+                    prefix = "(...) " if before_cut else ""
+                    suffix = " (...)" if after_cut else ""
+
+                    return f"{prefix}{before}{marker}{after}{suffix}"
 
             parts = text.split("<%%>", 1)
 

@@ -78,3 +78,29 @@ def calculate_from_datetime(publish_to_date: datetime, search_date: SearchDate):
 
     elif search_date == SearchDate.ANO:
         return publish_to_date - timedelta(days=364)
+
+class SectionDOESP:
+    """Dynamic provider for DOESP sections fetched from the DOESP journals API.
+
+    Use fetch_sections() to retrieve a dict mapping section names to their ids
+    (which is the value used in searches).
+    """
+
+    API_URL = "https://do-api-web-search.doe.sp.gov.br/v2/journals"
+
+    @staticmethod
+    def fetch_sections(timeout: int = 5):
+        """Fetch sections from the DOESP API and return dict{name: id}.
+
+        On error returns empty dict.
+        """
+        try:
+            import requests
+
+            resp = requests.get(SectionDOESP.API_URL, timeout=timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            items = data.get("items", []) if isinstance(data, dict) else []
+            return {item.get("name"): item.get("id") for item in items if "id" in item and "name" in item}
+        except Exception:
+            return {}

@@ -128,6 +128,62 @@ create-inlabs-portal-connection:
 			}' > /dev/null; \
 		fi"
 
+create-opensearch-variable:
+	@echo "Creating 'opensearch' Airflow variables"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/ro_dou_inlabs_use_opensearch' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"RO_DOU_INLABS_USE_OPENSEARCH\", \
+			\"value\": \"False\" \
+			}' > /dev/null; \
+		fi"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_host' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"OPENSEARCH_HOST\", \
+			\"value\": \"http://opensearch:9200\" \
+			}' > /dev/null; \
+		fi"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_user' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"OPENSEARCH_USER\", \
+			\"value\": \"OPENSEARCH_USER\" \
+			}' > /dev/null; \
+		fi"
+	@docker exec airflow-webserver sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_pass' --user \"airflow:airflow\" > /dev/null; \
+		then \
+			curl -s -X 'POST' \
+			'http://localhost:8080/api/v1/variables' \
+			-H 'accept: application/json' \
+			-H 'Content-Type: application/json' \
+			--user \"airflow:airflow\" \
+			-d '{ \
+			\"key\": \"OPENSEARCH_PASS\", \
+			\"value\": \"OPENSEARCH_PASS\" \
+			}' > /dev/null; \
+		fi"
+
+
 activate-inlabs-load-dag:
 	@echo "Activating 'dou_inlabs_load_pg' Airflow DAG"
 	@docker exec airflow-webserver sh -c \

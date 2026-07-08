@@ -79,6 +79,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
+    OPENSEARCH_HOST: http://opensearch:9200
+    OPENSEARCH_USER: OPENSEARCH_USER
+    OPENSEARCH_PASS: OPENSEARCH_PASS
 
   volumes:
     - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
@@ -90,6 +93,8 @@ x-airflow-common: &airflow-common
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
+      condition: service_healthy
+    opensearch:
       condition: service_healthy
 
 services:
@@ -138,6 +143,24 @@ services:
     command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow scheduler'
     restart: always
 
+  opensearch:
+    image: opensearchproject/opensearch:2
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=OPENSEARCH_PASS
+      - DISABLE_SECURITY_PLUGIN=true
+    ports:
+      - 9200:9200
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: always
+
   smtp4dev:
     image: rnwood/smtp4dev:v3
     restart: always
@@ -159,3 +182,4 @@ services:
       - postgres
 volumes:
   smtp4dev-data:
+  opensearch-data:
