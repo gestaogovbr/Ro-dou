@@ -178,6 +178,8 @@
   .toggle-avancado:hover { text-decoration: underline; }
   .avancado[hidden] { display: none; }
   .avancado { display: grid; gap: 16px; border-top: 1px dashed var(--borda); padding-top: 16px; }
+  .grupo-fonte { display: grid; gap: 16px; }
+  .grupo-fonte[hidden] { display: none; }
 
   /* ---------- Preview YAML ---------- */
   .preview-coluna {
@@ -460,6 +462,12 @@
             </label>
           </div>
         </div>
+        <p class="dica" id="dica-inlabs-dataset" hidden>Como o INLABS está marcado, o arquivo incluirá automaticamente <span class="tec">dataset: inlabs</span> — isso faz a busca esperar os dados do INLABS chegarem antes de rodar, evitando relatórios vazios.</p>
+        <div class="campo campo-opcional" id="campo-territory" hidden>
+          <label for="f-territory">Código do município no Querido Diário <span class="obrigatorio">*</span> <span class="tec">territory_id</span></label>
+          <div class="dica">Obrigatório para buscar no Querido Diário. Código IBGE do município (ex.: 4106902 = Curitiba/PR). Pode informar mais de um, separados por vírgula.</div>
+          <input type="text" id="f-territory" placeholder="ex.: 4106902">
+        </div>
         <button type="button" class="toggle-avancado" id="btn-avancado" aria-expanded="false">▸ Opções avançadas <span class="selo-opcional">opcional</span></button>
         <div class="avancado" id="painel-avancado" hidden>
           <p class="dica" style="margin:0 0 -4px">Você não precisa mexer aqui para a busca funcionar. Ajuste apenas se souber o que quer.</p>
@@ -520,35 +528,35 @@
             <textarea id="f-pubtype" placeholder="Portaria"></textarea>
           </div>
           <div class="grupo-check" style="flex-direction:column;align-items:flex-start">
+            <label class="check-item"><input type="checkbox" id="f-aproximada"> Aceitar variações e erros de digitação do termo (busca aproximada) <span class="tec">is_exact_search</span></label>
             <label class="check-item"><input type="checkbox" id="f-igsig"> Ignorar quando o termo aparece só na assinatura <span class="tec">ignore_signature_match</span></label>
             <label class="check-item"><input type="checkbox" id="f-rematch"> Refazer a busca mesmo se já tiver sido feita <span class="tec">force_rematch</span></label>
           </div>
-          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do INLABS</span> só valem se você marcou essa fonte acima.</p>
-          <div class="grupo-check" style="flex-direction:column;align-items:flex-start">
-            <label class="check-item"><input type="checkbox" id="f-fulltext"> Mostrar o texto completo no relatório <span class="tec">full_text</span></label>
-            <label class="check-item"><input type="checkbox" id="f-usesummary"> Mostrar a ementa (resumo oficial), quando existir <span class="tec">use_summary</span></label>
-            <label class="check-item"><input type="checkbox" id="f-relevancy"> Mostrar a relevância de cada resultado <span class="tec">show_relevancy</span></label>
-          </div>
-          <div class="campo">
-            <label for="f-textlength">Tamanho do trecho exibido <span class="tec">text_length</span></label>
-            <div class="dica">Apenas INLABS. Padrão: 400 caracteres.</div>
-            <input type="number" id="f-textlength" min="1" placeholder="400">
-          </div>
-
-          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do Querido Diário</span> só valem se você marcou essa fonte acima.</p>
-          <div class="campo">
-            <label for="f-territory">Código do município no Querido Diário <span class="tec">territory_id</span></label>
-            <div class="dica">Código IBGE do município (ex.: 4106902 = Curitiba/PR). Pode informar mais de um, separados por vírgula.</div>
-            <input type="text" id="f-territory" placeholder="ex.: 4106902">
-          </div>
-          <div class="linha-dupla">
-            <div class="campo">
-              <label for="f-excerptsize">Tamanho do trecho exibido <span class="tec">excerpt_size</span></label>
-              <input type="number" id="f-excerptsize" min="1" placeholder="500">
+          <div class="grupo-fonte" id="painel-inlabs" hidden>
+            <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do INLABS</span> disponíveis porque você marcou essa fonte.</p>
+            <div class="grupo-check" style="flex-direction:column;align-items:flex-start">
+              <label class="check-item"><input type="checkbox" id="f-fulltext"> Mostrar o texto completo no relatório <span class="tec">full_text</span></label>
+              <label class="check-item"><input type="checkbox" id="f-usesummary"> Mostrar a ementa (resumo oficial), quando existir <span class="tec">use_summary</span></label>
+              <label class="check-item"><input type="checkbox" id="f-relevancy"> Mostrar a relevância de cada resultado <span class="tec">show_relevancy</span></label>
             </div>
             <div class="campo">
-              <label for="f-numexcerpts">Máx. de trechos por edição <span class="tec">number_of_excerpts</span></label>
-              <input type="number" id="f-numexcerpts" min="1" placeholder="5">
+              <label for="f-textlength">Tamanho do trecho exibido <span class="tec">text_length</span></label>
+              <div class="dica">Padrão: 400 caracteres.</div>
+              <input type="number" id="f-textlength" min="1" placeholder="400">
+            </div>
+          </div>
+
+          <div class="grupo-fonte" id="painel-qd" hidden>
+            <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do Querido Diário</span> disponíveis porque você marcou essa fonte.</p>
+            <div class="linha-dupla">
+              <div class="campo">
+                <label for="f-excerptsize">Tamanho do trecho exibido <span class="tec">excerpt_size</span></label>
+                <input type="number" id="f-excerptsize" min="1" placeholder="500">
+              </div>
+              <div class="campo">
+                <label for="f-numexcerpts">Máx. de trechos por edição <span class="tec">number_of_excerpts</span></label>
+                <input type="number" id="f-numexcerpts" min="1" placeholder="5">
+              </div>
             </div>
           </div>
 
@@ -587,7 +595,7 @@
           <div class="campo">
             <label class="check-item"><input type="checkbox" id="f-hidefilters"> Ocultar os filtros no relatório <span class="tec">hide_filters</span></label>
           </div>
-          <p class="dica" style="margin:6px 0 -4px">Enviar também para outros canais, além do e-mail:</p>
+          <p class="dica" style="margin:6px 0 -4px">Enviar também para outros canais, além do e-mail. Cole a URL do webhook — ela é convertida automaticamente para o formato que o Ro-DOU aceita (<span class="tec">notification</span>).</p>
           <div class="linha-dupla">
             <div class="campo">
               <label for="f-discord">Webhook do Discord</label>
@@ -643,6 +651,9 @@
   const csv = (id) => $(id).value.split(",").map(s => s.trim()).filter(Boolean);
   const checks = (id) => Array.from($(id).querySelectorAll("input:checked")).map(i => i.value);
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Webhooks aceitos na UI; no YAML são emitidos como URLs Apprise (notification:)
+  const DISCORD_WEBHOOK_RE = /^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/webhooks\/(\d+)\/([\w-]+)\/?$/;
+  const SLACK_WEBHOOK_RE = /^https:\/\/hooks\.slack\.com\/services\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/?$/;
 
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -668,11 +679,6 @@
     for (const item of items) {
       out.push(`${pad}  - <span class="ys">${esc(yamlVal(item))}</span>`);
     }
-  }
-  function pushNested(out, indent, key, subkey, value) {
-    const pad = "  ".repeat(indent);
-    out.push(`${pad}<span class="yk">${key}</span>:`);
-    out.push(`${pad}  <span class="yk">${subkey}</span>: <span class="ys">${esc(yamlVal(value))}</span>`);
   }
 
   function slug(s) {
@@ -700,17 +706,23 @@
     const discord = $("f-discord").value.trim();
     const slack = $("f-slack").value.trim();
     const territory = csv("f-territory");
+    const temInlabs = sources.includes("INLABS");
+    const temQd = sources.includes("QD");
+
+    // ---- mostra/esconde campos que só valem para a fonte marcada ----
+    $("campo-territory").hidden = !temQd;
+    $("painel-inlabs").hidden = !temInlabs;
+    $("painel-qd").hidden = !temQd;
+    $("dica-inlabs-dataset").hidden = !temInlabs;
 
     // ---- validações — dizem o que fazer, não só o que está errado ----
     if (!id) erros.push("Dê um nome para esta busca, sem espaços (ex.: <strong>monitoramento_dados_abertos</strong>).");
     if (!desc) erros.push("Escreva uma breve descrição do que esta busca faz.");
     if (!terms.length && !dept.length && !pubtype.length)
       erros.push("Adicione pelo menos uma palavra ou expressão para monitorar.");
-    if (sources.includes("QD") && !terms.length)
+    if (temQd && !terms.length)
       erros.push("Para buscar no Querido Diário (QD), informe pelo menos uma palavra para monitorar.");
-    if (territory.length && !sources.includes("QD"))
-      erros.push("O código do município só é necessário quando a fonte Querido Diário (QD) está marcada.");
-    if (sources.includes("QD") && !territory.length)
+    if (temQd && !territory.length)
       erros.push("Informe o código do município para buscar no Querido Diário (QD).");
     const emailsInvalidos = emails.filter(e => !EMAIL_RE.test(e));
     if (emailsInvalidos.length)
@@ -720,6 +732,19 @@
     const failcbInvalidos = failcb.filter(e => !EMAIL_RE.test(e));
     if (failcbInvalidos.length)
       erros.push(`Verifique o e-mail de aviso de falha "${esc(failcbInvalidos[0])}".`);
+
+    // ---- webhooks → URLs Apprise (formato atual do Ro-DOU; slack:/discord: estão depreciados) ----
+    const notification = [];
+    if (discord) {
+      const m = discord.match(DISCORD_WEBHOOK_RE);
+      if (m) notification.push(`discord://${m[1]}/${m[2]}`);
+      else erros.push("Essa não parece ser uma URL de webhook do Discord válida — ela deve começar com <strong>https://discord.com/api/webhooks/…</strong>");
+    }
+    if (slack) {
+      const m = slack.match(SLACK_WEBHOOK_RE);
+      if (m) notification.push(`slack://${m[1]}/${m[2]}/${m[3]}`);
+      else erros.push("Essa não parece ser uma URL de webhook do Slack válida — ela deve começar com <strong>https://hooks.slack.com/services/…</strong>");
+    }
 
     // ---- dag ----
     out.push(`<span class="yk">dag</span>:`);
@@ -732,6 +757,8 @@
     if (owner.length) pushList(out, 1, "owner", owner);
     const sched = scheduleValue();
     if (sched) push(out, 1, "schedule", sched);
+    // INLABS: a DAG deve aguardar a chegada dos dados (todos os exemplos da doc usam isso)
+    if (temInlabs) push(out, 1, "dataset", "inlabs");
 
     // ---- search ----
     out.push(`  <span class="yk">search</span>:`);
@@ -753,19 +780,24 @@
     const sections = checks("f-sections");
     if (sections.length) pushList(out, 2, "dou_sections", sections);
 
+    if ($("f-aproximada").checked) push(out, 2, "is_exact_search", "false", "bool");
     if ($("f-igsig").checked) push(out, 2, "ignore_signature_match", "true", "bool");
     if ($("f-rematch").checked) push(out, 2, "force_rematch", "true", "bool");
-    if ($("f-fulltext").checked) push(out, 2, "full_text", "true", "bool");
-    if ($("f-usesummary").checked) push(out, 2, "use_summary", "true", "bool");
-    if ($("f-relevancy").checked) push(out, 2, "show_relevancy", "true", "bool");
-    const tlen = $("f-textlength").value.trim();
-    if (tlen) push(out, 2, "text_length", tlen, "num");
-    if (territory.length === 1) push(out, 2, "territory_id", territory[0], "num");
-    else if (territory.length > 1) pushList(out, 2, "territory_id", territory);
-    const excerptSize = $("f-excerptsize").value.trim();
-    if (excerptSize) push(out, 2, "excerpt_size", excerptSize, "num");
-    const numExcerpts = $("f-numexcerpts").value.trim();
-    if (numExcerpts) push(out, 2, "number_of_excerpts", numExcerpts, "num");
+    if (temInlabs) {
+      if ($("f-fulltext").checked) push(out, 2, "full_text", "true", "bool");
+      if ($("f-usesummary").checked) push(out, 2, "use_summary", "true", "bool");
+      if ($("f-relevancy").checked) push(out, 2, "show_relevancy", "true", "bool");
+      const tlen = $("f-textlength").value.trim();
+      if (tlen) push(out, 2, "text_length", tlen, "num");
+    }
+    if (temQd) {
+      if (territory.length === 1) push(out, 2, "territory_id", territory[0], "num");
+      else if (territory.length > 1) pushList(out, 2, "territory_id", territory);
+      const excerptSize = $("f-excerptsize").value.trim();
+      if (excerptSize) push(out, 2, "excerpt_size", excerptSize, "num");
+      const numExcerpts = $("f-numexcerpts").value.trim();
+      if (numExcerpts) push(out, 2, "number_of_excerpts", numExcerpts, "num");
+    }
 
     // ---- callback (avisos de falha) ----
     if (failcb.length) {
@@ -781,8 +813,7 @@
     if ($("f-noskip").checked) push(out, 2, "skip_null", "false", "bool");
     if ($("f-csv").checked) push(out, 2, "attach_csv", "true", "bool");
     if ($("f-hidefilters").checked) push(out, 2, "hide_filters", "true", "bool");
-    if (discord) pushNested(out, 2, "discord", "webhook", discord);
-    if (slack) pushNested(out, 2, "slack", "webhook", slack);
+    if (notification.length) pushList(out, 2, "notification", notification);
 
     // ---- render ----
     $("saida").innerHTML = out.join("\n");
@@ -915,7 +946,7 @@
     $("f-field").selectedIndex = 0;
     document.querySelectorAll("#f-sources input").forEach(cb => cb.checked = (cb.value === "DOU"));
     document.querySelectorAll("#f-sections input").forEach(cb => cb.checked = false);
-    ["f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-csv", "f-hidefilters", "f-noskip"]
+    ["f-aproximada", "f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-csv", "f-hidefilters", "f-noskip"]
       .forEach(id => { $(id).checked = false; });
     gerar();
   });
