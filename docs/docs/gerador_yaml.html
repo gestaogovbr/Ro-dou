@@ -458,7 +458,6 @@
                 <span class="balao" role="tooltip">Base de diários oficiais de prefeituras, mantida pelo projeto Querido Diário. Use para monitorar publicações municipais — exige informar o código do município abaixo.</span>
               </span>
             </label>
-            <label class="check-item"><input type="checkbox" value="DOESP"> DOESP — Diário Oficial do Estado de SP</label>
           </div>
         </div>
         <button type="button" class="toggle-avancado" id="btn-avancado" aria-expanded="false">▸ Opções avançadas <span class="selo-opcional">opcional</span></button>
@@ -553,12 +552,6 @@
             </div>
           </div>
 
-          <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do DOESP</span> só valem se você marcou essa fonte acima.</p>
-          <div class="campo">
-            <label for="f-journals">Cadernos do Diário Oficial do Estado de SP <span class="tec">journals</span></label>
-            <div class="dica">Um caderno por linha, ex.: Executivo, Legislativo. Se nenhum for informado, busca em todos.</div>
-            <textarea id="f-journals" placeholder="Executivo"></textarea>
-          </div>
         </div>
       </div>
     </fieldset>
@@ -773,8 +766,6 @@
     if (excerptSize) push(out, 2, "excerpt_size", excerptSize, "num");
     const numExcerpts = $("f-numexcerpts").value.trim();
     if (numExcerpts) push(out, 2, "number_of_excerpts", numExcerpts, "num");
-    const journals = linhas("f-journals");
-    if (journals.length) pushList(out, 2, "journals", journals);
 
     // ---- callback (avisos de falha) ----
     if (failcb.length) {
@@ -915,7 +906,7 @@
     if (!confirm("Limpar todos os campos preenchidos?")) return;
     ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-terms", "f-terms-ignore",
       "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-territory",
-      "f-excerptsize", "f-numexcerpts", "f-journals",
+      "f-excerptsize", "f-numexcerpts",
       "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom"
     ].forEach(id => { $(id).value = ""; });
     $("f-schedule").selectedIndex = 0;
