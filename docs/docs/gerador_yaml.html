@@ -222,6 +222,7 @@
     transition: background 0.15s ease;
   }
   .btn:focus-visible { outline: 2px solid var(--amarelo-gov); outline-offset: 1px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn-primario { background: var(--azul-gov); color: #fff; }
   .btn-primario:hover { background: #0F419A; }
   .btn-fantasma { background: transparent; color: #C9D6EA; border-color: #33456A; }
@@ -396,6 +397,7 @@
           </select>
           <div class="dica">Não existe opção "rodar só manualmente": se você não escolher um horário, o Ro-DOU roda a busca automaticamente todo dia de madrugada (o minuto exato varia por busca, para não sobrecarregar o sistema).</div>
           <input type="text" id="f-schedule-custom" placeholder="0 8 * * MON-FRI" class="campo-opcional" hidden style="margin-top:6px">
+          <div class="dica" id="cron-humano" hidden style="margin-top:4px;color:var(--verde-ok);font-weight:600"></div>
         </div>
 
         <button type="button" class="toggle-avancado" id="btn-avancado-dag" aria-expanded="false">▸ Mais detalhes desta busca <span class="selo-opcional">opcional</span></button>
@@ -408,7 +410,7 @@
             </div>
             <div class="campo">
               <label for="f-tags">Etiquetas <span class="tec">tags</span></label>
-              <div class="dica">Ajudam a organizar as buscas no sistema, separadas por vírgula.</div>
+              <div class="dica">Ajudam a organizar as buscas no sistema, separadas por vírgula. As etiquetas <span class="tec">dou</span> e <span class="tec">generated_dag</span> são adicionadas automaticamente — não precisa digitá-las.</div>
               <input type="text" id="f-tags" placeholder="ex.: projeto_a, departamento_x">
             </div>
           </div>
@@ -416,6 +418,11 @@
             <label for="f-failcb">Avisar por e-mail se a busca falhar <span class="tec">on_failure_callback</span></label>
             <div class="dica">E-mails que recebem aviso caso o robô dê erro, separados por vírgula.</div>
             <input type="text" id="f-failcb" placeholder="ex.: admin@orgao.gov.br">
+          </div>
+          <div class="campo">
+            <label for="f-docmd">Documentação da busca <span class="tec">doc_md</span></label>
+            <div class="dica">Texto livre exibido na tela da busca no sistema, para explicar o contexto a outras pessoas. Aceita formatação Markdown (títulos, listas, links).</div>
+            <textarea id="f-docmd" placeholder="## Objetivo&#10;Monitorar publicações sobre dados abertos para a equipe X."></textarea>
           </div>
         </div>
       </div>
@@ -468,7 +475,7 @@
         <p class="dica" id="dica-inlabs-dataset" hidden>Como o INLABS está marcado, o arquivo incluirá automaticamente <span class="tec">dataset: inlabs</span> — isso faz a busca esperar os dados do INLABS chegarem antes de rodar, evitando relatórios vazios.</p>
         <div class="campo campo-opcional" id="campo-territory" hidden>
           <label for="f-territory">Código do município no Querido Diário <span class="obrigatorio">*</span> <span class="tec">territory_id</span></label>
-          <div class="dica">Obrigatório para buscar no Querido Diário. Código IBGE do município (ex.: 4106902 = Curitiba/PR). Pode informar mais de um, separados por vírgula.</div>
+          <div class="dica">Obrigatório para buscar no Querido Diário. Código IBGE do município, só números (ex.: 4106902 = Curitiba/PR). Pode informar mais de um, separados por vírgula. <a href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php" target="_blank" rel="noopener">Consulte o código do seu município</a>.</div>
           <input type="text" id="f-territory" placeholder="ex.: 4106902">
         </div>
         <button type="button" class="toggle-avancado" id="btn-avancado" aria-expanded="false">▸ Opções avançadas <span class="selo-opcional">opcional</span></button>
@@ -579,6 +586,7 @@
         </div>
         <div class="campo">
           <label for="f-subject">Assunto do e-mail <span class="tec">subject</span></label>
+          <div class="dica">Se ficar vazio, o Ro-DOU usa um assunto padrão.</div>
           <input type="text" id="f-subject" placeholder="ex.: Alerta Ro-DOU — Dados abertos">
         </div>
         <div class="campo">
@@ -597,6 +605,21 @@
           </div>
           <div class="campo">
             <label class="check-item"><input type="checkbox" id="f-hidefilters"> Ocultar os filtros no relatório <span class="tec">hide_filters</span></label>
+          </div>
+          <div class="campo">
+            <label for="f-headertext">Texto de abertura do relatório <span class="tec">header_text</span></label>
+            <div class="dica">Aparece no topo do e-mail, antes dos resultados. Pode conter HTML simples.</div>
+            <textarea id="f-headertext" placeholder="&lt;p&gt;Clipping diário do Diário Oficial — Equipe de Dados&lt;/p&gt;"></textarea>
+          </div>
+          <div class="campo">
+            <label for="f-footertext">Texto de rodapé do relatório <span class="tec">footer_text</span></label>
+            <div class="dica">Aparece no fim do e-mail — bom lugar para a assinatura institucional. Pode conter HTML simples.</div>
+            <textarea id="f-footertext" placeholder="&lt;p&gt;Coordenação-Geral de Informações — contato: equipe@orgao.gov.br&lt;/p&gt;"></textarea>
+          </div>
+          <div class="campo">
+            <label for="f-noresults">Mensagem quando nada for encontrado <span class="tec">no_results_found_text</span></label>
+            <div class="dica">Padrão: "Nenhum dos termos pesquisados foi encontrado nesta consulta".</div>
+            <input type="text" id="f-noresults" placeholder="ex.: Nenhuma publicação de interesse hoje.">
           </div>
           <p class="dica" style="margin:6px 0 -4px">Enviar também para outros canais, além do e-mail. Cole a URL do webhook — ela é convertida automaticamente para o formato que o Ro-DOU aceita (<span class="tec">notification</span>).</p>
           <div class="linha-dupla">
@@ -683,6 +706,15 @@
       out.push(`${pad}  - <span class="ys">${esc(yamlVal(item))}</span>`);
     }
   }
+  // Texto que pode ter várias linhas: bloco literal (|) preserva as quebras
+  function pushTexto(out, indent, key, value) {
+    if (!value.includes("\n")) { push(out, indent, key, value); return; }
+    const pad = "  ".repeat(indent);
+    out.push(`${pad}<span class="yk">${key}</span>: |`);
+    for (const linha of value.split("\n")) {
+      out.push(`${pad}  <span class="ys">${esc(linha)}</span>`);
+    }
+  }
 
   function slug(s) {
     return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -692,6 +724,47 @@
   function scheduleValue() {
     const sel = $("f-schedule").value;
     return sel === "__custom" ? $("f-schedule-custom").value.trim() : sel;
+  }
+
+  // ---- validação de expressão cron (5 campos; aceita *, listas, faixas e passos) ----
+  const NOMES_MES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const NOMES_DIA = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  function campoCronValido(campo, min, max, nomes) {
+    const ok = (v) => nomes.includes(v) || (/^\d+$/.test(v) && +v >= min && +v <= max);
+    return campo.toUpperCase().split(",").every(parte => {
+      const m = parte.match(/^(\*|[A-Z\d]+(?:-[A-Z\d]+)?)(?:\/\d+)?$/);
+      if (!m) return false;
+      if (m[1] === "*") return true;
+      return m[1].split("-").every(ok);
+    });
+  }
+  function cronValido(expr) {
+    const p = expr.trim().split(/\s+/);
+    if (p.length !== 5) return false;
+    return campoCronValido(p[0], 0, 59, []) && campoCronValido(p[1], 0, 23, [])
+      && campoCronValido(p[2], 1, 31, []) && campoCronValido(p[3], 1, 12, NOMES_MES)
+      && campoCronValido(p[4], 0, 7, NOMES_DIA);
+  }
+  // Melhor esforço: descreve em português os padrões mais comuns; retorna "" se não souber
+  function descreverCron(expr) {
+    const [min, hora, diaMes, mes, diaSemRaw] = expr.trim().split(/\s+/);
+    if (!/^\d{1,2}$/.test(min) || !/^\d{1,2}$/.test(hora) || mes !== "*") return "";
+    const NOMES = { "0": "domingo", "7": "domingo", "1": "segunda-feira", "2": "terça-feira",
+      "3": "quarta-feira", "4": "quinta-feira", "5": "sexta-feira", "6": "sábado",
+      SUN: "domingo", MON: "segunda-feira", TUE: "terça-feira", WED: "quarta-feira",
+      THU: "quinta-feira", FRI: "sexta-feira", SAT: "sábado" };
+    const diaSem = diaSemRaw.toUpperCase();
+    const horario = `às ${+hora}h` + (+min ? String(+min).padStart(2, "0") : "");
+    let quando = "";
+    if (diaMes === "*" && diaSem === "*") quando = "todo dia";
+    else if (diaMes === "*" && (diaSem === "MON-FRI" || diaSem === "1-5")) quando = "de segunda a sexta-feira";
+    else if (diaMes === "*" && NOMES[diaSem]) {
+      const nome = NOMES[diaSem];
+      quando = (nome === "sábado" || nome === "domingo" ? "todo " : "toda ") + nome;
+    } else if (/^\d{1,2}$/.test(diaMes) && diaSem === "*") {
+      quando = `todo dia ${+diaMes} do mês`;
+    } else return "";
+    return `${quando}, ${horario}`;
   }
 
   function gerar() {
@@ -728,6 +801,23 @@
       erros.push("Para buscar no Querido Diário (QD), informe pelo menos uma palavra para monitorar.");
     if (temQd && !territory.length)
       erros.push("Informe o código do município para buscar no Querido Diário (QD).");
+    const territoryInvalidos = temQd ? territory.filter(t => !/^\d+$/.test(t)) : [];
+    if (territoryInvalidos.length)
+      erros.push(`O código do município deve conter só números (código IBGE, ex.: <strong>4106902</strong>) — verifique "${esc(territoryInvalidos[0])}".`);
+    // agendamento personalizado: valida o cron e mostra o que ele significa
+    const cronCustom = $("f-schedule").value === "__custom";
+    const cronExpr = $("f-schedule-custom").value.trim();
+    const cronHumano = $("cron-humano");
+    cronHumano.hidden = true;
+    if (cronCustom && !cronExpr) {
+      erros.push("Escreva a expressão cron do agendamento personalizado ou escolha uma das opções prontas.");
+    } else if (cronCustom && !cronValido(cronExpr)) {
+      erros.push("A expressão cron não parece válida — ela deve ter 5 partes (minuto, hora, dia, mês, dia da semana), ex.: <strong>0 8 * * MON-FRI</strong>.");
+    } else if (cronCustom) {
+      const humano = descreverCron(cronExpr);
+      if (humano) { cronHumano.textContent = "= " + humano; cronHumano.hidden = false; }
+    }
+
     const emailsInvalidos = emails.filter(e => !EMAIL_RE.test(e));
     if (emailsInvalidos.length)
       erros.push(`Verifique o e-mail "${esc(emailsInvalidos[0])}" — use o formato nome@orgao.gov.br.`);
@@ -763,6 +853,8 @@
     if (sched) push(out, 1, "schedule", sched);
     // INLABS: a DAG deve aguardar a chegada dos dados (todos os exemplos da doc usam isso)
     if (temInlabs) push(out, 1, "dataset", "inlabs");
+    const docmd = $("f-docmd").value.replace(/\s+$/, "");
+    if (docmd) pushTexto(out, 1, "doc_md", docmd);
 
     // ---- search ----
     out.push(`  <span class="yk">search</span>:`);
@@ -817,11 +909,22 @@
     if ($("f-noskip").checked) push(out, 2, "skip_null", "false", "bool");
     if ($("f-csv").checked) push(out, 2, "attach_csv", "true", "bool");
     if ($("f-hidefilters").checked) push(out, 2, "hide_filters", "true", "bool");
+    const headerText = $("f-headertext").value.trim();
+    if (headerText) pushTexto(out, 2, "header_text", headerText);
+    const footerText = $("f-footertext").value.trim();
+    if (footerText) pushTexto(out, 2, "footer_text", footerText);
+    const noResults = $("f-noresults").value.trim();
+    if (noResults) push(out, 2, "no_results_found_text", noResults);
     if (notification.length) pushList(out, 2, "notification", notification);
 
     // ---- render ----
     $("saida").innerHTML = out.join("\n");
     $("nome-arquivo").textContent = (id ? slug(id) : "minha_busca") + ".yaml";
+
+    // com qualquer erro pendente, não deixa baixar nem copiar YAML incompleto
+    const temErros = erros.length > 0;
+    $("btn-baixar").disabled = temErros;
+    $("btn-copiar").disabled = temErros;
 
     const painel = $("validacoes");
     if (erros.length) {
@@ -939,10 +1042,11 @@
 
   $("btn-limpar").addEventListener("click", () => {
     if (!confirm("Limpar todos os campos preenchidos?")) return;
-    ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-terms", "f-terms-ignore",
+    ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-docmd", "f-terms", "f-terms-ignore",
       "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-territory",
       "f-excerptsize", "f-numexcerpts",
-      "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom"
+      "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom",
+      "f-headertext", "f-footertext", "f-noresults"
     ].forEach(id => { $(id).value = ""; });
     $("f-schedule").selectedIndex = 0;
     $("f-schedule-custom").hidden = true;
