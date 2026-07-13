@@ -322,6 +322,8 @@
     padding: 1px 5px;
     border-radius: 4px;
   }
+  .balao .so-inlabs { display: block; margin-top: 6px; color: #8B1A08; font-weight: 600; }
+  .balao .so-inlabs[hidden] { display: none; }
 
   /* ---------- Barra de ações rápidas ---------- */
   .acoes-rapidas { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -430,11 +432,12 @@
             <span class="glossario">
               <button type="button" aria-expanded="false" aria-label="Como combinar palavras na busca">?</button>
               <span class="balao" role="tooltip">
-                Normalmente cada linha é uma busca separada. Mas dá para combinar palavras na mesma linha:<br>
+                Normalmente cada linha é uma busca separada. Com a fonte <strong>INLABS</strong> marcada, dá para combinar palavras na mesma linha:<br>
                 <strong>E</strong>: <code>MGI AND designar</code> (as duas devem aparecer)<br>
                 <strong>OU</strong>: <code>MGI OR designar</code> (qualquer uma)<br>
                 <strong>Excluir</strong>: <code>designar NOT temporário</code><br>
                 <strong>Expressão exata</strong>: <code>"instituto federal"</code>
+                <span class="so-inlabs" id="aviso-operadores" hidden>⚠ Estas combinações só funcionam no INLABS, que não está marcado em "Onde buscar" — nas outras fontes, AND/OR/NOT seriam tratados como texto comum.</span>
               </span>
             </span>
           </label>
@@ -714,6 +717,7 @@
     $("painel-inlabs").hidden = !temInlabs;
     $("painel-qd").hidden = !temQd;
     $("dica-inlabs-dataset").hidden = !temInlabs;
+    $("aviso-operadores").hidden = temInlabs;
 
     // ---- validações — dizem o que fazer, não só o que está errado ----
     if (!id) erros.push("Dê um nome para esta busca, sem espaços (ex.: <strong>monitoramento_dados_abertos</strong>).");
