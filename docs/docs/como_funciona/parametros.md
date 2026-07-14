@@ -2,6 +2,8 @@
 
 A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
+O Ro-DOU também oferece o [Gerador de configuração (YAML)](../gerador_yaml.html), que permite montar o arquivo em um formulário guiado, com validações e explicação de cada campo.
+
 ## Parâmetros da DAG
 * **id** *(obrigatório)*: Nome identificador da DAG a ser gerada. Deve ser único.
 * **description** *(obrigatório)*: Descrição da DAG de pesquisa exibida na interface do Airflow.
