@@ -454,6 +454,15 @@ class INLABSHook(BaseHook):
                     lambda terms: ", ".join(terms)
                 )
                 df["matches"] = df["matched_terms_text"]
+                if "semantic_match" in df.columns and "searched_expression" in df.columns:
+                    # Pure semantic hits have no lexical `matched_terms`, so
+                    # `matches` would otherwise be empty and the result would
+                    # be grouped/labeled under a blank term in the report.
+                    # Fall back to the full set of configured search terms.
+                    semantic_only = df["semantic_match"] & (df["matches"] == "")
+                    df.loc[semantic_only, "matches"] = df.loc[
+                        semantic_only, "searched_expression"
+                    ]
             elif any(text_terms):
                 df["matches"] = df.apply(
                     lambda row: self._find_matches(

@@ -825,6 +825,53 @@ def test_transform_search_results_forces_show_relevancy_for_neural_search(inlabs
     assert r[""][0]["show_relevancy"] is True
 
 
+def test_transform_search_results_labels_pure_semantic_hits_with_searched_expression(
+    inlabs_hook,
+):
+    """A hit found only via vector similarity has no ``matched_terms``, so it
+    must be grouped/labeled under the configured search terms instead of a
+    blank term - otherwise the report shows the result with no term heading.
+    """
+    df_in = pd.DataFrame(
+        [
+            {
+                "artcategory": "Texto exemplo art_category",
+                "arttype": "Publicação xxx",
+                "id": 1,
+                "assina": "Pessoa 1",
+                "data": "Brasília/DF, 15 de março de 2024.",
+                "ementa": "None",
+                "identifica": "Título da Publicação 1",
+                "name": "15.03.2024 bsb DOU xxx",
+                "pdfpage": "http://xxx.gov.br/",
+                "pubdate": datetime(2024, 3, 15),
+                "pubname": "DO1",
+                "subtitulo": "None",
+                "texto": "Lorem ipsum dolor sit amet.",
+                "titulo": "None",
+                "score": 0.93,
+                "searched_expression": "qualidade de vida, vitalidade",
+                "matched_terms": [],
+                "matched_terms_text": "",
+                "matches": "",
+                "semantic_match": True,
+            },
+        ]
+    )
+
+    r = inlabs_hook.TextDictHandler().transform_search_results(
+        ai_config=_MIN_AI_CONFIG,
+        response=df_in,
+        text_terms=[],
+        ignore_signature_match=False,
+        ai_search_config=_MIN_AI_SEARCH_CONFIG,
+        neural_search=True,
+    )
+
+    assert "qualidade de vida, vitalidade" in r
+    assert "" not in r
+
+
 def test_search_text_propagates_neural_search_flag(monkeypatch, inlabs_hook):
     """``neural_search_config`` must reach the generated OpenSearch query payload."""
     monkeypatch.setattr(
