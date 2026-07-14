@@ -90,7 +90,7 @@
     border-radius: var(--radius);
     padding: 0;
     margin: 0;
-    overflow: hidden;
+    /* sem overflow:hidden — cortaria os balões do glossário (?) */
   }
   .bloco legend { display: none; }
   .bloco-titulo {
@@ -100,6 +100,7 @@
     padding: 14px 18px;
     background: linear-gradient(to right, #F7F9FC, #fff);
     border-bottom: 1px solid var(--borda);
+    border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
   }
   .bloco-titulo .selo {
     font-family: var(--fonte-mono);
@@ -315,7 +316,9 @@
     color: var(--tinta);
     line-height: 1.5;
   }
-  .glossario.aberto > .balao { display: block; }
+  .glossario.aberto > .balao,
+  .glossario:hover > .balao,
+  .glossario > button:focus-visible + .balao { display: block; }
   .balao code {
     font-family: var(--fonte-mono);
     font-size: 11.5px;
@@ -480,7 +483,7 @@
         </div>
         <button type="button" class="toggle-avancado" id="btn-avancado" aria-expanded="false">▸ Opções avançadas <span class="selo-opcional">opcional</span></button>
         <div class="avancado" id="painel-avancado" hidden>
-          <p class="dica" style="margin:0 0 -4px">Você não precisa mexer aqui para a busca funcionar. Ajuste apenas se souber o que quer.</p>
+          <p class="dica" style="margin:0 0 -4px">Você não precisa mexer aqui para a busca funcionar. Ajuste apenas se souber o que quer. Cada parâmetro está explicado em detalhes na <a href="https://gestaogovbr.github.io/Ro-dou/como_funciona/parametros/" target="_blank" rel="noopener">documentação de parâmetros</a>.</p>
           <div class="linha-dupla">
             <div class="campo">
               <label for="f-date">Período de cada busca <span class="tec">date</span></label>
@@ -530,6 +533,7 @@
           </div>
           <div class="campo">
             <label for="f-department-ignore">Ignorar órgãos/unidades <span class="tec">department_ignore</span></label>
+            <div class="dica">Publicações destas unidades serão descartadas dos resultados — uma por linha, com o nome idêntico ao usado na publicação.</div>
             <textarea id="f-department-ignore"></textarea>
           </div>
           <div class="campo">
@@ -541,6 +545,7 @@
             <label class="check-item"><input type="checkbox" id="f-aproximada"> Aceitar variações e erros de digitação do termo (busca aproximada) <span class="tec">is_exact_search</span></label>
             <label class="check-item"><input type="checkbox" id="f-igsig"> Ignorar quando o termo aparece só na assinatura <span class="tec">ignore_signature_match</span></label>
             <label class="check-item"><input type="checkbox" id="f-rematch"> Refazer a busca mesmo se já tiver sido feita <span class="tec">force_rematch</span></label>
+            <div class="dica" style="margin:-4px 0 0 23px">Normalmente o robô não repete uma busca já executada para o mesmo dia. Marque para forçar o reprocessamento — útil ao testar ou corrigir uma configuração.</div>
           </div>
           <div class="grupo-fonte" id="painel-inlabs" hidden>
             <p class="dica" style="margin:10px 0 -4px"><span class="selo-opcional">recursos do INLABS</span> disponíveis porque você marcou essa fonte.</p>
@@ -548,6 +553,7 @@
               <label class="check-item"><input type="checkbox" id="f-fulltext"> Mostrar o texto completo no relatório <span class="tec">full_text</span></label>
               <label class="check-item"><input type="checkbox" id="f-usesummary"> Mostrar a ementa (resumo oficial), quando existir <span class="tec">use_summary</span></label>
               <label class="check-item"><input type="checkbox" id="f-relevancy"> Mostrar a relevância de cada resultado <span class="tec">show_relevancy</span></label>
+              <div class="dica" style="margin:-4px 0 0 23px">Exibe no relatório uma pontuação de quão bem cada publicação corresponde ao termo buscado, calculada pelo indexador de buscas (requer OpenSearch configurado).</div>
             </div>
             <div class="campo">
               <label for="f-textlength">Tamanho do trecho exibido <span class="tec">text_length</span></label>
@@ -561,10 +567,12 @@
             <div class="linha-dupla">
               <div class="campo">
                 <label for="f-excerptsize">Tamanho do trecho exibido <span class="tec">excerpt_size</span></label>
+                <div class="dica">Máximo de caracteres do trecho onde o termo foi encontrado. Padrão: 500.</div>
                 <input type="number" id="f-excerptsize" min="1" placeholder="500">
               </div>
               <div class="campo">
                 <label for="f-numexcerpts">Máx. de trechos por edição <span class="tec">number_of_excerpts</span></label>
+                <div class="dica">Quantas ocorrências do termo mostrar, no máximo, numa mesma edição do diário. Padrão: 5.</div>
                 <input type="number" id="f-numexcerpts" min="1" placeholder="5">
               </div>
             </div>
@@ -605,6 +613,7 @@
           </div>
           <div class="campo">
             <label class="check-item"><input type="checkbox" id="f-hidefilters"> Ocultar os filtros no relatório <span class="tec">hide_filters</span></label>
+            <div class="dica">O e-mail deixa de mostrar o cabeçalho com os filtros usados na pesquisa (termos, seções, período), exibindo só os resultados.</div>
           </div>
           <div class="campo">
             <label for="f-headertext">Texto de abertura do relatório <span class="tec">header_text</span></label>
@@ -665,7 +674,7 @@
 <footer class="gerador-rodape">
   <p style="margin:0 0 6px">Este gerador cobre o caminho mais comum de uso do Ro-DOU. Alguns recursos avançados e documentados não estão aqui — se precisar de algum deles, peça apoio da equipe técnica:
   resumo automático por Inteligência Artificial, termos de busca vindos de um banco de dados ou de uma variável do Airflow, notificação via outros aplicativos de mensagem (Apprise) e múltiplas buscas dentro do mesmo arquivo.</p>
-  <p style="margin:0">Dúvidas sobre cada parâmetro? Consulte a <a href="https://gestaogovbr.github.io/Ro-dou/">documentação completa</a>.</p>
+  <p style="margin:0">Dúvidas sobre cada parâmetro? Consulte a <a href="https://gestaogovbr.github.io/Ro-dou/como_funciona/parametros/">descrição completa dos parâmetros</a> ou a <a href="https://gestaogovbr.github.io/Ro-dou/">documentação geral</a>.</p>
 </footer>
 
 <script>
