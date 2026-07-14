@@ -5,11 +5,11 @@ nav:
   - O que é Ro-DOU?: definicao/rodou.md
   - Como utilizar:
     - Introdução: como_utilizar/intro_utilizacao.md
-    - Gerador de configuração (YAML): gerador_yaml.html
     - Instalação e configuração: como_utilizar/instalacao.md
     - Instalação do k8s: como_utilizar/instalacao_k8s.md
     - Instalação do WSL no Windows: como_utilizar/instalacao_wsl_windows.md
     - Habilitação do Docker no WSL: como_utilizar/habilitacao_docker_no_wsl.md
+    - Gerador de configuração (YAML): gerador_yaml.html
     - Usuários internos e externos: como_utilizar/usuarios.md
     - Notificação de erros: como_utilizar/notificacao_de_erros.md
     - Habilitando IA nos resumos: como_utilizar/habilitando_ia.md
