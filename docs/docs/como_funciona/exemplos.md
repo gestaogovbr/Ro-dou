@@ -636,3 +636,32 @@ dag:
       - destination@economia.gov.br
 
 ```
+### Exemplo 23
+Esta configuração demonstra como realizar uma busca omitindo anexos e tabelas no corpo
+do texto
+
+```yaml
+dag:
+  id: hide_attachments_example
+  description: DAG de teste omitindo anexos e tabelas
+  tags:
+    - inlabs
+  dataset: inlabs
+  owner:
+    - cdata
+  search:
+    sources:
+    - INLABS
+    terms:
+      - tecnologia
+      - informação
+    ignore_attachments: True
+    ignore_inline_tables: True
+    min_table_rows: 1
+  report:
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou (omitindo anexos e tabelas)"
+
+```
