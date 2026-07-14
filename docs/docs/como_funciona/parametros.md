@@ -36,6 +36,9 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **text_length** *(opcional)*: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)
 - **use_summary** *(opcional)*: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ignore_attachments** *(opcional)*: Define se os conteúdos anexos à matéria (tabelas, quadros e anexos) devem ser suprimidos do relatório. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ignore_inline_tables** *(opcional)*: Define se as tabelas embutidas no corpo da própria publicação devem ser omitidas. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **min_table_rows** *(opcional)*: Parâmetro complementar a `ignore_inline_tables` — só produz efeito quando `ignore_inline_tables: True`. Define o número mínimo de linhas que uma tabela deve ter para ser omitida. Default: `1` (todas as tabelas são omitidas).  (Funcionalidade disponível apenas no INLABS)
 - **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)-[Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
@@ -43,11 +46,7 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **sources** *(opcional)*: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS, DOESP. Default: DOU.
 - **terms** *(condicionalmente obrigatório)*: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se `QD` estiver na lista de `sources`, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios `terms`, `department` ou `pubtype`.
 - **show_relevancy** *(opcional)*: Exibe a relevância da publicação baseado no score do indexador de buscas.
-Default: False. (Funcionalidade disponível apenas no INLABS)
-- **neural_search_config** *(opcional)*: Configurações da busca semântica (por similaridade vetorial), que combina a busca por palavras-chave com a busca por similaridade, retornando também publicações relacionadas ao termo pesquisado que não contenham o termo literal. (Funcionalidade disponível apenas no INLABS)
-  - **neural_search** *(opcional)*: Habilita a busca semântica. Valores: True ou False. Default: False.
-  - **score** *(opcional)*: Pontuação mínima (entre 0.5 e 0.98) para considerar um resultado relevante na busca semântica. Abaixo de ~0.75 a busca fica muito permissiva; acima de ~0.95 dificilmente algo além de texto quase idêntico é retornado. Default: 0.85.
-  - **max_semantic_results** *(opcional)*: Número máximo de resultados retornados exclusivamente pela busca semântica (sem correspondência por palavra-chave). Default: 10.
+Default: False. (Funcionalidade disponível apenas no INLABS com o OpenSearch)
 - **territory_id** *(opcional)*: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.
 - **excerpt_size** *(opcional)*: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)
 - **number_of_excerpts** *(opcional)*: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário‑QD)

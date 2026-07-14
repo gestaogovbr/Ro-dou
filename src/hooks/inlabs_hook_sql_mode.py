@@ -27,7 +27,10 @@ class INLABSSQLModeHook(INLABSHook):
         full_text: bool,
         text_length: int,
         use_summary: bool,
-        show_relevancy: bool,
+        ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 1,
+        show_relevancy: bool = False,
         conn_id: str = INLABSHook.CONN_ID,
         client = None,
     ) -> dict:
@@ -62,6 +65,9 @@ class INLABSSQLModeHook(INLABSHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
             )
             if not all_results.empty

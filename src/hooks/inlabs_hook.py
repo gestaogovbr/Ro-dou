@@ -28,6 +28,9 @@ from opensearchpy import OpenSearch  # type: ignore
 
 from bs4 import BeautifulSoup
 
+# arttype values that identify annexes/attachments in the INLABS index.
+_ATTACHMENT_ARTTYPE = frozenset({"ANEXO", "QUADRO", "TABELA"})
+
 
 class INLABSHook(BaseHook):
     """A custom Apache Airflow Hook designed for executing searches via
@@ -77,8 +80,11 @@ class INLABSHook(BaseHook):
         full_text: bool,
         text_length: int,
         use_summary: bool,
-        show_relevancy: bool,
         neural_search_config: Optional[NeuralSearchConfig] = None,
+        ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 1,
+        show_relevancy: bool = False,
         conn_id: str = CONN_ID,
         client: OpenSearch | None = None,
     ) -> dict:
@@ -121,6 +127,9 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
                 conn_id=conn_id,
             )
@@ -300,6 +309,9 @@ class INLABSHook(BaseHook):
                 full_text=full_text,
                 text_length=text_length,
                 use_summary=use_summary,
+                ignore_attachments=ignore_attachments,
+                ignore_inline_tables=ignore_inline_tables,
+                min_table_rows=min_table_rows,
                 show_relevancy=show_relevancy,
                 neural_search=neural_search,
             )
@@ -389,6 +401,9 @@ class INLABSHook(BaseHook):
             text_length: int = 400,
             use_summary: bool = False,
             has_ementa: bool = False,
+            ignore_attachments: bool = False,
+            ignore_inline_tables: bool = False,
+            min_table_rows: int = 1,
             show_relevancy: bool = False,
             neural_search: bool = False,
         ) -> dict:
@@ -428,12 +443,33 @@ class INLABSHook(BaseHook):
             df["texto"] = df["texto"].apply(self._remove_duplicated_title)
 
             df["texto"] = df["texto"].apply(self._remove_empty_tr)
+
+            if ignore_inline_tables:
+                df["texto"] = df["texto"].apply(
+                    lambda x: self._replace_inline_tables(x, min_table_rows)
+                )
+
             if "opensearch_highlights" in df.columns:
                 df["_has_opensearch_highlight"] = df["opensearch_highlights"].apply(
                     self._has_opensearch_highlight
                 )
             else:
                 df["_has_opensearch_highlight"] = False
+
+            if ignore_attachments:
+                # A blank/null `identifica` means this record is a table or
+                # other fragment attached to a publication, not the
+                # publication itself (see comment above). This is the
+                # authoritative signal; `arttype` is kept as a secondary,
+                # defense-in-depth check.
+                _is_attachment = (
+                    df["identifica"].isna()
+                    | (df["identifica"].astype(str).str.strip() == "")
+                    | df["arttype"].str.upper().isin(_ATTACHMENT_ARTTYPE)
+                )
+                df = df[~_is_attachment]
+                if df.empty:
+                    return {}
 
             # Fill NaN identifica with name column value
             df["identifica"] = df["identifica"].fillna(df["name"])
@@ -454,7 +490,10 @@ class INLABSHook(BaseHook):
                     lambda terms: ", ".join(terms)
                 )
                 df["matches"] = df["matched_terms_text"]
-                if "semantic_match" in df.columns and "searched_expression" in df.columns:
+                if (
+                    "semantic_match" in df.columns
+                    and "searched_expression" in df.columns
+                ):
                     # Pure semantic hits have no lexical `matched_terms`, so
                     # `matches` would otherwise be empty and the result would
                     # be grouped/labeled under a blank term in the report.
@@ -528,6 +567,14 @@ class INLABSHook(BaseHook):
                 # If use_summary replace texto value by summary value
                 ementa_has_content = df["ementa"].fillna("").str.strip().ne("")
                 df["texto"] = df["texto"].where(~ementa_has_content, df["ementa"])
+                # The ementa replaces `texto` after the inline-table handling at
+                # the top of this method, so re-apply it here; otherwise the
+                # placeholder inserted earlier would be discarded along with the
+                # original `texto`.
+                if ignore_inline_tables:
+                    df.loc[ementa_has_content, "texto"] = df.loc[
+                        ementa_has_content, "texto"
+                    ].apply(lambda x: self._replace_inline_tables(x, min_table_rows))
                 # Mark if the ementa exists in a new column to be used on the template to display the "Ementa" tag
                 df["has_ementa"] = ementa_has_content
                 df.loc[ementa_has_content, "texto"] = df.loc[ementa_has_content].apply(
@@ -694,6 +741,38 @@ class INLABSHook(BaseHook):
                 return text
             return " (...) ".join(highlights)
 
+        @staticmethod
+        def _plain_text(text: str) -> str:
+            """De-tag and collapse whitespace, mirroring the ``texto_plain``
+            field indexed in OpenSearch (see ``open_search.indexer``)."""
+            return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text)).strip()
+
+        @classmethod
+        def _drop_omitted_table_highlights(cls, text: str, highlights):
+            """Discard OpenSearch highlight fragments whose content was removed
+            by ``ignore_inline_tables``.
+
+            OpenSearch highlights come from ``texto_plain`` (the fully de-tagged
+            document), so a term matched *inside* an omitted table would
+            otherwise resurface the table content and bypass the
+            ``[Tabela de N linhas omitida]`` placeholder. When a table was
+            omitted from ``text`` (the placeholder is present), keep only the
+            fragments whose text still exists in the cleaned ``text``.
+            """
+            if not cls._has_opensearch_highlight(highlights):
+                return highlights
+            if 'class="placeholder"' not in text:
+                return highlights
+            haystack = cls._normalize(cls._plain_text(text))
+            return [
+                h
+                for h in highlights
+                if cls._normalize(
+                    cls._plain_text(h.replace("<%%>", "").replace("</%%>", ""))
+                )
+                in haystack
+            ]
+
         def _highlight_search_text(
             self, terms: list, text: str, opensearch_highlights=None
         ) -> str:
@@ -707,7 +786,10 @@ class INLABSHook(BaseHook):
             highlighted_text = self._highlight_terms(terms, text)
             if "<%%>" in highlighted_text:
                 return highlighted_text
-            return self._opensearch_highlight_excerpt(text, opensearch_highlights)
+            highlights = self._drop_omitted_table_highlights(
+                text, opensearch_highlights
+            )
+            return self._opensearch_highlight_excerpt(text, highlights)
 
         def _highlight_terms(self, terms: list, text: str) -> str:
             """Wrap `terms` values in `text` with `<%%>` and `</%%>`.
@@ -941,6 +1023,25 @@ class INLABSHook(BaseHook):
             _from_start = self._truncate_from_start
             _from_end = self._truncate_from_end
 
+            # When there is no search highlight to center on (e.g. the match
+            # was inside a table removed by ``ignore_inline_tables``), anchor the
+            # excerpt on the omitted-table placeholder so the
+            # ``[Tabela de N linhas omitida]`` marker stays visible instead of
+            # being truncated away with the surrounding text.
+            if "<%%>" not in text:
+                placeholder_match = re.search(
+                    r'<p><span class="placeholder">\[[^\]]*\]</span></p>', text
+                )
+                if placeholder_match:
+                    before_full = text[: placeholder_match.start()]
+                    placeholder = placeholder_match.group(0)
+                    after_full = text[placeholder_match.end() :]
+                    before, before_cut = _from_end(before_full, text_length)
+                    after, after_cut = _from_start(after_full, text_length)
+                    prefix = "(...) " if before_cut else ""
+                    suffix = " (...)" if after_cut else ""
+                    return f"{prefix}{before}{placeholder}{after}{suffix}"
+
             marker_match = re.search(r"<%%>[\s\S]*?</%%>", text)
             if marker_match and self._visible_len(marker_match.group(0)) > text_length:
                 before_full = text[: marker_match.start()]
@@ -1036,12 +1137,42 @@ class INLABSHook(BaseHook):
             )
 
         @staticmethod
+        def _replace_inline_tables(text: str, min_table_rows: int = 1) -> str:
+            """Replace inline <table> blocks with a short placeholder.
+
+            Only tables with at least ``min_table_rows`` rows (after empty-row
+            removal) are replaced. With the default of 1, every table with
+            content is omitted; a higher ``min_table_rows`` keeps smaller tables
+            that likely carry structural content (e.g. a two-column value/label
+            pair). Applies regardless of ``full_text``.
+            """
+            soup = BeautifulSoup(text, "html.parser")
+            for table in soup.find_all("table"):
+                rows = table.find_all("tr")
+                if len(rows) >= min_table_rows:
+                    n = len(rows)
+                    label = f"[Tabela de {n} linhas omitida]"
+                    placeholder = BeautifulSoup(
+                        f'<p><span class="placeholder">{label}</span></p>',
+                        "html.parser",
+                    )
+                    table.replace_with(placeholder)
+            return str(soup)
+
+        @staticmethod
         def _remove_empty_tr(text: str) -> str:
-            """Remove <tr> tags that contain no visible content."""
+            """Remove <tr> tags that contain no visible content.
+
+            Both ``<td>`` and ``<th>`` cells are inspected so that a header row
+            (built only with ``<th>``) is not mistaken for an empty row. This
+            keeps such rows counted toward ``min_table_rows`` in
+            ``_replace_inline_tables``.
+            """
             soup = BeautifulSoup(text, "html.parser")
 
             for tr in soup.find_all("tr"):
-                if all(not td.get_text(strip=True) for td in tr.find_all("td")):
+                cells = tr.find_all(["td", "th"])
+                if all(not cell.get_text(strip=True) for cell in cells):
                     tr.decompose()
 
             return str(soup)
