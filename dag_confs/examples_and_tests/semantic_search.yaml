@@ -5,7 +5,13 @@ dag:
     sources:
       - INLABS
     terms:
-      - bem-estar
+      - qualidade de vida
+      - vitalidade
+      - equilíbrio
+      - longevidade
+      - disposição
+      - condicionamento físico
+      - qualidade do sono
     neural_search_config:
       neural_search: true
       score: 0.90
