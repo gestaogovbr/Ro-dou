@@ -14,9 +14,6 @@ dag:
       - tecnologia
       - informação
     use_summary: True
-    # ignore_attachments: True
-    ignore_inline_tables: True
-    min_table_rows: 5
   report:
     emails:
       - destination@economia.gov.br
