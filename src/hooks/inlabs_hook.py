@@ -431,6 +431,12 @@ class INLABSHook(BaseHook):
             # Semantic hits may have no lexical `matched_terms`, so the
             # relevancy tag becomes the only visible relevance signal.
             show_relevancy = show_relevancy or neural_search
+
+            # When semantic search is enabled, ignore attachments and
+            # inline tables to avoid false positives from unrelated content.
+            ignore_attachments = ignore_attachments or neural_search
+            ignore_inline_tables = ignore_inline_tables or neural_search
+
             logging.info(f"Search results: {response}")
             df = response.copy()
             # `identifica` column is the publication title. If None
