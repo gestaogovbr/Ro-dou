@@ -268,3 +268,7 @@ down:
 .PHONY: tests
 tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+
+.PHONY: gerador-cli
+gerador-cli:
+	docker exec -it airflow-webserver python3 /opt/airflow/tools/gerador_cli.py
