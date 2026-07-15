@@ -474,6 +474,7 @@
               </span>
             </label>
           </div>
+          <p class="dica" id="dica-exclusividade" hidden>O DOU e o INLABS trazem o mesmo conteúdo por caminhos diferentes, por isso apenas um dos dois pode ficar marcado — ao marcar um, o outro é desmarcado automaticamente.</p>
         </div>
         <p class="dica" id="dica-inlabs-dataset" hidden>Como o INLABS está marcado, o arquivo incluirá automaticamente <span class="tec">dataset: inlabs</span> — isso faz a busca esperar os dados do INLABS chegarem antes de rodar, evitando relatórios vazios.</p>
         <div class="campo campo-opcional" id="campo-territory" hidden>
@@ -685,6 +686,8 @@
   const linhas = (id) => $(id).value.split("\n").map(s => s.trim()).filter(Boolean);
   const csv = (id) => $(id).value.split(",").map(s => s.trim()).filter(Boolean);
   const checks = (id) => Array.from($(id).querySelectorAll("input:checked")).map(i => i.value);
+  const cbDou = document.querySelector('#f-sources input[value="DOU"]');
+  const cbInlabs = document.querySelector('#f-sources input[value="INLABS"]');
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   // Webhooks aceitos na UI; no YAML são emitidos como URLs Apprise (notification:)
   const DISCORD_WEBHOOK_RE = /^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/webhooks\/(\d+)\/([\w-]+)\/?$/;
@@ -801,8 +804,12 @@
     $("dica-inlabs-dataset").hidden = !temInlabs;
     $("aviso-operadores").hidden = temInlabs;
 
+    $("dica-exclusividade").hidden = !(cbDou.checked || cbInlabs.checked);
+
     // ---- validações — dizem o que fazer, não só o que está errado ----
     if (!id) erros.push("Dê um nome para esta busca, sem espaços (ex.: <strong>monitoramento_dados_abertos</strong>).");
+    if (temInlabs && sources.includes("DOU"))
+      erros.push("O DOU e o INLABS não podem ser usados juntos em \"Onde buscar\" — desmarque um deles.");
     if (!desc) erros.push("Escreva uma breve descrição do que esta busca faz.");
     if (!terms.length && !dept.length && !pubtype.length)
       erros.push("Adicione pelo menos uma palavra ou expressão para monitorar.");
@@ -1067,6 +1074,12 @@
       .forEach(id => { $(id).checked = false; });
     gerar();
   });
+
+  // ---- exclusividade DOU × INLABS: backends distintos para o mesmo conteúdo,
+  // marcar um desmarca o outro. Registrado antes dos listeners de gerar()
+  // abaixo, para o YAML ser montado já com a seleção corrigida.
+  cbDou.addEventListener("change", () => { if (cbDou.checked) cbInlabs.checked = false; });
+  cbInlabs.addEventListener("change", () => { if (cbInlabs.checked) cbDou.checked = false; });
 
   document.querySelectorAll("input, textarea, select").forEach(el => {
     el.addEventListener("input", gerar);
