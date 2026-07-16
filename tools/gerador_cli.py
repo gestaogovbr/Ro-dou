@@ -42,12 +42,14 @@ FONTES = {"dou": "DOU", "inlabs": "INLABS", "qd": "QD"}
 # ---------------------------------------------------------------- interação
 
 def titulo(texto: str) -> None:
+    """Imprime um cabeçalho de seção colorido."""
     print(f"\n{AZUL}── {texto} ──{RESET}")
 
 
 def perguntar(
     mensagem: str, dica: str | None = None, obrigatorio: bool = False
 ) -> str | None:
+    """Faz uma pergunta de texto livre; insiste se obrigatória e vazia."""
     if dica:
         print(f"{CINZA}{dica}{RESET}")
     marca = f"{VERM}*{RESET}" if obrigatorio else " "
@@ -63,6 +65,7 @@ def perguntar(
 def perguntar_lista(
     mensagem: str, dica: str | None = None, obrigatorio: bool = False
 ) -> list[str] | None:
+    """Pergunta uma lista de valores separados por vírgula."""
     valor = perguntar(f"{mensagem} (separe por vírgula)", dica, obrigatorio)
     if not valor:
         return None
@@ -70,6 +73,7 @@ def perguntar_lista(
 
 
 def perguntar_sim_nao(mensagem: str, default: bool = True) -> bool:
+    """Pergunta sim/não; Enter usa o default."""
     dica = "S/n" if default else "s/N"
     while True:
         valor = input(f"  {mensagem} ({dica}): ").strip().lower()
@@ -85,6 +89,7 @@ def perguntar_sim_nao(mensagem: str, default: bool = True) -> bool:
 # ------------------------------------------------------- coleta interativa
 
 def coletar_id() -> str:
+    """Pergunta o id da DAG (obrigatório)."""
     return perguntar(
         "ID da DAG",
         dica="ex.: monitoramento_dados_abertos (único, sem espaços)",
@@ -93,6 +98,7 @@ def coletar_id() -> str:
 
 
 def coletar_description() -> str:
+    """Pergunta a descrição da DAG (obrigatória)."""
     return perguntar(
         "Descrição da DAG",
         dica="ex.: Monitora publicações sobre dados abertos no DOU",
@@ -101,6 +107,7 @@ def coletar_description() -> str:
 
 
 def coletar_schedule() -> str | None:
+    """Pergunta o agendamento cron (opcional)."""
     return perguntar(
         "Agendamento cron",
         dica="ex.: 0 8 * * MON-FRI — Enter usa o padrão do Ro-dou",
@@ -108,6 +115,7 @@ def coletar_schedule() -> str | None:
 
 
 def coletar_owner() -> list[str] | None:
+    """Pergunta os owners da DAG (opcional)."""
     return perguntar_lista("Owners/responsáveis pela DAG", dica="ex.: cginf")
 
 
@@ -120,6 +128,7 @@ CAMPOS_SIMPLES = {
 
 
 def coletar_search() -> dict:
+    """Pergunta o bloco `search`: fontes, termos e territory_id (se QD)."""
     titulo("Busca")
     search = {}
     sources = perguntar_lista("Fontes (DOU, INLABS, QD)", dica="Enter usa DOU")
@@ -141,6 +150,7 @@ def coletar_search() -> dict:
 
 
 def coletar_report() -> dict:
+    """Pergunta o bloco `report`: e-mails de destino."""
     titulo("Relatório")
     report = {}
     emails = perguntar_lista(
@@ -154,7 +164,10 @@ def coletar_report() -> dict:
 # ------------------------------------------------------------- validação
 
 def formatar_erros(exc: ValidationError) -> str:
+    """Converte um ValidationError do Pydantic em lista legível de erros."""
     erros = exc.errors()
+    # Quando um validator do schema levanta ValueError, o Pydantic também
+    # reporta erros de tipo dos outros ramos da união; mostra só as regras.
     erros_de_regra = [erro for erro in erros if erro["type"] == "value_error"]
     if erros_de_regra:
         erros = erros_de_regra
@@ -203,7 +216,12 @@ class DumperIndentado(yaml.SafeDumper):
 
 
 def gerar_yaml(config: RoDouConfig) -> str:
+    """Serializa a configuração validada em YAML enxuto."""
+    # Só o que o usuário informou entra no YAML; os defaults ficam a cargo
+    # do Ro-dou na hora de carregar a DAG.
     dag_enxuto = config.dag.model_dump(exclude_defaults=True, exclude_none=True)
+    # O schema normaliza `search` para lista, mas com uma busca só os
+    # exemplos de dag_confs/ usam mapeamento direto.
     search = dag_enxuto.get("search")
     if isinstance(search, list) and len(search) == 1:
         dag_enxuto["search"] = search[0]
@@ -220,6 +238,7 @@ RE_ITEM = re.compile(r"^\s*- ")
 
 
 def colorir_yaml(texto: str) -> str:
+    """Aplica cores ANSI ao YAML para exibição no terminal."""
     linhas = []
     for linha in texto.splitlines():
         chave = RE_CHAVE.match(linha)
@@ -238,6 +257,7 @@ def colorir_yaml(texto: str) -> str:
 def salvar_arquivo(
     id_dag: str, yaml_texto: str, args: argparse.Namespace, interativo: bool
 ) -> int:
+    """Grava o YAML em disco, protegendo contra sobrescrita acidental."""
     caminho = args.output or os.path.join(DAG_CONFS_DIR, f"{id_dag}.yaml")
     if os.path.exists(caminho) and not args.force:
         if not interativo:
@@ -269,6 +289,7 @@ def salvar_arquivo(
 # ------------------------------------------------------------------ modos
 
 def modo_interativo(args: argparse.Namespace) -> int:
+    """Coleta os campos por perguntas, valida e repergunta só o que falhou."""
     print(f"{AZUL}Gerador de YAML do Ro-dou{RESET}")
     print(
         f"{CINZA}Responda às perguntas abaixo; campos marcados com "
@@ -298,6 +319,7 @@ def modo_interativo(args: argparse.Namespace) -> int:
                 if campo in CAMPOS_SIMPLES:
                     valor = CAMPOS_SIMPLES[campo]()
                     if valor is None:
+                        # Enter em campo opcional descarta o valor que falhou.
                         dag_dict.pop(campo, None)
                     else:
                         dag_dict[campo] = valor
@@ -318,6 +340,7 @@ def modo_interativo(args: argparse.Namespace) -> int:
 
 
 def montar_dag_dict(args: argparse.Namespace) -> dict:
+    """Traduz as flags do argparse para o dict esperado pelo schema."""
     search = {}
     if args.sources:
         search["sources"] = [FONTES[fonte] for fonte in args.sources]
@@ -339,6 +362,7 @@ def montar_dag_dict(args: argparse.Namespace) -> dict:
 
 
 def modo_direto(args: argparse.Namespace) -> int:
+    """Gera o YAML a partir das flags, sem perguntas; erro vira exit 1."""
     try:
         config = RoDouConfig(dag=montar_dag_dict(args))
     except ValidationError as exc:
@@ -354,6 +378,8 @@ def modo_direto(args: argparse.Namespace) -> int:
 
 # ------------------------------------------------------------------- main
 
+# Flags de conteúdo: a presença de qualquer uma delas ativa o modo direto.
+# --output/--stdout/--force ficam de fora porque valem nos dois modos.
 FLAGS_CONFIG = (
     "id", "description", "schedule", "owner",
     "terms", "sources", "territory_id", "emails",
@@ -361,6 +387,7 @@ FLAGS_CONFIG = (
 
 
 def montar_parser() -> argparse.ArgumentParser:
+    """Define as flags aceitas pela linha de comando."""
     parser = argparse.ArgumentParser(
         description="Gera arquivos YAML de configuração de DAGs do Ro-dou. "
         "Sem flags de configuração, roda em modo interativo.",
@@ -406,6 +433,7 @@ def montar_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Escolhe o modo: flags de conteúdo presentes → direto; senão interativo."""
     args = montar_parser().parse_args(argv)
     modo_flags = any(
         getattr(args, campo) is not None for campo in FLAGS_CONFIG
