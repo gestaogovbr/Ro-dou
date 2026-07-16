@@ -1,11 +1,7 @@
 """CLI (POC) para gerar arquivos de configuração YAML do Ro-dou.
 
-Dois modos de uso:
-
-- interativo (padrão, sem flags de configuração): perguntas passo a passo;
-- por flags: geração direta, sem perguntas — ex.:
-  ``gerador_cli.py --id minha_busca --description "..." --terms "dados abertos"
-  --emails pessoa@gov.br --stdout``
+O uso é interativo: o gerador faz perguntas passo a passo e, ao final,
+salva o YAML em `dag_confs/` (ou o imprime na tela, com ``--stdout``).
 
 Este script não reimplementa nenhuma regra de negócio: toda a validação é
 delegada ao `RoDouConfig` (Pydantic) definido em `src/schemas.py`, a mesma
@@ -35,8 +31,6 @@ DAG_CONFS_DIR = os.environ.get(
 VERDE, AZUL, VERM, CINZA, RESET = (
     "\033[32m", "\033[36m", "\033[31m", "\033[90m", "\033[0m"
 )
-
-FONTES = {"dou": "DOU", "inlabs": "INLABS", "qd": "QD"}
 
 
 # ---------------------------------------------------------------- interação
@@ -128,12 +122,12 @@ CAMPOS_SIMPLES = {
 
 
 def coletar_search() -> dict:
-    """Pergunta o bloco `search`: fontes, termos e territory_id (se QD)."""
+    """Pergunta o bloco `search`: fonte, termos e territory_id (se QD)."""
     titulo("Busca")
     search = {}
-    sources = perguntar_lista("Fontes (DOU, INLABS, QD)", dica="Enter usa DOU")
-    if sources:
-        search["sources"] = [fonte.upper() for fonte in sources]
+    fonte = perguntar("Fonte (DOU, INLABS ou QD)", dica="apenas uma; Enter usa DOU")
+    if fonte:
+        search["sources"] = [fonte.upper()]
     terms = perguntar_lista(
         "Termos de pesquisa", dica="ex.: dados abertos, governo aberto"
     )
@@ -255,18 +249,11 @@ def colorir_yaml(texto: str) -> str:
 # ------------------------------------------------------------------ saída
 
 def salvar_arquivo(
-    id_dag: str, yaml_texto: str, args: argparse.Namespace, interativo: bool
+    id_dag: str, yaml_texto: str, args: argparse.Namespace
 ) -> int:
     """Grava o YAML em disco, protegendo contra sobrescrita acidental."""
     caminho = args.output or os.path.join(DAG_CONFS_DIR, f"{id_dag}.yaml")
     if os.path.exists(caminho) and not args.force:
-        if not interativo:
-            print(
-                f"{VERM}Arquivo {caminho} já existe — use --force para "
-                f"sobrescrever.{RESET}",
-                file=sys.stderr,
-            )
-            return 1
         if not perguntar_sim_nao(
             f"Arquivo {caminho} já existe. Sobrescrever?", default=False
         ):
@@ -286,7 +273,7 @@ def salvar_arquivo(
     return 0
 
 
-# ------------------------------------------------------------------ modos
+# -------------------------------------------------------- modo interativo
 
 def modo_interativo(args: argparse.Namespace) -> int:
     """Coleta os campos por perguntas, valida e repergunta só o que falhou."""
@@ -336,86 +323,16 @@ def modo_interativo(args: argparse.Namespace) -> int:
     if not perguntar_sim_nao("Salvar este arquivo?"):
         print("Arquivo não foi salvo.")
         return 0
-    return salvar_arquivo(config.dag.id, yaml_texto, args, interativo=True)
-
-
-def montar_dag_dict(args: argparse.Namespace) -> dict:
-    """Traduz as flags do argparse para o dict esperado pelo schema."""
-    search = {}
-    if args.sources:
-        search["sources"] = [FONTES[fonte] for fonte in args.sources]
-    if args.terms:
-        search["terms"] = args.terms
-    if args.territory_id is not None:
-        search["territory_id"] = args.territory_id
-    report = {}
-    if args.emails:
-        report["emails"] = args.emails
-    dag_dict = {"search": search, "report": report}
-    for campo in ("id", "description", "schedule"):
-        valor = getattr(args, campo)
-        if valor is not None:
-            dag_dict[campo] = valor
-    if args.owner:
-        dag_dict["owner"] = args.owner
-    return dag_dict
-
-
-def modo_direto(args: argparse.Namespace) -> int:
-    """Gera o YAML a partir das flags, sem perguntas; erro vira exit 1."""
-    try:
-        config = RoDouConfig(dag=montar_dag_dict(args))
-    except ValidationError as exc:
-        print(f"{VERM}Configuração inválida:{RESET}", file=sys.stderr)
-        print(f"{VERM}{formatar_erros(exc)}{RESET}", file=sys.stderr)
-        return 1
-    yaml_texto = gerar_yaml(config)
-    if args.stdout:
-        print(yaml_texto, end="")
-        return 0
-    return salvar_arquivo(config.dag.id, yaml_texto, args, interativo=False)
+    return salvar_arquivo(config.dag.id, yaml_texto, args)
 
 
 # ------------------------------------------------------------------- main
 
-# Flags de conteúdo: a presença de qualquer uma delas ativa o modo direto.
-# --output/--stdout/--force ficam de fora porque valem nos dois modos.
-FLAGS_CONFIG = (
-    "id", "description", "schedule", "owner",
-    "terms", "sources", "territory_id", "emails",
-)
-
-
 def montar_parser() -> argparse.ArgumentParser:
-    """Define as flags aceitas pela linha de comando."""
+    """Define as flags de saída aceitas pela linha de comando."""
     parser = argparse.ArgumentParser(
-        description="Gera arquivos YAML de configuração de DAGs do Ro-dou. "
-        "Sem flags de configuração, roda em modo interativo.",
-        epilog="exemplo: %(prog)s --id minha_busca --description 'Minha busca' "
-        "--terms 'dados abertos' --emails pessoa@gov.br --stdout",
-    )
-    parser.add_argument("--id", help="nome único da DAG")
-    parser.add_argument("--description", help="descrição da DAG")
-    parser.add_argument("--schedule", help="expressão cron do agendamento")
-    parser.add_argument(
-        "--owner", action="append", metavar="NOME",
-        help="responsável pela DAG (repetível)",
-    )
-    parser.add_argument(
-        "--terms", action="append", metavar="TERMO",
-        help="termo de pesquisa (repetível)",
-    )
-    parser.add_argument(
-        "--sources", action="append", choices=sorted(FONTES),
-        help="fonte de dados (repetível; padrão: dou)",
-    )
-    parser.add_argument(
-        "--territory-id", type=int, metavar="ID",
-        help="ID do município no Querido Diário",
-    )
-    parser.add_argument(
-        "--emails", action="append", metavar="EMAIL",
-        help="e-mail de destino do relatório (repetível)",
+        description="Gera arquivos YAML de configuração de DAGs do Ro-dou "
+        "por meio de perguntas interativas.",
     )
     parser.add_argument(
         "--output", metavar="ARQUIVO",
@@ -433,13 +350,8 @@ def montar_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Escolhe o modo: flags de conteúdo presentes → direto; senão interativo."""
+    """Processa as flags de saída e roda o questionário interativo."""
     args = montar_parser().parse_args(argv)
-    modo_flags = any(
-        getattr(args, campo) is not None for campo in FLAGS_CONFIG
-    )
-    if modo_flags:
-        return modo_direto(args)
     return modo_interativo(args)
 
 

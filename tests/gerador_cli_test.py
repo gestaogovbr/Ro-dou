@@ -1,6 +1,7 @@
 """Testa o CLI (POC) de geração de YAML: tools/gerador_cli.py."""
 
 import os
+import re
 import subprocess
 import sys
 
@@ -21,27 +22,35 @@ _SRC_PATHS = [
     os.path.normpath(os.path.join(_TESTS_DIR, "..", "src")),
 ]
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
-def test_modo_flags_gera_yaml_valido():
+
+def test_modo_interativo_gera_yaml_valido():
     cli = next(path for path in _CLI_PATHS if os.path.exists(path))
     src = next(path for path in _SRC_PATHS if os.path.isdir(path))
-    resultado = subprocess.run(
+    respostas = "\n".join(
         [
-            sys.executable, cli,
-            "--id", "teste_poc_cli",
-            "--description", "Teste do modo por flags do gerador CLI",
-            "--terms", "dados abertos",
-            "--terms", "governo aberto",
-            "--emails", "destination@economia.gov.br",
-            "--stdout",
-        ],
+            "teste_poc_cli",  # id
+            "Teste do modo interativo do gerador CLI",  # description
+            "",  # schedule (pula)
+            "",  # owner (pula)
+            "",  # fonte (pula; usa DOU)
+            "dados abertos, governo aberto",  # termos
+            "destination@economia.gov.br",  # e-mails
+        ]
+    ) + "\n"
+    resultado = subprocess.run(
+        [sys.executable, cli, "--stdout"],
+        input=respostas,
         capture_output=True,
         text=True,
         env={**os.environ, "RO_DOU_SRC_PATH": src},
         check=False,
     )
     assert resultado.returncode == 0, resultado.stderr
-    data = yaml.safe_load(resultado.stdout)
+    saida = _ANSI.sub("", resultado.stdout)
+    yaml_texto = saida.split("── YAML gerado ──\n", 1)[1]
+    data = yaml.safe_load(yaml_texto)
     config = RoDouConfig(**data)
     assert config.dag.id == "teste_poc_cli"
     assert config.dag.search[0].terms == ["dados abertos", "governo aberto"]

@@ -270,7 +270,7 @@ tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
 # Roda o gerador de YAML dentro do container, onde o Airflow está
-# disponível; -it porque o modo interativo lê do terminal.
+# disponível; -it porque o gerador lê as respostas do terminal.
 .PHONY: gerador-cli
 gerador-cli:
 	docker exec -it airflow-webserver python3 /opt/airflow/tools/gerador_cli.py
