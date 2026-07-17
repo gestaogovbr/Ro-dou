@@ -447,12 +447,10 @@ class DouDigestDagGenerator:
             "depends_on_past": False,
             "retries": 10,
             "retry_delay": timedelta(minutes=2),
-            # TODO: re-enable when Airflow 3 implements task callbacks
-            # https://github.com/apache/airflow/issues/44354
-            # "on_retry_callback": self.on_retry_callback,
-            # "on_failure_callback": lambda context: self._notify_on_failure(
-            #     specs, context
-            # ),
+            "on_retry_callback": self.on_retry_callback,
+            "on_failure_callback": lambda context: self._notify_on_failure(
+                specs, context
+            ),
         }
 
         schedule = self._update_schedule(specs)
