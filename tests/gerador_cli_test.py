@@ -34,8 +34,11 @@ def test_modo_interativo_gera_yaml_valido():
             "Teste do modo interativo do gerador CLI",  # description
             "",  # schedule (pula)
             "",  # owner (pula)
+            "",  # callback (pula)
             "",  # fonte (pula; usa DOU)
             "dados abertos, governo aberto",  # termos
+            "",  # terms_ignore (pula)
+            "",  # dou_sections (pula; default TODOS)
             "destination@economia.gov.br",  # e-mails
             "",  # subject (pula)
             "",  # attach_csv (pula; default não)
