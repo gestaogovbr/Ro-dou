@@ -81,7 +81,7 @@ O Apache Airflow, utilizado também para executar o Ro-DOU, pode levar alguns mi
 
 Na tela inicial do Airflow, são fornecidos clippings de exemplo. A partir dos arquivos YAML (.yaml) do diretório `dag_confs/`, é possível manipular e customizar as pesquisas de clipping desejadas nos diários oficiais. Dentro dos arquivos YAML, é possível, por exemplo, definir palavras-chave de busca e um endereço de e-mail para recebimento de uma mensagem com os resultados da busca no(s) diário(s) oficial(is).
 
-Para criar um novo arquivo YAML de pesquisa sem precisar editá-lo manualmente, utilize o [Gerador de configuração (YAML)](../gerador_yaml.html). Alternativamente, com o ambiente rodando, execute `make gerador-cli` no terminal: ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em `dag_confs/`.
+Para criar um novo arquivo YAML de pesquisa sem precisar editá-lo manualmente, utilize o [Gerador de configuração (YAML)](../gerador_yaml.html). Alternativamente, com o ambiente rodando, execute `make gerar-yml` no terminal: ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em `dag_confs/`.
 
 Para executar qualquer DAG do Airflow, é necessário ligá-la. Inicialmente, todas as DAGs ficam pausadas por padrão. Sugerimos começar testando o clipping **all_parameters_example**. Utilize o botão _toggle_ para ligá-lo. Após ativá-lo, o Airflow executará a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
 para visualizar o detalhe da execução.
