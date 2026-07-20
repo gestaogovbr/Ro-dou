@@ -13,6 +13,7 @@ import textwrap
 from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional, Union
 from functools import reduce
+from urllib.parse import urlparse
 
 from airflow import DAG, Dataset
 from airflow.models.param import Param
@@ -26,15 +27,38 @@ from airflow.timetables.trigger import CronTriggerTimetable
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
-from utils.select_terms import TermSelector
+
 from notification.notifier import Notifier
+from utils.select_terms import TermSelector
+from notification.email_sender import EmailSender
+from notification.notification_sender import NotificationSender
 from parsers import DAGConfig, YAMLParser
 from schemas import FetchTermsConfig
-from searchers import BaseSearcher, DOUSearcher, QDSearcher, INLABSSearcher, DOESPSearcher
+from searchers import (
+    BaseSearcher,
+    DOUSearcher,
+    QDSearcher,
+    INLABSSearcher,
+    DOESPSearcher,
+)
 
 from airflow.models import Variable
 from ai.runner import AIRunner
+
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
+
+
+def _channel_name_from_url(url: str) -> str:
+    """Extract the notification channel name from a URL."""
+    parsed_url = urlparse(url)
+
+    if parsed_url.scheme and parsed_url.scheme not in {"http", "https"}:
+        return parsed_url.scheme.lower()
+
+    hostname = parsed_url.hostname or ""
+    parts = hostname.split(".")
+
+    return parts[-2] if len(parts) >= 2 else "unknown_channel"
 
 
 def merge_results(*dicts: SearchResult) -> SearchResult:
@@ -118,7 +142,7 @@ class DouDigestDagGenerator:
         }
 
         self.on_failure_callback = self._notify_on_failure
-        self.on_retry_callback = None
+        # self.on_retry_callback = None
 
     def _notify_on_failure(self, specs: DAGConfig, context):
         """Function called when the task fails to send a notification to admin"""
@@ -127,14 +151,15 @@ class DouDigestDagGenerator:
         try:
             task_instance = context.get("task_instance") or context.get("ti")
             dag_run = context.get("dag_run")
-            exception = context.get("exception")
 
             if not task_instance or not dag_run:
                 logging.error("Missing required context: task_instance or dag_run")
                 return
 
             failure_sender = FailureSender(specs=specs)
-            failure_sender.send(context, dag_run, task_instance, exception)
+            failure_sender.send(
+                context, dag_run, task_instance, exception=context.get("exception")
+            )
 
         except Exception as e:
             logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
@@ -154,14 +179,12 @@ class DouDigestDagGenerator:
         # options that won't show in the "DAG Docs"
         del config["description"]
         del config["doc_md"]
-        doc_md = specs.doc_md + textwrap.dedent(
-            f"""
+        doc_md = specs.doc_md + textwrap.dedent(f"""
 
             **Configuração da dag definida no arquivo `{config_file}`**:
 
 
-            """
-        )
+            """)
         for key, value in config.items():
             doc_md += f"\n**{key.replace('_', ' ').capitalize()}**\n"
 
@@ -307,7 +330,6 @@ class DouDigestDagGenerator:
         number_of_excerpts: Optional[int],
         **context,
     ) -> dict:
-
         """Performs the search in each source and merge the results"""
         if "DOU" in sources:
             dou_result = self.searchers["DOU"].exec_search(
@@ -410,7 +432,9 @@ class DouDigestDagGenerator:
 
         return search_results
 
-    def has_matches(self, num_searches: int, skip_null: bool, **context) -> str:
+    def has_matches(
+        self, num_searches: int, skip_null: bool, notify_task_ids: list, **context
+    ) -> str | list:
         """Check if search has matches and return to skip notification or not"""
 
         if skip_null:
@@ -424,19 +448,33 @@ class DouDigestDagGenerator:
                 items = ["contains" for k, v in search["result"].items() if v]
                 if items:
                     skip_notification = False
-            return "skip_notification" if skip_notification else "send_notification"
+            return "skip_notification" if skip_notification else notify_task_ids
         else:
-            return "send_notification"
+            return notify_task_ids
 
     def send_notification(
-        self, num_searches: int, specs: DAGConfig, report_date: str, **context
-    ) -> str:
-        """Send user notification using class Notifier"""
+        self,
+        num_searches: int,
+        specs: DAGConfig,
+        report_date: str,
+        sender_class: Optional[type] = None,
+        webhook_url: Optional[str] = None,
+        channel: Optional[str] = None,
+        **context,
+    ) -> None:
+        """Send user notification for a single channel"""
         search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
-
-        notifier = Notifier(specs)
-
-        notifier.send_notification(search_report=search_report, report_date=report_date)
+        if channel:
+            notifier = Notifier(specs, channel=channel)
+            notifier.send_notification(
+                search_report=search_report, report_date=report_date
+            )
+            return
+        if webhook_url:
+            sender = sender_class(specs.report, webhook_url=webhook_url)
+        else:
+            sender = sender_class(specs.report)
+        sender.send_report(search_report, report_date)
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
@@ -444,6 +482,7 @@ class DouDigestDagGenerator:
         Depending on configuration it adds an extra prior task to query
         the term_list from a database
         """
+
         # Prepare the markdown documentation
         doc_md = self.prepare_doc_md(specs, config_file) if specs.doc_md else None
         # DAG parameters
@@ -451,9 +490,8 @@ class DouDigestDagGenerator:
             "owner": ",".join(specs.owner),
             "start_date": datetime(2021, 10, 18),
             "depends_on_past": False,
-            "retries": 10,
+            "retries": 1,
             "retry_delay": timedelta(minutes=2),
-            "on_retry_callback": self.on_retry_callback,
             "on_failure_callback": lambda context: self._notify_on_failure(
                 specs, context
             ),
@@ -535,8 +573,6 @@ class DouDigestDagGenerator:
                         python_callable=self.perform_searches,
                         op_kwargs={
                             "ai_config": specs.ai_config,
-                            # "api_key_var": specs.ai_config.api_key_var,
-                            # "model": specs.model,
                             "header": subsearch.header,
                             "sources": subsearch.sources,
                             "territory_id": subsearch.territory_id,
@@ -570,8 +606,22 @@ class DouDigestDagGenerator:
                         select_terms_from_airflow_variable_task >> exec_search_task
 
                     if terms_come_from_db:
-                        # pylint: disable=pointless-statement
                         select_terms_from_db_task >> exec_search_task
+
+            notify_task_ids = []
+            if specs.report.notification:
+                for index, url in enumerate(specs.report.notification, start=1):
+                    channel = _channel_name_from_url(url)
+                    notify_task_ids.append(f"notify_{channel}_{index}")
+
+            if specs.report.slack:
+                notify_task_ids.append("notify_slack")
+
+            if specs.report.discord:
+                notify_task_ids.append("notify_discord")
+
+            if specs.report.emails:
+                notify_task_ids.append("notify_email")
 
             has_matches_task = BranchPythonOperator(
                 task_id="has_matches",
@@ -579,26 +629,71 @@ class DouDigestDagGenerator:
                 op_kwargs={
                     "num_searches": len(searches),
                     "skip_null": specs.report.skip_null,
+                    "notify_task_ids": notify_task_ids,
                 },
             )
 
             skip_notification_task = EmptyOperator(task_id="skip_notification")
 
-            send_notification_task = PythonOperator(
-                task_id="send_notification",
-                python_callable=self.send_notification,
-                op_kwargs={
-                    "num_searches": len(searches),
-                    "specs": specs,
-                    "report_date": template_ano_mes_dia_trigger_local_time,
-                },
-            )
+            if specs.report.notification:
+                for index, url in enumerate(specs.report.notification, start=1):
+                    channel = _channel_name_from_url(url)
+                    notify_task = PythonOperator(
+                        task_id=f"notify_{channel}_{index}",
+                        python_callable=self.send_notification,
+                        op_kwargs={
+                            "num_searches": len(searches),
+                            "specs": specs,
+                            "report_date": template_ano_mes_dia_trigger_local_time,
+                            "sender_class": NotificationSender,
+                            "webhook_url": url,
+                        },
+                    )
+                    has_matches_task >> notify_task
+
+            if specs.report.slack:
+                notify_task = PythonOperator(
+                    task_id="notify_slack",
+                    python_callable=self.send_notification,
+                    op_kwargs={
+                        "num_searches": len(searches),
+                        "specs": specs,
+                        "report_date": template_ano_mes_dia_trigger_local_time,
+                        "channel": "slack",
+                    },
+                )
+                has_matches_task >> notify_task
+
+            if specs.report.discord:
+                notify_task = PythonOperator(
+                    task_id="notify_discord",
+                    python_callable=self.send_notification,
+                    op_kwargs={
+                        "num_searches": len(searches),
+                        "specs": specs,
+                        "report_date": template_ano_mes_dia_trigger_local_time,
+                        "channel": "discord",
+                    },
+                )
+                has_matches_task >> notify_task
+
+            if specs.report.emails:
+                notify_task = PythonOperator(
+                    task_id="notify_email",
+                    python_callable=self.send_notification,
+                    op_kwargs={
+                        "num_searches": len(searches),
+                        "specs": specs,
+                        "report_date": template_ano_mes_dia_trigger_local_time,
+                        "sender_class": EmailSender,
+                    },
+                )
+                has_matches_task >> notify_task
 
             # pylint: disable=pointless-statement
             tg_exec_searchs >> has_matches_task
 
-            has_matches_task >> [send_notification_task, skip_notification_task]
-
+            has_matches_task >> skip_notification_task
 
         return dag
 
