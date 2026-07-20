@@ -3,7 +3,7 @@
 
 import pandas as pd
 import pytest
-from dags.ro_dou_src.dou_dag_generator import merge_results
+from dags.ro_dou_src.dou_dag_generator import _channel_name_from_url, merge_results
 from dags.ro_dou_src.notification.email_sender import EmailSender, repack_match
 from airflow import Dataset
 from airflow.timetables.datasets import DatasetOrTimeSchedule
@@ -109,6 +109,19 @@ def test_merge_results(merge_results_samples):
         merge_results_samples[1],
     )
     assert merged_result == merge_results_samples[2]
+
+
+@pytest.mark.parametrize(
+    "url, expected_channel",
+    [
+        ("slack://TokenA/TokenB/TokenC", "slack"),
+        ("discord://WebhookID/WebhookToken", "discord"),
+        ("https://hooks.slack.com/services/TokenA/TokenB/TokenC", "slack"),
+        ("invalid-url", "unknown_channel"),
+    ],
+)
+def test_channel_name_from_url(url, expected_channel):
+    assert _channel_name_from_url(url) == expected_channel
 
 
 @pytest.mark.parametrize(
