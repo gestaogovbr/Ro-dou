@@ -22,7 +22,7 @@ from pydantic import ValidationError
 
 SRC_PATH = os.environ.get("RO_DOU_SRC_PATH", "/opt/airflow/dags/ro_dou_src")
 sys.path.insert(0, SRC_PATH)
-from schemas import RoDouConfig  # noqa: E402
+from schemas import RoDouConfig  
 
 DAG_CONFS_DIR = os.environ.get(
     "RO_DOU__DAG_CONF_DIR", "/opt/airflow/dags/ro_dou/dag_confs"
@@ -144,7 +144,7 @@ def coletar_search() -> dict:
 
 
 def coletar_report() -> dict:
-    """Pergunta o bloco `report`: e-mails de destino."""
+    """Pergunta o bloco `report`: e-mails de destino, assunto e opções de envio."""
     titulo("Relatório")
     report = {}
     emails = perguntar_lista(
@@ -152,6 +152,17 @@ def coletar_report() -> dict:
     )
     if emails:
         report["emails"] = emails
+    subject = perguntar(
+        "Assunto do e-mail", dica="ex.: Alerta Ro-DOU — Dados abertos"
+    )
+    if subject:
+        report["subject"] = subject
+    report["attach_csv"] = perguntar_sim_nao(
+        "Anexar CSV com os resultados?", default=False
+    )
+    report["skip_null"] = perguntar_sim_nao(
+        "Pular o envio quando não houver resultados?", default=True
+    )
     return report
 
 

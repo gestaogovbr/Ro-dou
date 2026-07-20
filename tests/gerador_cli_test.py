@@ -37,6 +37,9 @@ def test_modo_interativo_gera_yaml_valido():
             "",  # fonte (pula; usa DOU)
             "dados abertos, governo aberto",  # termos
             "destination@economia.gov.br",  # e-mails
+            "",  # subject (pula)
+            "",  # attach_csv (pula; default não)
+            "",  # skip_null (pula; default sim)
         ]
     ) + "\n"
     resultado = subprocess.run(
