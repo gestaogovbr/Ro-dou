@@ -270,6 +270,6 @@ tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
 #PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
-.PHONY: gerador-cli
-gerador-cli:
+.PHONY: gerar-yml
+gerar-yml:
 	docker exec -it -e PYTHONWARNINGS=ignore airflow-webserver python3 /opt/airflow/tools/gerador_cli.py

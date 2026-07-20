@@ -10,7 +10,7 @@ valida, o CLI também não valida.
 
 Como o `schemas.py` importa `airflow.models.Variable` (via `ai/provider.py`),
 este script precisa rodar num ambiente com o Airflow instalado — na prática,
-dentro do container `airflow-webserver` (veja `make gerador-cli`).
+dentro do container `airflow-webserver` (veja `make gerar-yml`).
 """
 import argparse
 import os

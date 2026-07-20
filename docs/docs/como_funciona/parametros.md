@@ -2,7 +2,7 @@
 
 A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
-O Ro-DOU também oferece duas ferramentas para montar o arquivo sem editá-lo manualmente: o [Gerador de configuração (YAML)](../gerador_yaml.html), um formulário guiado no navegador com explicação de cada campo, e o comando `make gerador-cli`, para quem já tem o Ro-DOU [instalado](../como_utilizar/instalacao.md).
+O Ro-DOU também oferece duas ferramentas para montar o arquivo sem editá-lo manualmente: o [Gerador de configuração (YAML)](../gerador_yaml.html), um formulário guiado no navegador com explicação de cada campo, e o comando `make gerar-yml`, para quem já tem o Ro-DOU [instalado](../como_utilizar/instalacao.md).
 
 ## Parâmetros da DAG
 * **id** *(obrigatório)*: Nome identificador da DAG a ser gerada. Deve ser único.
