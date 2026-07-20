@@ -113,16 +113,29 @@ def coletar_owner() -> list[str] | None:
     return perguntar_lista("Owners/responsáveis pela DAG", dica="ex.: cginf")
 
 
+def coletar_callback() -> dict | None:
+    """Pergunta os e-mails avisados se a busca falhar (bloco `callback`)."""
+    emails = perguntar_lista(
+        "E-mails avisados se a busca falhar", dica="ex.: admin@orgao.gov.br"
+    )
+    if not emails:
+        return None
+    return {"on_failure_callback": emails}
+
+
 CAMPOS_SIMPLES = {
     "id": coletar_id,
     "description": coletar_description,
     "schedule": coletar_schedule,
     "owner": coletar_owner,
+    "callback": coletar_callback,
 }
 
 
 def coletar_search() -> dict:
-    """Pergunta o bloco `search`: fonte, termos e territory_id (se QD)."""
+    """Pergunta o bloco `search`: fonte, termos, termos a ignorar, seções do
+    Diário (se DOU/INLABS), territory_id (se QD) e opções de exibição
+    exclusivas do INLABS (se INLABS)."""
     titulo("Busca")
     search = {}
     fonte = perguntar("Fonte (DOU, INLABS ou QD)", dica="apenas uma; Enter usa DOU")
@@ -133,6 +146,19 @@ def coletar_search() -> dict:
     )
     if terms:
         search["terms"] = terms
+    terms_ignore = perguntar_lista(
+        "Termos a ignorar na pesquisa", dica="ex.: revogado, sem efeito"
+    )
+    if terms_ignore:
+        search["terms_ignore"] = terms_ignore
+    if "QD" not in search.get("sources", []):
+        dou_sections = perguntar_lista(
+            "Seções do Diário a procurar",
+            dica="ex.: SECAO_1, SECAO_3 — Enter usa TODOS "
+            "(outros valores: SECAO_2, EDICAO_EXTRA, EDICAO_SUPLEMENTAR)",
+        )
+        if dou_sections:
+            search["dou_sections"] = [secao.upper() for secao in dou_sections]
     if "QD" in search.get("sources", []):
         territory_id = perguntar(
             "ID do município no Querido Diário (territory_id)",
@@ -140,6 +166,16 @@ def coletar_search() -> dict:
         )
         if territory_id:
             search["territory_id"] = territory_id
+    if "INLABS" in search.get("sources", []):
+        search["full_text"] = perguntar_sim_nao(
+            "Mostrar o texto completo da publicação no relatório?", default=False
+        )
+        search["use_summary"] = perguntar_sim_nao(
+            "Mostrar a ementa oficial, quando existir?", default=False
+        )
+        search["show_relevancy"] = perguntar_sim_nao(
+            "Mostrar a relevância de cada resultado?", default=False
+        )
     return search
 
 
