@@ -269,8 +269,7 @@ down:
 tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
-# Roda o gerador de YAML dentro do container, onde o Airflow está
-# disponível; -it porque o gerador lê as respostas do terminal.
+#PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
 .PHONY: gerador-cli
 gerador-cli:
-	docker exec -it airflow-webserver python3 /opt/airflow/tools/gerador_cli.py
+	docker exec -it -e PYTHONWARNINGS=ignore airflow-webserver python3 /opt/airflow/tools/gerador_cli.py
