@@ -50,6 +50,16 @@ def perguntar(
     while True:
         valor = input(f"{marca} {mensagem}: ").strip()
         if valor:
+            # Glitches raros de terminal cortam acentos ao meio; sem isso,
+            # o valor corrompido seguiria em frente sem avisar ninguém.
+            try:
+                valor.encode("utf-8")
+            except UnicodeEncodeError:
+                print(
+                    f"{VERM}  ! Caractere inválido (acento corrompido ao "
+                    f"digitar). Digite novamente.{RESET}"
+                )
+                continue
             return valor
         if not obrigatorio:
             return None
