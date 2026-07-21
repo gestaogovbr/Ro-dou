@@ -564,8 +564,11 @@ class INLABSSearcher(BaseSearcher):
         full_text: bool,
         text_length: Optional[int],
         use_summary: bool,
-        show_relevancy: Optional[bool],
-        pubtype: List[str],
+        ignore_attachments: bool = False,
+        ignore_inline_tables: bool = False,
+        min_table_rows: int = 1,
+        show_relevancy: Optional[bool] = None,
+        pubtype: List[str] = None,
         reference_date: datetime = datetime.now(),
     ) -> Dict:
         """
@@ -589,6 +592,14 @@ class INLABSSearcher(BaseSearcher):
             full_text (bool): If trim result text content
             text_length (int, optional): Size of the text to be sent in the message. The default is 400.
             use_summary (bool): If exists, use summary as excerpt or full text
+            ignore_attachments (bool): If True, suppress attachments and tabular
+                content from the results. Defaults to False.
+            ignore_inline_tables (bool): If True, replace inline HTML tables in
+                the publication text with a short placeholder. Applies to both
+                the excerpt and full_text. Defaults to False.
+            min_table_rows (int): Minimum number of rows a table must have to
+                be replaced when ignore_inline_tables=True. Defaults to 1, so
+                every table is omitted; a higher value keeps smaller tables.
             show_relevancy (bool, optional): Flag to include relevancy tag in the results. Defaults to False.
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
@@ -619,6 +630,9 @@ class INLABSSearcher(BaseSearcher):
             full_text=full_text,
             text_length=text_length,
             use_summary=use_summary,
+            ignore_attachments=ignore_attachments,
+            ignore_inline_tables=ignore_inline_tables,
+            min_table_rows=min_table_rows,
             show_relevancy=show_relevancy,
         )
 

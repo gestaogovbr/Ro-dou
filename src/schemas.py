@@ -190,6 +190,32 @@ class SearchConfig(BaseModel):
         "Valores: True ou False. Default: False. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    ignore_attachments: Optional[bool] = Field(
+        default=False,
+        description="Define se os conteúdos anexos à matéria (tabelas, quadros, "
+        "anexos) devem ser suprimidos do relatório. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    ignore_inline_tables: Optional[bool] = Field(
+        default=False,
+        description="Define se as tabelas HTML embutidas no corpo das publicações "
+        "devem ser substituídas por um marcador de texto. Útil quando o "
+        "texto da publicação contém tabelas extensas (ex: listas de beneficiários, "
+        "relação de aprovados) que poluem o texto. "
+        "Aplica-se tanto ao recorte quanto ao full_text. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+    min_table_rows: Optional[int] = Field(
+        default=1,
+        ge=1,
+        description="Número mínimo de linhas que uma tabela inline deve ter para ser "
+        "omitida quando ignore_inline_tables=True. Com o default 1, todas as tabelas "
+        "são omitidas; defina um valor maior para manter tabelas menores (que ficam "
+        "como exceção à regra). Default: 1. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
     pubtype: Optional[List[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )

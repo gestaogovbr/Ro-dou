@@ -2,6 +2,8 @@
 
 A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 
+O Ro-DOU também oferece o [Gerador de configuração (YAML)](../gerador_yaml.html), que permite montar o arquivo em um formulário guiado, com validações e explicação de cada campo.
+
 ## Parâmetros da DAG
 * **id** *(obrigatório)*: Nome identificador da DAG a ser gerada. Deve ser único.
 * **description** *(obrigatório)*: Descrição da DAG de pesquisa exibida na interface do Airflow.
@@ -36,6 +38,9 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **full_text** *(opcional)*: Define se no relatório será exibido o texto completo, ao invés de um resumo. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **text_length** *(opcional)*: Tamanho do texto que será enviado na mensagem. O padrão é 400. (INLABS)
 - **use_summary** *(opcional)*: Define se no relatório será exibido a ementa, se existir. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ignore_attachments** *(opcional)*: Define se os conteúdos anexos à matéria (tabelas, quadros e anexos) devem ser suprimidos do relatório. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **ignore_inline_tables** *(opcional)*: Define se as tabelas embutidas no corpo da própria publicação devem ser omitidas. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
+- **min_table_rows** *(opcional)*: Parâmetro complementar a `ignore_inline_tables` — só produz efeito quando `ignore_inline_tables: True`. Define o número mínimo de linhas que uma tabela deve ter para ser omitida. Default: `1` (todas as tabelas são omitidas).  (Funcionalidade disponível apenas no INLABS)
 - **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)-[Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.

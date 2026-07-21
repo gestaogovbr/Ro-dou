@@ -1,6 +1,17 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.11.0] - 2026-07-15
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* docs: atualização de recursos e funcionalidades by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/308
+* feat: adiciona parâmetros  ignore_attachments, ignore_inline_tables e min_table_rows  (#299) by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/306
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.10.3...0.11.0
+
 ## [0.10.1] - 2026-05-29
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

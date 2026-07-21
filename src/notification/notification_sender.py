@@ -7,8 +7,8 @@ from schemas import ReportConfig
 class NotificationSender(ISender):
     highlight_tags = ("__", "__")
 
-    def __init__(self, report_config: ReportConfig) -> None:
-        self.notification = report_config.notification
+    def __init__(self, report_config: ReportConfig, webhook_url: str = None) -> None:
+        self.notification = webhook_url if webhook_url else report_config.notification
         self.hide_filters = report_config.hide_filters
         self.header_text = report_config.header_text
         self.footer_text = report_config.footer_text

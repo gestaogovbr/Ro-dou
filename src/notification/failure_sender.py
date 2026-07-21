@@ -3,6 +3,7 @@
 import os
 import sys
 import logging
+
 import json
 from datetime import datetime, date
 
@@ -12,8 +13,10 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 from airflow.utils.email import send_email
+
 from airflow.hooks.base import BaseHook
 from airflow.models import Variable
+
 from airflow.providers.slack.hooks.slack import SlackHook
 
 from parsers import DAGConfig
@@ -23,16 +26,14 @@ from notification.templateManager import TemplateManager
 
 
 class FailureSender:
-    """Sends DAG failure notifications via email and Slack.
+    """Sends DAG failure notifications via email.
 
-    Uses the DAG configuration (`DAGConfig`) to determine the email recipients
-    and the Slack channel where notifications should be sent. When no email is
-    configured in the DAG's YAML, falls back to the `email_admin` Airflow
-    variable as the default recipient. The Slack notification is only sent if
-    the `slack_notify_rodou_dagrun` connection is available in Airflow.
+    Resolves recipients from `DAGConfig.callback.on_failure_callback`. The
+    `email_admin` Airflow variable is always appended when available; if it is
+    not set, `DAGConfig.report.emails` is used as a fallback. The notification
+    is rendered from an HTML template and sent via Airflow's `send_email`.
 
     Attributes:
-        SLACK_CONN_ID (str): Airflow connection ID used for Slack.
         specs (DAGConfig): DAG configuration, including failure callbacks.
         tm (TemplateManager): HTML template manager for email rendering.
     """
@@ -47,7 +48,10 @@ class FailureSender:
 
     def send(self, context, dag_run, task_instance, exception):
         """Sends failure notification via email and Slack."""
-        self.send_slack_failure_notification(context, dag_run, task_instance, exception)
+        if self.SLACK_CONN_ID:
+            self.send_slack_failure_notification(
+                context, dag_run, task_instance, exception
+            )
         self.send_failure_email(self._get_failure_email_list(), dag_run, task_instance)
 
     def _get_failure_email_list(self) -> List[str]:
@@ -73,7 +77,13 @@ class FailureSender:
             email_admin = Variable.get("email_admin", default_var=None)
             if email_admin:
                 return email_list + [email_admin]
-            logging.warning("No email_admin variable found in Airflow")
+            # Se email_admin não estiver configurado, verifica se há email no relatório do DAG
+            else:
+                return (
+                    email_list + self.specs.report.emails
+                    if self.specs.report and self.specs.report.emails
+                    else email_list
+                )
         except Exception as e:
             logging.error(f"Error getting email_admin variable: {str(e)}")
 
