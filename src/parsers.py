@@ -46,7 +46,6 @@ class YAMLParser:
         if isinstance(terms, dict):
             if "from_airflow_variable" in terms:
                 term_list = terms.get("from_airflow_variable")
-
             elif "from_db_select" in terms:
                 from_db_select = terms.get("from_db_select")
                 terms = []
