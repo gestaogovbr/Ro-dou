@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from hooks.dou_hook import DOUHook
 from hooks.inlabs_hook import INLABSHook
 from hooks.doesp_hook import DOESPHook
+from schemas import NeuralSearchConfig
 from utils.search_domains import (
     Field,
     SearchDate,
@@ -570,6 +571,7 @@ class INLABSSearcher(BaseSearcher):
         show_relevancy: Optional[bool] = None,
         pubtype: List[str] = None,
         reference_date: datetime = datetime.now(),
+        neural_search_config: Optional[NeuralSearchConfig] = None,
     ) -> Dict:
         """
         Execute a search with given parameters, applying filters and
@@ -604,6 +606,11 @@ class INLABSSearcher(BaseSearcher):
             pubtype (List[str]): List of publication types to filter the search.
             reference_date (datetime, optional): Reference date for the
                 search. Defaults to now.
+            neural_search_config (NeuralSearchConfig, optional): Controls
+                whether keyword matching is combined with semantic (vector)
+                similarity, and the score threshold/result cap for the
+                semantic part. Defaults to a config with
+                ``neural_search=False``.
 
         Returns:
             Dict: Grouped search results.
@@ -634,6 +641,7 @@ class INLABSSearcher(BaseSearcher):
             ignore_inline_tables=ignore_inline_tables,
             min_table_rows=min_table_rows,
             show_relevancy=show_relevancy,
+            neural_search_config=neural_search_config,
         )
 
         group_results = self._group_results(search_results, terms, department)
