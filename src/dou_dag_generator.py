@@ -696,7 +696,7 @@ class DouDigestDagGenerator:
             # pylint: disable=pointless-statement
             tg_exec_searchs >> has_matches_task
 
-            has_matches_task >> [send_notification_task, skip_notification_task]
+            has_matches_task >> skip_notification_task
 
         return dag
 
