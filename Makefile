@@ -34,13 +34,12 @@ setup-containers:
 
 create-example-variable:
 	@echo 'Waiting for Airflow API to start ...'
-	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
+	@docker exec airflow-api-server sh -c "while ! curl -s 'http://localhost:8080/api/v2/monitor/health' > /dev/null; do sleep 5; done;"
 	@echo "Creating 'termos_exemplo_variavel' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/termos_exemplo_variavel' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c 		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/termos_exemplo_variavel' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -52,13 +51,13 @@ create-example-variable:
 
 create-email-admim-variable:
 	@echo 'Waiting for Airflow API to start ...'
-	@docker exec airflow-webserver sh -c "while ! curl -f -s -LI 'http://localhost:8080/' > /dev/null; do sleep 5; done;"
+	@docker exec airflow-api-server sh -c "while ! curl -s 'http://localhost:8080/api/v2/monitor/health' > /dev/null; do sleep 5; done;"
 	@echo "Creating 'email_admin_variavel' in Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/email_admin_variavel' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/email_admin_variavel' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -70,11 +69,11 @@ create-email-admim-variable:
 
 create-path-tmp-variable:
 	@echo "Creating 'path_tmp' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/path_tmp' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/path_tmp' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -90,11 +89,11 @@ create-inlabs-db:
 
 create-inlabs-db-connection:
 	@echo "Creating 'inlabs_db' Airflow connection"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/connections/inlabs_db' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/connections/inlabs_db' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/connections' \
+			'http://localhost:8080/api/v2/connections' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -111,11 +110,11 @@ create-inlabs-db-connection:
 
 create-inlabs-portal-connection:
 	@echo "Creating 'inlabs_portal' Airflow connection"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/connections/inlabs_portal' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/connections/inlabs_portal' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/connections' \
+			'http://localhost:8080/api/v2/connections' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -131,7 +130,7 @@ create-inlabs-portal-connection:
 
 create-opensearch-variable:
 	@echo "Creating 'opensearch' Airflow variables"
-	@docker exec airflow-webserver sh -c \
+	@docker exec airflow-api-server sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/ro_dou_inlabs_use_opensearch' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -144,7 +143,7 @@ create-opensearch-variable:
 			\"value\": \"False\" \
 			}' > /dev/null; \
 		fi"
-	@docker exec airflow-webserver sh -c \
+	@docker exec airflow-api-server sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_host' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -157,7 +156,7 @@ create-opensearch-variable:
 			\"value\": \"http://opensearch:9200\" \
 			}' > /dev/null; \
 		fi"
-	@docker exec airflow-webserver sh -c \
+	@docker exec airflow-api-server sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_user' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -170,7 +169,7 @@ create-opensearch-variable:
 			\"value\": \"OPENSEARCH_USER\" \
 			}' > /dev/null; \
 		fi"
-	@docker exec airflow-webserver sh -c \
+	@docker exec airflow-api-server sh -c \
 		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/opensearch_pass' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
@@ -187,9 +186,9 @@ create-opensearch-variable:
 
 activate-inlabs-load-dag:
 	@echo "Activating 'dou_inlabs_load_pg' Airflow DAG"
-	@docker exec airflow-webserver sh -c \
+	@docker exec airflow-api-server sh -c \
 		"curl -s -X 'PATCH' \
-			'http://localhost:8080/api/v1/dags/ro-dou_inlabs_load_pg' \
+			'http://localhost:8080/api/v2/dags/ro-dou_inlabs_load_pg' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -199,11 +198,11 @@ activate-inlabs-load-dag:
 
 create-azure-openai-endpoint-variable:
 	@echo "Creating 'AZURE_OPENAI_ENDPOINT' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_ENDPOINT' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/AZURE_OPENAI_ENDPOINT' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -215,11 +214,11 @@ create-azure-openai-endpoint-variable:
 
 create-azure-openai-api-version-variable:
 	@echo "Creating 'AZURE_OPENAI_API_VERSION' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_API_VERSION' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/AZURE_OPENAI_API_VERSION' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -231,11 +230,11 @@ create-azure-openai-api-version-variable:
 
 create-azure-openai-deployment-variable:
 	@echo "Creating 'AZURE_OPENAI_DEPLOYMENT' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_DEPLOYMENT' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/AZURE_OPENAI_DEPLOYMENT' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -247,11 +246,11 @@ create-azure-openai-deployment-variable:
 
 create-azure-openai-api-key-variable:
 	@echo "Creating 'AZURE_OPENAI_API_KEY' Airflow variable"
-	@docker exec airflow-webserver sh -c \
-		"if ! curl -f -s -LI 'http://localhost:8080/api/v1/variables/AZURE_OPENAI_API_KEY' --user \"airflow:airflow\" > /dev/null; \
+	@docker exec airflow-api-server sh -c \
+		"if ! curl -f -s -LI 'http://localhost:8080/api/v2/variables/AZURE_OPENAI_API_KEY' --user \"airflow:airflow\" > /dev/null; \
 		then \
 			curl -s -X 'POST' \
-			'http://localhost:8080/api/v1/variables' \
+			'http://localhost:8080/api/v2/variables' \
 			-H 'accept: application/json' \
 			-H 'Content-Type: application/json' \
 			--user \"airflow:airflow\" \
@@ -267,4 +266,4 @@ down:
 
 .PHONY: tests
 tests:
-	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+	docker exec airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"

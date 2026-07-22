@@ -9,15 +9,16 @@ import subprocess
 import logging
 from datetime import datetime, timedelta, date
 
-from airflow import Dataset  # type: ignore
-from airflow.decorators import dag, task  # type: ignore
-from airflow.models.param import Param  # type: ignore
-from airflow.operators.python import get_current_context  # type: ignore
-from airflow.models import Variable  # type: ignore
+from airflow.sdk.definitions.asset import Dataset
+from airflow.decorators import dag, task
+from airflow.models.param import Param
+from airflow.sdk import get_current_context
+from airflow.models import Variable
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
+from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH
 
-from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Constants
@@ -58,7 +59,7 @@ def load_inlabs():
     @task
     def get_date() -> str:
         """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context  # type: ignore
+        from airflow.sdk import get_current_context
         from utils.date import get_trigger_date
 
         context = get_current_context()
@@ -119,7 +120,7 @@ def load_inlabs():
             files = _find_files(session, headers)
 
             if not files:
-                logging.error(f"Files not found for this date: {trigger_date}")
+                logging.error("Files not found for date %s", trigger_date)
                 return False
 
             for file in files:
@@ -149,7 +150,9 @@ def load_inlabs():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         _create_directories()
         files_exists = _download_files()
-        _unzip_files()
+        
+        if files_exists:
+            unzip_files()
 
         return files_exists
 
@@ -223,7 +226,7 @@ def load_inlabs():
     @task.branch
     def check_if_should_run_indexer():
 
-        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == 'true':
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == "true":
             logging.info("OpenSearch enabled. Running indexer task.")
             return "indexer_data"
 
@@ -244,12 +247,14 @@ def load_inlabs():
     @task.branch
     def check_if_first_run_of_day():
         context = get_current_context()
-        execution_date = context["logical_date"]
-        prev_execution_date = context["prev_execution_date"]
-        logging.info("Execution_date: %s", execution_date)
-        logging.info("Prev_execution_date: %s", prev_execution_date)
+        logical_date = context["logical_date"]
+        dag_run = context["dag_run"]
+        prev_dag_run = dag_run.get_previous_dagrun()
+        prev_logical_date = prev_dag_run.logical_date if prev_dag_run else None
+        logging.info("Logical_date: %s", logical_date)
+        logging.info("Prev_logical_date: %s", prev_logical_date)
 
-        if execution_date.day == prev_execution_date.day:
+        if prev_logical_date and logical_date.day == prev_logical_date.day:
             logging.info("Não é a primeira execução do dia")
             logging.info("Triggering dataset edicao_extra")
             return "trigger_dataset_inlabs_edicao_extra"
@@ -294,4 +299,4 @@ def load_inlabs():
     )
 
 
-load_inlabs()
+dag = load_inlabs()
