@@ -319,6 +319,15 @@ def salvar_arquivo(
     try:
         with open(caminho, "w", encoding="utf-8") as arquivo:
             arquivo.write(yaml_texto)
+    except PermissionError:
+        print(
+            f"{VERM}Permissão negada para gravar em {caminho}.\n"
+            f"Na raiz do projeto (fora do container), rode:\n"
+            f"  chmod 777 dag_confs\n"
+            f"E tente de novo. Se persistir, use --stdout.{RESET}",
+            file=sys.stderr,
+        )
+        return 1
     except OSError as exc:
         print(
             f"{VERM}Não foi possível salvar em {caminho} ({exc.strerror}). "
