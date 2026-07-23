@@ -9,6 +9,9 @@ COPY dag_load_inlabs /opt/airflow/dags/ro_dou/dag_load_inlabs
 
 RUN chown -R airflow /opt/airflow
 
+# Ensure the dags and ro_dou_src packages are importable in container Python
+ENV PYTHONPATH="/opt/airflow/dags:/opt/airflow:$PYTHONPATH"
+
 # Install additional Airflow dependencies
 USER airflow
 
@@ -16,25 +19,25 @@ COPY requirements-uninstall.txt .
 RUN pip install --upgrade pip && \
   pip uninstall -y -r requirements-uninstall.txt && \
   pip install --no-cache-dir \
-  --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.0/constraints-3.11.txt" \
   apache-airflow-providers-microsoft-mssql \
   apache-airflow-providers-common-sql
 
 # Copy and install requirements.txt
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-  --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.0/constraints-3.11.txt"
+RUN pip install --no-cache-dir -r requirements.txt
 
 ARG AI_PROVIDERS=""
 
 COPY requirements-ai.txt .
 
 RUN if [ -n "$AI_PROVIDERS" ]; then \
+  : > /tmp/filtered.txt; \
   for provider in $AI_PROVIDERS; do \
       grep "# $provider" requirements-ai.txt | cut -d'#' -f1 >> /tmp/filtered.txt; \
-  done && \
-  pip install --no-cache-dir -r /tmp/filtered.txt \
-  --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.0/constraints-3.11.txt"; \
-  fi
+  done; \
+  if [ -s /tmp/filtered.txt ]; then \
+    pip install --no-cache-dir -r /tmp/filtered.txt; \
+  fi; \
+fi
 
 

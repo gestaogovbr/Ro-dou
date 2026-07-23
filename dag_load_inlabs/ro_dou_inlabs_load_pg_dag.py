@@ -152,7 +152,7 @@ def load_inlabs():
         files_exists = _download_files()
         
         if files_exists:
-            unzip_files()
+            _unzip_files()
 
         return files_exists
 
@@ -245,23 +245,23 @@ def load_inlabs():
         indexer.run(trigger_date)
 
     @task.branch
+    @task.branch
     def check_if_first_run_of_day():
         context = get_current_context()
         logical_date = context["logical_date"]
-        dag_run = context["dag_run"]
-        prev_dag_run = dag_run.get_previous_dagrun()
-        prev_logical_date = prev_dag_run.logical_date if prev_dag_run else None
-        logging.info("Logical_date: %s", logical_date)
-        logging.info("Prev_logical_date: %s", prev_logical_date)
 
-        if prev_logical_date and logical_date.day == prev_logical_date.day:
-            logging.info("Não é a primeira execução do dia")
-            logging.info("Triggering dataset edicao_extra")
-            return "trigger_dataset_inlabs_edicao_extra"
-        else:
+        logging.info("Logical_date: %s", logical_date)
+
+        # A DAG roda às 06:59 e às 23:59.
+        # A execução das 06h é considerada a primeira do dia.
+        if logical_date.hour == 6:
             logging.info("Primeira execução do dia")
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
+
+        logging.info("Não é a primeira execução do dia")
+        logging.info("Triggering dataset edicao_extra")
+        return "trigger_dataset_inlabs_edicao_extra"
 
     @task(outlets=[Dataset("inlabs_edicao_extra")])
     def trigger_dataset_inlabs_edicao_extra():

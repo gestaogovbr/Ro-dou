@@ -46,9 +46,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__CORE__FERNET_KEY: "${AIRFLOW__CORE__FERNET_KEY:-Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw=}"
+    AIRFLOW__CORE__FERNET_KEY: 'Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw='
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
     AIRFLOW__SMTP__SMTP_HOST: smtp4dev
@@ -60,8 +60,8 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
 
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
-    AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_WEBSERVER_SECRET_KEY:-super-secret-airflow-key-2026}"
-    AIRFLOW__API_AUTH__JWT_SECRET: "${AIRFLOW_API_AUTH_JWT_SECRET:-super-jwt-secret-2026}"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "super-secret-airflow-key-2026"
+    AIRFLOW__API_AUTH__JWT_SECRET: "super-jwt-secret-2026"
 
     AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
     AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT: 8793
@@ -69,7 +69,6 @@ x-airflow-common: &airflow-common
     AIRFLOW__LOGGING__HOSTNAME_CALLABLE: airflow.utils.net.get_host_ip_address
     
     _AIRFLOW_DB_UPGRADE: 'true'
-    RO_DOU_INLABS_USE_OPENSEARCH: 'false'
     _AIRFLOW_WWW_USER_CREATE: 'true'
     _AIRFLOW_WWW_USER_USERNAME: airflow
     _AIRFLOW_WWW_USER_PASSWORD: airflow
@@ -77,13 +76,9 @@ x-airflow-common: &airflow-common
     
 
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
-    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
-    PYTHONPATH: /opt/airflow/dags:/opt/airflow
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
-    OPENSEARCH_HOST: http://opensearch:9200
-    OPENSEARCH_USER: OPENSEARCH_USER
-    OPENSEARCH_PASS: OPENSEARCH_PASS
 
   volumes:
     - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
@@ -96,15 +91,13 @@ x-airflow-common: &airflow-common
   depends_on:
     postgres:
       condition: service_healthy
-    opensearch:
-      condition: service_healthy
 
 services:
   postgres:
     image: postgres:17.5-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-airflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
     ports:
       - 5432:5432
@@ -133,25 +126,7 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow-scheduler
-    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow scheduler'
-    restart: always
-
-  opensearch:
-    image: opensearchproject/opensearch:2
-    container_name: opensearch
-    environment:
-      - discovery.type=single-node
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-OPENSEARCH_PASS}
-      - DISABLE_SECURITY_PLUGIN=true
-    ports:
-      - 9200:9200
-    volumes:
-      - opensearch-data:/usr/share/opensearch/data
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'" ]
-      interval: 10s
-      timeout: 10s
-      retries: 10
+    command: scheduler #bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow scheduler'
     restart: always
 
   smtp4dev:
@@ -169,10 +144,9 @@ services:
   airflow-dag-processor:
     <<: *airflow-common
     container_name: airflow-dag-processor
-    command: bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow dag-processor'
+    command: dag-processor #bash -lc 'if [ -f /opt/airflow/airflow.cfg ]; then sed -i "s/^executor = .*/executor = LocalExecutor/" /opt/airflow/airflow.cfg; fi && exec airflow dag-processor'
     restart: always
     depends_on:
       - postgres
 volumes:
   smtp4dev-data:
-  opensearch-data:

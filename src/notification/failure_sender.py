@@ -17,7 +17,7 @@ from airflow.utils.email import send_email
 from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 
-from airflow.providers.slack.hooks.slack import SlackHook
+from airflow.providers.slack.notifications.slack import SlackNotifier
 
 from parsers import DAGConfig
 from typing import List
@@ -92,15 +92,19 @@ class FailureSender:
     def send_failure_email(self, email_list: List[str], dag_run, task_instance):
         """Sends failure notification email to the provided recipients."""
 
-        execution_date = getattr(dag_run, "execution_date", None)
-        if not isinstance(execution_date, (datetime, date)):
-            execution_date = getattr(dag_run, "logical_date", None)
-        if not isinstance(execution_date, (datetime, date)):
-            execution_date = None
+        # execution_date = getattr(dag_run, "execution_date", None)
+        # if not isinstance(execution_date, (datetime, date)):
+        #     execution_date = getattr(dag_run, "logical_date", None)
+        # if not isinstance(execution_date, (datetime, date)):
+        #     execution_date = None
 
         execution_date_str = (
-            execution_date.strftime("%d/%m/%Y %H:%M") if execution_date else "N/A"
+            dag_run.execution_date.strftime("%d/%m/%Y %H:%M")
+            if dag_run.execution_date
+            else "N/A"
         )
+        #     execution_date.strftime("%d/%m/%Y %H:%M") if execution_date else "N/A"
+        # )
         if email_list:
             try:
 
@@ -130,22 +134,37 @@ class FailureSender:
         """Sends failure notification via Slack, if the connection is available."""
         try:
             conn = BaseHook.get_connection(self.SLACK_CONN_ID)
-            description = json.loads(conn.description or "{}")
-            slack_hook = SlackHook(slack_conn_id=self.SLACK_CONN_ID)
-            slack_hook.call(
-                "chat.postMessage",
-                json={
-                    "channel": description.get("channel"),
-                    "text": (
-                        ":bomb: *Falha na DAG*"
-                        f"\n📊 *DAG:* `{dag_run.dag_id}`"
-                        f"\n📋 *Task:* `{task_instance.task_id}`"
-                        f"\n*State:* `{task_instance.state}`"
-                        f"\n 📅 *Data de execução:* {getattr(dag_run, 'logical_date', None) or getattr(dag_run, 'execution_date', None)}"
-                        f"\n📁 *Exception:* {exception}"
-                        f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
-                    ),
-                },
+            description = json.loads(conn.description)
+            slack_notifier = SlackNotifier(
+                slack_conn_id=self.SLACK_CONN_ID,
+                text=(
+                    ":bomb: *Falha na DAG*"
+                    f"\n📊 *DAG:* `{dag_run.dag_id}`"
+                    f"\n📋 *Task:* `{task_instance.task_id}`"
+                    f"\n*State:* `{task_instance.state}`"
+                    f"\n 📅 *Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
+                    f"\n📁 *Exception:* {exception}"
+                    f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
+                ),
+                channel=description["channel"],
             )
+            slack_notifier.notify(context)
+            # description = json.loads(conn.description or "{}")
+            # slack_hook = SlackHook(slack_conn_id=self.SLACK_CONN_ID)
+            # slack_hook.call(
+            #     "chat.postMessage",
+            #     json={
+            #         "channel": description.get("channel"),
+            #         "text": (
+            #             ":bomb: *Falha na DAG*"
+            #             f"\n📊 *DAG:* `{dag_run.dag_id}`"
+            #             f"\n📋 *Task:* `{task_instance.task_id}`"
+            #             f"\n*State:* `{task_instance.state}`"
+            #             f"\n 📅 *Data de execução:* {getattr(dag_run, 'logical_date', None) or getattr(dag_run, 'execution_date', None)}"
+            #             f"\n📁 *Exception:* {exception}"
+            #             f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
+            #         ),
+            #     },
+            # )
         except Exception as e:
             logging.error(f"Slack notification not sent: {str(e)}")
