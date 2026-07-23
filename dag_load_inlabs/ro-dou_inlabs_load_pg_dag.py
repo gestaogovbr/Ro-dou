@@ -18,6 +18,7 @@ from airflow.models import Variable  # type: ignore
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
 
 from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Constants
@@ -28,14 +29,36 @@ INLABS_CONN_ID = "inlabs_portal"
 STG_TABLE = "dou_inlabs.article_raw"
 
 
+def _notify_on_failure(context):
+    """Sends a failure notification reusing FailureSender."""
+    from types import SimpleNamespace
+    from ro_dou_src.notification.failure_sender import FailureSender
+
+    try:
+        task_instance = context.get("task_instance") or context.get("ti")
+        dag_run = context.get("dag_run")
+
+        if not task_instance or not dag_run:
+            logging.error("Missing required context: task_instance or dag_run")
+            return
+
+        specs = SimpleNamespace(callback=None, report=None)
+        FailureSender(specs=specs).send(
+            context, dag_run, task_instance, exception=context.get("exception")
+        )
+    except Exception as e:
+        logging.error(f"Error in _notify_on_failure: {str(e)}", exc_info=True)
+
+
 # DAG
 
 default_args = {
     "owner": "ro-dou_inlabs_load_pg",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
-    "retries": 6,
+    "retries": 3,
     "retry_delay": timedelta(minutes=5),
+    "on_failure_callback": _notify_on_failure,
 }
 
 
@@ -223,7 +246,7 @@ def load_inlabs():
     @task.branch
     def check_if_should_run_indexer():
 
-        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == 'true':
+        if RO_DOU_INLABS_USE_OPENSEARCH.lower() == "true":
             logging.info("OpenSearch enabled. Running indexer task.")
             return "indexer_data"
 
