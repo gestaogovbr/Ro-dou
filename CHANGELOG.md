@@ -1,6 +1,17 @@
 # Changelog
 
 **Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## [0.11.1] - 2026-07-23
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* feat: gerador web interativo de configuração YAML na documentação by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/311
+* POC: gerador de YAML de configuração de DAGs via CLI by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/314
+* refactor: split notification into per-channel tasks and remove Slack … by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/297
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.11.0...0.11.1
+
 ## [0.11.0] - 2026-07-15
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

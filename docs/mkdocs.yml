@@ -41,4 +41,4 @@ plugins:
   - macros
 
 extra:
-  version: "versão atual: 0.11.0"  # Será substituído pelo workflow
+  version: "versão atual: 0.11.1"  # Será substituído pelo workflow
