@@ -6,7 +6,7 @@ Nesta seção, você encontrará perguntas e respostas comuns e solução de pro
 As instruções detalhadas de instalação estão [neste link](https://gestaogovbr.github.io/Ro-dou/como_utilizar/instalacao/).
 
 1. **Como configurar os parâmetros de pesquisa do Ro-DOU?** <br>
-Os parâmetros devem ser editados no arquivo em formato yml. Você pode montar esse arquivo de forma guiada, sem editá-lo manualmente, usando o [Gerador de configuração (YAML)](https://gestaogovbr.github.io/Ro-dou/gerador_yaml.html).
+Os parâmetros devem ser editados no arquivo em formato yml. Você pode montar esse arquivo de forma guiada, sem editá-lo manualmente, de duas formas: pelo [Gerador de configuração (YAML)](https://gestaogovbr.github.io/Ro-dou/gerador_yaml.html), direto no navegador, ou — se já tiver o Ro-DOU [instalado](https://gestaogovbr.github.io/Ro-dou/como_utilizar/instalacao/) — pelo comando `make gerar-yml`, que valida e salva o arquivo direto em `dag_confs/`.
 
 1. **Qual a configuração mínima para a instalação do Ro-DOU?** <br>
 É recomendado 4 Gb de memória RAM e 2 Gb de espaço em disco pelo menos.

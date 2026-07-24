@@ -268,3 +268,13 @@ down:
 .PHONY: tests
 tests:
 	docker exec airflow-webserver sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
+
+#PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
+.PHONY: gerar-yml
+gerar-yml:
+	@docker inspect -f '{{.State.Running}}' airflow-webserver >/dev/null 2>&1 || { \
+		echo "Erro: o container airflow-webserver não está rodando."; \
+		echo "Suba o ambiente primeiro com: make run"; \
+		exit 1; \
+	}
+	docker exec -it -e PYTHONWARNINGS=ignore airflow-webserver python3 /opt/airflow/tools/gerador_cli.py
