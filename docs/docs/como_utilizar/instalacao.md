@@ -83,6 +83,10 @@ Na tela inicial do Airflow, são fornecidos clippings de exemplo. A partir dos a
 
 Para criar um novo arquivo YAML de pesquisa sem precisar editá-lo manualmente, utilize o [Gerador de configuração (YAML)](../gerador_yaml.html). Alternativamente, com o ambiente rodando, execute `make gerar-yml` no terminal: ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em `dag_confs/`.
 
+Assista ao vídeo tutorial abaixo para ver o gerador de configuração (YAML) e a CLI em funcionamento:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/FVf3pC0rOWw" title="Gerador de configuração (YAML) e CLI do Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 Para executar qualquer DAG do Airflow, é necessário ligá-la. Inicialmente, todas as DAGs ficam pausadas por padrão. Sugerimos começar testando o clipping **all_parameters_example**. Utilize o botão _toggle_ para ligá-lo. Após ativá-lo, o Airflow executará a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
 para visualizar o detalhe da execução.
 
