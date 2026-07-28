@@ -33,7 +33,7 @@ from utils.select_terms import TermSelector
 from notification.email_sender import EmailSender
 from notification.notification_sender import NotificationSender
 from parsers import DAGConfig, YAMLParser
-from schemas import FetchTermsConfig
+from schemas import FetchTermsConfig, NeuralSearchConfig
 from searchers import (
     BaseSearcher,
     DOUSearcher,
@@ -321,6 +321,7 @@ class DouDigestDagGenerator:
         min_table_rows: Optional[int],
         ai_search_config: Optional[dict],
         show_relevancy: Optional[bool],
+        neural_search_config: Optional[NeuralSearchConfig],
         result_as_email: Optional[bool],
         department: List[str],
         department_ignore: List[str],
@@ -365,6 +366,7 @@ class DouDigestDagGenerator:
                 min_table_rows=min_table_rows,
                 ai_search_config=ai_search_config,
                 show_relevancy=show_relevancy,
+                neural_search_config=neural_search_config,
                 pubtype=pubtype,
                 reference_date=get_trigger_date(context, local_time=True),
             )
@@ -592,6 +594,7 @@ class DouDigestDagGenerator:
                             "min_table_rows": subsearch.min_table_rows,
                             "ai_search_config": subsearch.ai_search_config,
                             "show_relevancy": subsearch.show_relevancy,
+                            "neural_search_config": subsearch.neural_search_config,
                             "department": subsearch.department,
                             "department_ignore": subsearch.department_ignore,
                             "terms_ignore": subsearch.terms_ignore,
