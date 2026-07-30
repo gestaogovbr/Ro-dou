@@ -67,11 +67,10 @@ Autentique-se com usuário `airflow` e senha `airflow`.
 
 ### 4. Ativando o clipping de exemplo
 
-Na tela inicial do Airflow, você verá clippings de exemplo já configurados a partir dos arquivos YAML do diretório `dag_confs/`. Vamos ativar um deles para testar o ambiente:
+Na tela inicial do Airflow (lista de DAGs), você verá clippings de exemplo já configurados a partir dos arquivos YAML do diretório `dag_confs/`. Todas as DAGs começam pausadas — vamos ativar uma para testar o ambiente:
 
-1. Localize a DAG **all_parameters_example** e ative-a pelo botão _toggle_ (todas as DAGs começam pausadas por padrão).
-2. Após ativá-la, o Airflow executa a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example) para ver o detalhe da execução.
-3. Na visualização em árvore (**Tree**) ou em grafo (**Graph**), verifique a task **send_report**: se estiver verde, foi encontrado um resultado na API da Imprensa Nacional e um e-mail foi enviado ao endereço configurado no YAML.
+1. Localize a DAG **all_parameters_example** na lista e ative-a clicando no botão _toggle_ à esquerda do nome.
+2. Assim que ativada, o Airflow dispara a execução automaticamente (uma única vez). Clique no [nome da DAG](http://localhost:8080/dags/all_parameters_example/grid) para acompanhar na visualização em **Grid**.
 
 ### 5. Visualizando o clipping
 
