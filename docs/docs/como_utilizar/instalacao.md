@@ -45,7 +45,7 @@ make run
 
 Você deverá ver uma saída parecida com esta:
 
-![Executando make run](../../img/new_make_run.png)
+![Executando make run](https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/new_make_run.png?raw=true)
 
 Se esta não for a primeira execução, os bancos e conexões já existirão e você verá mensagens como:
 
