@@ -1,62 +1,53 @@
 ## Instalação e configuração
 
-**⚠️Observação:** Para instalar e executar este projeto no Windows, recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/).   Certifique-se de que o WSL está devidamente instalado e configurado em seu sistema antes de prosseguir com os passos de instalação, certifique-se também de habilitar o [docker no WSL](https://learn.microsoft.com/pt-br/windows/wsl/tutorials/wsl-containers)
+Este guia mostra como instalar e executar o Ro-DOU localmente para experimentação e desenvolvimento. Ao final, você terá o ambiente completo rodando em containers Docker, com um clipping de exemplo já configurado.
 
-* [Como instalar e configurar o WSL](instalacao_wsl_windows.md)
-* [Como habilitar o docker no WSL](habilitacao_docker_no_wsl.md)
+**Tempo estimado:** 10 a 15 minutos (a primeira inicialização dos containers pode levar alguns minutos).
 
-### Configurando o ambiente local (desenvolvimento)
-
-#### Requisitos
-
-* 4Gb de memória RAM
-* 2Gb de espaço em disco
-* Sistema operacional Linux ou Windows com WSL
-
-O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.
-
-
-Neste material, apresentamos uma configuração de exemplo para que você possa instalar e executar o Ro-DOU em seu computador.
+Prefere acompanhar em vídeo? Os tutoriais abaixo cobrem o passo a passo de instalação:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-Passo a passo:
+O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.
 
-1. Instalar na máquina o Docker e Docker Compose (versão 1.29 ou superior):
+### Pré-requisitos
 
-    [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/)
+* 4Gb de memória RAM
+* 2Gb de espaço em disco
+* Sistema operacional Linux, macOS ou Windows com WSL
+* [Docker e Docker Compose](https://docs.docker.com/compose/install/) (Docker Compose versão 1.29 ou superior)
 
-2. Clonar o repositório do código no Github
-[https://github.com/gestaogovbr/Ro-dou](https://github.com/gestaogovbr/Ro-dou). Abra o terminal e execute os comandos abaixo:
+**⚠️ Usuários de Windows:** recomenda-se utilizar o [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/pt-br/windows/wsl/). Antes de continuar, confirme que:
+
+* [o WSL está instalado e configurado](instalacao_wsl_windows.md);
+* [o Docker está habilitado no WSL](habilitacao_docker_no_wsl.md).
+
+### 1. Clonando o repositório
+
+Abra o terminal e execute:
 
 ```bash
 git clone https://github.com/gestaogovbr/Ro-dou
-cd Ro-Dou
+cd Ro-dou
 ```
 
-3. O repositório já vem com comandos pré-definidos no Makefile para facilitar a execução.
+### 2. Iniciando o ambiente
 
-
-**Para iniciar o sistema, execute:**
+O repositório já vem com comandos pré-definidos no `Makefile` para facilitar a execução. Para iniciar todos os serviços necessários, rode:
 
 ```bash
 make run
 ```
 
-**💡 Dica:** Este comando irá inicializar todos os serviços necessários do projeto.
+**💡 Dica:** este comando baixa as imagens Docker, builda o container do Ro-DOU e configura automaticamente as variáveis de ambiente e conexões do Airflow — não é necessário nenhum passo manual adicional.
 
-Você deverá ver uma saída similar a esta:
+Você deverá ver uma saída parecida com esta:
 
-!['makerun.png'](https://raw.githubusercontent.com/gestaogovbr/Ro-dou/8edc3e3d567a4d2f182100db103316dc312fb241/docs/img/makerunwsl.png)
+![Executando make run](../../img/new_make_run.png)
 
-
-**Observação:** Ao executar o comando, uma mensagem será exibida confirmando a criação das variáveis de ambiente e das conexões. Caso isso não ocorra automaticamente, você pode executar cada função separadamente a partir do arquivo `Makefile`.
-
-<!-- Este comando baixa as imagens Docker necessárias, efetua o build do container Docker do Ro-DOU e executa todos os demais passos necessários. -->
-
-Como mostrado na imagem, após executar o comando no terminal e realizar o build dos containers, as conexões com os ambientes necessários serão iniciadas automaticamente. No exemplo apresentado, os containers e conexões já haviam sido criados, por isso as mensagens exibidas no retorno.
+Se esta não for a primeira execução, os bancos e conexões já existirão e você verá mensagens como:
 
 ```bash
 psql:/sql/init-db.sql:1: ERROR:  database "inlabs" already exists
@@ -64,50 +55,65 @@ psql:/sql/init-db.sql:5: NOTICE:  schema "dou_inlabs" already exists, skipping
 psql:/sql/init-db.sql:35: NOTICE:  relation "article_raw" already exists, skipping
 ```
 
-Ao ser executado pela primeira vez a mensagem retornada será:
+Isso é esperado e não indica um problema — o Ro-DOU verifica o que já existe antes de criar novamente.
+
+### 3. Confirmando que o Airflow está no ar
+
+O Apache Airflow — do qual o Ro-DOU depende — pode levar alguns minutos para subir na primeira inicialização. Aguarde e acesse:
+
+[http://localhost:8080/](http://localhost:8080/)
+
+Autentique-se com usuário `airflow` e senha `airflow`.
+
+### 4. Ativando o clipping de exemplo
+
+Na tela inicial do Airflow, você verá clippings de exemplo já configurados a partir dos arquivos YAML do diretório `dag_confs/`. Vamos ativar um deles para testar o ambiente:
+
+1. Localize a DAG **all_parameters_example** e ative-a pelo botão _toggle_ (todas as DAGs começam pausadas por padrão).
+2. Após ativá-la, o Airflow executa a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example) para ver o detalhe da execução.
+3. Na visualização em árvore (**Tree**) ou em grafo (**Graph**), verifique a task **send_report**: se estiver verde, foi encontrado um resultado na API da Imprensa Nacional e um e-mail foi enviado ao endereço configurado no YAML.
+
+### 5. Visualizando o clipping
+
+Acesse [http://localhost:5001/](http://localhost:5001/) — um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação — e veja a mensagem recebida. **_Voilà!_**
+
+### 6. Encerrando o ambiente
+
+Quando terminar de utilizar o ambiente de teste, desligue-o com:
 
 ```bash
-Creating 'inlabs' database
-Creating 'dou_inlabs' schema
+make down
 ```
 
-4. Confirme se o serviço do Airflow — do qual o Ro-DOU depende — está funcionando, acessando-o pelo navegador no endereço:
+Você pode subir o ambiente novamente a qualquer momento com `make run`.
 
-    [http://localhost:8080/](http://localhost:8080/)
+---
 
-O Apache Airflow, utilizado também para executar o Ro-DOU, pode levar alguns minutos para ser configurado na primeira inicialização. Para acessar e se autenticar no Airflow, abra o link e utilize o usuário `airflow` e a senha `airflow`.
+## Próximos passos
 
-5. Ativar a DAG de clipping:
+* Quer criar seus próprios clippings? Use o [Gerador de configuração (YAML)](../gerador_yaml.html) pela interface web, ou rode `make gerar-yml` no terminal — ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em `dag_confs/`. Veja o [vídeo tutorial do gerador e da CLI](https://www.youtube.com/embed/FVf3pC0rOWw).
+* Confira os [parâmetros de pesquisa](../como_funciona/parametros.md) disponíveis nos YAMLs.
+* Veja exemplos prontos em [Exemplos](../como_funciona/exemplos.md).
 
-Na tela inicial do Airflow, são fornecidos clippings de exemplo. A partir dos arquivos YAML (.yaml) do diretório `dag_confs/`, é possível manipular e customizar as pesquisas de clipping desejadas nos diários oficiais. Dentro dos arquivos YAML, é possível, por exemplo, definir palavras-chave de busca e um endereço de e-mail para recebimento de uma mensagem com os resultados da busca no(s) diário(s) oficial(is).
+---
 
-Para criar um novo arquivo YAML de pesquisa sem precisar editá-lo manualmente, utilize o [Gerador de configuração (YAML)](../gerador_yaml.html). Alternativamente, com o ambiente rodando, execute `make gerar-yml` no terminal: ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em `dag_confs/`.
+## Configurações avançadas (opcional)
 
-Assista ao vídeo tutorial abaixo para ver o gerador de configuração (YAML) e a CLI em funcionamento:
+As seções abaixo são independentes entre si — configure apenas o que fizer sentido para o seu caso de uso.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/FVf3pC0rOWw" title="Gerador de configuração (YAML) e CLI do Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+### Usando o INLABS como fonte de dados
 
-Para executar qualquer DAG do Airflow, é necessário ligá-la. Inicialmente, todas as DAGs ficam pausadas por padrão. Sugerimos começar testando o clipping **all_parameters_example**. Utilize o botão _toggle_ para ligá-lo. Após ativá-lo, o Airflow executará a DAG uma única vez. Clique no [nome da DAG](http://localhost:8080/tree?dag_id=all_parameters_example)
-para visualizar o detalhe da execução.
+Para utilizar `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal [INLABS](https://inlabs.in.gov.br/acessar.php) (cadastre-se caso ainda não tenha usuário). A DAG responsável pelo download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
 
-Você observará que, tanto na visualização em árvore (**Tree**) como na visualização em Grafo (**Graph**) dentro do Apache Airflow, é possível constatar se houve algum resultado encontrado na API da Imprensa Nacional para os termos e demais parâmetros deste clipping. Se a tarefa chamada **"send_report"** estiver na cor verde, significa que foi encontrado um resultado e que uma mensagem de e-mail foi enviada para o endereço configurado no arquivo YAML.
+<iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-6. Visualizar clipping:
+<iframe width="560" height="315" src="https://www.youtube.com/embed/0bppPCACs5Q?si=SQUs2fBJ9bOArwJD" title="Utilizando o INLABS como fonte de dados-pt2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-Para visualizar a mensagem de e-mail, acesse o endereço http://localhost:5001/. Este é um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação. **_Voilà!_**.
+### Backend de busca do INLABS (SQL ou OpenSearch)
 
-7. Opcional: Configurando o INLABS como fonte de dados:
+O OpenSearch é um mecanismo de busca e indexação utilizado pelo Ro-DOU para realizar pesquisas textuais nas publicações do INLABS. Por padrão, o Ro-DOU utiliza o **PostgreSQL (modo SQL)**. Para alternar para o **OpenSearch**, use a variável do Airflow `RO_DOU_INLABS_USE_OPENSEARCH`.
 
-**Observação:** Para utilizar o `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal. Um novo usuário pode ser cadastrado pelo portal [INLABS](https://inlabs.in.gov.br/acessar.php). A DAG
-que realiza o download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
-
-8. Opcional: Configurando o backend de busca do INLABS (SQL ou OpenSearch):
-
-O OpenSearch é um mecanismo de busca e indexação utilizado pelo Ro-DOU para realizar pesquisas textuais nas publicações do INLABS.
-
-Por padrão, o Ro-DOU utiliza o **PostgreSQL (modo SQL)** como backend para as buscas do INLABS. Caso queira utilizar o **OpenSearch**, é possível alternar entre os dois modos por meio da variável do Airflow `RO_DOU_INLABS_USE_OPENSEARCH`.
-
-Para criar a variável automaticamente via Makefile, execute:
+Para criar a variável automaticamente:
 
 ```bash
 make create-opensearch-variable
@@ -124,78 +130,26 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 
 > **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
 
+### Resumos automáticos com IA generativa
 
-9. Opcional: Configurando variáveis de ambiente para IA (resumo com IA):
+O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em [Habilitando IA nos resumos](habilitando_ia.md).
 
-O Ro-DOU suporta geração de resumos automáticos de publicações utilizando modelos de linguagem (LLMs). Para habilitar essa funcionalidade, é necessário buildar a imagem com o(s) provedor(es) desejado(s) e configurar as variáveis de API no Apache Airflow.
+---
 
-**Provedores suportados: Azure, OpenAI, Gemini e Claude**
+## Referência rápida de comandos
 
-**1. Build com o provedor desejado:**
-
-```bash
-# Build com um provedor
-make build AI_PROVIDERS="openai"
-
-# Build com múltiplos provedores
-make build AI_PROVIDERS="openai gemini"
-```
-
-Provedores disponíveis: `openai`, `gemini`, `claude`. Se nenhum provedor for especificado, as dependências de IA são ignoradas e a funcionalidade não estará disponível.
-
-**2. Configurando as variáveis de API no Airflow:**
-
-Para os provedores **OpenAI**, **Gemini** e **Claude**, basta criar uma variável no Airflow com a chave de API do provedor escolhido:
-
-| Variável | Descrição |
+| Comando | O que faz |
 |---|---|
-| `OPENAI_API_KEY` | Chave de API do OpenAI |
-| `GEMINI_API_KEY` | Chave de API do Gemini |
-| `ANTHROPIC_API_KEY` | Chave de API do Claude (Anthropic) |
+| `make run` | Sobe todos os containers e configura o ambiente (idempotente — pode rodar de novo a qualquer momento) |
+| `make down` | Desliga todos os containers |
+| `make build AI_PROVIDERS="..."` | Reconstrói a imagem incluindo suporte a provedor(es) de IA |
+| `make gerar-yml` | Gera um novo arquivo de configuração YAML por um assistente interativo no terminal (requer o ambiente já rodando) |
+| `make create-opensearch-variable` | Cria a variável do Airflow para usar o OpenSearch como backend de busca do INLABS |
+| `make create-azure-openai-variables` | Cria as variáveis do Airflow necessárias para usar o provedor Azure OpenAI |
 
-Para criar a variável, acesse a interface do Airflow em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/) e adicione a variável com o valor da sua chave.
+## Solução de problemas comuns
 
-Para o provedor **Azure**, são necessárias variáveis adicionais:
-
-| Variável | Descrição | Exemplo |
-|---|---|---|
-| `AZURE_OPENAI_ENDPOINT` | URL do endpoint do Azure OpenAI | `https://seu-recurso.openai.azure.com/` |
-| `AZURE_OPENAI_API_VERSION` | Versão da API | `2024-02-01` |
-| `AZURE_OPENAI_DEPLOYMENT` | Nome do deployment do modelo | `gpt-4o-mini` |
-| `AZURE_OPENAI_API_KEY` | Chave de API do Azure OpenAI | `<sua-chave>` |
-
-**Criando as variáveis do Azure automaticamente via Makefile:**
-
-```bash
-make create-azure-openai-variables
-```
-
-A variável `AZURE_OPENAI_API_KEY` será criada com o valor `<your-api-key>`. Para inserir sua chave real, acesse [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/), localize a variável e edite o valor.
-
-**3. Configurando a DAG para usar IA:**
-
-No arquivo YAML da DAG, adicione o bloco `ai_config` com o provedor e o nome da variável que contém a chave de API:
-
-```yaml
-search:
-  use_ai_summary: True
-  ai_pub_limit: 5
-  ai_custom_prompt: |
-    Você é um assistente que cria resumos concisos de publicações oficiais.
-ai_config:
-  provider: openai  # openai | gemini | claude | azure
-  api_key_var: OPENAI_API_KEY
-```
-
-9. Desligando o ambiente:
-
-Quando tiver terminado de utilizar o ambiente de teste do Ro-DOU, desligue-o por meio do seguinte comando:
-
-```bash
-make down
-```
-
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/0bppPCACs5Q?si=SQUs2fBJ9bOArwJD" title="Utilizando o INLABS como fonte de dados-pt2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+* **`make run` falha ou trava:** confirme que o Docker Desktop/daemon está em execução antes de rodar o comando.
+* **Porta já em uso (8080 ou 5001):** verifique se outro serviço na sua máquina já está usando essas portas e finalize-o, ou libere a porta antes de rodar `make run`.
+* **Airflow não carrega em http://localhost:8080/:** aguarde alguns minutos — a mensagem "Waiting for Airflow API to start" no terminal indica que o serviço ainda está subindo.
+* **`make gerar-yml` retorna erro de container:** o ambiente precisa estar rodando primeiro; execute `make run` antes.
