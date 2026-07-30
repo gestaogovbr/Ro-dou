@@ -1,6 +1,8 @@
 # Operadores de Pesquisa Avançada
 
-Os seguintes operadores de pesquisa avançada no Ro-DOU podem ser utilizados nas consultas configuradas nos arquivos YAML:
+⚠️ **Estes operadores estão disponíveis apenas para a fonte INLABS** (`sources: - INLABS`). Eles não se aplicam às demais fontes (DOU, Querido Diário, DOESP).
+
+Os seguintes operadores de pesquisa avançada podem ser utilizados nas consultas configuradas nos arquivos YAML:
 
 | Operador | Significado | Exemplo |
 |-----------|-------------|----------|
