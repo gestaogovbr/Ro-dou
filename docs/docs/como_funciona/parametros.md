@@ -5,28 +5,28 @@ A página abaixo lista os parâmetros configuráveis nos arquivos YAML:
 O Ro-DOU também oferece duas ferramentas para montar o arquivo sem editá-lo manualmente: o [Gerador de configuração (YAML)](../gerador_yaml.html), um formulário guiado no navegador com explicação de cada campo, e o comando `make gerar-yml`, para quem já tem o Ro-DOU [instalado](../como_utilizar/instalacao.md).
 
 ## Parâmetros da DAG
-* **id** *(obrigatório)*: Nome identificador da DAG a ser gerada. Deve ser único.
-* **description** *(obrigatório)*: Descrição da DAG de pesquisa exibida na interface do Airflow.
-* **doc_md** *(opcional)*: Documentação em markdown da DAG para uma descrição mais completa. Pode conter títulos, listas e links.
-* **schedule** *(opcional)*: Agendamento da periodicidade de execução da DAG. Use expressão cron (o padrão utilizado pelo gerador é `0 8 * * MON-FRI` quando não informado).
-* **dataset** *(opcional)*: Nome de um `Dataset` do Airflow. Se fornecido, a DAG só dispara quando o dataset for atualizado; pode ser combinado com `schedule`.
-* **callback** *(opcional)*: Notificações técnicas do sistema.
-  * **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
-* **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
-* **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
-* **ai_config** *(opcional): Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
-
+- **id** *(obrigatório)*: Nome identificador da DAG a ser gerada. Deve ser único.
+- **description** *(obrigatório)*: Descrição da DAG de pesquisa exibida na interface do Airflow.
+- **doc_md** *(opcional)*: Documentação em markdown da DAG para uma descrição mais completa. Pode conter títulos, listas e links.
+- **schedule** *(opcional)*: Agendamento da periodicidade de execução da DAG. Use expressão cron (o padrão utilizado pelo gerador é `0 8 * * MON-FRI` quando não informado).
+- **dataset** *(opcional)*: Nome de um `Dataset` do Airflow. Se fornecido, a DAG só dispara quando o dataset for atualizado; pode ser combinado com `schedule`.
+- **callback** *(opcional)*: Notificações técnicas do sistema.
+    - **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
+- **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
+- **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
+- **ai_config** *(opcional)*: Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 
 (Quando uma chave não é informada, é utilizada a configuração padrão definida pelo gerador: veja o código-fonte em `src/schemas.py` para os valores e comportamentos.)
 
 ## Parâmetros da Pesquisa (Search)
 
-* **search** *(obrigatório)*: Seção que define um conjunto de filtros a serem executados em sequência. Pode ser uma única pesquisa ou uma lista de pesquisas aninhadas.
+- **search** *(obrigatório)*: Seção que define um conjunto de filtros a serem executados em sequência. Pode ser uma única pesquisa ou uma lista de pesquisas aninhadas.
 
 Para cada item de `search` aplica‑se o conjunto de parâmetros abaixo. Nem todos precisam ser informados, mas existe uma **validação interna** que exige pelo menos um dos critérios `terms`, `department` ou `pubtype`. Além disso, se `sources` incluir `QD` (Querido Diário), o uso de `terms` torna‑se obrigatório.
 
 Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser informado para restringir a busca a cadernos específicos do Diário Oficial do Estado de São Paulo.
 
+- **header** *(opcional)*: Cabeçalho exibido para esta pesquisa no relatório.
 - **date** *(opcional)*: Intervalo de data para busca. Valores: DIA, SEMANA, MES, ANO. Default: DIA.
 - **department** *(opcional)*: Lista de unidades a serem filtradas na busca. O nome deve ser idêntico ao da publicação.
 - **department_ignore** *(opcional)*: Lista de unidades e subordinadas a serem desconsideradas na busca. O nome deve ser idêntico ao da publicação.
@@ -41,31 +41,36 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 - **ignore_attachments** *(opcional)*: Define se os conteúdos anexos à matéria (tabelas, quadros e anexos) devem ser suprimidos do relatório. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **ignore_inline_tables** *(opcional)*: Define se as tabelas embutidas no corpo da própria publicação devem ser omitidas. Valores: True ou False. Default: False. (Funcionalidade disponível apenas no INLABS)
 - **min_table_rows** *(opcional)*: Parâmetro complementar a `ignore_inline_tables` — só produz efeito quando `ignore_inline_tables: True`. Define o número mínimo de linhas que uma tabela deve ter para ser omitida. Default: `1` (todas as tabelas são omitidas).  (Funcionalidade disponível apenas no INLABS)
-- **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS)-[Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
+- **ai_search_config** *(opcional)*: Configurações de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
 - **ignore_signature_match** *(opcional)*: Ignora a correspondência de assinatura ao realizar a busca. Valores: True ou False. Default: False.
 - **is_exact_search** *(opcional)*: Busca somente o termo exato. Valores: True ou False. Default: True.
 - **pubtype** *(opcional)*: Lista de tipos de publicações a serem filtradas na busca. Valores: [Lista de tipos de publicações](tipos_de_publicacoes.md).
 - **sources** *(opcional)*: Fontes de pesquisa dos diários oficiais. Pode ser uma ou uma lista. Opções disponíveis: DOU, QD, INLABS, DOESP. Default: DOU.
 - **terms** *(condicionalmente obrigatório)*: Lista de termos a serem buscados. Para o INLABS podem ser utilizados operadores avançados de busca. Veja nota acima sobre validação: se `QD` estiver na lista de `sources`, os termos são exigidos; caso contrário basta informar pelo menos um dos critérios `terms`, `department` ou `pubtype`.
-- **show_relevancy** *(opcional)*: Exibe a relevância da publicação baseado no score do indexador de buscas.
-Default: False. (Funcionalidade disponível apenas no INLABS com o OpenSearch)
+- **show_relevancy** *(opcional)*: Exibe a relevância da publicação baseado no score do indexador de buscas. Default: False. (Funcionalidade disponível apenas no INLABS com o OpenSearch)
 - **territory_id** *(opcional)*: Lista de identificadores do id do município. Necessário para buscar no Querido Diário. Este parâmetro só deve ser utilizado exclusivamente quando a fonte de dados for o Querido Diário‑QD.
 - **excerpt_size** *(opcional)*: Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. (Funcionalidade disponível apenas no Querido Diário‑QD)
 - **number_of_excerpts** *(opcional)*: Número máximo de ocorrências do termo de busca em uma mesma edição. (Funcionalidade disponível apenas no Querido Diário‑QD)
 
 ## Parâmetros do Relatório (Report)
-O bloco `report` contém as informações de notificação. Não há validação estrita no esquema, mas **deve existir pelo menos um mecanismo de envio** (por exemplo `emails`, `slack_webhook`, `discord_webhook` ou `notification`).
+O bloco `report` contém as informações de notificação. Não há validação estrita no esquema, mas **deve existir pelo menos um mecanismo de envio** (por exemplo `emails`, `slack`, `discord` ou `notification`).
 
 - **attach_csv** *(opcional)*: Anexar no email o resultado da pesquisa em CSV. Default: False.
-- **discord_webhook** *(opcional)*: URL de Webhook para integração com o Discord.
+- **slack** *(opcional)*: Bloco com a URL de webhook para integração com o Slack:
+    ```yaml
+    report:
+      slack:
+        webhook: https://hooks.slack.com/services/...
+    ```
+- **discord** *(opcional)*: Bloco com a URL de webhook para integração com o Discord, no mesmo formato de `slack` acima.
 - **notification** *(opcional)*: Integração com aplicativos de mensagens via [Apprise](https://github.com/caronc/apprise).
 - **emails** *(opcional)*: Lista de emails dos destinatários. Normalmente ao menos este campo ou um webhook deve ser preenchido.
 - **footer_text** *(opcional)*: Texto em HTML do rodapé do relatório.
 - **header_text** *(opcional)*: Texto em HTML de cabeçalho do relatório.
 - **hide_filters** *(opcional)*: Omite no relatório os filtros de pesquisa. Default: False.
 - **no_results_found_text** *(opcional)*: Texto padrão para quando não há resultados encontrados. Default: "Nenhum dos termos pesquisados foi encontrado nesta consulta".
+- **page_title** *(opcional)*: Título da página do relatório enviado por e-mail.
 - **skip_null** *(opcional)*: Dispensa o envio de email quando não há resultados encontrados em todas as pesquisas. Valores: True ou False. Default: True.
-- **slack_webhook** *(opcional)*: URL de Webhook para integração com o Slack.
 - **subject** *(opcional)*: Texto de assunto do email. Se não for fornecido o gerador define um texto padrão.
 
 ## Como utilizar Slack ou Discord para envio do clippings
