@@ -4,14 +4,6 @@ Este guia mostra como instalar e executar o Ro-DOU localmente para experimentaç
 
 **Tempo estimado:** 10 a 15 minutos (a primeira inicialização dos containers pode levar alguns minutos).
 
-Prefere acompanhar em vídeo? Os tutoriais abaixo cobrem o passo a passo de instalação:
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.
-
 ### Pré-requisitos
 
 * 4Gb de memória RAM
@@ -23,6 +15,14 @@ O código-fonte está disponibilizado no perfil do <a href="https://github.com/g
 
 * [o WSL está instalado e configurado](instalacao_wsl_windows.md);
 * [o Docker está habilitado no WSL](habilitacao_docker_no_wsl.md).
+
+Prefere acompanhar em vídeo? Os tutoriais abaixo cobrem o passo a passo de instalação:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.
 
 ### 1. Clonando o repositório
 
