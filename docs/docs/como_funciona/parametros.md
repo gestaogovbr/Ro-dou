@@ -56,12 +56,7 @@ Quando a fonte `DOESP` for utilizada, o parâmetro `journals` poderá ser inform
 O bloco `report` contém as informações de notificação. Não há validação estrita no esquema, mas **deve existir pelo menos um mecanismo de envio** (por exemplo `emails`, `slack`, `discord` ou `notification`).
 
 - **attach_csv** *(opcional)*: Anexar no email o resultado da pesquisa em CSV. Default: False.
-- **slack** *(opcional)*: Bloco com a URL de webhook para integração com o Slack:
-    ```yaml
-    report:
-      slack:
-        webhook: https://hooks.slack.com/services/...
-    ```
+- **slack** *(opcional)*: Bloco com a URL de webhook para integração com o Slack
 - **discord** *(opcional)*: Bloco com a URL de webhook para integração com o Discord, no mesmo formato de `slack` acima.
 - **notification** *(opcional)*: Integração com aplicativos de mensagens via [Apprise](https://github.com/caronc/apprise).
 - **emails** *(opcional)*: Lista de emails dos destinatários. Normalmente ao menos este campo ou um webhook deve ser preenchido.
