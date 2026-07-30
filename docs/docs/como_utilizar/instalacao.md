@@ -103,7 +103,21 @@ As seções abaixo são independentes entre si — configure apenas o que fizer 
 
 ### Usando o INLABS como fonte de dados
 
-Para utilizar `source: - INLABS`, é necessário alterar a conexão `inlabs_portal` no Apache Airflow, apontando o usuário e senha de autenticação do portal [INLABS](https://inlabs.in.gov.br/acessar.php) (cadastre-se caso ainda não tenha usuário). A DAG responsável pelo download dos arquivos do INLABS é a **ro-dou_inlabs_load_pg**.
+O [INLABS](https://github.com/Imprensa-Nacional/inlabs) é o portal da Imprensa Nacional que disponibiliza os dados do Diário Oficial da União em lote. Usá-lo como fonte no Ro-DOU libera recursos extras não disponíveis na fonte padrão (API do DOU), como texto completo, resumos por IA e operadores de busca avançados.
+
+Para configurar:
+
+1. **Crie uma conta no portal do INLABS:** acesse [https://inlabs.in.gov.br/acessar.php](https://inlabs.in.gov.br/acessar.php) e cadastre-se.
+
+    ⚠️ **Observação:** é comum o portal exibir uma mensagem de erro logo após o cadastro. Pode ignorar — a conta costuma ser criada normalmente mesmo assim.
+
+2. **Acesse as conexões do Airflow** em [http://localhost:8080/connection/list/](http://localhost:8080/connection/list/). O `make run` já cria duas conexões: `inlabs_db` e `inlabs_portal`.
+
+3. **Edite a conexão `inlabs_portal`** e preencha:
+    - **Login:** o e-mail usado para criar a conta no INLABS
+    - **Password:** a senha da conta
+
+4. **Rode a DAG `ro-dou_inlabs_load_pg`** — ela faz a carga inicial dos dados do INLABS no banco de dados.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
