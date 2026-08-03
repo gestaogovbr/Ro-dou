@@ -19,7 +19,7 @@ except Exception:
     BeautifulSoup = None
 
 try:
-    from airflow.hooks.base import BaseHook
+    from airflow.sdk.bases.hook import BaseHook
 except Exception:
     # Allow running tests without Airflow installed
     BaseHook = object

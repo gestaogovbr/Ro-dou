@@ -1,6 +1,19 @@
 # Changelog
 
-**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.8.0...0.8.1
+## What's Changed
+- Migração do Airflow 2 para Airflow 3
+
+### 🚀 Outros
+* Update CHANGELOG.md for 0.11.1 by @github-actions[bot] in https://github.com/gestaogovbr/Ro-dou/pull/316
+* feat: notify on failure in INLABS load DAG by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/315
+* docs: adiciona vídeo tutorial do gerador YAML/CLI by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/317
+* airflow3: migrate Airflow 2 changes to Airflow 3 by @luisssguilherme in https://github.com/gestaogovbr/Ro-dou/pull/290
+
+## New Contributors
+* @luisssguilherme made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/290
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.11.1...0.12.0
+
 ## [0.11.1] - 2026-07-23
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

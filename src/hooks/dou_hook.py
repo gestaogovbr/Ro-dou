@@ -10,7 +10,7 @@ import json
 from typing import List
 import requests
 
-from airflow.hooks.base import BaseHook
+from airflow.sdk.bases.hook import BaseHook
 
 from bs4 import BeautifulSoup
 
