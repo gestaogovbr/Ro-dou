@@ -139,7 +139,7 @@ create-inlabs-db-connection: get_access_token
 
 test-inlabs-db-connection:
 	@echo "Testing 'inlabs_db' Airflow connection"
-	@docker exec -it airflow-scheduler airflow connections test inlabs_db
+	@docker exec -e PYTHONWARNINGS=ignore airflow-scheduler airflow connections test inlabs_db
 
 create-inlabs-portal-connection: get_access_token
 	@echo "Creating 'inlabs_portal' Airflow connection"
