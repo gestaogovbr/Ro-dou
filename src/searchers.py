@@ -9,6 +9,7 @@ import sys
 import os
 from abc import ABC
 from datetime import datetime, timedelta
+from io import StringIO
 from random import random
 from typing import Dict, List, Tuple, Union
 import string
@@ -58,7 +59,7 @@ class BaseSearcher(ABC):
         elif isinstance(pre_term_list, list):
             return pre_term_list
         else:
-            return pd.read_json(pre_term_list).iloc[:, 0].tolist()
+            return pd.read_json(StringIO(pre_term_list)).iloc[:, 0].tolist()
 
     def _group_results(
         self,
@@ -197,7 +198,7 @@ class DOUSearcher(BaseSearcher):
         term_list,
         dou_sections,
         search_date,
-        trigger_date,
+        reference_date,
         field,
         is_exact_search,
         ignore_signature_match,
@@ -223,7 +224,7 @@ class DOUSearcher(BaseSearcher):
             results = self._search_text_with_retry(
                 search_term=search_term,
                 sections=[Section[s] for s in dou_sections],
-                reference_date=trigger_date,
+                reference_date=reference_date,
                 search_date=SearchDate[search_date],
                 field=Field[field],
                 is_exact_search=is_exact_search,

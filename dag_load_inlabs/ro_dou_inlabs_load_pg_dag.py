@@ -7,15 +7,13 @@ import os
 import sys
 import subprocess
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
-from airflow import Dataset  # type: ignore
-from airflow.decorators import dag, task  # type: ignore
-from airflow.models.param import Param  # type: ignore
-from airflow.operators.python import get_current_context  # type: ignore
-from airflow.models import Variable  # type: ignore
+from airflow.sdk.definitions.asset import Dataset
+from airflow.sdk import Metadata, dag, task
+from airflow.sdk import get_current_context, Variable
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator
 
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator  # type: ignore
 
 from ro_dou_src.utils.open_search.config import RO_DOU_INLABS_USE_OPENSEARCH  # type: ignore
 
@@ -53,7 +51,7 @@ def _notify_on_failure(context):
 # DAG
 
 default_args = {
-    "owner": "ro-dou_inlabs_load_pg",
+    "owner": "airflow",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
     "retries": 3,
@@ -69,31 +67,25 @@ default_args = {
     catchup=False,
     description=__doc__,
     max_active_runs=1,
-    params={
-        "trigger_date": Param(
-            default=date.today().isoformat(), type="string", format="date"
-        )
-    },
     tags=["ro-dou", "inlabs"],
 )
 def load_inlabs():
 
     @task
-    def get_date() -> str:
-        """Returns DAG trigger_date in YYYY-MM-DD"""
-        from airflow.operators.python import get_current_context  # type: ignore
-        from utils.date import get_trigger_date
+    def get_reference_date() -> str:
+        """Return the run's reference date in YYYY-MM-DD."""
+        from ro_dou_src.utils.date import get_reference_date as resolve_date
 
         context = get_current_context()
-        return get_trigger_date(context, local_time=True).strftime("%Y-%m-%d")
+        return resolve_date(context).isoformat()
 
     @task.short_circuit
-    def download_n_unzip_files(trigger_date: str):
+    def download_n_unzip_files(reference_date: str):
         import requests
         from bs4 import BeautifulSoup
         import zipfile
         from urllib.parse import urljoin
-        from airflow.hooks.base import BaseHook  # type: ignore
+        from airflow.sdk.bases.hook import BaseHook  # type: ignore
 
         def _create_directories():
             subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
@@ -119,7 +111,7 @@ def load_inlabs():
         def _find_files(session, headers):
             response = session.request(
                 "GET",
-                urljoin(inlabs_conn.host, f"index.php?p={trigger_date}"),
+                urljoin(inlabs_conn.host, f"index.php?p={reference_date}"),
                 headers=headers,
             )
             soup = BeautifulSoup(response.text, "html.parser")
@@ -129,7 +121,7 @@ def load_inlabs():
             ]
             logging.info("Files found: %s", files)
             if not files:
-                raise ValueError("No files found for this date: %s" % trigger_date)
+                raise ValueError("No files found for this date: %s" % reference_date)
             return files
 
         def _download_files():
@@ -142,7 +134,7 @@ def load_inlabs():
             files = _find_files(session, headers)
 
             if not files:
-                logging.error(f"Files not found for this date: {trigger_date}")
+                logging.error("Files not found for date %s", reference_date)
                 return False
 
             for file in files:
@@ -165,19 +157,21 @@ def load_inlabs():
             for zip_file in zip_files:
                 zip_file_path = os.path.join(dest_path, zip_file)
                 with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-                    zip_ref.extractall(os.path.join(dest_path, trigger_date))
+                    zip_ref.extractall(os.path.join(dest_path, reference_date))
             logging.info("Unzipped files: %s", zip_files)
 
         inlabs_conn = BaseHook.get_connection(INLABS_CONN_ID)
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
         _create_directories()
         files_exists = _download_files()
-        _unzip_files()
+
+        if files_exists:
+            _unzip_files()
 
         return files_exists
 
     @task
-    def load_data(trigger_date: str) -> None:
+    def load_data(reference_date: str) -> None:
         from bs4 import BeautifulSoup
         import glob
         import pandas as pd
@@ -188,7 +182,7 @@ def load_inlabs():
             dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
             df = pd.DataFrame()
             for xml_file in glob.glob(
-                os.path.join(dest_path, trigger_date, "**/*.xml"), recursive=True
+                os.path.join(dest_path, reference_date, "**/*.xml"), recursive=True
             ):
                 df1 = pd.read_xml(xml_file)
                 df2 = pd.read_xml(xml_file, xpath="//body")
@@ -216,7 +210,7 @@ def load_inlabs():
             """)
             if table_exists[0]:
                 hook.run(
-                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{trigger_date}'"
+                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{reference_date}'"
                 )
 
         df = _read_files()
@@ -239,7 +233,7 @@ def load_inlabs():
                 FROM
                     {STG_TABLE}
                 WHERE
-                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_date')}}}}'
+                    DATE(pubdate) = '{{{{ ti.xcom_pull(task_ids='get_reference_date')}}}}'
             """,
     )
 
@@ -258,36 +252,45 @@ def load_inlabs():
         logging.info("Indexer skipped because OpenSearch is disabled.")
 
     @task
-    def indexer_data(trigger_date: str) -> None:
+    def indexer_data(reference_date: str) -> None:
         from ro_dou_src.utils.open_search.indexer import Indexer  # type: ignore
 
         indexer = Indexer(conn_id=DEST_CONN_ID)
-        indexer.run(trigger_date)
+        indexer.run(reference_date)
 
     @task.branch
     def check_if_first_run_of_day():
-        context = get_current_context()
-        execution_date = context["logical_date"]
-        prev_execution_date = context["prev_execution_date"]
-        logging.info("Execution_date: %s", execution_date)
-        logging.info("Prev_execution_date: %s", prev_execution_date)
 
-        if execution_date.day == prev_execution_date.day:
-            logging.info("Não é a primeira execução do dia")
-            logging.info("Triggering dataset edicao_extra")
-            return "trigger_dataset_inlabs_edicao_extra"
-        else:
-            logging.info("Primeira execução do dia")
+        context = get_current_context()
+        logical_date = context["logical_date"]
+        prev_end_date_success = context.get("prev_end_date_success")
+        print(
+            f"Logical date: {logical_date}, Previous successful end date: {prev_end_date_success}"
+        )
+
+        if not prev_end_date_success:
+            logging.info("Primeira execução da dag")
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
 
+        if prev_end_date_success.date() < logical_date.date():
+            logging.info("Primeira execução bem-sucedida do dia")
+            logging.info("Triggering dataset e DAGs do INLABS")
+            return "trigger_dataset_inlabs"
+
+        logging.info("Já existe uma execução bem-sucedida hoje")
+        logging.info("Triggering dataset edicao_extra")
+        return "trigger_dataset_inlabs_edicao_extra"
+
     @task(outlets=[Dataset("inlabs_edicao_extra")])
-    def trigger_dataset_inlabs_edicao_extra():
-        pass
+    def trigger_dataset_inlabs_edicao_extra(reference_date: str):
+        yield Metadata(
+            Dataset("inlabs_edicao_extra"), {"reference_date": reference_date}
+        )
 
     @task(outlets=[Dataset("inlabs")])
-    def trigger_dataset_inlabs():
-        pass
+    def trigger_dataset_inlabs(reference_date: str):
+        yield Metadata(Dataset("inlabs"), {"reference_date": reference_date})
 
     @task(trigger_rule="none_failed_min_one_success")
     def remove_directory():
@@ -296,16 +299,16 @@ def load_inlabs():
         logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
-    trigger_date = get_date()
+    reference_date = get_reference_date()
     run_indexer_task = check_if_should_run_indexer()
-    indexer_task = indexer_data(trigger_date)  # type: ignore
+    indexer_task = indexer_data(reference_date)  # type: ignore
     skip_indexer_task = skip_indexer_data()
     remove_directory_task = remove_directory()
     check_first_run_task = check_if_first_run_of_day()
 
     (
-        download_n_unzip_files(trigger_date)
-        >> load_data(trigger_date)  # type: ignore
+        download_n_unzip_files(reference_date)
+        >> load_data(reference_date)  # type: ignore
         >> check_loaded_data
         >> run_indexer_task
     )
@@ -313,8 +316,11 @@ def load_inlabs():
     (
         remove_directory_task
         >> check_first_run_task
-        >> [trigger_dataset_inlabs_edicao_extra(), trigger_dataset_inlabs()]
+        >> [
+            trigger_dataset_inlabs_edicao_extra(reference_date),
+            trigger_dataset_inlabs(reference_date),
+        ]
     )
 
 
-load_inlabs()
+dag = load_inlabs()

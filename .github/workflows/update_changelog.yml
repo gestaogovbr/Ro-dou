@@ -11,8 +11,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-        
+      uses: actions/checkout@v4
       - name: Get latest release tag
         id: get_latest_release
         run: echo "::set-output name=tag::$(gh release list -R ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')"

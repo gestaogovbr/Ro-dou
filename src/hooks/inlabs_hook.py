@@ -9,10 +9,10 @@ import unicodedata
 import pandas as pd
 import html2text
 
-from airflow.hooks.base import BaseHook  # type: ignore
+from airflow.sdk.bases.hook import BaseHook  # type: ignore
 
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import Variable  # type: ignore
+from airflow.sdk import Variable  # type: ignore
 
 # from typing import Optional
 from schemas import AIConfig, AISearchConfig  # type: ignore
