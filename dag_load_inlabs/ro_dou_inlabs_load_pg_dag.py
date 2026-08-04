@@ -54,7 +54,7 @@ default_args = {
     "owner": "airflow",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
-    "retries": 3,
+    "retries": 0,
     "retry_delay": timedelta(minutes=5),
     "on_failure_callback": _notify_on_failure,
 }
@@ -258,7 +258,7 @@ def load_inlabs():
         indexer = Indexer(conn_id=DEST_CONN_ID)
         indexer.run(reference_date)
 
-    @task.branch
+    @task.branch(trigger_rule="none_failed_min_one_success")
     def check_if_first_run_of_day():
 
         context = get_current_context()
@@ -303,23 +303,26 @@ def load_inlabs():
     run_indexer_task = check_if_should_run_indexer()
     indexer_task = indexer_data(reference_date)  # type: ignore
     skip_indexer_task = skip_indexer_data()
-    remove_directory_task = remove_directory()
     check_first_run_task = check_if_first_run_of_day()
+    remove_directory_task = remove_directory()
+
+    download_task = download_n_unzip_files(reference_date)
+    load_task = load_data(reference_date)
+    check_loaded_data_task = check_loaded_data
+
+    (download_task >> load_task >> check_loaded_data_task >> run_indexer_task)
+
+    run_indexer_task >> [indexer_task, skip_indexer_task]
+    indexer_task >> check_first_run_task
+    skip_indexer_task >> check_first_run_task
 
     (
-        download_n_unzip_files(reference_date)
-        >> load_data(reference_date)  # type: ignore
-        >> check_loaded_data
-        >> run_indexer_task
-    )
-    run_indexer_task >> [indexer_task, skip_indexer_task] >> remove_directory_task
-    (
-        remove_directory_task
-        >> check_first_run_task
+        check_first_run_task
         >> [
             trigger_dataset_inlabs_edicao_extra(reference_date),
             trigger_dataset_inlabs(reference_date),
         ]
+        >> remove_directory_task.as_teardown(setups=reference_date)
     )
 
 
