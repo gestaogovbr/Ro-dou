@@ -99,8 +99,8 @@ class FailureSender:
         #     execution_date = None
 
         execution_date_str = (
-            dag_run.execution_date.strftime("%d/%m/%Y %H:%M")
-            if dag_run.execution_date
+            dag_run.logical_date.strftime("%d/%m/%Y %H:%M")
+            if dag_run.logical_date
             else "N/A"
         )
         #     execution_date.strftime("%d/%m/%Y %H:%M") if execution_date else "N/A"
@@ -142,29 +142,13 @@ class FailureSender:
                     f"\n📊 *DAG:* `{dag_run.dag_id}`"
                     f"\n📋 *Task:* `{task_instance.task_id}`"
                     f"\n*State:* `{task_instance.state}`"
-                    f"\n 📅 *Data de execução:* {dag_run.execution_date.strftime('%d/%m/%Y %H:%M') if dag_run.execution_date else 'N/A'}"
+                    f"\n 📅 *Data de execução:* {dag_run.logical_date.strftime('%d/%m/%Y %H:%M') if dag_run.logical_date else 'N/A'}"
                     f"\n📁 *Exception:* {exception}"
                     f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
                 ),
                 channel=description["channel"],
             )
             slack_notifier.notify(context)
-            # description = json.loads(conn.description or "{}")
-            # slack_hook = SlackHook(slack_conn_id=self.SLACK_CONN_ID)
-            # slack_hook.call(
-            #     "chat.postMessage",
-            #     json={
-            #         "channel": description.get("channel"),
-            #         "text": (
-            #             ":bomb: *Falha na DAG*"
-            #             f"\n📊 *DAG:* `{dag_run.dag_id}`"
-            #             f"\n📋 *Task:* `{task_instance.task_id}`"
-            #             f"\n*State:* `{task_instance.state}`"
-            #             f"\n 📅 *Data de execução:* {getattr(dag_run, 'logical_date', None) or getattr(dag_run, 'execution_date', None)}"
-            #             f"\n📁 *Exception:* {exception}"
-            #             f"\n🔗 *Log:* <{task_instance.log_url}|Ver log completo>"
-            #         ),
-            #     },
-            # )
+
         except Exception as e:
             logging.error(f"Slack notification not sent: {str(e)}")
