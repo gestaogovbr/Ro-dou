@@ -54,7 +54,7 @@ default_args = {
     "owner": "airflow",
     "start_date": datetime(2024, 4, 1),
     "depends_on_past": False,
-    "retries": 0,
+    "retries": 3,
     "retry_delay": timedelta(minutes=5),
     "on_failure_callback": _notify_on_failure,
 }
