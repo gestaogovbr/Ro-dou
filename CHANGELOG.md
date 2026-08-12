@@ -1,6 +1,18 @@
 # Changelog
 
 ## What's Changed
+## [0.12.1] - 2026-08-12
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* docs: reorganiza e revisa a documentação by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/319
+* Fix Makefile - step test inlabs_db_test_connection by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/320
+* fix: substitui execution_date por logical_date no callback de falha by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/322
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.12.0...0.12.1
+
 - Migração do Airflow 2 para Airflow 3
 
 ### 🚀 Outros
