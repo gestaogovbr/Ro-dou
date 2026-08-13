@@ -17,7 +17,12 @@ spec:
               cat <<'EOF' > /tmp/variables.json
               {
                 "path_tmp": "/tmp",
-                "email_admin": "admin@rodou.gov.br"
+                "email_admin": "admin@rodou.gov.br",
+                "termos_exemplo_variavel": "LGPD\nlei geral de proteção de dados\nacesso à informação",
+                "RO_DOU_INLABS_USE_OPENSEARCH": "False",
+                "OPENSEARCH_HOST": "http://opensearch:9200",
+                "OPENSEARCH_USER": "OPENSEARCH_USER",
+                "OPENSEARCH_PASS": "OPENSEARCH_PASS",
               }
               EOF
               airflow variables import /tmp/variables.json
