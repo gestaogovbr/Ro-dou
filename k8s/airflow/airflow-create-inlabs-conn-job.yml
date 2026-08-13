@@ -8,7 +8,8 @@ spec:
       restartPolicy: Never
       containers:
       - name: create-inlabs-connection
-        image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+        image: ghcr.io/gestaogovbr/ro-dou:latest
+        imagePullPolicy: Always
         command: ["bash", "-c"]
         args:
           - |
@@ -23,3 +24,4 @@ spec:
               name: airflow-secrets
           - configMapRef:
               name: airflow-config
+  backoffLimit: 0
