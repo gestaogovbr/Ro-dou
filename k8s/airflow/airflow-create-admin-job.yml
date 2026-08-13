@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-create-admin
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: create-admin
+          image: ghcr.io/gestaogovbr/ro-dou:latest
+          imagePullPolicy: Always
+          command:
+            - bash
+            - -c
+            - |
+              airflow users create \
+                --username "${_AIRFLOW_WWW_USER_USERNAME}" \
+                --firstname Airflow \
+                --lastname Admin \
+                --role Admin \
+                --email airflowadmin@example.com \
+                --password "${_AIRFLOW_WWW_USER_PASSWORD}"
+          envFrom:
+            - secretRef:
+                name: airflow-secrets
+            - configMapRef:
+                name: airflow-config
+  backoffLimit: 0

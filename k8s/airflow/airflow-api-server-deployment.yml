@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-api-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-api-server
+  template:
+    metadata:
+      labels:
+        app: airflow-api-server
+    spec:
+      containers:
+        - name: airflow-api-server
+          image: ghcr.io/gestaogovbr/ro-dou:latest
+          imagePullPolicy: Always
+          command: ["airflow", "api-server"]
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: airflow-secrets
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+          startupProbe:
+            httpGet:
+              path: /api/v2/version
+              port: http
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /api/v2/version
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/v2/version
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+      volumes:
+        - name: airflow-logs
+          persistentVolumeClaim:
+            claimName: airflow-rodou-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-api-server
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+  selector:
+    app: airflow-api-server

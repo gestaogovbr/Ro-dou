@@ -29,7 +29,8 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:15
+          image: postgres:17.5-alpine
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
               name: postgres
@@ -49,6 +50,19 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "airflow", "-d", "airflow"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "airflow", "-d", "airflow"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
   volumeClaimTemplates:
     - metadata:
         name: postgres-data

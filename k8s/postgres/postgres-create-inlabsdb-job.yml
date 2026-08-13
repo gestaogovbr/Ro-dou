@@ -8,7 +8,8 @@ spec:
       restartPolicy: Never
       containers:
       - name: init-db
-        image: postgres:16
+        image: postgres:17.5-alpine
+        imagePullPolicy: IfNotPresent
         command: ["psql"]
         args: ["-h", "postgres", "-U", "airflow", "-d", "postgres", "-f", "/init/init.sql"]
         env:
@@ -24,3 +25,4 @@ spec:
         - name: init-sql
           configMap:
             name: inlabs-init-sql
+  backoffLimit: 0

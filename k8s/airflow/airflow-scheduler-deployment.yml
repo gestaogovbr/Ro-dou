@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: airflow-scheduler
-          image: ghcr.io/gestaogovbr/airflow2-rodou:latest
+          image: ghcr.io/gestaogovbr/ro-dou:latest
+          imagePullPolicy: Always
           command: ["airflow", "scheduler"]
           envFrom:
             - secretRef:
@@ -24,6 +25,19 @@ spec:
           volumeMounts:
             - name: airflow-logs
               mountPath: /opt/airflow/logs
+          livenessProbe:
+            exec:
+              command:
+                - airflow
+                - jobs
+                - check
+                - --job-type
+                - SchedulerJob
+                - --local
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
       volumes:
         - name: airflow-logs
           persistentVolumeClaim:

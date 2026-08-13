@@ -1,23 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: airflow-webserver
+  name: airflow-dag-processor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: airflow-webserver
+      app: airflow-dag-processor
   template:
     metadata:
       labels:
-        app: airflow-webserver
+        app: airflow-dag-processor
     spec:
       containers:
-        - name: airflow-webserver
-          image: ghcr.io/gestaogovbr/airflow2-rodou:latest
-          command: ["airflow", "webserver"]
-          ports:
-            - containerPort: 8080
+        - name: airflow-dag-processor
+          image: ghcr.io/gestaogovbr/ro-dou:latest
+          imagePullPolicy: Always
+          command: ["airflow", "dag-processor"]
           envFrom:
             - secretRef:
                 name: airflow-secrets
@@ -30,15 +29,3 @@ spec:
         - name: airflow-logs
           persistentVolumeClaim:
             claimName: airflow-rodou-logs-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: airflow-webserver
-spec:
-  type: ClusterIP
-  ports:
-    - port: 8080
-      targetPort: 8080
-  selector:
-    app: airflow-webserver
