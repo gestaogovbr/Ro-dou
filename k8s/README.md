@@ -110,11 +110,37 @@ kubectl -n airflow-rodou port-forward service/airflow-api-server 8080:8080
 Acesse `http://localhost:8080` com o usuário e a senha definidos por
 `_AIRFLOW_WWW_USER_USERNAME` e `_AIRFLOW_WWW_USER_PASSWORD`.
 
-Interface do SMTP4dev:
-
-```bash
-kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
-```
 
 Jobs são imutáveis no Kubernetes. Para executá-los novamente, exclua o Job
 correspondente antes de reaplicar o manifest.
+
+## Sincronização dos `dag_confs` via Git (git-rsync)
+
+Em ambientes onde o Ro-DOU roda no Kubernetes, é comum manter as
+configurações das DAGs em uma pasta `dag_confs/`. Para sincronizar essas
+configurações a partir de um repositório Git sem rebuildar imagens, há um
+exemplo de solução `git-rsync` em `k8s/git-rsync/` que:
+
+- provê um `ConfigMap` com um script `git-rsync.sh` que faz `git clone`/
+   `git pull` e usa `rsync` para atualizar o diretório alvo;
+- provê um `CronJob` que executa o script periodicamente (padrão: a cada
+   5 minutos).
+
+Como usar (passos rápidos):
+
+1. Ajuste `k8s/git-rsync/git-rsync-cronjob.yml` definindo `GIT_REPO`,
+    `GIT_BRANCH` e substitua `dag-confs-pvc` pelo nome do seu PVC destino.
+2. Aplique os manifests:
+
+```bash
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+```
+
+3. Para repositórios privados, prefira usar um token (PAT) via HTTPS:
+
+```bash
+kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+```
+
