@@ -1,7 +1,7 @@
 # Ro-dou no Kubernetes
 
 Manifests para uma instalação local do Ro-DOU com Airflow 3, PostgreSQL,
-OpenSearch e SMTP4dev.
+OpenSearch (opcional), SMTP4dev (opcional) e git-rsync (opcional).
 
 ## Pré-requisitos
 
