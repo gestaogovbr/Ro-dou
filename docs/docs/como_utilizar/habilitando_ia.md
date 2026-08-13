@@ -23,21 +23,11 @@ Assista ao vídeo abaixo para ver a configuração completa na prática:
 
 ## Como configurar
 
-### 1. Faça o build da imagem com o provedor desejado.
-
-As dependências de IA são opcionais e controladas pelo argumento `AI_PROVIDERS` do build. Se nenhum provedor for especificado, elas são ignoradas.
-
-```bash
-# Um provedor
-make build AI_PROVIDERS="openai"
-
-# Múltiplos provedores
-make build AI_PROVIDERS="openai gemini"
-```
+### 1. Providers
 
 Provedores de build disponíveis: `openai`, `gemini`, `claude`.
 
-💡 Para usar o Azure OpenAI, faça o build com AI_PROVIDERS="openai", pois o Azure OpenAI utiliza o mesmo SDK do OpenAI e não possui um pacote dedicado.
+💡 O Azure OpenAI utiliza o mesmo SDK do OpenAI e não possui um pacote dedicado.
 
 ### 2. Crie a variável com a chave de API no Airflow
 
