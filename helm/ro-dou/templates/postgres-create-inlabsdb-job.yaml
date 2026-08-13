@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-init-inlabs-db
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: postgres
+spec:
+  template:
+    metadata:
+      labels:
+        app: init-inlabs-db
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: init-db
+        image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
+        imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+        command: ["bash", "-c"]
+        args:
+          - |
+            until pg_isready -h {{ include "ro-dou.fullname" . }}-postgres -U {{ index .Values.postgres.secrets "postgres-user" }} -d postgres; do
+              echo "Waiting for PostgreSQL to be ready..."
+              sleep 2
+            done
+            echo "PostgreSQL is ready. Running init script..."
+            psql -h {{ include "ro-dou.fullname" . }}-postgres -U {{ index .Values.postgres.secrets "postgres-user" }} -d postgres -f /init/init.sql
+        env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "ro-dou.fullname" . }}-postgres-secret
+                key: postgres-password
+        volumeMounts:
+          - name: init-sql
+            mountPath: /init
+      volumes:
+        - name: init-sql
+          configMap:
+            name: {{ include "ro-dou.fullname" . }}-inlabs-init-sql
+  backoffLimit: 0

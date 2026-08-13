@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-smtp4dev
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: smtp4dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smtp4dev
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: smtp4dev
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: smtp4dev
+          image: {{ .Values.smtp4dev.image.repository }}:{{ .Values.smtp4dev.image.tag }}
+          imagePullPolicy: {{ .Values.smtp4dev.image.pullPolicy }}
+          ports:
+            - containerPort: 80   # Web UI
+            - containerPort: 25   # SMTP
+            - containerPort: 143  # IMAP
+          env:
+            - name: ServerOptions__HostName
+              value: smtp4dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-smtp4dev
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: smtp4dev
+spec:
+  type: ClusterIP
+  selector:
+    app: smtp4dev
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: web
+      port: {{ .Values.smtp4dev.service.webPort }}
+      targetPort: 80
+    - name: smtp
+      port: {{ .Values.smtp4dev.service.smtpPort }}
+      targetPort: 25
+    - name: imap
+      port: {{ .Values.smtp4dev.service.imapPort }}
+      targetPort: 143

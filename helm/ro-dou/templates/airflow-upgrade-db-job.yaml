@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-upgrade-db
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+spec:
+  template:
+    metadata:
+      labels:
+        app: airflow-upgrade-db
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: upgrade-db
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command:
+            - bash
+            - -c
+            - |
+              airflow db upgrade &&
+              airflow users create \
+                --username admin \
+                --firstname Admin \
+                --lastname User \
+                --role Admin \
+                --email admin@example.com \
+                --password admin
+          envFrom:
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+  backoffLimit: 0

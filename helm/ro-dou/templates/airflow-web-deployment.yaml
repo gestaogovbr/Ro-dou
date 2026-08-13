@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-webserver
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-webserver
+spec:
+  replicas: {{ .Values.airflow.webserver.replicas }}
+  selector:
+    matchLabels:
+      app: airflow-webserver
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: airflow-webserver
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: airflow-webserver
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command: ["airflow", "webserver"]
+          ports:
+            - containerPort: {{ .Values.airflow.webserver.port }}
+          envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+      volumes:
+        - name: airflow-logs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.fullname" . }}-airflow-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-webserver
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-webserver
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.airflow.webserver.port }}
+      targetPort: {{ .Values.airflow.webserver.port }}
+  selector:
+    app: airflow-webserver
+    app.kubernetes.io/instance: {{ .Release.Name }}
