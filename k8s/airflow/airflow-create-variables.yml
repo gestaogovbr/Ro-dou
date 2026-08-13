@@ -22,7 +22,7 @@ spec:
                 "RO_DOU_INLABS_USE_OPENSEARCH": "False",
                 "OPENSEARCH_HOST": "http://opensearch:9200",
                 "OPENSEARCH_USER": "OPENSEARCH_USER",
-                "OPENSEARCH_PASS": "OPENSEARCH_PASS",
+                "OPENSEARCH_PASS": "OPENSEARCH_PASS"
               }
               EOF
               airflow variables import /tmp/variables.json
