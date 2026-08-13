@@ -70,6 +70,13 @@ Antes do deploy, preencha os valores adequados em
    kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
    kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s
    ```
+7. Crie as variáveis de ambiente:
+
+   Edite o arquivo `airflow/airflow-create-variables.yml` com os nomes e valores das variáveis desejadas.
+
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-variables.yml
+   ```
 
 ## Serviços opcionais
 

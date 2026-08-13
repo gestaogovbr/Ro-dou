@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-create-variable
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: create-variable
+          image: ghcr.io/gestaogovbr/ro-dou:latest
+          imagePullPolicy: Always
+          command:
+            - bash
+            - -c
+            - |
+              cat <<'EOF' > /tmp/variables.json
+              {
+                "path_tmp": "/tmp",
+                "email_admin": "admin@rodou.gov.br"
+              }
+              EOF
+              airflow variables import /tmp/variables.json
+          envFrom:
+            - secretRef:
+                name: airflow-secrets
+            - configMapRef:
+                name: airflow-config
+  backoffLimit: 0
