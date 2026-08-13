@@ -18,7 +18,7 @@ Os exemplos abaixo usam o namespace `airflow-rodou`:
 kubectl create namespace airflow-rodou
 ```
 
-Antes do deploy, substitua os valores de desenvolvimento em
+Antes do deploy, preencha os valores adequados em
 `airflow/airflow-secrets.yml` e `postgres/postgres-secrets.yml`.
 
 ## Instalação
@@ -45,13 +45,7 @@ Antes do deploy, substitua os valores de desenvolvimento em
    kubectl -n airflow-rodou apply -f airflow/airflow-secrets.yml
    kubectl -n airflow-rodou apply -f airflow/airflow-configmap.yml
    kubectl -n airflow-rodou apply -f airflow/airflow-pvc.yml
-   kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
-   kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
-   kubectl -n airflow-rodou rollout status statefulset/opensearch
    ```
-
-   O uso do OpenSearch pelo Ro-DOU permanece desabilitado por padrão. Para
-   habilitá-lo, altere `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap.
 
 4. Migre o banco de metadados e crie o usuário administrador:
 
@@ -76,6 +70,34 @@ Antes do deploy, substitua os valores de desenvolvimento em
    kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
    kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s
    ```
+
+## Serviços opcionais
+
+### OpenSearch
+
+- O Ro-DOU não usa OpenSearch por padrão. Para habilitar, altere
+  `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap
+  `airflow/airflow-configmap.yml`.
+- Deploy (opcional):
+
+```bash
+kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
+kubectl -n airflow-rodou rollout status statefulset/opensearch
+```
+
+### SMTP4dev
+
+- SMTP4dev é útil apenas para testes de envio de email. Deploy (opcional):
+
+```bash
+kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
+```
+
+Exemplo de acesso local (opcional):
+
+```bash
+kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
+```
 
 ## Acesso local
 
