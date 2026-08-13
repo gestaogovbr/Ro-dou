@@ -56,12 +56,8 @@ create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
 
 
-AI_PROVIDERS ?=
-
 build:
-	@echo "AI_PROVIDERS=$(AI_PROVIDERS)"
-	docker compose build \
-		--build-arg AI_PROVIDERS="$(AI_PROVIDERS)"
+	docker compose build
 
 setup-containers:
 	docker compose up -d --force-recreate --remove-orphans

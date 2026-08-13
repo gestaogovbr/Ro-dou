@@ -30,14 +30,4 @@ ARG AI_PROVIDERS=""
 
 COPY requirements-ai.txt .
 
-RUN if [ -n "$AI_PROVIDERS" ]; then \
-  : > /tmp/filtered.txt; \
-  for provider in $AI_PROVIDERS; do \
-      grep "# $provider" requirements-ai.txt | cut -d'#' -f1 >> /tmp/filtered.txt; \
-  done; \
-  if [ -s /tmp/filtered.txt ]; then \
-    pip install --no-cache-dir -r /tmp/filtered.txt; \
-  fi; \
-fi
-
-
+RUN pip install --no-cache-dir -r requirements-ai.txt
