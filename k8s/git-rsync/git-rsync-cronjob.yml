@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: git-rsync-dag-confs
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: git-rsync
+              image: alpine:3.18
+              command: ["/bin/sh", "-c", "apk add --no-cache git rsync ca-certificates && /scripts/git-rsync.sh"]
+              env:
+                - name: GIT_REPO
+                  value: "https://github.com/your-org/your-repo.git"
+                - name: GIT_BRANCH
+                  value: "main"
+                - name: TARGET_DIR
+                  value: "/opt/airflow/dags/ro_dou/dag_confs"
+                - name: GIT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: git-token
+                      key: token
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: dag-confs
+                  mountPath: /opt/airflow/dags/ro_dou/dag_confs
+          volumes:
+            - name: scripts
+              configMap:
+                name: git-rsync-scripts
+                defaultMode: 0755
+            - name: dag-confs
+              persistentVolumeClaim:
+                claimName: dag-confs-pvc
+            # Use HTTPS+token (PAT) for authentication.
