@@ -1,7 +1,7 @@
 # Ro-dou no Kubernetes
 
 Manifests para uma instalação local do Ro-DOU com Airflow 3, PostgreSQL,
-OpenSearch (opcional), SMTP4dev (opcional) e git-rsync (opcional).
+OpenSearch e SMTP4dev.
 
 ## Pré-requisitos
 
@@ -18,7 +18,7 @@ Os exemplos abaixo usam o namespace `airflow-rodou`:
 kubectl create namespace airflow-rodou
 ```
 
-Antes do deploy, preencha os valores adequados em
+Antes do deploy, substitua os valores de desenvolvimento em
 `airflow/airflow-secrets.yml` e `postgres/postgres-secrets.yml`.
 
 ## Instalação
@@ -45,7 +45,13 @@ Antes do deploy, preencha os valores adequados em
    kubectl -n airflow-rodou apply -f airflow/airflow-secrets.yml
    kubectl -n airflow-rodou apply -f airflow/airflow-configmap.yml
    kubectl -n airflow-rodou apply -f airflow/airflow-pvc.yml
+   kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
+   kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
+   kubectl -n airflow-rodou rollout status statefulset/opensearch
    ```
+
+   O uso do OpenSearch pelo Ro-DOU permanece desabilitado por padrão. Para
+   habilitá-lo, altere `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap.
 
 4. Migre o banco de metadados e crie o usuário administrador:
 
@@ -70,41 +76,6 @@ Antes do deploy, preencha os valores adequados em
    kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
    kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s
    ```
-7. Crie as variáveis de ambiente:
-
-   Edite o arquivo `airflow/airflow-create-variables.yml` com os nomes e valores das variáveis desejadas.
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-create-variables.yml
-   ```
-
-## Serviços opcionais
-
-### OpenSearch
-
-- O Ro-DOU não usa OpenSearch por padrão. Para habilitar, altere
-  `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap
-  `airflow/airflow-configmap.yml`.
-- Deploy (opcional):
-
-```bash
-kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
-kubectl -n airflow-rodou rollout status statefulset/opensearch
-```
-
-### SMTP4dev
-
-- SMTP4dev é útil apenas para testes de envio de email. Deploy (opcional):
-
-```bash
-kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
-```
-
-Exemplo de acesso local (opcional):
-
-```bash
-kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
-```
 
 ## Acesso local
 
@@ -117,37 +88,11 @@ kubectl -n airflow-rodou port-forward service/airflow-api-server 8080:8080
 Acesse `http://localhost:8080` com o usuário e a senha definidos por
 `_AIRFLOW_WWW_USER_USERNAME` e `_AIRFLOW_WWW_USER_PASSWORD`.
 
+Interface do SMTP4dev:
+
+```bash
+kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
+```
 
 Jobs são imutáveis no Kubernetes. Para executá-los novamente, exclua o Job
 correspondente antes de reaplicar o manifest.
-
-## Sincronização dos `dag_confs` via Git (git-rsync)
-
-Em ambientes onde o Ro-DOU roda no Kubernetes, é comum manter as
-configurações das DAGs em uma pasta `dag_confs/`. Para sincronizar essas
-configurações a partir de um repositório Git sem rebuildar imagens, há um
-exemplo de solução `git-rsync` em `k8s/git-rsync/` que:
-
-- provê um `ConfigMap` com um script `git-rsync.sh` que faz `git clone`/
-   `git pull` e usa `rsync` para atualizar o diretório alvo;
-- provê um `CronJob` que executa o script periodicamente (padrão: a cada
-   5 minutos).
-
-Como usar (passos rápidos):
-
-1. Ajuste `k8s/git-rsync/git-rsync-cronjob.yml` definindo `GIT_REPO`,
-    `GIT_BRANCH` e substitua `dag-confs-pvc` pelo nome do seu PVC destino.
-2. Aplique os manifests:
-
-```bash
-kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
-kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
-```
-
-3. Para repositórios privados, prefira usar um token (PAT) via HTTPS:
-
-```bash
-kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
-kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
-```
-
