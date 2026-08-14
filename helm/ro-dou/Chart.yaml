@@ -3,4 +3,4 @@ name: ro-dou
 description: A Helm chart for Ro-dou project
 type: application
 version: 0.3.0
-appVersion: "0.12.2"
+appVersion: "latest"
