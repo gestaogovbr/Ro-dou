@@ -73,6 +73,7 @@ Os principais valores configuráveis são:
 | `postgres.secrets.postgres-password` | Senha do PostgreSQL | `postgres` |
 | `postgres.secrets.postgres-db` | Banco de metadados do Airflow | `airflow` |
 | `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `1Gi` |
+| `smtp4dev.enabled` | Implanta o SMTP4dev no cluster | `true` |
 | `smtp4dev.image.repository` | Repositório da imagem do SMTP4dev | `rnwood/smtp4dev` |
 | `smtp4dev.image.tag` | Tag da imagem do SMTP4dev | `v3` |
 | `smtp4dev.service.webPort` | Porta da interface web do SMTP4dev | `5001` |
@@ -93,6 +94,18 @@ Consulte [`values.yaml`](./values.yaml) para ver todos os valores disponíveis.
 Por padrão, `airflow.secrets.AIRFLOW__SMTP__SMTP_HOST` fica vazio. Nesse caso,
 o chart configura automaticamente o endereço do serviço SMTP4dev criado para
 o release, por exemplo `meu-rodou-ro-dou-smtp4dev`.
+
+Para não implantar o SMTP4dev, defina `smtp4dev.enabled: false` e informe o
+host de um servidor SMTP externo:
+
+```yaml
+smtp4dev:
+  enabled: false
+
+airflow:
+  secrets:
+    AIRFLOW__SMTP__SMTP_HOST: smtp.exemplo.gov.br
+```
 
 Para usar outro servidor de e-mail, informe o host e as demais credenciais em
 um arquivo de valores:

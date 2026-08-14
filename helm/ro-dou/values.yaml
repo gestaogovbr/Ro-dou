@@ -63,6 +63,7 @@ postgres:
 
 # SMTP4Dev configuration (optional)
 smtp4dev:
+  enabled: true
   image:
     repository: rnwood/smtp4dev
     tag: v3
@@ -74,7 +75,7 @@ smtp4dev:
 
 # OpenSearch configuration (optional)
 opensearch:
-  enabled: true
+  enabled: false
   image:
     repository: opensearchproject/opensearch
     tag: "2"
