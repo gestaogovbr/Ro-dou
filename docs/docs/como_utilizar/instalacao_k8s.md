@@ -4,7 +4,39 @@ Instruções para subir o Ro-DOU em um cluster Kubernetes 🚀🚀🚀
 
 ## Helm deploy
 
-Em breve...
+## Pré-requisitos
+
+- Kubernetes 1.19 ou superior
+- Helm 3.0 ou superior
+- Uma `StorageClass` compatível com as configurações de persistência do chart
+
+## Instalação
+
+Para instalar o chart com o nome de release `rodou`:
+
+```bash
+helm install rodou ./helm/ro-dou
+```
+
+Para personalizar a instalação, crie um arquivo de valores e informe-o com
+`-f`:
+
+```bash
+helm install rodou ./helm/ro-dou -f my-values.yaml
+```
+
+## Atualização
+
+Para atualizar uma instalação existente:
+
+```bash
+helm upgrade rodou ./helm/ro-dou -f my-values.yaml
+```
+
+## Desinstalação
+
+```bash
+helm uninstall rodou
 
 ## Manual deployment
 
