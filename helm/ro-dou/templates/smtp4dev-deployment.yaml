@@ -1,3 +1,4 @@
+{{- if .Values.smtp4dev.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -51,3 +52,4 @@ spec:
     - name: imap
       port: {{ .Values.smtp4dev.service.imapPort }}
       targetPort: 143
+{{- end }}
