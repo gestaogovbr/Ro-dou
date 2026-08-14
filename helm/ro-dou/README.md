@@ -58,12 +58,20 @@ Os principais valores configuráveis são:
 | `airflow.dagProcessor.replicas` | Réplicas do processador de DAGs | `1` |
 | `airflow.pvc.storage` | Espaço solicitado para os logs do Airflow | `1Gi` |
 | `airflow.pvc.storageClassName` | `StorageClass` usada pelos logs do Airflow | `""` |
+| `airflow.secrets.AIRFLOW__CORE__FERNET_KEY` | Chave Fernet usada pelo Airflow | valor de desenvolvimento |
+| `airflow.secrets.AIRFLOW__API_AUTH__JWT_SECRET` | Chave de assinatura dos tokens JWT | valor de desenvolvimento |
+| `airflow.secrets.AIRFLOW__API__SECRET_KEY` | Chave secreta do servidor de API | valor de desenvolvimento |
+| `airflow.secrets._AIRFLOW_WWW_USER_USERNAME` | Usuário administrador inicial | `admin` |
+| `airflow.secrets._AIRFLOW_WWW_USER_PASSWORD` | Senha do administrador inicial | `admin` |
 | `airflow.secrets.AIRFLOW__SMTP__SMTP_HOST` | Host SMTP externo; vazio usa o SMTP4dev deste release | `""` |
 | `airflow.secrets.OPENSEARCH_USER` | Usuário utilizado para acessar o OpenSearch | `OPENSEARCH_USER` |
 | `airflow.secrets.OPENSEARCH_PASS` | Senha do OpenSearch e senha inicial do administrador | `OPENSEARCH_PASS` |
 | `postgres.image.repository` | Repositório da imagem do PostgreSQL | `postgres` |
 | `postgres.image.tag` | Tag da imagem do PostgreSQL | `15` |
 | `postgres.service.port` | Porta do PostgreSQL | `5432` |
+| `postgres.secrets.postgres-user` | Usuário do PostgreSQL | `postgres` |
+| `postgres.secrets.postgres-password` | Senha do PostgreSQL | `postgres` |
+| `postgres.secrets.postgres-db` | Banco de metadados do Airflow | `airflow` |
 | `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `1Gi` |
 | `smtp4dev.image.repository` | Repositório da imagem do SMTP4dev | `rnwood/smtp4dev` |
 | `smtp4dev.image.tag` | Tag da imagem do SMTP4dev | `v3` |
@@ -152,8 +160,6 @@ Para acessar a interface do Airflow localmente:
 ```bash
 kubectl port-forward service/rodou-ro-dou-airflow-api-server 8080:8080
 ```
-(usuario admin / senha admin)
-
 
 Para acessar a interface do SMTP4dev:
 
@@ -170,7 +176,28 @@ instalação.
 
 ## Segredos
 
-Antes de instalar o chart em um ambiente compartilhado ou de produção,
-substitua os valores padrão de `airflow.secrets`, `postgres.secrets` e das
-chaves criptográficas do Airflow. Prefira fornecer esses valores por meio de
-um arquivo protegido e não versionado no repositório.
+O chart fornece credenciais e chaves padrão apenas para facilitar ambientes de
+desenvolvimento. Antes de uma instalação compartilhada ou de produção,
+substitua as chaves do Airflow, o administrador inicial e as credenciais do
+PostgreSQL em um arquivo de valores protegido:
+
+```yaml
+airflow:
+  secrets:
+    AIRFLOW__CORE__FERNET_KEY: <fernet-key>
+    AIRFLOW__API_AUTH__JWT_SECRET: <jwt-secret>
+    AIRFLOW__API__SECRET_KEY: <api-secret>
+    _AIRFLOW_WWW_USER_USERNAME: <usuario-administrador>
+    _AIRFLOW_WWW_USER_PASSWORD: <senha-administrador>
+
+postgres:
+  secrets:
+    postgres-user: <usuario-postgresql>
+    postgres-password: <senha-postgresql>
+    postgres-db: airflow
+```
+
+Não versione o arquivo que contém os valores reais. Em ambientes de produção,
+prefira ainda integrar o processo de instalação a um gerenciador externo de
+segredos. Os valores padrão nunca devem ser reutilizados fora de ambientes de
+desenvolvimento.

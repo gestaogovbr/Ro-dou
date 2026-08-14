@@ -19,17 +19,19 @@ airflow:
     AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo"
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
     AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
-    AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
-    AIRFLOW__API__SECRET_KEY: "42"
     AIRFLOW__API__BASE_URL: "http://localhost:8080"
-    AIRFLOW__API_AUTH__JWT_SECRET: "42"
     _AIRFLOW_DB_MIGRATE: "true"
     RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
     AIRFLOW_VAR_PATH_TMP: "/tmp"
   secrets:
+    AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
+    AIRFLOW__API_AUTH__JWT_SECRET: "42"
+    AIRFLOW__API__SECRET_KEY: "42"
+    _AIRFLOW_WWW_USER_USERNAME: "admin"
+    _AIRFLOW_WWW_USER_PASSWORD: "admin"
     # Leave empty to use the smtp4dev Service deployed by this chart.
     AIRFLOW__SMTP__SMTP_HOST: ""
     AIRFLOW__SMTP__SMTP_MAIL_FROM: "airflow@email.gov.br"
@@ -54,8 +56,8 @@ postgres:
   service:
     port: 5432
   secrets:
-    postgres-user: "airflow"
-    postgres-password: "airflow"
+    postgres-user: "postgres"
+    postgres-password: "postgres"
     postgres-db: "airflow"
   storage: 1Gi
 
@@ -72,7 +74,7 @@ smtp4dev:
 
 # OpenSearch configuration (optional)
 opensearch:
-  enabled: false
+  enabled: true
   image:
     repository: opensearchproject/opensearch
     tag: "2"

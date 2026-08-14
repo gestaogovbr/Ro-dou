@@ -26,14 +26,16 @@ spec:
             - -c
             - |
               {{- include "ro-dou.waitForPostgres" . | nindent 14 }}
-              airflow users list | grep -qw admin || airflow users create \
-                --username admin \
+              airflow users list | grep -qw -- "$_AIRFLOW_WWW_USER_USERNAME" || airflow users create \
+                --username "$_AIRFLOW_WWW_USER_USERNAME" \
                 --firstname Admin \
                 --lastname User \
                 --role Admin \
                 --email admin@example.com \
-                --password admin
+                --password "$_AIRFLOW_WWW_USER_PASSWORD"
           envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
             - configMapRef:
                 name: {{ include "ro-dou.fullname" . }}-airflow-config
   backoffLimit: 0
