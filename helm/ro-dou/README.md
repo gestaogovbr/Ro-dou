@@ -152,17 +152,13 @@ Para acessar a interface do Airflow localmente:
 ```bash
 kubectl port-forward service/rodou-ro-dou-airflow-api-server 8080:8080
 ```
+(usuario admin / senha admin)
+
 
 Para acessar a interface do SMTP4dev:
 
 ```bash
 kubectl port-forward service/rodou-ro-dou-smtp4dev 5001:5001
-```
-
-Para acessar a API do OpenSearch implantado pelo chart:
-
-```bash
-kubectl port-forward service/rodou-ro-dou-opensearch 9200:9200
 ```
 
 ## Persistência
