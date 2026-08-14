@@ -8,95 +8,152 @@ Em breve...
 
 ## Manual deployment
 
-1. **Deploy do PostgreSQL**
+## Pré-requisitos
 
-    1. Sobe os secrets e o statefulset:
+- Um cluster Kubernetes local e o `kubectl` configurado.
+- A imagem `ghcr.io/gestaogovbr/ro-dou:latest` acessível pelo cluster. Os
+  componentes do Airflow usam `imagePullPolicy: Always` para resolver a tag
+  novamente sempre que um pod for criado.
+- Capacidade de provisionar volumes `ReadWriteOnce`.
+- Para o OpenSearch, `vm.max_map_count` deve ser pelo menos `262144` no nó.
 
-        ```bash
-        kubectl apply -f postgres/postgres-secrets.yml
-        kubectl apply -f postgres/postgres-deployment.yml
-        ```
+Os exemplos abaixo usam o namespace `airflow-rodou`:
 
-    2. Cria o banco de dados para o INLABS:
+```bash
+kubectl create namespace airflow-rodou
+```
 
-        ```bash
-        kubectl apply -f postgres/postgres-inlabsdb-configmap.yml
-        kubectl apply -f postgres/postgres-createinlabsdb-job.yml
-        ```
+Antes do deploy, preencha os valores adequados em
+`airflow/airflow-secrets.yml` e `postgres/postgres-secrets.yml`.
 
-2. **Deploy do Airflow**
+## Instalação
 
-    1. Cria um volume PVC para a pasta de logs:
+1. Suba PostgreSQL e aguarde sua disponibilidade:
 
-        ```bash
-        kubectl apply -f airflow/airflow-pvc.yml
-        ```
+   ```bash
+   kubectl -n airflow-rodou apply -f postgres/postgres-secrets.yml
+   kubectl -n airflow-rodou apply -f postgres/postgres-deployment.yml
+   kubectl -n airflow-rodou rollout status statefulset/postgres
+   ```
 
-    2. Sobe as variáveis de ambiente:
+2. Crie o banco usado pelo INLABS:
 
-        ```bash
-        kubectl apply -f airflow/airflow-configmap.yml
-        ```
+   ```bash
+   kubectl -n airflow-rodou apply -f postgres/postgres-inlabsdb-configmap.yml
+   kubectl -n airflow-rodou apply -f postgres/postgres-create-inlabsdb-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/init-inlabs-db --timeout=120s
+   ```
 
-    3. Edite o arquivo `airflow/airflow-secrets.yml`:
-        - Crie um usuário no portal [INLABS](https://inlabs.in.gov.br/acessar.php) e inclua as credenciais no arquivo.
-        - Altere as configurações referentes ao servidor de e-mail (SMTP).
+3. Suba os serviços auxiliares e a configuração do Airflow:
 
-        Depois, aplique o arquivo:
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-secrets.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-configmap.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-pvc.yml
+   ```
 
-        ```bash
-        kubectl apply -f airflow/airflow-secrets.yml
-        ```
+4. Migre o banco de metadados e crie o usuário administrador:
 
-    4. Inicialize o banco do Airflow:
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-init-db-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-db-init --timeout=300s
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-admin-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-create-admin --timeout=120s
+   ```
 
-        ```bash
-        kubectl apply -f airflow/airflow-init-db-job.yml
-        ```
+5. Suba os componentes do Airflow 3:
 
-    5. Suba os serviços do Airflow:
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-api-server-deployment.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-scheduler-deployment.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-dag-processor-deployment.yml
+   ```
 
-        ```bash
-        kubectl apply -f airflow/airflow-scheduler-deployment.yml
-        kubectl apply -f airflow/airflow-web-deployment.yml
-        ```
+6. Crie a conexão do portal INLABS:
 
-    6. Crie o usuário admin do Airflow:
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s
+   ```
+7. Crie as variáveis de ambiente:
 
-        ```bash
-        kubectl apply -f airflow/airflow-upgrade-db-job.yml
-        ```
+   Edite o arquivo `airflow/airflow-create-variables.yml` com os nomes e valores das variáveis desejadas.
 
-    7. Crie a conexão com o INLABS:
+   ```bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-variables.yml
+   ```
 
-        ```bash
-        kubectl apply -f airflow/airflow-create-inlabs-conn-job.yml
-        ```
+## Serviços opcionais
 
-3. **Deploy do SMTP4dev** (opcional — para testes de envio de e-mail)
+### OpenSearch
 
-    1. Suba o deployment:
+- O Ro-DOU não usa OpenSearch por padrão. Para habilitar, altere
+  `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap
+  `airflow/airflow-configmap.yml`.
+- Deploy (opcional):
 
-        ```bash
-        kubectl apply -f smtp4dev/smtp4dev-deployment.yml
-        ```
+```bash
+kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
+kubectl -n airflow-rodou rollout status statefulset/opensearch
+```
 
-    2. Para acessar o smtp4dev, utilize o comando:
+### SMTP4dev
 
-        ```bash
-        kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
-        ```
+- SMTP4dev é útil apenas para testes de envio de email. Deploy (opcional):
 
-4. **Acessando a interface web sem um host configurado**
+```bash
+kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
+```
 
-    Use o port-forward:
+Exemplo de acesso local (opcional):
 
-    ```bash
-    kubectl port-forward service/airflow-webserver 8080:8080
-    ```
+```bash
+kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
+```
 
-    Acesse [http://localhost:8080](http://localhost:8080) com usuário `admin@example.com` e senha `admin`.
+## Acesso local
 
-5. **Criando suas próprias buscas**
+Interface do Airflow:
 
-    Para criar suas próprias buscas, o ideal é criar um script para sincronizar a pasta `dag_confs` a partir de um repositório do GitHub.
+```bash
+kubectl -n airflow-rodou port-forward service/airflow-api-server 8080:8080
+```
+
+Acesse `http://localhost:8080` com o usuário e a senha definidos por
+`_AIRFLOW_WWW_USER_USERNAME` e `_AIRFLOW_WWW_USER_PASSWORD`.
+
+
+Jobs são imutáveis no Kubernetes. Para executá-los novamente, exclua o Job
+correspondente antes de reaplicar o manifest.
+
+## Sincronização dos `dag_confs` via Git (git-rsync)
+
+Em ambientes onde o Ro-DOU roda no Kubernetes, é comum manter as
+configurações das DAGs em uma pasta `dag_confs/`. Para sincronizar essas
+configurações a partir de um repositório Git sem rebuildar imagens, há um
+exemplo de solução `git-rsync` em `k8s/git-rsync/` que:
+
+- provê um `ConfigMap` com um script `git-rsync.sh` que faz `git clone`/
+   `git pull` e usa `rsync` para atualizar o diretório alvo;
+- provê um `CronJob` que executa o script periodicamente (padrão: a cada
+   5 minutos).
+
+Como usar (passos rápidos):
+
+1. Ajuste `k8s/git-rsync/git-rsync-cronjob.yml` definindo `GIT_REPO`,
+    `GIT_BRANCH` e substitua `dag-confs-pvc` pelo nome do seu PVC destino.
+2. Aplique os manifests:
+
+```bash
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+```
+
+3. Para repositórios privados, prefira usar um token (PAT) via HTTPS:
+
+```bash
+kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+```
+
+
