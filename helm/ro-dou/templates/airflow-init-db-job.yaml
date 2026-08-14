@@ -5,6 +5,10 @@ metadata:
   labels:
     {{- include "ro-dou.labels" . | nindent 4 }}
     app: airflow
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
 spec:
   template:
     metadata:
@@ -16,7 +20,12 @@ spec:
         - name: airflow-db-init
           image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
           imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
-          command: ["airflow", "db", "init"]
+          command:
+            - bash
+            - -c
+            - |
+              {{- include "ro-dou.waitForPostgres" . | nindent 14 }}
+              airflow db migrate
           envFrom:
             - configMapRef:
                 name: {{ include "ro-dou.fullname" . }}-airflow-config

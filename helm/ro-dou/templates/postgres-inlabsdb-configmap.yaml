@@ -7,7 +7,7 @@ metadata:
     app: postgres
 data:
   init.sql: |
-    CREATE DATABASE inlabs;
+    SELECT 'CREATE DATABASE inlabs' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'inlabs')\gexec
 
     \c inlabs
 
