@@ -30,13 +30,13 @@ spec:
               "path_tmp": "/tmp",
               "email_admin": "admin@rodou.gov.br",
               "termos_exemplo_variavel": "LGPD\nlei geral de proteção de dados\nacesso à informação",
-              "RO_DOU_INLABS_USE_OPENSEARCH": "False",
-              "OPENSEARCH_HOST": "http://opensearch:9200",
-              "OPENSEARCH_USER": "OPENSEARCH_USER",
-              "OPENSEARCH_PASS": "OPENSEARCH_PASS"
+              "RO_DOU_INLABS_USE_OPENSEARCH": {{ ternary "True" "False" .Values.opensearch.connection.enabled | quote }},
+              "OPENSEARCH_HOST": {{ default (printf "http://%s-opensearch:%v" (include "ro-dou.fullname" .) .Values.opensearch.service.port) .Values.opensearch.connection.host | quote }}
             }
             EOF
             airflow variables import /tmp/variables.json
+            airflow variables set OPENSEARCH_USER "$OPENSEARCH_USER"
+            airflow variables set OPENSEARCH_PASS "$OPENSEARCH_PASS"
         envFrom:
           - secretRef:
               name: {{ include "ro-dou.fullname" . }}-airflow-secrets
