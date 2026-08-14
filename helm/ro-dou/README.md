@@ -64,7 +64,7 @@ Os principais valores configuráveis são:
 | `postgres.image.repository` | Repositório da imagem do PostgreSQL | `postgres` |
 | `postgres.image.tag` | Tag da imagem do PostgreSQL | `15` |
 | `postgres.service.port` | Porta do PostgreSQL | `5432` |
-| `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `5Gi` |
+| `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `1Gi` |
 | `smtp4dev.image.repository` | Repositório da imagem do SMTP4dev | `rnwood/smtp4dev` |
 | `smtp4dev.image.tag` | Tag da imagem do SMTP4dev | `v3` |
 | `smtp4dev.service.webPort` | Porta da interface web do SMTP4dev | `5001` |
@@ -75,7 +75,7 @@ Os principais valores configuráveis são:
 | `opensearch.connection.enabled` | Habilita o uso do OpenSearch pelo Ro-DOU | `false` |
 | `opensearch.connection.host` | URL de um OpenSearch externo; vazio usa o Service deste release | `""` |
 | `opensearch.security.disablePlugin` | Desabilita o plugin de segurança | `true` |
-| `opensearch.persistence.storage` | Espaço solicitado para os dados do OpenSearch | `5Gi` |
+| `opensearch.persistence.storage` | Espaço solicitado para os dados do OpenSearch | `1Gi` |
 | `opensearch.persistence.storageClassName` | `StorageClass` dos dados do OpenSearch | `""` |
 
 Consulte [`values.yaml`](./values.yaml) para ver todos os valores disponíveis.

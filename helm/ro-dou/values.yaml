@@ -57,7 +57,7 @@ postgres:
     postgres-user: "airflow"
     postgres-password: "airflow"
     postgres-db: "airflow"
-  storage: 5Gi
+  storage: 1Gi
 
 # SMTP4Dev configuration (optional)
 smtp4dev:
@@ -86,5 +86,5 @@ opensearch:
   security:
     disablePlugin: true
   persistence:
-    storage: 5Gi
+    storage: 1Gi
     storageClassName: ""
