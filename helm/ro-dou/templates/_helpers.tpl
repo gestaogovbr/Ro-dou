@@ -49,3 +49,15 @@ Selector labels
 app.kubernetes.io/name: {{ include "ro-dou.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Shell snippet that blocks until the Postgres service is accepting TCP connections.
+Hooks only guarantee Postgres has been created, not that it is ready, so jobs that
+talk to it must wait themselves.
+*/}}
+{{- define "ro-dou.waitForPostgres" -}}
+until (exec 3<>/dev/tcp/{{ include "ro-dou.fullname" . }}-postgres/{{ .Values.postgres.service.port }}) 2>/dev/null; do
+  echo "Waiting for PostgreSQL to be reachable..."
+  sleep 3
+done
+{{- end }}

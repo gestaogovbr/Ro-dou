@@ -3,30 +3,31 @@
 # Airflow configuration
 airflow:
   image:
-    repository: ghcr.io/gestaogovbr/airflow2-rodou
+    repository: ghcr.io/gestaogovbr/ro-dou
     tag: latest
     pullPolicy: IfNotPresent
-  webserver:
+  apiServer:
     replicas: 1
     port: 8080
   scheduler:
     replicas: 1
+  dagProcessor:
+    replicas: 1
   config:
-    AIRFLOW__API__AUTH_BACKEND: "airflow.api.auth.backend.basic_auth"
+    AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
     AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo"
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
     AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
     AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "America/Sao_Paulo"
     AIRFLOW__WEBSERVER__SECRET_KEY: "42"
-    AIRFLOW__WEBSERVER__WORKERS: "1"
-    _AIRFLOW_DB_UPGRADE: "true"
-    AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: "postgresql://airflow:airflow@postgres:5432/airflow"
+    AIRFLOW__WEBSERVER__BASE_URL: "http://localhost:8080"
+    AIRFLOW__API_AUTH__JWT_SECRET: "42"
+    _AIRFLOW_DB_MIGRATE: "true"
     RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
     AIRFLOW_VAR_PATH_TMP: "/tmp"
   secrets:
@@ -36,7 +37,6 @@ airflow:
     AIRFLOW__SMTP__SMTP_STARTTLS: "false"
     AIRFLOW__SMTP__SMTP_USER: ""
     AIRFLOW__SMTP__SMTP_PASSWORD: ""
-    AIRFLOW_CONN_INLABS_DB: "postgres://airflow:airflow@postgres/inlabs"
     INLABS_PORTAL_LOGIN: ""
     INLABS_PORTAL_PASSWORD: ""
   pvc:

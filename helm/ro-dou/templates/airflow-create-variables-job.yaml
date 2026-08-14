@@ -1,37 +1,42 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "ro-dou.fullname" . }}-create-inlabs-portal-connection
+  name: {{ include "ro-dou.fullname" . }}-airflow-create-variables-job
   labels:
     {{- include "ro-dou.labels" . | nindent 4 }}
     app: airflow
   annotations:
     helm.sh/hook: post-install,post-upgrade
-    helm.sh/hook-weight: "2"
+    helm.sh/hook-weight: "1"
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
   template:
     metadata:
       labels:
-        app: create-inlabs-portal-connection
+        app: airflow-create-variables-job
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       restartPolicy: Never
       containers:
-      - name: create-inlabs-connection
+      - name: create-variables
         image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
         imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
         command: ["bash", "-c"]
         args:
           - |
             {{- include "ro-dou.waitForPostgres" . | nindent 12 }}
-            airflow connections delete inlabs_portal 2>/dev/null || true
-            airflow connections add inlabs_portal \
-              --conn-type http \
-              --conn-host https://inlabs.in.gov.br/ \
-              --conn-login "$INLABS_PORTAL_LOGIN" \
-              --conn-password "$INLABS_PORTAL_PASSWORD" \
-              --conn-description "Credencial para acesso no Portal do INLabs"
+            cat <<'EOF' > /tmp/variables.json
+            {
+              "path_tmp": "/tmp",
+              "email_admin": "admin@rodou.gov.br",
+              "termos_exemplo_variavel": "LGPD\nlei geral de proteção de dados\nacesso à informação",
+              "RO_DOU_INLABS_USE_OPENSEARCH": "False",
+              "OPENSEARCH_HOST": "http://opensearch:9200",
+              "OPENSEARCH_USER": "OPENSEARCH_USER",
+              "OPENSEARCH_PASS": "OPENSEARCH_PASS"
+            }
+            EOF
+            airflow variables import /tmp/variables.json
         envFrom:
           - secretRef:
               name: {{ include "ro-dou.fullname" . }}-airflow-secrets
