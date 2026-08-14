@@ -27,6 +27,8 @@ spec:
               {{- include "ro-dou.waitForPostgres" . | nindent 14 }}
               airflow db migrate
           envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
             - configMapRef:
                 name: {{ include "ro-dou.fullname" . }}-airflow-config
       restartPolicy: Never

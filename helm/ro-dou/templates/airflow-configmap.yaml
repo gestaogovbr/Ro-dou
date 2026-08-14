@@ -10,5 +10,3 @@ data:
   {{ $key }}: {{ $value | quote }}
 {{- end }}
   AIRFLOW__CORE__EXECUTION_API_SERVER_URL: {{ printf "http://%s-airflow-api-server:%v/execution/" (include "ro-dou.fullname" .) .Values.airflow.apiServer.port | quote }}
-  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: {{ printf "postgresql+psycopg2://%s:%s@%s-postgres/%s" (index .Values.postgres.secrets "postgres-user") (index .Values.postgres.secrets "postgres-password") (include "ro-dou.fullname" .) (index .Values.postgres.secrets "postgres-db") | quote }}
-  AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: {{ printf "postgresql://%s:%s@%s-postgres:%v/%s" (index .Values.postgres.secrets "postgres-user") (index .Values.postgres.secrets "postgres-password") (include "ro-dou.fullname" .) .Values.postgres.service.port (index .Values.postgres.secrets "postgres-db") | quote }}
