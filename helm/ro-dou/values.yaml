@@ -23,15 +23,15 @@ airflow:
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
-    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "America/Sao_Paulo"
-    AIRFLOW__WEBSERVER__SECRET_KEY: "42"
-    AIRFLOW__WEBSERVER__BASE_URL: "http://localhost:8080"
+    AIRFLOW__API__SECRET_KEY: "42"
+    AIRFLOW__API__BASE_URL: "http://localhost:8080"
     AIRFLOW__API_AUTH__JWT_SECRET: "42"
     _AIRFLOW_DB_MIGRATE: "true"
     RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
     AIRFLOW_VAR_PATH_TMP: "/tmp"
   secrets:
-    AIRFLOW__SMTP__SMTP_HOST: "smtp4dev"
+    # Leave empty to use the smtp4dev Service deployed by this chart.
+    AIRFLOW__SMTP__SMTP_HOST: ""
     AIRFLOW__SMTP__SMTP_MAIL_FROM: "airflow@email.gov.br"
     AIRFLOW__SMTP__SMTP_PORT: "25"
     AIRFLOW__SMTP__SMTP_STARTTLS: "false"
@@ -39,9 +39,11 @@ airflow:
     AIRFLOW__SMTP__SMTP_PASSWORD: ""
     INLABS_PORTAL_LOGIN: ""
     INLABS_PORTAL_PASSWORD: ""
+    OPENSEARCH_USER: "OPENSEARCH_USER"
+    OPENSEARCH_PASS: "OPENSEARCH_PASS"
   pvc:
     storage: 1Gi
-    storageClassName: "nfs-seges"
+    storageClassName: ""
 
 # PostgreSQL configuration
 postgres:
@@ -57,7 +59,7 @@ postgres:
     postgres-db: "airflow"
   storage: 5Gi
 
-# SMTP4Dev configuration
+# SMTP4Dev configuration (optional)
 smtp4dev:
   image:
     repository: rnwood/smtp4dev
@@ -67,3 +69,22 @@ smtp4dev:
     webPort: 5001
     smtpPort: 25
     imapPort: 143
+
+# OpenSearch configuration (optional)
+opensearch:
+  enabled: false
+  image:
+    repository: opensearchproject/opensearch
+    tag: "2"
+    pullPolicy: IfNotPresent
+  service:
+    port: 9200
+  connection:
+    enabled: false
+    # Leave empty to use the OpenSearch Service deployed by this chart.
+    host: ""
+  security:
+    disablePlugin: true
+  persistence:
+    storage: 5Gi
+    storageClassName: ""
