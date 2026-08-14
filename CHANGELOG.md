@@ -1,6 +1,16 @@
 # Changelog
 
 ## What's Changed
+## [0.12.2] - 2026-08-14
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Update kubernetes manifets to airflow 3 by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/324
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.12.1...0.12.2
+
 ## [0.12.1] - 2026-08-12
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
