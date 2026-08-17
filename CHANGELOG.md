@@ -1,6 +1,14 @@
 # Changelog
 
 ## What's Changed
+## [0.12.3] - 2026-08-17
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Create Helm Chart by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/325
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.12.2...0.12.3
+
 ## [0.12.2] - 2026-08-14
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
