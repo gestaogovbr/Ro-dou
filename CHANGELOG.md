@@ -1,6 +1,18 @@
 # Changelog
 
 ## What's Changed
+## [0.12.4] - 2026-08-19
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Add gitrysnc chart on Helm by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/330
+* Create optional ingress service for airflow by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/331
+* Remove k8s folder (replaced by Helm Charts)
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.12.3...0.12.4
+
 ## [0.12.3] - 2026-08-17
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
