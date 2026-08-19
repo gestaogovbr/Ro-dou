@@ -11,7 +11,7 @@ O Ro-DOU também oferece duas ferramentas para montar o arquivo sem editá-lo ma
 - **schedule** *(opcional)*: Agendamento da periodicidade de execução da DAG. Use expressão cron (o padrão utilizado pelo gerador é `0 8 * * MON-FRI` quando não informado).
 - **dataset** *(opcional)*: Nome de um `Dataset` do Airflow. Se fornecido, a DAG só dispara quando o dataset for atualizado; pode ser combinado com `schedule`.
 - **callback** *(opcional)*: Notificações técnicas do sistema.
-    - **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Caso não seja informado, nenhuma notificação por e‑mail será enviada em caso de falhas.
+    - **on_failure_callback** *(opcional)*: Lista de e‑mail para recebimento de avisos de falhas nas execuções da DAG. Se não informado, o Ro-DOU tenta usar como destinatário padrão a Airflow Variable `email_admin` — **é necessário criar essa Variável manualmente no Airflow** (em **Admin > Variables**) para que o alerta funcione nesse caso; na ausência dela, usa o campo `emails` do bloco [`report`](#parâmetros-do-relatório-report), se preenchido. Caso nenhuma dessas três fontes esteja disponível, nenhuma notificação por e‑mail é enviada. Veja também [Notificação de erros](../como_utilizar/notificacao_de_erros.md).
 - **tags** *(opcional)*: Conjunto de tags para categorizar a DAG. Dois valores padrão (`dou` e `generated_dag`) são sempre adicionados automaticamente.
 - **owner** *(opcional)*: Lista de responsáveis/owners da DAG, utilizada para filtragem no Airflow.
 - **ai_config** *(opcional)*: Configurações do provedor de IA para geração de resumos automáticos. (Disponível apenas para INLABS). [Veja como habilitar IA](../como_utilizar/habilitando_ia.md)
