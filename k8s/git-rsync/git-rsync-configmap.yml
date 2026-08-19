@@ -7,52 +7,41 @@ metadata:
 data:
   git-rsync.sh: |
     #!/bin/sh
-    set -e
+    set -eu
 
     GIT_REPO="${GIT_REPO:-}"
     GIT_BRANCH="${GIT_BRANCH:-main}"
     TARGET_DIR="${TARGET_DIR:-/opt/airflow/dags/ro_dou/dag_confs}"
-    WORKDIR="/tmp/repo"
-
-    # Authentication should use GIT_TOKEN (PAT)
+    TARGET_UID="${TARGET_UID:-50000}"
+    TARGET_GID="${TARGET_GID:-0}"
 
     if [ -z "$GIT_REPO" ]; then
       echo "GIT_REPO is not set"
       exit 1
     fi
 
-    echo "Using GIT_REPO=$GIT_REPO branch=$GIT_BRANCH"
+    workspace="$(mktemp -d)"
+    workdir="$workspace/repo"
+    trap 'rm -rf "$workspace"' EXIT
 
-    # If a token is provided via env GIT_TOKEN, use it for HTTPS auth
-    if [ -n "$GIT_TOKEN" ]; then
-      echo "Using token authentication (https)"
-      # do not expose token in logs
-      GIT_HTTP_HEADER="http.extraHeader=Authorization: Bearer $GIT_TOKEN"
-      GIT_AUTH_OPTS="-c \"$GIT_HTTP_HEADER\""
-    else
-      GIT_AUTH_OPTS=""
-    fi
-
-    if [ -d "$WORKDIR/.git" ]; then
-      echo "Updating existing clone"
-      cd "$WORKDIR"
-      if [ -n "$GIT_AUTH_OPTS" ]; then
-        eval git $GIT_AUTH_OPTS fetch --all --prune
-        eval git $GIT_AUTH_OPTS reset --hard "origin/$GIT_BRANCH"
+    git_clone() {
+      if [ -n "${GIT_TOKEN:-}" ]; then
+        askpass="$workspace/git-askpass.sh"
+        printf '%s\n' \
+          '#!/bin/sh' \
+          'case "$1" in' \
+          '  *Username*) printf "%s\n" "x-access-token" ;;' \
+          '  *Password*) printf "%s\n" "$GIT_TOKEN" ;;' \
+          '  *) exit 1 ;;' \
+          'esac' > "$askpass"
+        chmod 0700 "$askpass"
+        GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 git "$@"
       else
-        git fetch --all --prune
-        git reset --hard "origin/$GIT_BRANCH"
+        git "$@"
       fi
-    else
-      echo "Cloning repository"
-      rm -rf "$WORKDIR"
-      if [ -n "$GIT_AUTH_OPTS" ]; then
-        eval git $GIT_AUTH_OPTS clone --branch "$GIT_BRANCH" "$GIT_REPO" "$WORKDIR"
-      else
-        git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$WORKDIR"
-      fi
-    fi
+    }
 
-    echo "Syncing to $TARGET_DIR"
+    git_clone clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" "$workdir"
     mkdir -p "$TARGET_DIR"
-    rsync -av --delete "$WORKDIR/" "$TARGET_DIR/"
+    rsync -a --delete --exclude=.git "$workdir/" "$TARGET_DIR/"
+    chown -R "$TARGET_UID:$TARGET_GID" "$TARGET_DIR"

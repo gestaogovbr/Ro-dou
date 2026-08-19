@@ -128,10 +128,12 @@ configurações das DAGs em uma pasta `dag_confs/`. Para sincronizar essas
 configurações a partir de um repositório Git sem rebuildar imagens, há um
 exemplo de solução `git-rsync` em `k8s/git-rsync/` que:
 
-- provê um `ConfigMap` com um script `git-rsync.sh` que faz `git clone`/
-   `git pull` e usa `rsync` para atualizar o diretório alvo;
+- provê um `ConfigMap` com um script `git-rsync.sh` que faz um clone raso e
+   usa `rsync` para atualizar o diretório alvo;
 - provê um `CronJob` que executa o script periodicamente (padrão: a cada
-   5 minutos).
+   5 minutos);
+- provê um PVC dedicado e patches opcionais que o montam, somente para
+   leitura, no servidor de API, scheduler e processador de DAGs do Airflow.
 
 Como usar (passos rápidos):
 
@@ -139,7 +141,15 @@ Como usar (passos rápidos):
     `GIT_BRANCH`. O manifesto `dag-confs-pvc.yml` cria, por padrão, um PVC de
     1 Gi chamado `dag-confs-pvc`; ajuste-o se precisar de outra capacidade,
     classe de armazenamento ou modo de acesso.
-2. Aplique os manifests:
+2. Para um repositório privado, crie um Secret com um token (PAT) HTTPS. Um
+    PAT classic precisa apenas do escopo `repo`; o escopo `user` não é
+    necessário. Pule este passo para repositórios públicos:
+
+```bash
+kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
+```
+
+3. Aplique os manifests:
 
 ```bash
 kubectl -n airflow-rodou apply -f k8s/git-rsync/dag-confs-pvc.yml
@@ -147,9 +157,16 @@ kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 ```
 
-3. Para repositórios privados, prefira usar um token (PAT) via HTTPS:
+4. Aplique os patches para montar o PVC nos três Deployments do Airflow:
 
 ```bash
-kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
-kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+kubectl -n airflow-rodou patch deployment airflow-api-server --type=strategic --patch-file k8s/git-rsync/airflow-api-server-volume-patch.yml
+kubectl -n airflow-rodou patch deployment airflow-scheduler --type=strategic --patch-file k8s/git-rsync/airflow-scheduler-volume-patch.yml
+kubectl -n airflow-rodou patch deployment airflow-dag-processor --type=strategic --patch-file k8s/git-rsync/airflow-dag-processor-volume-patch.yml
 ```
+
+O token é fornecido ao Git de forma não interativa por `GIT_ASKPASS`, sem ser
+incluído na URL ou nos logs. Após cada sincronização, o CronJob altera o
+proprietário do diretório e dos arquivos para UID `50000` e GID `0`, usados
+pela imagem oficial do Airflow.
+
