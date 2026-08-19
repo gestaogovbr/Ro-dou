@@ -67,7 +67,7 @@ metadata:
     {{- include "ro-dou.labels" . | nindent 4 }}
     app: airflow-api-server
 spec:
-  type: ClusterIP
+  type: {{ .Values.airflow.apiServer.service.type }}
   ports:
     - port: {{ .Values.airflow.apiServer.port }}
       targetPort: {{ .Values.airflow.apiServer.port }}
