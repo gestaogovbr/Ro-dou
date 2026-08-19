@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Habilitando IA nos resumos - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Habilitando IA nos resumos";
+        var mkdocs_page_input_path = "como_utilizar/habilitando_ia.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.12.4
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao/">Instalação e configuração</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_k8s/">Instalação do k8s</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_wsl_windows/">Instalação do WSL no Windows</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitacao_docker_no_wsl/">Habilitação do Docker no WSL</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../gerador_yaml.html">Gerador de configuração (YAML)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Habilitando IA nos resumos</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#provedores-suportados">Provedores suportados</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-configurar">Como configurar</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-providers">1. Providers</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-crie-a-variavel-com-a-chave-de-api-no-airflow">2. Crie a variável com a chave de API no Airflow</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-configure-o-yaml-da-dag">3. Configure o YAML da DAG</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#referencia-de-parametros">Referência de parâmetros</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ai_config-nivel-da-dag-obrigatorio-se-use_ai_summary-true">ai_config (nível da DAG — obrigatório se use_ai_summary: True)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#ai_search_config-dentro-de-search">ai_search_config (dentro de search)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#prompt-padrao">Prompt padrão</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#observacao">Observação</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/parametros/">Parâmetros de pesquisa</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/Guia_de_Uso/">Guia de Uso e Responsabilidade</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como utilizar</li>
+      <li class="breadcrumb-item active">Habilitando IA nos resumos</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="integracao-com-inteligencia-artificial-generativa">Integração com Inteligência Artificial Generativa</h1>
+<p>O Ro-DOU permite gerar resumos automáticos das publicações encontradas no Diário Oficial da União (DOU) usando um modelo de linguagem (LLM) de um provedor de IA externo.</p>
+<p>Isso ajuda a reduzir o tempo de análise, destacando rapidamente o conteúdo mais relevante de cada publicação. O prompt enviado à IA pode ser customizado (<code>ai_custom_prompt</code>), permitindo adaptar o resumo — em tópicos, mais detalhado, em outro tom, etc.</p>
+<p>⚠️ <strong>Disponível apenas para a fonte INLABS.</strong></p>
+<p>Assista ao vídeo abaixo para ver a configuração completa na prática:</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/tP18HtsI-0g?si=MTjvx_0GOMVYF_Hb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<h2 id="provedores-suportados">Provedores suportados</h2>
+<ul>
+<li>OpenAI</li>
+<li>Gemini</li>
+<li>Claude</li>
+<li>Azure OpenAI</li>
+</ul>
+<p>⚠️ <strong>Atenção aos custos:</strong> o uso de IA pode gerar custos por consumo de tokens, cobrados diretamente pelo provedor escolhido. Ajuste <code>ai_pub_limit</code> para limitar quantas publicações são processadas por execução — importante em buscas com grande volume de resultados.</p>
+<p>⚠️ <strong>Veracidade das informações:</strong> o texto gerado por IA pode conter informações imprecisas ou incompletas. Use sempre como apoio à análise, validando com a fonte original.</p>
+<h2 id="como-configurar">Como configurar</h2>
+<h3 id="1-providers">1. Providers</h3>
+<p>Provedores de build disponíveis: <code>openai</code>, <code>gemini</code>, <code>claude</code>.</p>
+<p>💡 O Azure OpenAI utiliza o mesmo SDK do OpenAI e não possui um pacote dedicado.</p>
+<h3 id="2-crie-a-variavel-com-a-chave-de-api-no-airflow">2. Crie a variável com a chave de API no Airflow</h3>
+<p>Acesse <a href="http://localhost:8080/variable/list/">http://localhost:8080/variable/list/</a> e crie uma variável com a chave do provedor escolhido. O nome é livre — você vai referenciá-lo no YAML pelo campo <code>api_key_var</code> (passo 3):</p>
+<table>
+<thead>
+<tr>
+<th>Provedor</th>
+<th>Variável sugerida</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI</td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td>Gemini</td>
+<td><code>GEMINI_API_KEY</code></td>
+</tr>
+<tr>
+<td>Claude (Anthropic)</td>
+<td><code>ANTHROPIC_API_KEY</code></td>
+</tr>
+</tbody>
+</table>
+<p>Para <strong>Azure</strong>, além da chave de API, são necessárias três variáveis adicionais:</p>
+<table>
+<thead>
+<tr>
+<th>Variável</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AZURE_OPENAI_ENDPOINT</code></td>
+<td>URL do endpoint do Azure OpenAI</td>
+</tr>
+<tr>
+<td><code>AZURE_OPENAI_API_VERSION</code></td>
+<td>Versão da API</td>
+</tr>
+<tr>
+<td><code>AZURE_OPENAI_DEPLOYMENT</code></td>
+<td>Nome do deployment do modelo</td>
+</tr>
+<tr>
+<td><code>AZURE_OPENAI_API_KEY</code></td>
+<td>Chave de API do Azure OpenAI</td>
+</tr>
+</tbody>
+</table>
+<p>Crie-as automaticamente com:</p>
+<pre><code class="language-bash">make create-azure-openai-variables
+</code></pre>
+<h3 id="3-configure-o-yaml-da-dag">3. Configure o YAML da DAG</h3>
+<p>Adicione <code>ai_config</code> no nível da DAG — ele aponta o provedor e a variável com a chave — e <code>ai_search_config</code> dentro de <code>search</code>, que liga o resumo e ajusta seus parâmetros:</p>
+<pre><code class="language-yaml">dag:
+  id: exemplo_com_ia
+  description: DAG de exemplo com resumo por IA
+  ...
+
+  ai_config:
+    provider: openai  # openai | gemini | claude | azure
+    api_key_var: OPENAI_API_KEY
+    model: gpt-4o-mini
+
+  search:
+    sources:
+      - INLABS
+    terms:
+      - concurso público
+    ai_search_config:
+      use_ai_summary: True
+      ai_pub_limit: 5
+      ai_custom_prompt: |
+        Você é um assistente que cria resumos concisos de publicações oficiais.
+</code></pre>
+<p>⚠️ <strong>Atenção:</strong> <code>ai_search_config</code> fica dentro de <code>search</code>, no mesmo nível de <code>terms</code>/<code>sources</code> — não é o mesmo bloco que <code>ai_config</code> (que fica no nível da DAG).</p>
+<h2 id="referencia-de-parametros">Referência de parâmetros</h2>
+<h3 id="ai_config-nivel-da-dag-obrigatorio-se-use_ai_summary-true"><code>ai_config</code> (nível da DAG — obrigatório se <code>use_ai_summary: True</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Parâmetro</th>
+<th>Obrigatório</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>provider</code></td>
+<td>Sim</td>
+<td><code>openai</code>, <code>gemini</code>, <code>claude</code> ou <code>azure</code></td>
+</tr>
+<tr>
+<td><code>api_key_var</code></td>
+<td>Sim</td>
+<td>Nome da variável do Airflow que contém a chave de API</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>Sim</td>
+<td>Modelo suportado pelo provedor (ex: <code>gpt-4o-mini</code>)</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>Não</td>
+<td>0.0 a 1.0. Default: <code>0.2</code>. Valores baixos deixam a resposta mais determinística; valores altos, mais variada</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>Não</td>
+<td>Máximo de tokens na resposta da IA. Default: <code>200</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_search_config-dentro-de-search"><code>ai_search_config</code> (dentro de <code>search</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Parâmetro</th>
+<th>Obrigatório</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>use_ai_summary</code></td>
+<td>Não</td>
+<td>Habilita o resumo por IA. Default: <code>False</code></td>
+</tr>
+<tr>
+<td><code>ai_pub_limit</code></td>
+<td>Não</td>
+<td>Máximo de publicações resumidas por execução da DAG. Default: <code>10</code></td>
+</tr>
+<tr>
+<td><code>ai_custom_prompt</code></td>
+<td>Não</td>
+<td>Prompt customizado enviado à IA (veja o padrão abaixo)</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>Não</td>
+<td>Mesmo efeito do <code>temperature</code> de <code>ai_config</code>. Default: <code>0.2</code></td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>Não</td>
+<td>Mesmo efeito do <code>max_tokens</code> de <code>ai_config</code>. Default: <code>200</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="prompt-padrao">Prompt padrão</h3>
+<pre><code>Você é um assistente especializado em análise de
+publicações do Diário Oficial da União (DOU).
+Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
+
+Inclua o termo &quot;{}&quot; no texto.
+
+O resumo deve focar em:
+- órgão responsável
+- tipo de ato
+- ação principal
+
+Não invente informações. Não use markdown. Retorne apenas a frase.
+</code></pre>
+<h3 id="observacao">Observação</h3>
+<p>O parâmetro <code>use_summary</code> (recurso separado do INLABS, que exibe a ementa da publicação quando ela existe) tem prioridade sobre o resumo por IA: se a publicação já tem ementa, ela é exibida no lugar do resumo gerado por IA; o resumo por IA só é gerado para as publicações sem ementa.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../notificacao_de_erros/" class="btn btn-neutral float-left" title="Notificação de erros"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../como_funciona/intro_funcionamento/" class="btn btn-neutral float-right" title="Introdução">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../notificacao_de_erros/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../como_funciona/intro_funcionamento/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+  <script>
+    document.querySelectorAll('a[href*="gerador_yaml.html"]').forEach(function (link) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  </script>
+
+
+</body>
+</html>

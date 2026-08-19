@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Instalação do k8s - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Instala\u00e7\u00e3o do k8s";
+        var mkdocs_page_input_path = "como_utilizar/instalacao_k8s.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.12.4
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao/">Instalação e configuração</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Instalação do k8s</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#helm-deploy">Helm deploy</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#instalacao">Instalação</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#atualizacao">Atualização</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#desinstalacao">Desinstalação</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#instalacao_1">Instalação</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#servicos-opcionais">Serviços opcionais</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#opensearch">OpenSearch</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#smtp4dev">SMTP4dev</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#acesso-local">Acesso local</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sincronizacao-dos-dag_confs-via-git-git-rsync">Sincronização dos dag_confs via Git (git-rsync)</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_wsl_windows/">Instalação do WSL no Windows</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitacao_docker_no_wsl/">Habilitação do Docker no WSL</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../gerador_yaml.html">Gerador de configuração (YAML)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitando_ia/">Habilitando IA nos resumos</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/parametros/">Parâmetros de pesquisa</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/Guia_de_Uso/">Guia de Uso e Responsabilidade</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como utilizar</li>
+      <li class="breadcrumb-item active">Instalação do k8s</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ro-dou-on-kubernetes">Ro-DOU on Kubernetes</h1>
+<p>Instruções para subir o Ro-DOU em um cluster Kubernetes 🚀🚀🚀</p>
+<h2 id="helm-deploy">Helm deploy</h2>
+<h2 id="pre-requisitos">Pré-requisitos</h2>
+<ul>
+<li>Kubernetes 1.19 ou superior</li>
+<li>Helm 3.0 ou superior</li>
+<li>Uma <code>StorageClass</code> compatível com as configurações de persistência do chart</li>
+</ul>
+<h2 id="instalacao">Instalação</h2>
+<p>Para instalar o chart com o nome de release <code>rodou</code>:</p>
+<pre><code class="language-bash">helm install rodou ./helm/ro-dou
+</code></pre>
+<p>Para personalizar a instalação, crie um arquivo de valores e informe-o com
+<code>-f</code>:</p>
+<pre><code class="language-bash">helm install rodou ./helm/ro-dou -f my-values.yaml
+</code></pre>
+<h2 id="atualizacao">Atualização</h2>
+<p>Para atualizar uma instalação existente:</p>
+<pre><code class="language-bash">helm upgrade rodou ./helm/ro-dou -f my-values.yaml
+</code></pre>
+<h2 id="desinstalacao">Desinstalação</h2>
+<pre><code class="language-bash">helm uninstall rodou
+
+## Manual deployment
+
+## Pré-requisitos
+
+- Um cluster Kubernetes local e o `kubectl` configurado.
+- A imagem `ghcr.io/gestaogovbr/ro-dou:latest` acessível pelo cluster. Os
+  componentes do Airflow usam `imagePullPolicy: Always` para resolver a tag
+  novamente sempre que um pod for criado.
+- Capacidade de provisionar volumes `ReadWriteOnce`.
+- Para o OpenSearch, `vm.max_map_count` deve ser pelo menos `262144` no nó.
+
+Os exemplos abaixo usam o namespace `airflow-rodou`:
+
+```bash
+kubectl create namespace airflow-rodou
+</code></pre>
+<p>Antes do deploy, preencha os valores adequados em
+<code>airflow/airflow-secrets.yml</code> e <code>postgres/postgres-secrets.yml</code>.</p>
+<h2 id="instalacao_1">Instalação</h2>
+<ol>
+<li>Suba PostgreSQL e aguarde sua disponibilidade:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f postgres/postgres-secrets.yml
+   kubectl -n airflow-rodou apply -f postgres/postgres-deployment.yml
+   kubectl -n airflow-rodou rollout status statefulset/postgres</code></p>
+<ol>
+<li>Crie o banco usado pelo INLABS:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f postgres/postgres-inlabsdb-configmap.yml
+   kubectl -n airflow-rodou apply -f postgres/postgres-create-inlabsdb-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/init-inlabs-db --timeout=120s</code></p>
+<ol>
+<li>Suba os serviços auxiliares e a configuração do Airflow:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-secrets.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-configmap.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-pvc.yml</code></p>
+<ol>
+<li>Migre o banco de metadados e crie o usuário administrador:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-init-db-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-db-init --timeout=300s
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-admin-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-create-admin --timeout=120s</code></p>
+<ol>
+<li>Suba os componentes do Airflow 3:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-api-server-deployment.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-scheduler-deployment.yml
+   kubectl -n airflow-rodou apply -f airflow/airflow-dag-processor-deployment.yml</code></p>
+<ol>
+<li>Crie a conexão do portal INLABS:</li>
+</ol>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
+   kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s</code>
+7. Crie as variáveis de ambiente:</p>
+<p>Edite o arquivo <code>airflow/airflow-create-variables.yml</code> com os nomes e valores das variáveis desejadas.</p>
+<p><code>bash
+   kubectl -n airflow-rodou apply -f airflow/airflow-create-variables.yml</code></p>
+<h2 id="servicos-opcionais">Serviços opcionais</h2>
+<h3 id="opensearch">OpenSearch</h3>
+<ul>
+<li>O Ro-DOU não usa OpenSearch por padrão. Para habilitar, altere
+  <code>RO_DOU_INLABS_USE_OPENSEARCH</code> para <code>true</code> no ConfigMap
+  <code>airflow/airflow-configmap.yml</code>.</li>
+<li>Deploy (opcional):</li>
+</ul>
+<pre><code class="language-bash">kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
+kubectl -n airflow-rodou rollout status statefulset/opensearch
+</code></pre>
+<h3 id="smtp4dev">SMTP4dev</h3>
+<ul>
+<li>SMTP4dev é útil apenas para testes de envio de email. Deploy (opcional):</li>
+</ul>
+<pre><code class="language-bash">kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
+</code></pre>
+<p>Exemplo de acesso local (opcional):</p>
+<pre><code class="language-bash">kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
+</code></pre>
+<h2 id="acesso-local">Acesso local</h2>
+<p>Interface do Airflow:</p>
+<pre><code class="language-bash">kubectl -n airflow-rodou port-forward service/airflow-api-server 8080:8080
+</code></pre>
+<p>Acesse <code>http://localhost:8080</code> com o usuário e a senha definidos por
+<code>_AIRFLOW_WWW_USER_USERNAME</code> e <code>_AIRFLOW_WWW_USER_PASSWORD</code>.</p>
+<p>Jobs são imutáveis no Kubernetes. Para executá-los novamente, exclua o Job
+correspondente antes de reaplicar o manifest.</p>
+<h2 id="sincronizacao-dos-dag_confs-via-git-git-rsync">Sincronização dos <code>dag_confs</code> via Git (git-rsync)</h2>
+<p>Em ambientes onde o Ro-DOU roda no Kubernetes, é comum manter as
+configurações das DAGs em uma pasta <code>dag_confs/</code>. Para sincronizar essas
+configurações a partir de um repositório Git sem rebuildar imagens, há um
+exemplo de solução <code>git-rsync</code> em <code>k8s/git-rsync/</code> que:</p>
+<ul>
+<li>provê um <code>ConfigMap</code> com um script <code>git-rsync.sh</code> que faz <code>git clone</code>/
+   <code>git pull</code> e usa <code>rsync</code> para atualizar o diretório alvo;</li>
+<li>provê um <code>CronJob</code> que executa o script periodicamente (padrão: a cada
+   5 minutos).</li>
+</ul>
+<p>Como usar (passos rápidos):</p>
+<ol>
+<li>Ajuste <code>k8s/git-rsync/git-rsync-cronjob.yml</code> definindo <code>GIT_REPO</code>,
+    <code>GIT_BRANCH</code> e substitua <code>dag-confs-pvc</code> pelo nome do seu PVC destino.</li>
+<li>Aplique os manifests:</li>
+</ol>
+<pre><code class="language-bash">kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+</code></pre>
+<ol>
+<li>Para repositórios privados, prefira usar um token (PAT) via HTTPS:</li>
+</ol>
+<pre><code class="language-bash">kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
+kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../instalacao/" class="btn btn-neutral float-left" title="Instalação e configuração"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../instalacao_wsl_windows/" class="btn btn-neutral float-right" title="Instalação do WSL no Windows">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../instalacao/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../instalacao_wsl_windows/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+  <script>
+    document.querySelectorAll('a[href*="gerador_yaml.html"]').forEach(function (link) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  </script>
+
+
+</body>
+</html>
