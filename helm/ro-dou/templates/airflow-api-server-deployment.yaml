@@ -44,10 +44,20 @@ spec:
           volumeMounts:
             - name: airflow-logs
               mountPath: /opt/airflow/logs
+            {{- if .Values.gitRsync.enabled }}
+            - name: dag-confs
+              mountPath: {{ .Values.gitRsync.targetDir | quote }}
+              readOnly: true
+            {{- end }}
       volumes:
         - name: airflow-logs
           persistentVolumeClaim:
             claimName: {{ include "ro-dou.fullname" . }}-airflow-logs-pvc
+        {{- if .Values.gitRsync.enabled }}
+        - name: dag-confs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service

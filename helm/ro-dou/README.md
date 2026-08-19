@@ -58,6 +58,19 @@ Os principais valores configuráveis são:
 | `airflow.dagProcessor.replicas` | Réplicas do processador de DAGs | `1` |
 | `airflow.pvc.storage` | Espaço solicitado para os logs do Airflow | `1Gi` |
 | `airflow.pvc.storageClassName` | `StorageClass` usada pelos logs do Airflow | `""` |
+| `gitRsync.enabled` | Sincroniza as configurações das DAGs de um repositório Git | `false` |
+| `gitRsync.schedule` | Agendamento do CronJob de sincronização | `*/5 * * * *` |
+| `gitRsync.repository` | URL HTTPS do repositório Git | `""` |
+| `gitRsync.branch` | Branch sincronizada | `main` |
+| `gitRsync.targetDir` | Diretório montado nos componentes do Airflow | `/opt/airflow/dags/ro_dou/dag_confs` |
+| `gitRsync.targetOwner.uid` | UID proprietário do diretório e dos arquivos sincronizados | `50000` |
+| `gitRsync.targetOwner.gid` | GID proprietário do diretório e dos arquivos sincronizados | `0` |
+| `gitRsync.secret.name` | Secret existente que contém o token Git; vazio para repositórios públicos | `""` |
+| `gitRsync.secret.key` | Chave do token dentro do Secret | `token` |
+| `gitRsync.persistence.existingClaim` | PVC existente para os arquivos sincronizados; vazio cria um PVC | `""` |
+| `gitRsync.persistence.storage` | Espaço solicitado para as configurações das DAGs | `1Gi` |
+| `gitRsync.persistence.storageClassName` | `StorageClass` usada pelas configurações das DAGs | `""` |
+| `gitRsync.persistence.accessMode` | Modo de acesso do PVC das configurações das DAGs | `ReadWriteOnce` |
 | `airflow.secrets.AIRFLOW__CORE__FERNET_KEY` | Chave Fernet usada pelo Airflow | valor de desenvolvimento |
 | `airflow.secrets.AIRFLOW__API_AUTH__JWT_SECRET` | Chave de assinatura dos tokens JWT | valor de desenvolvimento |
 | `airflow.secrets.AIRFLOW__API__SECRET_KEY` | Chave secreta do servidor de API | valor de desenvolvimento |
@@ -140,7 +153,7 @@ airflow:
 
 Quando `opensearch.connection.host` fica vazio, o chart configura o Airflow
 com a URL interna do Service criado para o release, por exemplo
-`http://meu-rodou-ro-dou-opensearch:9200`.
+`http://rodou-ro-dou-opensearch:9200`.
 
 Para utilizar uma instalação externa, mantenha `opensearch.enabled: false` e
 informe a URL externa:
@@ -157,6 +170,40 @@ airflow:
     OPENSEARCH_USER: usuario
     OPENSEARCH_PASS: senha-segura
 ```
+
+## Sincronização das configurações das DAGs via Git
+
+O git-rsync é desabilitado por padrão. Quando habilitado, o chart cria um
+CronJob e, salvo quando `existingClaim` é informado, um PVC dedicado. Esse PVC
+é montado no servidor de API, scheduler e processador de DAGs do Airflow. Após
+cada sincronização, o CronJob define o proprietário do diretório e de seus
+arquivos como UID `50000` e GID `0`, usados pela imagem oficial do Airflow.
+
+Para um repositório público:
+
+```yaml
+gitRsync:
+  enabled: true
+  repository: https://github.com/sua-organizacao/dag-confs.git
+  branch: main
+```
+
+Para um repositório privado, crie previamente um Secret com um token HTTPS e
+informe seu nome:
+
+```bash
+kubectl create secret generic git-token --from-literal=token=SEU_TOKEN
+```
+
+```yaml
+gitRsync:
+  enabled: true
+  repository: https://github.com/sua-organizacao/dag-confs.git
+  secret:
+    name: git-token
+    key: token
+```
+
 
 ## Serviços
 
@@ -183,34 +230,7 @@ kubectl port-forward service/rodou-ro-dou-smtp4dev 5001:5001
 ## Persistência
 
 O chart cria um PVC para os logs do Airflow, um volume persistente para os
-dados do PostgreSQL e, quando habilitado, outro para o OpenSearch. Ajuste a
-`StorageClass` e o tamanho dos volumes de acordo com o cluster antes da
-instalação.
+dados do PostgreSQL e, quando habilitados, volumes para o OpenSearch e o
+git-rsync. Ajuste a `StorageClass`, o modo de acesso e o tamanho dos volumes de
+acordo com o cluster antes da instalação.
 
-## Segredos
-
-O chart fornece credenciais e chaves padrão apenas para facilitar ambientes de
-desenvolvimento. Antes de uma instalação compartilhada ou de produção,
-substitua as chaves do Airflow, o administrador inicial e as credenciais do
-PostgreSQL em um arquivo de valores protegido:
-
-```yaml
-airflow:
-  secrets:
-    AIRFLOW__CORE__FERNET_KEY: <fernet-key>
-    AIRFLOW__API_AUTH__JWT_SECRET: <jwt-secret>
-    AIRFLOW__API__SECRET_KEY: <api-secret>
-    _AIRFLOW_WWW_USER_USERNAME: <usuario-administrador>
-    _AIRFLOW_WWW_USER_PASSWORD: <senha-administrador>
-
-postgres:
-  secrets:
-    postgres-user: <usuario-postgresql>
-    postgres-password: <senha-postgresql>
-    postgres-db: airflow
-```
-
-Não versione o arquivo que contém os valores reais. Em ambientes de produção,
-prefira ainda integrar o processo de instalação a um gerenciador externo de
-segredos. Os valores padrão nunca devem ser reutilizados fora de ambientes de
-desenvolvimento.

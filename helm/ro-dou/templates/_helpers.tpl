@@ -51,6 +51,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Name of the PVC shared by git-rsync and the Airflow workloads.
+*/}}
+{{- define "ro-dou.gitRsync.claimName" -}}
+{{- default (printf "%s-dag-confs-pvc" (include "ro-dou.fullname" .)) .Values.gitRsync.persistence.existingClaim -}}
+{{- end }}
+
+{{/*
 Shell snippet that blocks until the Postgres service is accepting TCP connections.
 Hooks only guarantee Postgres has been created, not that it is ready, so jobs that
 talk to it must wait themselves.

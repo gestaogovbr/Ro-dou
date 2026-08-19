@@ -1,0 +1,119 @@
+{{- if .Values.gitRsync.enabled }}
+{{- if not .Values.gitRsync.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ro-dou.gitRsync.claimName" . }}
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: git-rsync
+spec:
+  accessModes:
+    - {{ .Values.gitRsync.persistence.accessMode }}
+  {{- if .Values.gitRsync.persistence.storageClassName }}
+  storageClassName: {{ .Values.gitRsync.persistence.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.gitRsync.persistence.storage }}
+---
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-git-rsync-scripts
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: git-rsync
+data:
+  git-rsync.sh: |
+    #!/bin/sh
+    set -eu
+
+    workspace="$(mktemp -d)"
+    workdir="$workspace/repo"
+    trap 'rm -rf "$workspace"' EXIT
+
+    git_clone() {
+      if [ -n "${GIT_TOKEN:-}" ]; then
+        askpass="$workspace/git-askpass.sh"
+        printf '%s\n' \
+          '#!/bin/sh' \
+          'case "$1" in' \
+          '  *Username*) printf "%s\n" "x-access-token" ;;' \
+          '  *Password*) printf "%s\n" "$GIT_TOKEN" ;;' \
+          '  *) exit 1 ;;' \
+          'esac' > "$askpass"
+        chmod 0700 "$askpass"
+        GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 git "$@"
+      else
+        git "$@"
+      fi
+    }
+
+    git_clone clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" "$workdir"
+    mkdir -p "$TARGET_DIR"
+    rsync -a --delete --exclude=.git "$workdir/" "$TARGET_DIR/"
+    chown -R "$TARGET_UID:$TARGET_GID" "$TARGET_DIR"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-git-rsync-dag-confs
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: git-rsync
+spec:
+  schedule: {{ .Values.gitRsync.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: git-rsync
+            app.kubernetes.io/instance: {{ .Release.Name }}
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: git-rsync
+              image: {{ printf "%s:%s" .Values.gitRsync.image.repository .Values.gitRsync.image.tag | quote }}
+              imagePullPolicy: {{ .Values.gitRsync.image.pullPolicy }}
+              command:
+                - /bin/sh
+                - -c
+                - apk add --no-cache git rsync ca-certificates && /scripts/git-rsync.sh
+              env:
+                - name: GIT_REPO
+                  value: {{ required "gitRsync.repository is required when gitRsync is enabled" .Values.gitRsync.repository | quote }}
+                - name: GIT_BRANCH
+                  value: {{ .Values.gitRsync.branch | quote }}
+                - name: TARGET_DIR
+                  value: {{ .Values.gitRsync.targetDir | quote }}
+                - name: TARGET_UID
+                  value: {{ .Values.gitRsync.targetOwner.uid | quote }}
+                - name: TARGET_GID
+                  value: {{ .Values.gitRsync.targetOwner.gid | quote }}
+                {{- if .Values.gitRsync.secret.name }}
+                - name: GIT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.gitRsync.secret.name | quote }}
+                      key: {{ .Values.gitRsync.secret.key | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: dag-confs
+                  mountPath: {{ .Values.gitRsync.targetDir | quote }}
+          volumes:
+            - name: scripts
+              configMap:
+                name: {{ include "ro-dou.fullname" . }}-git-rsync-scripts
+                defaultMode: 0755
+            - name: dag-confs
+              persistentVolumeClaim:
+                claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+{{- end }}
