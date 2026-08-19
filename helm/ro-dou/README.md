@@ -54,6 +54,12 @@ Os principais valores configuráveis são:
 | `airflow.image.pullPolicy` | Política de download da imagem | `IfNotPresent` |
 | `airflow.apiServer.replicas` | Réplicas do servidor de API | `1` |
 | `airflow.apiServer.port` | Porta do servidor de API | `8080` |
+| `airflow.apiServer.service.type` | Tipo do Service do servidor de API | `ClusterIP` |
+| `airflow.apiServer.ingress.enabled` | Cria um Ingress para a interface e API do Airflow | `false` |
+| `airflow.apiServer.ingress.className` | Nome da `IngressClass` | `""` |
+| `airflow.apiServer.ingress.annotations` | Anotações adicionadas ao Ingress | `{}` |
+| `airflow.apiServer.ingress.hosts` | Hosts e caminhos publicados pelo Ingress | `airflow.local` |
+| `airflow.apiServer.ingress.tls` | Configuração TLS do Ingress | `[]` |
 | `airflow.scheduler.replicas` | Réplicas do scheduler | `1` |
 | `airflow.dagProcessor.replicas` | Réplicas do processador de DAGs | `1` |
 | `airflow.pvc.storage` | Espaço solicitado para os logs do Airflow | `1Gi` |
@@ -101,6 +107,35 @@ Os principais valores configuráveis são:
 | `opensearch.persistence.storageClassName` | `StorageClass` dos dados do OpenSearch | `""` |
 
 Consulte [`values.yaml`](./values.yaml) para ver todos os valores disponíveis.
+
+## Exposição do Airflow por Ingress
+
+Por padrão, o servidor de API e a interface do Airflow são expostos apenas por
+um Service `ClusterIP`. Para criar também um Ingress:
+
+```yaml
+airflow:
+  config:
+    AIRFLOW__API__BASE_URL: https://airflow.exemplo.gov.br
+  apiServer:
+    ingress:
+      enabled: true
+      className: nginx
+      annotations: {}
+      hosts:
+        - host: airflow.exemplo.gov.br
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: airflow-tls
+          hosts:
+            - airflow.exemplo.gov.br
+```
+
+O controlador de Ingress e o Secret TLS devem existir no cluster. Se TLS não
+for necessário, mantenha `tls: []` e use a URL HTTP correspondente em
+`AIRFLOW__API__BASE_URL`.
 
 ## Configuração de SMTP
 
@@ -233,4 +268,3 @@ O chart cria um PVC para os logs do Airflow, um volume persistente para os
 dados do PostgreSQL e, quando habilitados, volumes para o OpenSearch e o
 git-rsync. Ajuste a `StorageClass`, o modo de acesso e o tamanho dos volumes de
 acordo com o cluster antes da instalação.
-

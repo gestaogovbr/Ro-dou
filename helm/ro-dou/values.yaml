@@ -9,6 +9,18 @@ airflow:
   apiServer:
     replicas: 1
     port: 8080
+    service:
+      type: ClusterIP
+    ingress:
+      enabled: false
+      className: ""
+      annotations: {}
+      hosts:
+        - host: airflow.local
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
   scheduler:
     replicas: 1
   dagProcessor:
