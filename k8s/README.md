@@ -135,11 +135,14 @@ exemplo de solução `git-rsync` em `k8s/git-rsync/` que:
 
 Como usar (passos rápidos):
 
-1. Ajuste `k8s/git-rsync/git-rsync-cronjob.yml` definindo `GIT_REPO`,
-    `GIT_BRANCH` e substitua `dag-confs-pvc` pelo nome do seu PVC destino.
+1. Ajuste `k8s/git-rsync/git-rsync-cronjob.yml` definindo `GIT_REPO` e
+    `GIT_BRANCH`. O manifesto `dag-confs-pvc.yml` cria, por padrão, um PVC de
+    1 Gi chamado `dag-confs-pvc`; ajuste-o se precisar de outra capacidade,
+    classe de armazenamento ou modo de acesso.
 2. Aplique os manifests:
 
 ```bash
+kubectl -n airflow-rodou apply -f k8s/git-rsync/dag-confs-pvc.yml
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-configmap.yml
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 ```
@@ -150,4 +153,3 @@ kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YOUR_GITHUB_TOKEN
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 ```
-
