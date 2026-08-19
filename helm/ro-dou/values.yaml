@@ -47,6 +47,33 @@ airflow:
     storage: 1Gi
     storageClassName: ""
 
+# Synchronize DAG configuration files from Git (optional)
+gitRsync:
+  enabled: false
+  schedule: "*/5 * * * *"
+  image:
+    repository: alpine
+    tag: "3.18"
+    pullPolicy: IfNotPresent
+  repository: ""
+  branch: main
+  targetDir: /opt/airflow/dags/ro_dou/dag_confs
+  targetOwner:
+    # The official Airflow image runs as UID 50000 in the root group.
+    uid: 50000
+    gid: 0
+  secret:
+    # Name of an existing Secret containing a Git HTTPS token. Leave empty for
+    # public repositories.
+    name: ""
+    key: token
+  persistence:
+    # Use an existing claim instead of creating one when this value is set.
+    existingClaim: ""
+    storage: 1Gi
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+
 # PostgreSQL configuration
 postgres:
   image:
