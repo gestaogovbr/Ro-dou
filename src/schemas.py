@@ -30,11 +30,10 @@ from pydantic import (
     model_validator,
 )
 
-from ai.config import prompt
-from ai.provider import AIProvider
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from ai.config import prompt
+from ai.provider import AIProvider
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
