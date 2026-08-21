@@ -2,7 +2,7 @@ Ro-DOU foi instalado como release "{{ .Release.Name }}" no namespace "{{ .Releas
 
 Acesse o serviço:
 {{- if eq .Values.airflow.apiServer.service.type "ClusterIP" }}
-   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ro-dou.fullname" . }}-airflow-api-server 8080:{{ .Values.airflow.apiServer.port }}
+   kubectl -n default port-forward service/{{ include "ro-dou.fullname" . }}-airflow-api-server 8080:{{ .Values.airflow.apiServer.port }}
    Depois abra http://localhost:8080
 {{- else if eq .Values.airflow.apiServer.service.type "LoadBalancer" }}
    kubectl -n {{ .Release.Namespace }} get svc {{ include "ro-dou.fullname" . }}-airflow-api-server -w
