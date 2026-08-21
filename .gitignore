@@ -139,5 +139,8 @@ test_notrack/
 **/mnt/airflow-logs
 **/dag_confs/
 
-# Airflow token 
+# Airflow token
 .airflow_token
+
+# Helm local overrides with real credentials
+helm/ro-dou/values-local.yaml
