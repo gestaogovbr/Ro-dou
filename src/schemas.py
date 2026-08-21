@@ -1,3 +1,4 @@
+# ruff: noqa: UP007, UP045, UP006, UP035
 """
 This module defines the Pydantic models for validating the structure of
 the YAML files used in the application.
@@ -14,16 +15,25 @@ These models are used to validate the YAML files using the Pydantic
 library.
 """
 
-import textwrap
 import os
 import sys
-from typing import List, Optional, Set, Union
-from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
-from pydantic import field_validator, model_validator
+import textwrap
+
+from typing import Optional, Union, Set
+
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from ai.provider import AIProvider
+
 from ai.config import prompt
+from ai.provider import AIProvider
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
@@ -45,6 +55,7 @@ class FetchTermsConfig(BaseModel):
         description="Consulta SQL para buscar os termos de pesquisa em um "
         "banco de dados",
     )
+
 
 class AISearchConfig(BaseModel):
     """Represents the AI Search configuration in the YAML file."""
@@ -72,11 +83,12 @@ class AISearchConfig(BaseModel):
         default=0.2,
         ge=0.0,
         le=1.0,
-        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.",
+    )
 
     max_tokens: Optional[int] = Field(
-        default=200,
-        description="Número máximo de tokens para a resposta da IA.")
+        default=200, description="Número máximo de tokens para a resposta da IA."
+    )
 
 
 class SearchField(BaseModel):
@@ -92,12 +104,12 @@ class SearchConfig(BaseModel):
     header: Optional[str] = Field(
         default=None, description="Cabeçalho da consulta de pesquisa"
     )
-    sources: Optional[List[str]] = Field(
+    sources: Optional[list[str]] = Field(
         default=["DOU"],
         description="Lista de fontes de dados para pesquisar (Querido Diário [QD], "
         "Diário Oficial da União [DOU], INLABS). Default: DOU.",
     )
-    territory_id: Optional[Union[int, List[int]]] = Field(
+    territory_id: Optional[Union[int, list[int]]] = Field(
         default=None,
         description="ID do território no Querido Diário para filtragem "
         "baseada em localização",
@@ -107,10 +119,9 @@ class SearchConfig(BaseModel):
         description="Intervalo de data para busca. Valores: DIA, SEMANA, "
         "MES, ANO. Default: DIA",
     )
-    dou_sections: Optional[List[str]] = Field(
+    dou_sections: Optional[list[str]] = Field(
         default=["TODOS"],
-        description=textwrap.dedent(
-            """
+        description=textwrap.dedent("""
             Seção do Diário Oficial a procurar:
 
             - SECAO_1
@@ -130,27 +141,26 @@ class SearchConfig(BaseModel):
             - TODOS
 
             Default: TODOS
-        """
-        ),
+        """),
     )
-    journals: Optional[List[Union[str, dict]]] = Field(
+    journals: Optional[list[Union[str, dict]]] = Field(
         default=None,
         description="Lista de cadernos (seções) do DOE-SP para filtrar a pesquisa.",
     )
-    department: Optional[List[str]] = Field(
+    department: Optional[list[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )
-    department_ignore: Optional[List[str]] = Field(
+    department_ignore: Optional[list[str]] = Field(
         default=None, description="Lista de departamentos a serem ignorados na pesquisa"
     )
-    terms: Optional[Union[List[str], FetchTermsConfig]] = Field(
+    terms: Optional[Union[list[str], FetchTermsConfig]] = Field(
         default=None,
         description="Lista de termos de pesquisa ou uma forma de buscá-los. "
-        "Opcional quando há filtros de department ou pubtype definidos"
+        "Opcional quando há filtros de department ou pubtype definidos",
     )
-    terms_ignore: Optional[List[str]] = Field(
+    terms_ignore: Optional[list[str]] = Field(
         default=None,
-        description="Lista de termos que deverão ser ignorados na pesquisa. "
+        description="Lista de termos que deverão ser ignorados na pesquisa. ",
     )
     field: Optional[str] = Field(
         default="TUDO",
@@ -216,18 +226,18 @@ class SearchConfig(BaseModel):
         "como exceção à regra). Default: 1. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
-    pubtype: Optional[List[str]] = Field(
+    pubtype: Optional[list[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
     excerpt_size: Optional[int] = Field(
         default=None,
         description="Número máximo de caracteres exibidos no trecho onde o termo de busca foi localizado. "
-        "(Funcionalidade disponível apenas no Querido Diário)"
+        "(Funcionalidade disponível apenas no Querido Diário)",
     )
     number_of_excerpts: Optional[int] = Field(
         default=None,
         description="Número máximo de ocorrências do termo de busca em uma mesma edição. "
-        "(Funcionalidade disponível apenas no Querido Diário)"
+        "(Funcionalidade disponível apenas no Querido Diário)",
     )
     ai_search_config: Optional[AISearchConfig] = Field(
         default=None,
@@ -237,11 +247,10 @@ class SearchConfig(BaseModel):
     show_relevancy: Optional[bool] = Field(
         default=False,
         description="Define se no relatório será exibida a tag de relevância para cada resultado. "
-        "(Funcionalidade disponível apenas no INLABS)"
+        "(Funcionalidade disponível apenas no INLABS)",
     )
 
-
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_search_criteria(self):
         """Validate that at least one search criterion is provided."""
         if not self.terms and "QD" in self.sources:
@@ -256,11 +265,15 @@ class SearchConfig(BaseModel):
             )
         return self
 
+
 class CallBacksConfig(BaseModel):
     """Represents the configuration of the callback functions in the YAML file."""
-    on_failure_callback: Optional[List[EmailStr]] = Field(
-        default=None, description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha"
+
+    on_failure_callback: Optional[list[EmailStr]] = Field(
+        default=None,
+        description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha",
     )
+
 
 class ReportConfig(BaseModel):
     """Represents the report configuration in the YAML file."""
@@ -271,10 +284,11 @@ class ReportConfig(BaseModel):
     discord: Optional[dict] = Field(
         default=None, description="Configuração do webhook do Discord para relatórios"
     )
-    notification: Optional[List[str]] = Field(
-        default=None, description="Configuração dos métodos de notificação para relatórios"
+    notification: Optional[list[str]] = Field(
+        default=None,
+        description="Configuração dos métodos de notificação para relatórios",
     )
-    emails: Optional[List[EmailStr]] = Field(
+    emails: Optional[list[EmailStr]] = Field(
         default=None, description="Lista de endereços de e-mail para enviar o relatório"
     )
     attach_csv: Optional[bool] = Field(
@@ -292,7 +306,7 @@ class ReportConfig(BaseModel):
     )
     page_title: Optional[str] = Field(
         default=None,
-        description="Título da página do relatório que é enviado por e-mail"
+        description="Título da página do relatório que é enviado por e-mail",
     )
     hide_filters: Optional[bool] = Field(
         default=False,
@@ -310,26 +324,28 @@ class ReportConfig(BaseModel):
         description="Texto a ser exibido quando não há resultados",
     )
 
+
 class AIConfig(BaseModel):
     """Represents the AI configuration in the YAML file."""
-    provider: AIProvider = Field(
-        description="Nome do provedor da API de IA")
 
-    api_key_var: str = Field(
-        description="Variável do Airflow da chave da API de IA")
+    provider: AIProvider = Field(description="Nome do provedor da API de IA")
 
-    model: str = Field(
-        description="Modelo da API de IA")
+    api_key_var: str = Field(description="Variável do Airflow da chave da API de IA")
+
+    model: str = Field(description="Modelo da API de IA")
 
     temperature: Optional[float] = Field(
         default=0.2,
         ge=0.0,
         le=1.0,
-        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.")
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.",
+    )
 
     max_tokens: Optional[int] = Field(
-        default=200,
-        description="Número máximo de tokens para a resposta da IA.")
+        default=200, description="Número máximo de tokens para a resposta da IA."
+    )
+
+
 class DAGConfig(BaseModel):
     """Represents the DAG configuration in the YAML file."""
 
@@ -339,23 +355,22 @@ class DAGConfig(BaseModel):
         default={"dou", "generated_dag"},
         description="Conjunto de tags para filtragem da DAG no Airflow",
     )
-    owner: Optional[List[str]] = Field(
+    owner: Optional[list[str]] = Field(
         default=[], description="Lista de owners para filtragem da DAG no Airflow"
     )
     schedule: Optional[str] = Field(default=None, description="Expressão cron")
     dataset: Optional[str] = Field(default=None, description="Nome do Dataset")
-    search: Union[List[SearchConfig], SearchConfig] = Field(
+    search: Union[list[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
     callback: Union[CallBacksConfig, None] = Field(
         default=None,
-        description="Seção para definição dos endereços de e-mail de notificação"
+        description="Seção para definição dos endereços de e-mail de notificação",
     )
     doc_md: Optional[str] = Field(default=None, description="description")
 
     ai_config: Optional[AIConfig] = Field(
-        default=None,
-        description="Configurações de IA"
+        default=None, description="Configurações de IA"
     )
     report: ReportConfig = Field(
         description="Aceita: `slack`, `discord`, `emails`, `attach_csv`, "
@@ -365,8 +380,8 @@ class DAGConfig(BaseModel):
     @field_validator("search")
     @staticmethod
     def cast_to_list(
-        search_param: Union[List[SearchConfig], SearchConfig]
-    ) -> List[SearchConfig]:
+        search_param: Union[list[SearchConfig], SearchConfig],
+    ) -> list[SearchConfig]:
         """Cast the value of "search" parameter to always be a list.
         If the yaml configuration file does not use a list, convert to
         a list with a single search.
@@ -390,7 +405,7 @@ class DAGConfig(BaseModel):
         tags_param.update({"dou", "generated_dag"})
         return tags_param
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_ai_config(self):
         for search in self.search:
             if (
@@ -403,6 +418,7 @@ class DAGConfig(BaseModel):
                 )
 
         return self
+
 
 class RoDouConfig(BaseModel):
     """Represents the overall configuration in the YAML file."""
