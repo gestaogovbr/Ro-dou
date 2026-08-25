@@ -1,0 +1,13 @@
+# Valores locais/sensíveis - NAO versionar com credenciais reais preenchidas.
+# Uso:
+#   helm install rodou ./helm/ro-dou -f helm/ro-dou/values-local.yaml
+#   helm upgrade rodou ./helm/ro-dou -f helm/ro-dou/values-local.yaml
+#
+# Sempre use este arquivo (com os mesmos valores) em toda instalacao/atualizacao,
+# pois o Job "create-inlabs-portal-connection" roda em post-install e post-upgrade
+# e recria a conexao inlabs_portal a partir destes valores a cada deploy.
+
+airflow:
+  secrets:
+    INLABS_PORTAL_LOGIN: "heitorh3@gmail.com"
+    INLABS_PORTAL_PASSWORD: "@rtHom&M@is05"
