@@ -24,7 +24,7 @@ from dags.ro_dou_src.parsers import YAMLParser
 
 CONFIG_FILE = "basic_example.yaml"
 MATCHED_TERM = "dados abertos"
-RECIPIENT = "destination@gestao.gov.br"
+RECIPIENT = "destination@economia.gov.br"
 
 FAKE_MATCH = {
     "section": "do1",
