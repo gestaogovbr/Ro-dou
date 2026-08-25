@@ -141,3 +141,6 @@ test_notrack/
 
 # Airflow token 
 .airflow_token
+
+#helm local values
+values-local.yaml
