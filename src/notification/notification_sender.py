@@ -17,6 +17,7 @@ class NotificationSender(ISender):
         self.message = ""
         self.payload = []
         self.delimiter = "━━━━━━━━━━━━━━━━━"
+        self.executive_summary = ""
 
     def send(self, search_report: list, report_date: str = None):
         """
@@ -34,6 +35,10 @@ class NotificationSender(ISender):
         if self.header_text:
             header_text = remove_html_tags(self.header_text)
             self.message += header_text + "\n"
+
+        # Send executive summary if enabled
+        if self.executive_summary:
+            self.message += self.executive_summary + "\n"
 
         # Process each search in the report
         for search in search_report:
