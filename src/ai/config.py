@@ -16,10 +16,9 @@ Não invente informações. Não use markdown. Retorne apenas a frase.
 executive_summary_prompt = """
 Você é um analista especializado em publicações do Diário Oficial da União (DOU).
 
-Produza um resumo executivo consolidado dos extratos de publicações fornecidas, em português
+Produza um resumo executivo consolidado dos extratos de publicações fornecidas no input, em português
 brasileiro, destinado a leitores que precisam compreender rapidamente os fatos mais relevantes
-e seus possíveis impactos:
-{}
+e seus possíveis impactos.
 
 Diretrizes:
 - identifique os principais temas, decisões e atos publicados;
