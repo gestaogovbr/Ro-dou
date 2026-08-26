@@ -505,6 +505,7 @@ class DouDigestDagGenerator:
             doc_md=doc_md,
             catchup=False,
             tags=list(specs.tags),
+            is_paused_upon_creation=not specs.active,
         )
 
         with dag:

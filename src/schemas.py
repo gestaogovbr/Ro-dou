@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from ai.config import prompt
 from ai.provider import AIProvider
 
+
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -360,6 +361,11 @@ class DAGConfig(BaseModel):
     )
     schedule: Optional[str] = Field(default=None, description="Expressão cron")
     dataset: Optional[str] = Field(default=None, description="Nome do Dataset")
+    active: Optional[bool] = Field(
+        default=False,
+        description="Se True, a DAG é criada e já fica ativa (unpaused). "
+        "Se False, a DAG é criada mas permanece pausada. Default: False.",
+    )
     search: Union[list[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
