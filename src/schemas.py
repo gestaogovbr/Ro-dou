@@ -32,7 +32,7 @@ from pydantic import (
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from ai.config import prompt
+from ai.config import prompt, executive_summary_prompt
 from ai.provider import AIProvider
 
 class DBSelect(BaseModel):
@@ -101,7 +101,7 @@ class AIReportConfig(BaseModel):
     )
 
     ai_executive_custom_prompt: Optional[str] = Field(
-        default=prompt,
+        default=executive_summary_prompt,
         description="Prompt do agente para geração do resumo executivo por IA. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
