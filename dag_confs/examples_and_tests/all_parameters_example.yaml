@@ -1,6 +1,7 @@
 dag:
   id: all_parameters_example
   description: DAG exemplo utilizando todos os demais parâmetros.
+  active: True
   tags:
     - projeto_a
     - departamento_x
