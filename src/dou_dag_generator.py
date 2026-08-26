@@ -452,10 +452,28 @@ class DouDigestDagGenerator:
         else:
             return notify_task_ids
 
-    def send_notification(
+    def generate_ai_executive_summary(
         self,
         num_searches: int,
         specs: DAGConfig,
+        **context):
+        """Generate AI executive summary"""
+        from ai.executive_summary import generate_executive_summary
+
+        search_results = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
+
+        executive_summary = generate_executive_summary(
+            search_results=search_results,
+            ai_config=specs.ai_config,
+            report_config=specs.report.ai_report_config,
+        )
+
+        return executive_summary
+
+    def send_notification(
+        self,
+        num_searches: int,
+        specs: DAGCcnfig,
         sender_class: Optional[type] = None,
         webhook_url: Optional[str] = None,
         channel: Optional[str] = None,
@@ -629,6 +647,24 @@ class DouDigestDagGenerator:
             )
 
             skip_notification_task = EmptyOperator(task_id="skip_notification")
+
+            ai_report_config = specs.report.ai_report_config
+            use_executive_summary = bool(
+                ai_report_config
+                and ai_report_config.use_ai_executive_summary
+            )
+
+            if use_executive_summary:
+                ai_executive_summary_task = PythonOperator(
+                    task_id="generate_ai_executive_summary",
+                    python_callable=self.generate_ai_executive_summary,
+                    op_kwargs={
+                        "num_searches": len(searches),
+                        "specs": specs,
+                    },
+                )
+                has_matches_task >> ai_executive_summary_task
+                ai_executive_summary_task >> notify_task
 
             if specs.report.notification:
                 for index, url in enumerate(specs.report.notification, start=1):
