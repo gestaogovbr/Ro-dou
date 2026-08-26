@@ -63,7 +63,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: "super-secret-airflow-key-2026"
     AIRFLOW__API_AUTH__JWT_SECRET: "super-jwt-secret-2026"
 
-    AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+    AIRFLOW__API__BASE_URL: http://localhost:8080
 
     _AIRFLOW_DB_MIGRATE: 'true'
     _AIRFLOW_WWW_USER_CREATE: 'true'
