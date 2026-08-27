@@ -63,6 +63,10 @@ airflow:
 gitRsync:
   enabled: false
   schedule: "*/5 * * * *"
+  env:
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+    NO_PROXY: ""
   image:
     repository: alpine
     tag: "3.18"
