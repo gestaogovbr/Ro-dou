@@ -2,13 +2,17 @@
 
 Instruções para subir o Ro-DOU em um cluster Kubernetes 🚀🚀🚀
 
-## Helm deploy
+O deploy no Kubernetes é feito pelo chart Helm em `helm/ro-dou`, que instala
+Airflow 3, PostgreSQL, SMTP4dev e, opcionalmente, OpenSearch e a
+sincronização das configurações das DAGs via Git (git-rsync).
 
 ## Pré-requisitos
 
 - Kubernetes 1.19 ou superior
 - Helm 3.0 ou superior
 - Uma `StorageClass` compatível com as configurações de persistência do chart
+- Para executar o OpenSearch no cluster, `vm.max_map_count` deve ser pelo
+  menos `262144` no nó
 
 ## Instalação
 
@@ -37,126 +41,28 @@ helm upgrade rodou ./helm/ro-dou -f my-values.yaml
 
 ```bash
 helm uninstall rodou
-
-## Manual deployment
-
-## Pré-requisitos
-
-- Um cluster Kubernetes local e o `kubectl` configurado.
-- A imagem `ghcr.io/gestaogovbr/ro-dou:latest` acessível pelo cluster. Os
-  componentes do Airflow usam `imagePullPolicy: Always` para resolver a tag
-  novamente sempre que um pod for criado.
-- Capacidade de provisionar volumes `ReadWriteOnce`.
-- Para o OpenSearch, `vm.max_map_count` deve ser pelo menos `262144` no nó.
-
-Os exemplos abaixo usam o namespace `airflow-rodou`:
-
-```bash
-kubectl create namespace airflow-rodou
 ```
 
-Antes do deploy, preencha os valores adequados em
-`airflow/airflow-secrets.yml` e `postgres/postgres-secrets.yml`.
-
-## Instalação
-
-1. Suba PostgreSQL e aguarde sua disponibilidade:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f postgres/postgres-secrets.yml
-   kubectl -n airflow-rodou apply -f postgres/postgres-deployment.yml
-   kubectl -n airflow-rodou rollout status statefulset/postgres
-   ```
-
-2. Crie o banco usado pelo INLABS:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f postgres/postgres-inlabsdb-configmap.yml
-   kubectl -n airflow-rodou apply -f postgres/postgres-create-inlabsdb-job.yml
-   kubectl -n airflow-rodou wait --for=condition=complete job/init-inlabs-db --timeout=120s
-   ```
-
-3. Suba os serviços auxiliares e a configuração do Airflow:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-secrets.yml
-   kubectl -n airflow-rodou apply -f airflow/airflow-configmap.yml
-   kubectl -n airflow-rodou apply -f airflow/airflow-pvc.yml
-   ```
-
-4. Migre o banco de metadados e crie o usuário administrador:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-init-db-job.yml
-   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-db-init --timeout=300s
-   kubectl -n airflow-rodou apply -f airflow/airflow-create-admin-job.yml
-   kubectl -n airflow-rodou wait --for=condition=complete job/airflow-create-admin --timeout=120s
-   ```
-
-5. Suba os componentes do Airflow 3:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-api-server-deployment.yml
-   kubectl -n airflow-rodou apply -f airflow/airflow-scheduler-deployment.yml
-   kubectl -n airflow-rodou apply -f airflow/airflow-dag-processor-deployment.yml
-   ```
-
-6. Crie a conexão do portal INLABS:
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-create-inlabs-conn-job.yml
-   kubectl -n airflow-rodou wait --for=condition=complete job/create-inlabs-portal-connection --timeout=120s
-   ```
-7. Crie as variáveis de ambiente:
-
-   Edite o arquivo `airflow/airflow-create-variables.yml` com os nomes e valores das variáveis desejadas.
-
-   ```bash
-   kubectl -n airflow-rodou apply -f airflow/airflow-create-variables.yml
-   ```
-
-## Serviços opcionais
-
-### OpenSearch
-
-- O Ro-DOU não usa OpenSearch por padrão. Para habilitar, altere
-  `RO_DOU_INLABS_USE_OPENSEARCH` para `true` no ConfigMap
-  `airflow/airflow-configmap.yml`.
-- Deploy (opcional):
-
-```bash
-kubectl -n airflow-rodou apply -f opensearch/opensearch-deployment.yml
-kubectl -n airflow-rodou rollout status statefulset/opensearch
-```
-
-### SMTP4dev
-
-- SMTP4dev é útil apenas para testes de envio de email. Deploy (opcional):
-
-```bash
-kubectl -n airflow-rodou apply -f smtp4dev/smtp4dev-deployment.yml
-```
-
-Exemplo de acesso local (opcional):
-
-```bash
-kubectl -n airflow-rodou port-forward service/smtp4dev 5001:5001
-```
+Os volumes persistentes podem permanecer no cluster após a desinstalação.
+Verifique os PVCs antes de remover seus dados manualmente.
 
 ## Acesso local
 
-Interface do Airflow:
+Interface e API do Airflow:
 
 ```bash
-kubectl -n airflow-rodou port-forward service/airflow-api-server 8080:8080
+kubectl port-forward service/rodou-ro-dou-airflow-api-server 8080:8080
 ```
 
 Acesse `http://localhost:8080` com o usuário e a senha definidos por
-`_AIRFLOW_WWW_USER_USERNAME` e `_AIRFLOW_WWW_USER_PASSWORD`.
+`airflow.secrets._AIRFLOW_WWW_USER_USERNAME` e
+`airflow.secrets._AIRFLOW_WWW_USER_PASSWORD` (padrão `admin`/`admin`).
 
+Interface do SMTP4dev:
 
-Jobs são imutáveis no Kubernetes. Para executá-los novamente, exclua o Job
-correspondente antes de reaplicar o manifest.
+```bash
+kubectl port-forward service/rodou-ro-dou-smtp4dev 5001:5001
+```
 
 ## Sincronização dos `dag_confs` via Git (git-rsync)
 
@@ -188,4 +94,22 @@ kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YO
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 ```
 
+## Configuração
 
+A pasta `helm/ro-dou` contém um
+[`README.md`](https://github.com/gestaogovbr/Ro-dou/blob/main/helm/ro-dou/README.md)
+com mais informações: tabela de parâmetros, exposição por Ingress,
+configuração de SMTP externo, OpenSearch e sincronização das configurações
+das DAGs via Git (git-rsync).
+
+Consulte também
+[`helm/ro-dou/values.yaml`](https://github.com/gestaogovbr/Ro-dou/blob/main/helm/ro-dou/values.yaml)
+para a lista completa de valores.
+
+### Antes de usar em produção
+
+O chart traz valores de desenvolvimento em `airflow.secrets`
+(`AIRFLOW__CORE__FERNET_KEY`, usuário/senha `admin`/`admin`,
+`AIRFLOW__API_AUTH__JWT_SECRET`, entre outros), além das senhas padrão de
+PostgreSQL e OpenSearch. Sobrescreva todos esses valores no seu
+`my-values.yaml` antes de instalar em um ambiente real.
