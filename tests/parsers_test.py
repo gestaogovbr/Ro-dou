@@ -24,7 +24,6 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": None,
                 "dataset": None,
                 "skip_null": True,
-                "active": False,
                 "doc_md": None,
                 "tags": {"dou", "generated_dag"},
                 "owner": [],
