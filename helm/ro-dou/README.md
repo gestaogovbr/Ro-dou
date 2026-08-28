@@ -68,6 +68,7 @@ Os principais valores configuráveis são:
 | `gitRsync.schedule` | Agendamento do CronJob de sincronização | `*/5 * * * *` |
 | `gitRsync.repository` | URL HTTPS do repositório Git | `""` |
 | `gitRsync.branch` | Branch sincronizada | `main` |
+| `gitRsync.sourceDir` | Diretório relativo dentro do repositório; vazio sincroniza a raiz | `""` |
 | `gitRsync.targetDir` | Diretório montado nos componentes do Airflow | `/opt/airflow/dags/ro_dou/dag_confs` |
 | `gitRsync.targetOwner.uid` | UID proprietário do diretório e dos arquivos sincronizados | `50000` |
 | `gitRsync.targetOwner.gid` | GID proprietário do diretório e dos arquivos sincronizados | `0` |
