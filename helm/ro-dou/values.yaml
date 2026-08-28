@@ -73,6 +73,9 @@ gitRsync:
     pullPolicy: IfNotPresent
   repository: ""
   branch: main
+  # Relative folder inside the repository to synchronize. Leave empty to
+  # synchronize the repository root.
+  sourceDir: ""
   targetDir: /opt/airflow/dags/ro_dou/dag_confs
   targetOwner:
     # The official Airflow image runs as UID 50000 in the root group.
