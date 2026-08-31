@@ -459,6 +459,7 @@ class DouDigestDagGenerator:
     ):
         """Generate AI executive summary"""
         from ai.executive_summary import generate_executive_summary
+        from ai.config import ia_warning_msg
 
         search_results = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
 
@@ -467,6 +468,8 @@ class DouDigestDagGenerator:
             ai_config=specs.ai_config,
             report_config=specs.report.ai_report_config,
         )
+
+        executive_summary = executive_summary + "\n\n" + ia_warning_msg + "\n\n"
 
         return executive_summary
 
