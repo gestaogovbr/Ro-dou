@@ -52,8 +52,20 @@ data:
     }
 
     git_clone clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" "$workdir"
+    case "$GIT_SOURCE_DIR" in
+      ""|.) source_dir="$workdir" ;;
+      /*|..|../*|*/..|*/../*)
+        echo "GIT_SOURCE_DIR must be a relative path inside the repository" >&2
+        exit 1
+        ;;
+      *) source_dir="$workdir/$GIT_SOURCE_DIR" ;;
+    esac
+    if [ ! -d "$source_dir" ]; then
+      echo "Git source directory does not exist: $GIT_SOURCE_DIR" >&2
+      exit 1
+    fi
     mkdir -p "$TARGET_DIR"
-    rsync -a --delete --exclude=.git "$workdir/" "$TARGET_DIR/"
+    rsync -a --delete --exclude=.git "$source_dir/" "$TARGET_DIR/"
     chown -R "$TARGET_UID:$TARGET_GID" "$TARGET_DIR"
 ---
 apiVersion: batch/v1
@@ -86,10 +98,18 @@ spec:
                 - -c
                 - apk add --no-cache git rsync ca-certificates && /scripts/git-rsync.sh
               env:
+                - name: HTTP_PROXY
+                  value: {{ .Values.gitRsync.env.HTTP_PROXY | quote }}
+                - name: HTTPS_PROXY
+                  value: {{ .Values.gitRsync.env.HTTPS_PROXY | quote }}
+                - name: NO_PROXY
+                  value: {{ .Values.gitRsync.env.NO_PROXY | quote }}
                 - name: GIT_REPO
                   value: {{ required "gitRsync.repository is required when gitRsync is enabled" .Values.gitRsync.repository | quote }}
                 - name: GIT_BRANCH
                   value: {{ .Values.gitRsync.branch | quote }}
+                - name: GIT_SOURCE_DIR
+                  value: {{ .Values.gitRsync.sourceDir | quote }}
                 - name: TARGET_DIR
                   value: {{ .Values.gitRsync.targetDir | quote }}
                 - name: TARGET_UID
