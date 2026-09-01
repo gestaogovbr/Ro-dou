@@ -36,6 +36,7 @@ from ai.config import prompt
 from ai.provider import AIProvider
 
 
+
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
@@ -89,6 +90,31 @@ class AISearchConfig(BaseModel):
 
     max_tokens: Optional[int] = Field(
         default=200, description="Número máximo de tokens para a resposta da IA."
+    )
+
+
+class NeuralSearchConfig(BaseModel):
+    """Represents the Neural Search configuration in the YAML file."""
+
+    neural_search: Optional[bool] = Field(
+        default=False,
+        description="Define se a busca será feita utilizando técnicas de busca semântica (vetorização). "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    score: Optional[float] = Field(
+        default=0.85,
+        ge=0.5,
+        le=0.98,
+        description="Pontuação mínima (0.5 a 0.98) para considerar um resultado "
+        "relevante na busca semântica. Abaixo de ~0.75 a busca fica muito "
+        "permissiva (quase qualquer texto do mesmo domínio passa); acima de "
+        "~0.95 dificilmente algo além de texto quase idêntico é retornado.",
+    )
+
+    max_semantic_results: Optional[int] = Field(
+        default=10,
+        description="Número máximo de resultados semânticos a serem retornados.",
     )
 
 
@@ -250,6 +276,11 @@ class SearchConfig(BaseModel):
         description="Define se no relatório será exibida a tag de relevância para cada resultado. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
+    neural_search_config: Optional[NeuralSearchConfig] = Field(
+        default=None,
+        description="Configuração específica para o uso de busca neural no relatório. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
 
     @model_validator(mode="after")
     def validate_search_criteria(self):
@@ -270,7 +301,7 @@ class SearchConfig(BaseModel):
 class CallBacksConfig(BaseModel):
     """Represents the configuration of the callback functions in the YAML file."""
 
-    on_failure_callback: Optional[list[EmailStr]] = Field(
+    on_failure_callback: Optional[List[EmailStr]] = Field(
         default=None,
         description="Um e-mail ou uma lista de e-mails para enviar o relatório de falha",
     )
@@ -285,7 +316,7 @@ class ReportConfig(BaseModel):
     discord: Optional[dict] = Field(
         default=None, description="Configuração do webhook do Discord para relatórios"
     )
-    notification: Optional[list[str]] = Field(
+    notification: Optional[List[str]] = Field(
         default=None,
         description="Configuração dos métodos de notificação para relatórios",
     )
@@ -381,8 +412,8 @@ class DAGConfig(BaseModel):
     @field_validator("search")
     @staticmethod
     def cast_to_list(
-        search_param: Union[list[SearchConfig], SearchConfig],
-    ) -> list[SearchConfig]:
+        search_param: Union[List[SearchConfig], SearchConfig],
+    ) -> List[SearchConfig]:
         """Cast the value of "search" parameter to always be a list.
         If the yaml configuration file does not use a list, convert to
         a list with a single search.

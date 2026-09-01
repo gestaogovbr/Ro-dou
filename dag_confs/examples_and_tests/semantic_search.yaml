@@ -1,0 +1,22 @@
+dag:
+  id: basic_semantic_search
+  description: DAG de teste 
+  search:
+    sources:
+      - INLABS
+    terms:
+      - qualidade de vida
+      - vitalidade
+      - equilíbrio
+      - longevidade
+      - disposição
+      - condicionamento físico
+      - qualidade do sono
+    neural_search_config:
+      neural_search: true
+      score: 0.90
+      max_semantic_results: 5    
+  report:
+    emails:
+      - destination@economia.gov.br
+    subject: "Teste do Ro-dou"

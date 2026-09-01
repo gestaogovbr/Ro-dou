@@ -50,6 +50,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "use_summary": False,
                         "department": None,
                         "pubtype": None,
+                        "neural_search_config": None,
                     }
                 ],
                 "report": {

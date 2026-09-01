@@ -42,6 +42,17 @@ if not OPENSEARCH_HOST:
 
 INDEX_NAME = "dou"
 
+EMBED_MODEL = "intfloat/multilingual-e5-base"
+EMBED_DIMENSION = 768
+
+NEURAL_SEARCH_MIN_SCORE = 0.85
+
+# Radial search has no result-count cap (it's mutually exclusive with `k` in
+# OpenSearch), so results found only by semantic similarity (no keyword
+# match) are capped in application code instead, keeping only the
+# highest-scoring ones. Keyword-matched results are never affected.
+NEURAL_SEARCH_MAX_SEMANTIC_ONLY_RESULTS = 10
+
 COLUMNS_NAME = [
     "id",
     "name",
@@ -73,6 +84,7 @@ COLUMNS_NAME = [
 
 MAPPING = {
     "settings": {
+        "index.knn": True,
         "analysis": {
             "filter": {
                 "autocomplete_filter": {
@@ -88,7 +100,7 @@ MAPPING = {
                     "filter": ["lowercase", "asciifolding", "autocomplete_filter"],
                 }
             },
-        }
+        },
     },
     "mappings": {
         "properties": {
@@ -114,7 +126,18 @@ MAPPING = {
             "highlightimage": {"type": "binary", "index": False},
             "idmateria": {"type": "keyword"},
             "midias": {"type": "text"},
-            "identifica": {"type": "text"},
+            "identifica": {
+                "type": "text",
+                "analyzer": "portuguese",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                },
+            },
             "data": {"type": "text"},
             "titulo": {"type": "text"},
             "subtitulo": {"type": "text"},
@@ -132,7 +155,15 @@ MAPPING = {
                 },
             },
             "assina": {"type": "text"},
-            "embedding": {"type": "knn_vector", "dimension": 384},
+            "embedding": {
+                "type": "knn_vector",
+                "dimension": EMBED_DIMENSION,
+                "method": {
+                    "name": "hnsw",
+                    "space_type": "cosinesimil",
+                    "engine": "lucene",
+                },
+            },
         },
     },
 }

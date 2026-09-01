@@ -6,6 +6,12 @@ import re
 from opensearchpy.helpers import bulk  # type: ignore
 from .client_open_search import OpenSearchClient  # type: ignore
 from .config import INDEX_NAME, MAPPING, COLUMNS_NAME  # type: ignore
+from .embeddings import (  # type: ignore
+    build_passage_text,
+    embed_passage,
+    is_passage_truncated,
+    max_seq_length,
+)
 
 
 class Indexer:
@@ -64,7 +70,7 @@ class Indexer:
         try:
             with hook.get_conn().cursor() as cur:
                 cur.execute(
-                    f"SELECT {', '.join(COLUMNS_NAME)} FROM {self.STG_TABLE} WHERE pubdate IS NOT NULL AND pubdate = %s",
+                    f"SELECT {', '.join(COLUMNS_NAME)} FROM {self.STG_TABLE} WHERE pubdate IS NOT NULL AND pubdate >= %s",
                     (pubdate,),
                 )
                 while True:
@@ -80,20 +86,56 @@ class Indexer:
             hook.get_conn().close()
 
     @staticmethod
-    def _to_bulk_actions(docs):
+    def _clean_field(value):
+        """Return ``value`` unless it's blank or the DB's "None" placeholder string."""
+        if not value or value == "None":
+            return None
+        return value
+
+    @classmethod
+    def _to_bulk_actions(cls, docs, stats: dict = None):
         """Wrap documents in the OpenSearch bulk action format.
 
         Args:
             docs (Iterable[dict]): Documents to wrap.
+            stats (dict, optional): When given, updated in place with
+                ``"embedded"`` and ``"truncated"`` counters so callers can
+                report how often the embedding model's token limit was hit.
 
         Yields:
             dict: Bulk action dict with ``_index``, ``_id``, and ``_source``.
         """
         for doc in docs:
-            texto = doc.get("texto") or ""
+            text = doc.get("texto") or ""
             doc["texto_plain"] = re.sub(
-                r"\s+", " ", re.sub("<[^>]+>", " ", texto)
+                r"\s+", " ", re.sub("<[^>]+>", " ", text)
             ).strip()
+
+            # `identifica`/`titulo`/`ementa` summarize the article, so they
+            # go first and are kept in full. `texto_plain` is truncated from
+            # the *front* (keeping its tail) when the combined text would
+            # overflow the model's token limit — see `build_passage_text`.
+            text = build_passage_text(
+                [
+                    cls._clean_field(doc.get("identifica")),
+                    cls._clean_field(doc.get("titulo")),
+                    cls._clean_field(doc.get("ementa")),
+                ],
+                doc.get("texto_plain") or "",
+            )
+            if text:
+                if stats is not None:
+                    stats["embedded"] = stats.get("embedded", 0) + 1
+                    if is_passage_truncated(text):
+                        stats["truncated"] = stats.get("truncated", 0) + 1
+                        logging.warning(
+                            "Documento id=%s excede o limite de %d tokens do "
+                            "modelo de embedding; o final do texto foi ignorado.",
+                            doc.get("id"),
+                            max_seq_length(),
+                        )
+                doc["embedding"] = embed_passage(text)
+
             yield {"_index": INDEX_NAME, "_id": doc["id"], "_source": doc}
 
     def run(self, pubdate: str, batch_size: int = 500):
@@ -108,12 +150,24 @@ class Indexer:
         """
         self._ensure_index()
 
+        stats = {}
         success, errors = bulk(
             self.client,
-            self._to_bulk_actions(self._fetch_from_postgres(pubdate, batch_size)),
+            self._to_bulk_actions(
+                self._fetch_from_postgres(pubdate, batch_size), stats
+            ),
             raise_on_error=False,
         )
         logging.info(f"Indexados: {success} documento(s)")
+        if stats.get("embedded"):
+            truncated = stats.get("truncated", 0)
+            logging.info(
+                "Embeddings truncados (>%d tokens): %d de %d documentos (%.1f%%)",
+                max_seq_length(),
+                truncated,
+                stats["embedded"],
+                100 * truncated / stats["embedded"],
+            )
         if errors:
             logging.info(f"Erros: {len(errors)}")
             for err in errors[:5]:
