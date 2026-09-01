@@ -6,9 +6,7 @@ import numpy as np
 from bs4 import BeautifulSoup
 from datetime import datetime
 import importlib.util
-from datetime import datetime
 from unittest.mock import MagicMock, patch
-from airflow.models import Variable
 from ai.provider import AIProvider
 from schemas import AIConfig, AISearchConfig, NeuralSearchConfig
 
@@ -18,8 +16,6 @@ _INLABS_HOOK = (
     if importlib.util.find_spec("dags.ro_dou_src.hooks.inlabs_hook")
     else "hooks.inlabs_hook"
 )
-
-Variable.set("KEY", "fake-key-for-tests")
 
 _MIN_AI_CONFIG = AIConfig(
     provider=AIProvider.openai,

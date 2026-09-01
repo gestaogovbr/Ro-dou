@@ -1,5 +1,6 @@
 """Unit tests for FailureSender."""
 
+import json
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -37,7 +38,7 @@ def dag_run():
     dr = MagicMock()
     dr.dag_id = "my_dag"
     dr.run_id = "manual__2024-01-01"
-    dr.execution_date = datetime(2024, 1, 1, 12, 0)
+    dr.logical_date = datetime(2024, 1, 1, 12, 0)
     return dr
 
 
@@ -205,7 +206,7 @@ class TestSendFailureEmail:
         dr = MagicMock()
         dr.dag_id = "my_dag"
         dr.run_id = "manual__2024-01-01"
-        dr.execution_date = None
+        dr.logical_date = None
 
         with patch("dags.ro_dou_src.notification.failure_sender.send_email"):
             sender.send_failure_email(["dev@email.com"], dr, task_instance)
@@ -213,11 +214,67 @@ class TestSendFailureEmail:
         render_kwargs = sender.tm.renderizar.call_args[1]
         assert render_kwargs["execution_date"] == "N/A"
 
+class TestSendSlackFailureNotification:
+    def _make_slack_conn(self, channel="#alerts"):
+        conn = MagicMock()
+        conn.description = json.dumps({"channel": channel})
+        return conn
 
-class TestSend:
-    def test_send_calls_email(
+    def test_sends_slack_notification_when_connection_exists(
         self, specs_with_callback, dag_run, task_instance
     ):
+        sender = FailureSender(specs_with_callback)
+        mock_notifier = MagicMock()
+
+        with patch(
+            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
+            return_value=self._make_slack_conn("#alerts"),
+        ), patch(
+            "dags.ro_dou_src.notification.failure_sender.SlackNotifier",
+            return_value=mock_notifier,
+        ):
+            sender.send_slack_failure_notification(
+                {}, dag_run, task_instance, Exception("boom")
+            )
+
+        mock_notifier.notify.assert_called_once()
+
+    def test_uses_channel_from_connection_description(
+        self, specs_with_callback, dag_run, task_instance
+    ):
+        sender = FailureSender(specs_with_callback)
+        mock_notifier = MagicMock()
+
+        with patch(
+            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
+            return_value=self._make_slack_conn("#my-channel"),
+        ), patch(
+            "dags.ro_dou_src.notification.failure_sender.SlackNotifier"
+        ) as mock_notifier_cls:
+            sender.send_slack_failure_notification(
+                {}, dag_run, task_instance, Exception("boom")
+            )
+
+        _, kwargs = mock_notifier_cls.call_args
+        assert kwargs["channel"] == "#my-channel"
+
+    def test_logs_error_when_connection_not_available(
+        self, specs_with_callback, dag_run, task_instance
+    ):
+        sender = FailureSender(specs_with_callback)
+
+        with patch(
+            "dags.ro_dou_src.notification.failure_sender.BaseHook.get_connection",
+            side_effect=Exception("connection not found"),
+        ):
+            # Must not raise
+            sender.send_slack_failure_notification(
+                {}, dag_run, task_instance, Exception("boom")
+            )
+
+
+class TestSend:
+    def test_send_calls_email(self, specs_with_callback, dag_run, task_instance):
         sender = FailureSender(specs_with_callback)
         sender.send_failure_email = MagicMock()
         sender.send_slack_failure_notification = MagicMock()

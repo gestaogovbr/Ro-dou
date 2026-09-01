@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-scheduler
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-scheduler
+spec:
+  replicas: {{ .Values.airflow.scheduler.replicas }}
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: airflow-scheduler
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command: ["airflow", "scheduler"]
+          envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+            {{- if .Values.gitRsync.enabled }}
+            - name: dag-confs
+              mountPath: {{ .Values.gitRsync.targetDir | quote }}
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: airflow-logs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.fullname" . }}-airflow-logs-pvc
+        {{- if .Values.gitRsync.enabled }}
+        - name: dag-confs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+        {{- end }}

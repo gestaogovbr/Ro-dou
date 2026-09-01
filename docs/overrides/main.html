@@ -15,3 +15,13 @@
   <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
 
 {% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    document.querySelectorAll('a[href*="gerador_yaml.html"]').forEach(function (link) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  </script>
+{% endblock %}

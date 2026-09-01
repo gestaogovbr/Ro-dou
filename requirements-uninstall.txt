@@ -1,3 +1,6 @@
+# requests uses charset-normalizer; chardet 6 triggers RequestsDependencyWarning
+chardet
+
 # from apache-airflow-providers-amazon
 apache-airflow-providers-amazon
 aiobotocore

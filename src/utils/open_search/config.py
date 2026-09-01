@@ -4,37 +4,37 @@ parameters and defines constants for index names and other settings.
 """
 
 import os
-from airflow.models import Variable
+from airflow.sdk import Variable
 
 # Try to load OpenSearch connection parameters from Airflow Variables, falling
 # back to environment variables if not set in Airflow.
 
 RO_DOU_INLABS_USE_OPENSEARCH = Variable.get(
     "RO_DOU_INLABS_USE_OPENSEARCH",
-    default_var=os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", "false"),
+    os.getenv("RO_DOU_INLABS_USE_OPENSEARCH", 'false'),
 )
 
 OPENSEARCH_HOST = Variable.get(
     "OPENSEARCH_HOST",
-    default_var=os.getenv("OPENSEARCH_HOST", "http://localhost:9200"),
+    os.getenv("OPENSEARCH_HOST", "http://localhost:9200"),
 )
 
 OPENSEARCH_USER = Variable.get(
     "OPENSEARCH_USER",
-    default_var=os.getenv("OPENSEARCH_USER"),
+    os.getenv("OPENSEARCH_USER"),
 )
 
 OPENSEARCH_PASS = Variable.get(
     "OPENSEARCH_PASS",
-    default_var=os.getenv("OPENSEARCH_PASS"),
+    os.getenv("OPENSEARCH_PASS"),
 )
 OPENSEARCH_SSL = Variable.get(
     "OPENSEARCH_SSL",
-    default_var=os.getenv("OPENSEARCH_SSL", False),
+    os.getenv("OPENSEARCH_SSL", False),
 )
 OPENSEARCH_VERIFY_CERTS = Variable.get(
     "OPENSEARCH_VERIFY_CERTS",
-    default_var=os.getenv("OPENSEARCH_VERIFY_CERTS", False),
+    os.getenv("OPENSEARCH_VERIFY_CERTS", False),
 )
 
 if not OPENSEARCH_HOST:

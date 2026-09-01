@@ -10,23 +10,26 @@ import logging
 import os
 import sys
 import textwrap
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
 from functools import reduce
 from urllib.parse import urlparse
 
-from airflow import DAG, Dataset
-from airflow.models.param import Param
-from airflow.utils.task_group import TaskGroup
+from airflow import DAG
+from airflow.sdk import TaskGroup, Variable
+from airflow.sdk.definitions.asset import Dataset
 
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.python import (
+    BranchPythonOperator,
+    PythonOperator,
+)
 
-from airflow.timetables.datasets import DatasetOrTimeSchedule
+from airflow.timetables.assets import AssetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from utils.date import get_trigger_date, template_ano_mes_dia_trigger_local_time
+from utils.date import get_reference_date
 
 from notification.notifier import Notifier
 from utils.select_terms import TermSelector
@@ -41,9 +44,6 @@ from searchers import (
     INLABSSearcher,
     DOESPSearcher,
 )
-
-from airflow.models import Variable
-from ai.runner import AIRunner
 
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
@@ -223,24 +223,24 @@ class DouDigestDagGenerator:
 
     def _update_schedule_with_dataset(
         self, dataset: str, schedule: str, is_default_schedule: bool
-    ) -> Union[Dataset, DatasetOrTimeSchedule]:
+    ) -> Union[Dataset, AssetOrTimeSchedule]:
         """If a dataset is provide, the schedule will be update
         to make execution conditional on the Dataset or
-        DatasetOrTimeSchedule
+        AssetOrTimeSchedule
         (if the value of schedule is specified in the YAML information).
         """
         if not is_default_schedule:
-            return DatasetOrTimeSchedule(
+            return AssetOrTimeSchedule(
                 timetable=CronTriggerTimetable(
                     schedule, timezone=os.getenv("AIRFLOW__CORE__DEFAULT_TIMEZONE")
                 ),
-                datasets=[Dataset(dataset)],
+                assets=[Dataset(dataset)],
             )
         return [Dataset(dataset)]
 
     def _update_schedule(
         self, specs: DAGConfig
-    ) -> Union[str, Union[Dataset, DatasetOrTimeSchedule]]:
+    ) -> Union[str, Union[Dataset, AssetOrTimeSchedule]]:
         """The DAG will update the value of schedule to
         the default value or to a Dataset, if that option is specified.
         """
@@ -345,7 +345,7 @@ class DouDigestDagGenerator:
                 department_ignore=department_ignore,
                 terms_ignore=terms_ignore,
                 pubtype=pubtype,
-                reference_date=get_trigger_date(context, local_time=True),
+                reference_date=get_reference_date(context),
             )
         elif "INLABS" in sources:
             terms = self._parse_term_list(term_list)
@@ -368,7 +368,7 @@ class DouDigestDagGenerator:
                 show_relevancy=show_relevancy,
                 neural_search_config=neural_search_config,
                 pubtype=pubtype,
-                reference_date=get_trigger_date(context, local_time=True),
+                reference_date=get_reference_date(context),
             )
 
         if "QD" in sources:
@@ -376,7 +376,7 @@ class DouDigestDagGenerator:
                 territory_id=territory_id,
                 term_list=term_list,
                 is_exact_search=is_exact_search,
-                reference_date=get_trigger_date(context, local_time=True),
+                reference_date=get_reference_date(context),
                 excerpt_size=excerpt_size,
                 number_of_excerpts=number_of_excerpts,
                 result_as_email=result_as_email,
@@ -393,7 +393,7 @@ class DouDigestDagGenerator:
                 department_ignore=department_ignore,
                 terms_ignore=terms_ignore,
                 pubtype=pubtype,
-                reference_date=get_trigger_date(context, local_time=True),
+                reference_date=get_reference_date(context),
             )
 
         if "DOU" in sources and "QD" in sources:
@@ -458,7 +458,6 @@ class DouDigestDagGenerator:
         self,
         num_searches: int,
         specs: DAGConfig,
-        report_date: str,
         sender_class: Optional[type] = None,
         webhook_url: Optional[str] = None,
         channel: Optional[str] = None,
@@ -466,6 +465,7 @@ class DouDigestDagGenerator:
     ) -> None:
         """Send user notification for a single channel"""
         search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
+        report_date = get_reference_date(context).strftime("%d/%m/%Y")
         if channel:
             notifier = Notifier(specs, channel=channel)
             notifier.send_notification(
@@ -507,11 +507,6 @@ class DouDigestDagGenerator:
             description=specs.description,
             doc_md=doc_md,
             catchup=False,
-            params={
-                "trigger_date": Param(
-                    default=date.today().isoformat(), type="string", format="date"
-                )
-            },
             tags=list(specs.tags),
         )
 
@@ -647,7 +642,6 @@ class DouDigestDagGenerator:
                         op_kwargs={
                             "num_searches": len(searches),
                             "specs": specs,
-                            "report_date": template_ano_mes_dia_trigger_local_time,
                             "sender_class": NotificationSender,
                             "webhook_url": url,
                         },
@@ -661,7 +655,6 @@ class DouDigestDagGenerator:
                     op_kwargs={
                         "num_searches": len(searches),
                         "specs": specs,
-                        "report_date": template_ano_mes_dia_trigger_local_time,
                         "channel": "slack",
                     },
                 )
@@ -674,7 +667,6 @@ class DouDigestDagGenerator:
                     op_kwargs={
                         "num_searches": len(searches),
                         "specs": specs,
-                        "report_date": template_ano_mes_dia_trigger_local_time,
                         "channel": "discord",
                     },
                 )
@@ -687,7 +679,6 @@ class DouDigestDagGenerator:
                     op_kwargs={
                         "num_searches": len(searches),
                         "specs": specs,
-                        "report_date": template_ano_mes_dia_trigger_local_time,
                         "sender_class": EmailSender,
                     },
                 )

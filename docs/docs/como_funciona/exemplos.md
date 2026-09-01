@@ -4,6 +4,32 @@ Neste segmento, você encontrará uma série de exemplos práticos de utilizaç�
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/L6wlMqLlNBs?si=1n3qs7AZjxYfJWoh" title="Explorando as Dags do Ro-DOU com Exemplos Práticos" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+### Índice
+
+* [Exemplo 1](#exemplo-1) — pesquisa diária de termos com envio por e-mail
+* [Exemplo 2](#exemplo-2) — agendamento CRON, seções do DOU e CSV anexado
+* [Exemplo 3](#exemplo-3) — termos dinâmicos a partir de consulta SQL (`from_db_select`)
+* [Exemplo 4](#exemplo-4) — termos dinâmicos a partir de variável do Airflow (`from_airflow_variable`)
+* [Exemplo 5](#exemplo-5) — execução mensal e busca aproximada (`is_exact_search`)
+* [Exemplo 6](#exemplo-6) — busca no Querido Diário por município
+* [Exemplo 7](#exemplo-7) — documentação da DAG em markdown (`doc_md`)
+* [Exemplo 8](#exemplo-8-depreciado) — Discord direto (depreciado)
+* [Exemplo 9](#exemplo-9-depreciado) — Slack direto (depreciado)
+* [Exemplo 10](#exemplo-10) — múltiplos canais de notificação com Apprise (`notification`)
+* [Exemplo 11](#exemplo-11) — filtro por órgão/unidade (`department`)
+* [Exemplo 12](#exemplo-12) — múltiplas buscas no mesmo arquivo (DOU + QD)
+* [Exemplo 13](#exemplo-13) — filtro por tipo de publicação (`pubtype`)
+* [Exemplo 14](#exemplo-14) — múltiplos municípios no Querido Diário (`territory_id`)
+* [Exemplo 15](#exemplo-15) — termos dinâmicos a partir de banco de dados externo
+* [Exemplo 16](#exemplo-16) — busca básica no INLABS
+* [Exemplo 17](#exemplo-17) — operadores de busca avançada no INLABS
+* [Exemplo 18](#exemplo-18) — ocultar filtros de pesquisa no relatório (`hide_filters`)
+* [Exemplo 19](#exemplo-19) — busca sem termos, filtrando só por órgão e tipo de publicação
+* [Exemplo 20](#exemplo-20) — notificação de falha na execução da DAG (`on_failure_callback`)
+* [Exemplo 21](#exemplo-21) — termos a serem ignorados na busca (`terms_ignore`)
+* [Exemplo 22](#exemplo-22) — resumo automático com IA generativa
+* [Exemplo 23](#exemplo-23) — busca no Diário Oficial do Estado de São Paulo (DOESP)
+* [Exemplo 24](#exemplo-24) — omitir anexos e tabelas do corpo do texto
 
 ### Exemplo 1
 
@@ -211,7 +237,6 @@ dag:
     - expressão cultural
     - política cultural
   report:
-    report:
     discord:
       webhook: https://discord.com/api/webhooks/105220xxxxxx811250/Q-XsfdnoHtudTQ-8A6zzzzznitai-vi0bGLE7xxxxxxxxxxxxxxxxxxxmx94R3oZ1h0ngl1
 ```
@@ -520,13 +545,13 @@ dag:
     subject: "Teste do Ro-dou - Todas as Portarias e Resoluções do MGI"
 ```
 
-### Exemplo 19
+### Exemplo 20
 Esta configuração envia as notificações de falhas na execução da DAG para
 uma lista de email específica.
 
 ```yaml
 dag:
-  id: no_terms_example
+  id: dag_callback_example
   description: DAG de callback
   callback:
     on_failure_callback:
@@ -543,7 +568,7 @@ dag:
     subject: "Teste do Ro-dou - Envia callback para email nas falhas"
 ```
 
-### Exemplo 20
+### Exemplo 21
 Esta configuração permite que seja configurado uma lista de termos a serem ignorados
 na busca. No exemplo abaixo serão ignorados as publicações que tiverem o termo "deputados"
 no corpo do texto.
@@ -566,11 +591,12 @@ dag:
     subject: "Teste do Ro-dou - Termos ignorados"
 ```
 
-### Exemplo 21
+### Exemplo 22
 Esta configuração permite que seja utilizado IA generativa para criação de resumos das
 publicações.
+
 ```yaml
-dag:```yaml
+dag:
   id: ai_summary_example
   description: DAG de teste de geração de resumo com IA
   tags:
@@ -581,9 +607,7 @@ dag:```yaml
     - cdata
   ai_config:
     provider: openai
-    api_key_var: Esta configuração permite que seja configurado uma lista de termos a serem ignorados
-na busca. No exemplo abaixo serão ignorados as publicações que tiverem o termo "deputados"
-no corpo do texto.OPENAI_API_KEY
+    api_key_var: OPENAI_API_KEY
     model: gpt-4o-mini
     temperature: 0.2
     max_tokens: 200
@@ -593,29 +617,29 @@ no corpo do texto.OPENAI_API_KEY
     terms:
       - tecnologia da informação
       - inovação
-    use_summary: True
-    use_ai_summary: True
-    ai_pub_limit: 5
-    ai_custom_prompt: |
-      Você é um assistente especializado em análise de
-      publicações do Diário Oficial da União (DOU).
-      Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
+    ai_search_config:
+      use_ai_summary: True
+      ai_pub_limit: 5
+      ai_custom_prompt: |
+        Você é um assistente especializado em análise de
+        publicações do Diário Oficial da União (DOU).
+        Resuma o texto em uma única frase objetiva, fiel ao conteúdo original, em português brasileiro.
 
-      Inclua o termo "{}" no texto.
+        Inclua o termo "{}" no texto.
 
-      O resumo deve focar em:
-      - órgão responsável
-      - tipo de ato
-      - ação principal
+        O resumo deve focar em:
+        - órgão responsável
+        - tipo de ato
+        - ação principal
 
-      Não invente informações. Não use markdown. Retorne apenas a frase.
+        Não invente informações. Não use markdown. Retorne apenas a frase.
   report:
     emails:
       - destination@economia.gov.br
     attach_csv: True
     subject: "Teste do Ro-dou com IA"
 ```
-### Exemplo 22
+### Exemplo 23
 Esta configuração demonstra como realizar uma busca no Diário Oficial do Estado de São Paulo (DOE-SP), restringindo a pesquisa ao caderno Executivo.
 
 ```yaml

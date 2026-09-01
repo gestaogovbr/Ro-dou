@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-create-inlabs-portal-connection
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "2"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  template:
+    metadata:
+      labels:
+        app: create-inlabs-portal-connection
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: create-inlabs-connection
+        image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+        imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+        command: ["bash", "-c"]
+        args:
+          - |
+            {{- include "ro-dou.waitForPostgres" . | nindent 12 }}
+            airflow connections delete inlabs_portal 2>/dev/null || true
+            airflow connections add inlabs_portal \
+              --conn-type http \
+              --conn-host https://inlabs.in.gov.br/ \
+              --conn-login "$INLABS_PORTAL_LOGIN" \
+              --conn-password "$INLABS_PORTAL_PASSWORD" \
+              --conn-description "Credencial para acesso no Portal do INLabs"
+        envFrom:
+          - secretRef:
+              name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+          - configMapRef:
+              name: {{ include "ro-dou.fullname" . }}-airflow-config
+  backoffLimit: 0

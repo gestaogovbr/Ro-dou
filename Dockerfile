@@ -1,4 +1,4 @@
-FROM apache/airflow:2.10.0-python3.10
+FROM apache/airflow:3.3.0-python3.11
 
 USER root
 
@@ -9,6 +9,9 @@ COPY dag_load_inlabs /opt/airflow/dags/ro_dou/dag_load_inlabs
 
 RUN chown -R airflow /opt/airflow
 
+# Ensure the dags and ro_dou_src packages are importable in container Python
+ENV PYTHONPATH="/opt/airflow/dags:/opt/airflow:$PYTHONPATH"
+
 # Install additional Airflow dependencies
 USER airflow
 
@@ -16,8 +19,8 @@ COPY requirements-uninstall.txt .
 RUN pip install --upgrade pip && \
   pip uninstall -y -r requirements-uninstall.txt && \
   pip install --no-cache-dir \
-  apache-airflow-providers-microsoft-mssql==3.9.0 \
-  apache-airflow-providers-common-sql==1.15.0
+  apache-airflow-providers-microsoft-mssql==4.7.0 \
+  apache-airflow-providers-common-sql==2.0.3
 
 # Copy and install requirements.txt
 COPY requirements.txt .
@@ -27,12 +30,4 @@ ARG AI_PROVIDERS=""
 
 COPY requirements-ai.txt .
 
-RUN if [ -n "$AI_PROVIDERS" ]; then \
-  for provider in $AI_PROVIDERS; do \
-      grep "# $provider" requirements-ai.txt | cut -d'#' -f1 >> /tmp/filtered.txt; \
-  done && \
-  pip install -r /tmp/filtered.txt; \
-  fi
-
-
-
+RUN pip install --no-cache-dir -r requirements-ai.txt

@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-db-init
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  template:
+    metadata:
+      labels:
+        app: airflow-db-init
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: airflow-db-init
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command:
+            - bash
+            - -c
+            - |
+              {{- include "ro-dou.waitForPostgres" . | nindent 14 }}
+              airflow db migrate
+          envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+      restartPolicy: Never
+  backoffLimit: 0

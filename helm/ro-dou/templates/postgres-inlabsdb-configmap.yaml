@@ -1,10 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: inlabs-init-sql
+  name: {{ include "ro-dou.fullname" . }}-inlabs-init-sql
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: postgres
 data:
   init.sql: |
-    CREATE DATABASE inlabs;
+    SELECT 'CREATE DATABASE inlabs' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'inlabs')\gexec
 
     \c inlabs
 

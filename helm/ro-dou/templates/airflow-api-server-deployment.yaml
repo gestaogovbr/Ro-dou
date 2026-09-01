@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-api-server
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-api-server
+spec:
+  replicas: {{ .Values.airflow.apiServer.replicas }}
+  selector:
+    matchLabels:
+      app: airflow-api-server
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: airflow-api-server
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: airflow-api-server
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command: ["airflow", "api-server"]
+          ports:
+            - containerPort: {{ .Values.airflow.apiServer.port }}
+          readinessProbe:
+            httpGet:
+              path: /api/v2/monitor/health
+              port: {{ .Values.airflow.apiServer.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v2/monitor/health
+              port: {{ .Values.airflow.apiServer.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+            {{- if .Values.gitRsync.enabled }}
+            - name: dag-confs
+              mountPath: {{ .Values.gitRsync.targetDir | quote }}
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: airflow-logs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.fullname" . }}-airflow-logs-pvc
+        {{- if .Values.gitRsync.enabled }}
+        - name: dag-confs
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-api-server
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-api-server
+spec:
+  type: {{ .Values.airflow.apiServer.service.type }}
+  ports:
+    - port: {{ .Values.airflow.apiServer.port }}
+      targetPort: {{ .Values.airflow.apiServer.port }}
+  selector:
+    app: airflow-api-server
+    app.kubernetes.io/instance: {{ .Release.Name }}

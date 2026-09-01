@@ -138,3 +138,9 @@ test_notrack/
 **/mnt/pgdata/
 **/mnt/airflow-logs
 **/dag_confs/
+
+# Airflow token 
+.airflow_token
+
+#helm local values
+values-local.yaml

@@ -1,3 +1,4 @@
+# ruff: noqa: UP007, UP045, UP006, UP035
 """
 This module defines the Pydantic models for validating the structure of
 the YAML files used in the application.
@@ -14,16 +15,26 @@ These models are used to validate the YAML files using the Pydantic
 library.
 """
 
-import textwrap
 import os
 import sys
-from typing import List, Optional, Set, Union
-from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
-from pydantic import field_validator, model_validator
+import textwrap
+
+from typing import Optional, Union, Set
+
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from ai.provider import AIProvider
+
 from ai.config import prompt
+from ai.provider import AIProvider
+
 
 
 class DBSelect(BaseModel):
@@ -120,12 +131,12 @@ class SearchConfig(BaseModel):
     header: Optional[str] = Field(
         default=None, description="Cabeçalho da consulta de pesquisa"
     )
-    sources: Optional[List[str]] = Field(
+    sources: Optional[list[str]] = Field(
         default=["DOU"],
         description="Lista de fontes de dados para pesquisar (Querido Diário [QD], "
         "Diário Oficial da União [DOU], INLABS). Default: DOU.",
     )
-    territory_id: Optional[Union[int, List[int]]] = Field(
+    territory_id: Optional[Union[int, list[int]]] = Field(
         default=None,
         description="ID do território no Querido Diário para filtragem "
         "baseada em localização",
@@ -135,7 +146,7 @@ class SearchConfig(BaseModel):
         description="Intervalo de data para busca. Valores: DIA, SEMANA, "
         "MES, ANO. Default: DIA",
     )
-    dou_sections: Optional[List[str]] = Field(
+    dou_sections: Optional[list[str]] = Field(
         default=["TODOS"],
         description=textwrap.dedent("""
             Seção do Diário Oficial a procurar:
@@ -159,22 +170,22 @@ class SearchConfig(BaseModel):
             Default: TODOS
         """),
     )
-    journals: Optional[List[Union[str, dict]]] = Field(
+    journals: Optional[list[Union[str, dict]]] = Field(
         default=None,
         description="Lista de cadernos (seções) do DOE-SP para filtrar a pesquisa.",
     )
-    department: Optional[List[str]] = Field(
+    department: Optional[list[str]] = Field(
         default=None, description="Lista de departamentos para filtrar a pesquisa"
     )
-    department_ignore: Optional[List[str]] = Field(
+    department_ignore: Optional[list[str]] = Field(
         default=None, description="Lista de departamentos a serem ignorados na pesquisa"
     )
-    terms: Optional[Union[List[str], FetchTermsConfig]] = Field(
+    terms: Optional[Union[list[str], FetchTermsConfig]] = Field(
         default=None,
         description="Lista de termos de pesquisa ou uma forma de buscá-los. "
         "Opcional quando há filtros de department ou pubtype definidos",
     )
-    terms_ignore: Optional[List[str]] = Field(
+    terms_ignore: Optional[list[str]] = Field(
         default=None,
         description="Lista de termos que deverão ser ignorados na pesquisa. ",
     )
@@ -242,7 +253,7 @@ class SearchConfig(BaseModel):
         "como exceção à regra). Default: 1. "
         "(Funcionalidade disponível apenas no INLABS)",
     )
-    pubtype: Optional[List[str]] = Field(
+    pubtype: Optional[list[str]] = Field(
         default=None, description="Lista de tipo de publicações para filtrar a pesquisa"
     )
     excerpt_size: Optional[int] = Field(
@@ -309,7 +320,7 @@ class ReportConfig(BaseModel):
         default=None,
         description="Configuração dos métodos de notificação para relatórios",
     )
-    emails: Optional[List[EmailStr]] = Field(
+    emails: Optional[list[EmailStr]] = Field(
         default=None, description="Lista de endereços de e-mail para enviar o relatório"
     )
     attach_csv: Optional[bool] = Field(
@@ -376,12 +387,12 @@ class DAGConfig(BaseModel):
         default={"dou", "generated_dag"},
         description="Conjunto de tags para filtragem da DAG no Airflow",
     )
-    owner: Optional[List[str]] = Field(
+    owner: Optional[list[str]] = Field(
         default=[], description="Lista de owners para filtragem da DAG no Airflow"
     )
     schedule: Optional[str] = Field(default=None, description="Expressão cron")
     dataset: Optional[str] = Field(default=None, description="Nome do Dataset")
-    search: Union[List[SearchConfig], SearchConfig] = Field(
+    search: Union[list[SearchConfig], SearchConfig] = Field(
         description="Seção para definição da busca no Diário"
     )
     callback: Union[CallBacksConfig, None] = Field(

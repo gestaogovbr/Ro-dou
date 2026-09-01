@@ -1,5 +1,4 @@
-""" Parsers unit tests
-"""
+"""Parsers unit tests"""
 
 import os
 import sys
@@ -75,12 +74,11 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": "0 8 * * MON-FRI",
                 "dataset": None,
                 "description": "DAG exemplo utilizando todos os demais parâmetros.",
-                "callback": {
-                    "on_failure_callback": ["admin@gov.br"]
-                },
+                "callback": {"on_failure_callback": ["admin@gov.br"]},
                 "doc_md": None,
                 "tags": {"dou", "generated_dag", "projeto_a", "departamento_x"},
                 "owner": ["pessoa 1", "pessoa 2"],
+                "active": True,
                 "search": [
                     {
                         "terms": [
@@ -147,7 +145,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                                     "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"
                                 ),
                                 "conn_id": "example_database_conn",
-                            }
+                            },
                         },
                         "header": None,
                         "sources": ["DOU"],
@@ -229,15 +227,13 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "schedule": None,
                 "dataset": None,
                 "description": "DAG com documentação em markdown",
-                "doc_md": textwrap.dedent(
-                    """
+                "doc_md": textwrap.dedent("""
                     ## Ola!
                     Esta é uma DAG de exemplo com documentação em markdown. Esta descrição é opcional e pode ser definida no parâmetro `doc_md`.
 
                       * Ah, aqui você também pode usar *markdown* para
                       * escrever listas, por exemplo,
-                      * ou colocar [links](graph)!"""
-                ).strip(),
+                      * ou colocar [links](graph)!""").strip(),
                 "tags": {"dou", "generated_dag"},
                 "owner": [],
                 "search": [
@@ -386,7 +382,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                 "search": [
                     {
                         "terms": [
-                            "designar AND (MGI OR \"MINISTÉRIO FAZENDA\")",
+                            'designar AND (MGI OR "MINISTÉRIO FAZENDA")',
                             "instituto AND federal NOT paraná",
                         ],
                         "header": None,
@@ -607,23 +603,19 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
             {
                 "id": "qd_list_territory_id_example",
                 "description": "DAG de teste com múltiplos territory_id",
-                "schedule": '0 8 * * MON-FRI',
+                "schedule": "0 8 * * MON-FRI",
                 "dataset": None,
                 "doc_md": None,
                 "tags": {"dou", "generated_dag"},
                 "owner": [],
                 "search": [
                     {
-                        "terms": [
-                            "LGPD",
-                            "RIO DE JANEIRO",
-                            "DADOS PESSOAIS"
-                        ],
+                        "terms": ["LGPD", "RIO DE JANEIRO", "DADOS PESSOAIS"],
                         "header": "Teste com múltiplos territory_id",
                         "sources": ["QD"],
                         "sql": None,
                         "conn_id": None,
-                        "territory_id": [3300100,3300159,3300209,3305703],
+                        "territory_id": [3300100, 3300159, 3300209, 3305703],
                         "dou_sections": ["TODOS"],
                         "search_date": "DIA",
                         "field": "TUDO",
@@ -689,8 +681,8 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                             "Ratificação",
                             "Resolução",
                             "Retificação",
-                            "Protocolo"
-                            ],
+                            "Protocolo",
+                        ],
                     }
                 ],
                 "report": {
@@ -738,7 +730,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                         "pubtype": [
                             "Portaria",
                             "Resolução",
-                            ],
+                        ],
                     }
                 ],
                 "report": {
