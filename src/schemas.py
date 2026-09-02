@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from ai.config import prompt, executive_summary_prompt
 from ai.provider import AIProvider
 
+
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 

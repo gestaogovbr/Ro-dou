@@ -41,7 +41,7 @@ x-airflow-common: &airflow-common
     context: .
   environment: &airflow-common-env
     #AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
     AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -63,15 +63,12 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: "super-secret-airflow-key-2026"
     AIRFLOW__API_AUTH__JWT_SECRET: "super-jwt-secret-2026"
 
-    AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
-
+    AIRFLOW__API__BASE_URL: http://localhost:8080
 
     _AIRFLOW_DB_MIGRATE: 'true'
     _AIRFLOW_WWW_USER_CREATE: 'true'
     _AIRFLOW_WWW_USER_USERNAME: airflow
     _AIRFLOW_WWW_USER_PASSWORD: airflow
-
-
 
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/

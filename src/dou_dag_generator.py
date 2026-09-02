@@ -20,7 +20,10 @@ from airflow.sdk import TaskGroup, Variable
 from airflow.sdk.definitions.asset import Dataset
 
 from airflow.providers.standard.operators.empty import EmptyOperator
-from airflow.providers.standard.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.standard.operators.python import (
+    BranchPythonOperator,
+    PythonOperator,
+)
 
 from airflow.timetables.assets import AssetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
@@ -41,8 +44,6 @@ from searchers import (
     INLABSSearcher,
     DOESPSearcher,
 )
-
-
 
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
