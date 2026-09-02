@@ -31,6 +31,7 @@ class EmailSender(ISender):
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
         self.search_report = ""
+        self.executive_summary = ""
         self.watermark = ""
 
     def send(self, search_report: list, report_date: str, executive_summary: str = ""):
