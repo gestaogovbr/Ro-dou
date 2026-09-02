@@ -30,6 +30,7 @@ Neste segmento, você encontrará uma série de exemplos práticos de utilizaç�
 * [Exemplo 22](#exemplo-22) — resumo automático com IA generativa
 * [Exemplo 23](#exemplo-23) — busca no Diário Oficial do Estado de São Paulo (DOESP)
 * [Exemplo 24](#exemplo-24) — omitir anexos e tabelas do corpo do texto
+* [Exemplo 25](#exemplo-25) — resumo executivo geral com IA generativa
 
 ### Exemplo 1
 
@@ -688,4 +689,38 @@ dag:
     attach_csv: True
     subject: "Teste do Ro-dou (omitindo anexos e tabelas)"
 
+```
+### Exemplo 25
+Esta configuração permite que seja utilizado IA generativa para criação do resumo executivo
+das principais publicações
+
+```yaml
+dag:
+  id: ai_executive_summary_example
+  description: DAG de teste de geração de resumo com IA
+  tags:
+    - inlabs
+  dataset: inlabs
+  owner:
+    - cdata
+  ai_config:
+    provider: openai
+    api_key_var: OPENAI_API_KEY
+    model: gpt-4o-mini
+  search:
+    sources:
+      - INLABS
+    terms:
+      - dados abertos
+    use_summary: True
+  report:
+    ai_report_config:
+      use_ai_executive_summary: True
+      ai_executive_pub_limit: 10
+      executive_temperature: 0.2
+      executive_max_tokens: 600
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou com Resumo Executivo por IA"
 ```
