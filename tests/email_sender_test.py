@@ -16,17 +16,38 @@ def mock_report_config():
     MockReportConfig = namedtuple(
         "MockReportConfig",
         [
-            "hide_filters",            
+            "hide_filters",
             "header_text",
             "footer_text",
             "no_results_found_text"
         ]
     )
-    return MockReportConfig(   
+    return MockReportConfig(
         hide_filters=False,
         header_text="Test Header",
-        footer_text="Test Footer", 
+        footer_text="Test Footer",
         no_results_found_text="Nenhum resultado encontrado"
+    )
+
+@pytest.fixture
+def mock_report_config_with_executive_summary():
+    """Mock ReportConfig for testing"""
+    MockReportConfig = namedtuple(
+        "MockReportConfig",
+        [
+            "hide_filters",
+            "header_text",
+            "footer_text",
+            "no_results_found_text",
+            "executive_summary"
+        ]
+    )
+    return MockReportConfig(
+        hide_filters=False,
+        header_text="Test Header",
+        footer_text="Test Footer",
+        no_results_found_text="Nenhum resultado encontrado",
+        executive_summary="Resumo Executivo"
     )
 
 @pytest.fixture
@@ -45,28 +66,28 @@ def mock_report_config_send_email():
             "no_results_found_text"
         ]
     )
-    return MockReportConfig(   
+    return MockReportConfig(
         hide_filters=False,
         subject="Test Subject",
         skip_null=False,
         emails=["teste@gestao.gov.br"],
         attach_csv=False,
         header_text="Test Header",
-        footer_text="Test Footer", 
+        footer_text="Test Footer",
         no_results_found_text="Nenhum resultado encontrado"
     )
 
 class TestEmailSenderInit:
     def test_init_with_valid_config(self, mock_report_config):
         sender = EmailSender(mock_report_config)
-      
+
         assert isinstance(sender, ISender)
 
 
 class TestEmailSenderProcessing:
     def test_generate_email_content(self, mock_report_config):
         sender = EmailSender(mock_report_config)
-       
+
         sender.search_report = [
             {
                 "header": "Seção 3",
@@ -95,22 +116,65 @@ class TestEmailSenderProcessing:
                 },
             },
         ]
-        
+
         email_content = sender._generate_email_content()
 
         soup = BeautifulSoup(email_content, 'html.parser')
 
         # Procurar por elementos específicos
         abstract = soup.find("div", class_="abstract")
-        date = soup.find('div', string='02/09/2021') 
+        date = soup.find('div', string='02/09/2021')
         footer = soup.find('div', class_='ext_footer')
-        
+
         assert abstract is not None
         assert abstract.find("span", class_="recort") is not None
         assert abstract.text.strip() == 'Recorte: ALESSANDRO GLAUCO DOS ANJOS DE VASCONCELOS - Secretário-Executivo Adjunto...'
         assert date is not None
         assert date.text == '02/09/2021'
         assert footer is not None
+
+    @patch('dags.ro_dou_src.notification.email_sender.send_email')
+    def test_generate_email_content_with_executive_summary(
+        self, mock_send_email, mock_report_config_send_email
+    ):
+        sender = EmailSender(mock_report_config_send_email)
+        report = [
+            {
+                "header": "Seção 3",
+                "department": [],
+                "department_ignore": [],
+                "pubtype": [],
+                "result": {
+                    "single_group": {
+                        "all_publications": {
+                            "single_department": [
+                                {
+                                    "section": "Seção 3",
+                                    "title": "Documento de teste",
+                                    "href": "https://example.com/documento",
+                                    "abstract": None,
+                                    "date": "02/09/2021",
+                                }
+                            ]
+                        }
+                    }
+                },
+            }
+        ]
+
+        sender.send(
+            search_report=report,
+            report_date="2024-04-01",
+            executive_summary="**Resumo executivo gerado pela IA**",
+        )
+
+        email_content = mock_send_email.call_args.kwargs["html_content"]
+        soup = BeautifulSoup(email_content, "html.parser")
+        summary = soup.find("div", class_="executive-summary")
+
+        assert summary is not None
+        assert summary.find("h3").text == "Resumo Executivo"
+        assert summary.find("strong").text == "Resumo executivo gerado pela IA"
 
     def test_get_csv_tempfile(self, mock_report_config):
         sender = EmailSender(mock_report_config)
