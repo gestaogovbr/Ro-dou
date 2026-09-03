@@ -471,7 +471,7 @@ class INLABSHook(BaseHook):
 
                 idx = df.loc[mask].index[: ai_search_config.ai_pub_limit]
                 for i in idx:
-                    df.at[i, "texto"] = AIRunner.run(
+                    summary, _ = AIRunner.run(
                         provider=ai_config.provider,
                         api_key=Variable.get(ai_config.api_key_var),
                         model=ai_config.model,
@@ -482,6 +482,7 @@ class INLABSHook(BaseHook):
                         max_tokens=ai_search_config.max_tokens,
                         temperature=ai_search_config.temperature,
                     )
+                    df.at[i, "texto"] = summary
                     df.at[i, "ai_generated"] = True
                     df.at[i, "texto"] = _highlight_row_matches(df.loc[i])
 
