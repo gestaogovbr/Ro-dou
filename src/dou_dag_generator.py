@@ -464,13 +464,23 @@ class DouDigestDagGenerator:
 
         search_results = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
 
-        executive_summary = generate_executive_summary(
-            search_results=search_results,
-            ai_config=specs.ai_config,
-            report_config=specs.report.ai_report_config,
-        )
+        """Don't raise error if task fails."""
+        try:
+            executive_summary, finish_reason = generate_executive_summary(
+                search_results=search_results,
+                ai_config=specs.ai_config,
+                report_config=specs.report.ai_report_config,
+            )
+            if finish_reason == "length":
+                msg = "Resumo executivo truncado: limite de tokens atingido"
+                logging.warning(msg)
 
-        executive_summary = executive_summary + "\n\n" + ia_warning_msg + "\n\n"
+                executive_summary = f"{executive_summary.rstrip()}...\n\n{msg}\n\n"
+
+            executive_summary = executive_summary + "\n\n" + ia_warning_msg + "\n\n"
+        except Exception as e:
+            logging.warning(f"Erro ao gerar resumo executivo: {e}")
+            executive_summary = ""
 
         return executive_summary
 
