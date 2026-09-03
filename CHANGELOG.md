@@ -1,6 +1,24 @@
 # Changelog
 
 ## What's Changed
+## [0.13.0] - 2026-09-03
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+* Adiciona a possibilidade de gerar um resumo executivo consolidado das publicações (INLABS) by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/343
+
+### 🚀 Outros
+* chore: formatação ruff e type hints em schemas.py by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/329
+* docs: documenta configuração de alerta por e-mail em falha de DAG by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/332
+* test: adiciona teste de integração ponta a ponta da DAG by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/335
+* feat(helm): support repository subdirectory sync and proxy configuration by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/341
+* docs: enxuga guia de instalação k8s para usar só o Helm chart by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/340
+* feat: Permitir que a DAG seja ativada ou desativada via parametro by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/339
+
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.12.4...0.13.0
+
 ## [0.12.4] - 2026-08-19
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
