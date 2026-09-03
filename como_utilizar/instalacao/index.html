@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Instalação e configuração - Ro-DOU - ferramenta de clipping dos diários oficiais</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Instala\u00e7\u00e3o e configura\u00e7\u00e3o";
+        var mkdocs_page_input_path = "como_utilizar/instalacao.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+
+  <!-- keep default homepage -->
+  
+          <a href="../.." class="icon icon-home"> Ro-DOU - ferramenta de clipping dos diários oficiais
+        </a>
+  <!-- Custom icons -->
+  <a href="https://github.com/gestaogovbr/Ro-dou/" target="_blank" class="icon fa-github"></a>
+  <a href="https://discord.gg/8R6bS5D2KN" target="_blank" class="icon fa-discord"></a>
+  <a href="https://www.youtube.com/playlist?list=PLpqT2wQe19o2zJ7NJJm96Gpc5PbSWJQ_Q" target="_blank" class="icon fa-youtube"></a>
+
+
+        <div class="version">
+          versão atual: 0.13.0
+        </div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Página Inicial</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../definicao/rodou/">O que é Ro-DOU?</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como utilizar</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro_utilizacao/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Instalação e configuração</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1-clonando-o-repositorio">1. Clonando o repositório</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-iniciando-o-ambiente">2. Iniciando o ambiente</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-confirmando-que-o-airflow-esta-no-ar">3. Confirmando que o Airflow está no ar</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-ativando-o-clipping-de-exemplo">4. Ativando o clipping de exemplo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-visualizando-o-clipping">5. Visualizando o clipping</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-encerrando-o-ambiente">6. Encerrando o ambiente</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_k8s/">Instalação do k8s</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../instalacao_wsl_windows/">Instalação do WSL no Windows</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitacao_docker_no_wsl/">Habilitação do Docker no WSL</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../gerador_yaml.html">Gerador de configuração (YAML)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usuarios/">Usuários internos e externos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../notificacao_de_erros/">Notificação de erros</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../habilitando_ia/">Habilitando IA nos resumos</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como funciona</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/intro_funcionamento/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/pesquisa_dou/">Compreendendo a pesquisa no D.O.U.</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/recursos_funcionalidades/">Recursos e funcionalidades</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/parametros/">Parâmetros de pesquisa</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/operadores/">Operadores de pesquisa avançada</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/exemplos/">Exemplos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_funciona/tipos_de_publicacoes/">Modelos de publicações</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Como contribuir</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../como_contribuir/contribuicoes/">Contribuições</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Oficinas e mídias</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../oficinas_midias/oficinas_midias/">Conteúdos sobre o Ro-DOU</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Outros</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/Guia_de_Uso/">Guia de Uso e Responsabilidade</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/faq/">FAQ</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/links/">Links relevantes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../outros/contato/">Contato</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CHANGELOG</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../changelog/changelog/">Changelog</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Ro-DOU - ferramenta de clipping dos diários oficiais</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Como utilizar</li>
+      <li class="breadcrumb-item active">Instalação e configuração</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="instalacao-e-configuracao">Instalação e configuração</h2>
+<p>Este guia mostra como instalar e executar o Ro-DOU localmente para experimentação e desenvolvimento. Ao final, você terá o ambiente completo rodando em containers Docker, com um clipping de exemplo já configurado.</p>
+<p><strong>Tempo estimado:</strong> 10 a 15 minutos (a primeira inicialização dos containers pode levar alguns minutos).</p>
+<h3 id="pre-requisitos">Pré-requisitos</h3>
+<ul>
+<li>4Gb de memória RAM</li>
+<li>2Gb de espaço em disco</li>
+<li>Sistema operacional Linux, macOS ou Windows com WSL</li>
+<li><a href="https://docs.docker.com/compose/install/">Docker e Docker Compose</a> (Docker Compose versão 1.29 ou superior)</li>
+</ul>
+<p><strong>⚠️ Usuários de Windows:</strong> recomenda-se utilizar o <a href="https://learn.microsoft.com/pt-br/windows/wsl/">WSL (Windows Subsystem for Linux)</a>. Antes de continuar, confirme que:</p>
+<ul>
+<li><a href="../instalacao_wsl_windows/">o WSL está instalado e configurado</a>;</li>
+<li><a href="../habilitacao_docker_no_wsl/">o Docker está habilitado no WSL</a>.</li>
+</ul>
+<p>Prefere acompanhar em vídeo? Os tutoriais abaixo cobrem o passo a passo de instalação:</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6QUHxOe9v20?si=4O4hJhltwgOiUHgc" title="Como instalar o Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/WWt6lrnfEXE?si=uV_tKSfHHDolufgm" title="Vídeo orientado para instalação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<p>O código-fonte está disponibilizado no perfil do <a href="https://github.com/gestaogovbr/Ro-dou"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" style="vertical-align: middle; display: inline-block;"></a> do Ministério da Gestão e da Inovação em Serviços Públicos.</p>
+<h3 id="1-clonando-o-repositorio">1. Clonando o repositório</h3>
+<p>Abra o terminal e execute:</p>
+<pre><code class="language-bash">git clone https://github.com/gestaogovbr/Ro-dou
+cd Ro-dou
+</code></pre>
+<h3 id="2-iniciando-o-ambiente">2. Iniciando o ambiente</h3>
+<p>O repositório já vem com comandos pré-definidos no <code>Makefile</code> para facilitar a execução. Para iniciar todos os serviços necessários, rode:</p>
+<pre><code class="language-bash">make run
+</code></pre>
+<p><strong>💡 Dica:</strong> este comando baixa as imagens Docker, builda o container do Ro-DOU e configura automaticamente as variáveis de ambiente e conexões do Airflow — não é necessário nenhum passo manual adicional.</p>
+<p>Você deverá ver uma saída parecida com esta:</p>
+<p><img alt="Executando make run" src="https://github.com/gestaogovbr/Ro-dou/blob/main/docs/img/new_make_run.png?raw=true" /></p>
+<p>Se esta não for a primeira execução, os bancos e conexões já existirão e você verá mensagens como:</p>
+<pre><code class="language-bash">psql:/sql/init-db.sql:1: ERROR:  database &quot;inlabs&quot; already exists
+psql:/sql/init-db.sql:5: NOTICE:  schema &quot;dou_inlabs&quot; already exists, skipping
+psql:/sql/init-db.sql:35: NOTICE:  relation &quot;article_raw&quot; already exists, skipping
+</code></pre>
+<p>Isso é esperado e não indica um problema — o Ro-DOU verifica o que já existe antes de criar novamente.</p>
+<h3 id="3-confirmando-que-o-airflow-esta-no-ar">3. Confirmando que o Airflow está no ar</h3>
+<p>O Apache Airflow — do qual o Ro-DOU depende — pode levar alguns minutos para subir na primeira inicialização. Aguarde e acesse:</p>
+<p><a href="http://localhost:8080/">http://localhost:8080/</a></p>
+<p>Autentique-se com usuário <code>airflow</code> e senha <code>airflow</code>.</p>
+<h3 id="4-ativando-o-clipping-de-exemplo">4. Ativando o clipping de exemplo</h3>
+<p>Na tela inicial do Airflow (lista de DAGs), você verá clippings de exemplo já configurados a partir dos arquivos YAML do diretório <code>dag_confs/</code>. Todas as DAGs começam pausadas — vamos ativar uma para testar o ambiente:</p>
+<ol>
+<li>Localize a DAG <strong>all_parameters_example</strong> na lista e ative-a clicando no botão <em>toggle</em> à esquerda do nome.</li>
+<li>Assim que ativada, o Airflow dispara a execução automaticamente (uma única vez). Clique no <a href="http://localhost:8080/dags/all_parameters_example/grid">nome da DAG</a> para acompanhar na visualização em <strong>Grid</strong>.</li>
+</ol>
+<h3 id="5-visualizando-o-clipping">5. Visualizando o clipping</h3>
+<p>Acesse <a href="http://localhost:5001/">http://localhost:5001/</a> — um serviço que simula uma caixa de e-mail (servidor SMTP) para fins de experimentação — e veja a mensagem recebida. <strong><em>Voilà!</em></strong></p>
+<h3 id="6-encerrando-o-ambiente">6. Encerrando o ambiente</h3>
+<p>Quando terminar de utilizar o ambiente de teste, desligue-o com:</p>
+<pre><code class="language-bash">make down
+</code></pre>
+<p>Você pode subir o ambiente novamente a qualquer momento com <code>make run</code>.</p>
+<hr />
+<h2 id="proximos-passos">Próximos passos</h2>
+<ul>
+<li>Quer criar seus próprios clippings? Use o <a href="../../gerador_yaml.html">Gerador de configuração (YAML)</a> pela interface web, ou rode <code>make gerar-yml</code> no terminal — ele pergunta os campos passo a passo, valida com as mesmas regras do Ro-DOU e salva o arquivo direto em <code>dag_confs/</code>. Veja o <a href="https://www.youtube.com/embed/FVf3pC0rOWw">vídeo tutorial do gerador e da CLI</a>.</li>
+<li>Confira os <a href="../../como_funciona/parametros/">parâmetros de pesquisa</a> disponíveis nos YAMLs.</li>
+<li>Veja exemplos prontos em <a href="../../como_funciona/exemplos/">Exemplos</a>.</li>
+</ul>
+<hr />
+<h2 id="configuracoes-avancadas-opcional">Configurações avançadas (opcional)</h2>
+<p>As seções abaixo são independentes entre si — configure apenas o que fizer sentido para o seu caso de uso.</p>
+<h3 id="usando-o-inlabs-como-fonte-de-dados">Usando o INLABS como fonte de dados</h3>
+<p>O <a href="https://github.com/Imprensa-Nacional/inlabs">INLABS</a> é o portal da Imprensa Nacional que disponibiliza os dados do Diário Oficial da União em lote. Usá-lo como fonte no Ro-DOU libera recursos extras não disponíveis na fonte padrão (API do DOU), como texto completo, resumos por IA e operadores de busca avançados.</p>
+<p>Para configurar:</p>
+<ol>
+<li>
+<p><strong>Crie uma conta no portal do INLABS:</strong> acesse <a href="https://inlabs.in.gov.br/acessar.php">https://inlabs.in.gov.br/acessar.php</a> e cadastre-se.</p>
+<p>⚠️ <strong>Observação:</strong> é comum o portal exibir uma mensagem de erro logo após o cadastro. Pode ignorar — a conta costuma ser criada normalmente mesmo assim.</p>
+</li>
+<li>
+<p><strong>Acesse as conexões do Airflow</strong> em <a href="http://localhost:8080/connection/list/">http://localhost:8080/connection/list/</a>. O <code>make run</code> já cria duas conexões: <code>inlabs_db</code> e <code>inlabs_portal</code>.</p>
+</li>
+<li>
+<p><strong>Edite a conexão <code>inlabs_portal</code></strong> e preencha:</p>
+<ul>
+<li><strong>Login:</strong> o e-mail usado para criar a conta no INLABS</li>
+<li><strong>Password:</strong> a senha da conta</li>
+</ul>
+</li>
+<li>
+<p><strong>Rode a DAG <code>ro-dou_inlabs_load_pg</code></strong> — ela faz a carga inicial dos dados do INLABS no banco de dados.</p>
+</li>
+</ol>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/NpumeNLBuI8?si=g_i99R2d2k23yISX" title="Utilizando o INLABS como fonte de dados-pt1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/0bppPCACs5Q?si=SQUs2fBJ9bOArwJD" title="Utilizando o INLABS como fonte de dados-pt2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<h3 id="backend-de-busca-do-inlabs-sql-ou-opensearch">Backend de busca do INLABS (SQL ou OpenSearch)</h3>
+<p>O OpenSearch é um mecanismo de busca e indexação utilizado pelo Ro-DOU para realizar pesquisas textuais nas publicações do INLABS. Por padrão, o Ro-DOU utiliza o <strong>PostgreSQL (modo SQL)</strong>. Para alternar para o <strong>OpenSearch</strong>, use a variável do Airflow <code>RO_DOU_INLABS_USE_OPENSEARCH</code>.</p>
+<p>Para criar a variável automaticamente:</p>
+<pre><code class="language-bash">make create-opensearch-variable
+</code></pre>
+<p>Ou crie manualmente na interface do Airflow em <a href="http://localhost:8080/variable/list/">http://localhost:8080/variable/list/</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Variável</th>
+<th>Valor padrão</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RO_DOU_INLABS_USE_OPENSEARCH</code></td>
+<td><code>False</code></td>
+<td>Define o backend de busca do INLABS. Use <code>False</code> para PostgreSQL (SQL) ou <code>True</code> para OpenSearch.</td>
+</tr>
+<tr>
+<td><code>OPENSEARCH_HOST</code></td>
+<td><code>http://opensearch:9200</code></td>
+<td>Endereço do serviço OpenSearch (definido no docker-compose).</td>
+</tr>
+<tr>
+<td><code>OPENSEARCH_USER</code></td>
+<td><code>OPENSEARCH_USER</code></td>
+<td>Usuário para autenticação no OpenSearch.</td>
+</tr>
+<tr>
+<td><code>OPENSEARCH_PASS</code></td>
+<td><code>OPENSEARCH_PASS</code></td>
+<td>Senha para autenticação no OpenSearch.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Observação:</strong> Quando o valor é <code>False</code> (padrão), o OpenSearch <strong>não precisa estar disponível</strong> no ambiente. A task de indexação é automaticamente ignorada na DAG <code>ro-dou_inlabs_load_pg</code>.</p>
+</blockquote>
+<h3 id="resumos-automaticos-com-ia-generativa">Resumos automáticos com IA generativa</h3>
+<p>O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em <a href="../habilitando_ia/">Habilitando IA nos resumos</a>.</p>
+<hr />
+<h2 id="referencia-rapida-de-comandos">Referência rápida de comandos</h2>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>make run</code></td>
+<td>Sobe todos os containers e configura o ambiente (idempotente — pode rodar de novo a qualquer momento)</td>
+</tr>
+<tr>
+<td><code>make down</code></td>
+<td>Desliga todos os containers</td>
+</tr>
+<tr>
+<td><code>make build AI_PROVIDERS="..."</code></td>
+<td>Reconstrói a imagem incluindo suporte a provedor(es) de IA</td>
+</tr>
+<tr>
+<td><code>make gerar-yml</code></td>
+<td>Gera um novo arquivo de configuração YAML por um assistente interativo no terminal (requer o ambiente já rodando)</td>
+</tr>
+<tr>
+<td><code>make create-opensearch-variable</code></td>
+<td>Cria a variável do Airflow para usar o OpenSearch como backend de busca do INLABS</td>
+</tr>
+<tr>
+<td><code>make create-azure-openai-variables</code></td>
+<td>Cria as variáveis do Airflow necessárias para usar o provedor Azure OpenAI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="solucao-de-problemas-comuns">Solução de problemas comuns</h2>
+<ul>
+<li><strong><code>make run</code> falha ou trava:</strong> confirme que o Docker Desktop/daemon está em execução antes de rodar o comando.</li>
+<li><strong>Porta já em uso (8080 ou 5001):</strong> verifique se outro serviço na sua máquina já está usando essas portas e finalize-o, ou libere a porta antes de rodar <code>make run</code>.</li>
+<li><strong>Airflow não carrega em http://localhost:8080/:</strong> aguarde alguns minutos — a mensagem "Waiting for Airflow API to start" no terminal indica que o serviço ainda está subindo.</li>
+<li><strong><code>make gerar-yml</code> retorna erro de container:</strong> o ambiente precisa estar rodando primeiro; execute <code>make run</code> antes.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../intro_utilizacao/" class="btn btn-neutral float-left" title="Introdução"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../instalacao_k8s/" class="btn btn-neutral float-right" title="Instalação do k8s">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../intro_utilizacao/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../instalacao_k8s/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+  <script>
+    document.querySelectorAll('a[href*="gerador_yaml.html"]').forEach(function (link) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  </script>
+
+
+</body>
+</html>
