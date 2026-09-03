@@ -92,14 +92,14 @@ def generate_executive_summary(
     search_results: list[dict],
     ai_config: AIConfig,
     report_config: AIReportConfig,
-) -> str:
+) -> tuple[str, str | None]:
     publications = extract_publications(
         search_results,
         limit=report_config.ai_executive_pub_limit,
     )
 
     if not publications:
-        return ""
+        return "", None
 
     input_text = serialize_publications(publications)
 
