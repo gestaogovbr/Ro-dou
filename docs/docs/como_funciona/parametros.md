@@ -67,6 +67,12 @@ O bloco `report` contém as informações de notificação. Não há validação
 - **page_title** *(opcional)*: Título da página do relatório enviado por e-mail.
 - **skip_null** *(opcional)*: Dispensa o envio de email quando não há resultados encontrados em todas as pesquisas. Valores: True ou False. Default: True.
 - **subject** *(opcional)*: Texto de assunto do email. Se não for fornecido o gerador define um texto padrão.
+- **ai_report_config** *(opcional)*: Configurações para gerar um resumo executivo único das publicações encontradas no relatório. Disponível apenas para a fonte `INLABS` e requer que o bloco `ai_config` esteja configurado no nível da DAG. [Veja como habilitar IA](../como_utilizar/habilitando_ia.md).
+    - **use_ai_executive_summary** *(opcional)*: Habilita a geração e exibição do resumo executivo por IA. Valores: True ou False. Default: False.
+    - **ai_executive_custom_prompt** *(opcional)*: Prompt enviado ao provedor de IA para orientar a geração do resumo executivo. Quando não informado, utiliza o prompt padrão definido pelo Ro-DOU.
+    - **ai_executive_pub_limit** *(opcional)*: Número máximo de publicações consideradas na geração do resumo executivo. Default: 10.
+    - **executive_temperature** *(opcional)*: Controla a variação da resposta gerada pela IA. Aceita valores entre 0 e 1. Default: 0.2.
+    - **executive_max_tokens** *(opcional)*: Número máximo de tokens da resposta contendo o resumo executivo. Default: 600.
 
 ## Como utilizar Slack ou Discord para envio do clippings
 

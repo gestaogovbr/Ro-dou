@@ -32,8 +32,9 @@ from pydantic import (
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from ai.config import prompt
+from ai.config import prompt, executive_summary_prompt
 from ai.provider import AIProvider
+
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
@@ -88,6 +89,39 @@ class AISearchConfig(BaseModel):
 
     max_tokens: Optional[int] = Field(
         default=200, description="Número máximo de tokens para a resposta da IA."
+    )
+
+class AIReportConfig(BaseModel):
+    """Represents the AI Report configuration in the YAML file."""
+
+    use_ai_executive_summary: bool = Field(
+        default=False,
+        description="Define se será exibido um resumo executivo gerado por IA. "
+        "Valores: True ou False. Default: False. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    ai_executive_custom_prompt: Optional[str] = Field(
+        default=executive_summary_prompt,
+        description="Prompt do agente para geração do resumo executivo por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    ai_executive_pub_limit: Optional[int] = Field(
+        default=10,
+        description="Número máximo de publicações a serem processadas por IA. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
+
+    executive_temperature: Optional[float] = Field(
+        default=0.2,
+        ge=0.0,
+        le=1.0,
+        description="Parâmetro de temperature para o gerador de IA. Valores entre 0 e 1.",
+    )
+
+    executive_max_tokens: Optional[int] = Field(
+        default=600, description="Número máximo de tokens para a resposta da IA."
     )
 
 
@@ -323,7 +357,11 @@ class ReportConfig(BaseModel):
         default="Nenhum dos termos pesquisados foi encontrado nesta consulta",
         description="Texto a ser exibido quando não há resultados",
     )
-
+    ai_report_config: Optional[AIReportConfig] = Field(
+        default=None,
+        description="Configuração específica para o uso de IA no resumo executivo. "
+        "(Funcionalidade disponível apenas no INLABS)",
+    )
 
 class AIConfig(BaseModel):
     """Represents the AI configuration in the YAML file."""
@@ -344,6 +382,8 @@ class AIConfig(BaseModel):
     max_tokens: Optional[int] = Field(
         default=200, description="Número máximo de tokens para a resposta da IA."
     )
+
+
 
 
 class DAGConfig(BaseModel):

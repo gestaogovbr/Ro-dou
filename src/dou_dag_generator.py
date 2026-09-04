@@ -20,7 +20,10 @@ from airflow.sdk import TaskGroup, Variable
 from airflow.sdk.definitions.asset import Dataset
 
 from airflow.providers.standard.operators.empty import EmptyOperator
-from airflow.providers.standard.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.standard.operators.python import (
+    BranchPythonOperator,
+    PythonOperator,
+)
 
 from airflow.timetables.assets import AssetOrTimeSchedule
 from airflow.timetables.trigger import CronTriggerTimetable
@@ -41,8 +44,6 @@ from searchers import (
     INLABSSearcher,
     DOESPSearcher,
 )
-
-
 
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
@@ -451,6 +452,38 @@ class DouDigestDagGenerator:
         else:
             return notify_task_ids
 
+    def generate_ai_executive_summary(
+        self,
+        num_searches: int,
+        specs: DAGConfig,
+        **context,
+    ):
+        """Generate AI executive summary"""
+        from ai.executive_summary import generate_executive_summary
+        from ai.config import ia_warning_msg
+
+        search_results = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
+
+        """Don't raise error if task fails."""
+        try:
+            executive_summary, finish_reason = generate_executive_summary(
+                search_results=search_results,
+                ai_config=specs.ai_config,
+                report_config=specs.report.ai_report_config,
+            )
+            if finish_reason == "length":
+                msg = "Resumo executivo truncado: limite de tokens atingido"
+                logging.warning(msg)
+
+                executive_summary = f"{executive_summary.rstrip()}...\n\n{msg}\n\n"
+
+            executive_summary = executive_summary + "\n\n" + ia_warning_msg + "\n\n"
+        except Exception as e:
+            logging.warning(f"Erro ao gerar resumo executivo: {e}")
+            executive_summary = ""
+
+        return executive_summary
+
     def send_notification(
         self,
         num_searches: int,
@@ -463,17 +496,23 @@ class DouDigestDagGenerator:
         """Send user notification for a single channel"""
         search_report = self.get_xcom_pull_tasks(num_searches=num_searches, **context)
         report_date = get_reference_date(context).strftime("%d/%m/%Y")
+        executive_summary = context["ti"].xcom_pull(
+            task_ids="generate_ai_executive_summary",
+            key="return_value"
+        )
         if channel:
             notifier = Notifier(specs, channel=channel)
             notifier.send_notification(
-                search_report=search_report, report_date=report_date
+                search_report=search_report,
+                report_date=report_date,
+                executive_summary=executive_summary,
             )
             return
         if webhook_url:
             sender = sender_class(specs.report, webhook_url=webhook_url)
         else:
             sender = sender_class(specs.report)
-        sender.send_report(search_report, report_date)
+        sender.send_report(search_report, report_date, executive_summary)
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:
         """Creates the DAG object and tasks
@@ -617,18 +656,46 @@ class DouDigestDagGenerator:
             if specs.report.emails:
                 notify_task_ids.append("notify_email")
 
+            ai_report_config = specs.report.ai_report_config
+
+            # Check if executive_summary is enabled
+            use_executive_summary = bool(
+                ai_report_config
+                and ai_report_config.use_ai_executive_summary
+            )
+
+            # If true create a task to generate the executive summary,
+            # otherwise use the notify tasks
+            branch_task_ids = (
+                ["generate_ai_executive_summary"]
+                if use_executive_summary
+                else notify_task_ids
+            )
+
             has_matches_task = BranchPythonOperator(
                 task_id="has_matches",
                 python_callable=self.has_matches,
                 op_kwargs={
                     "num_searches": len(searches),
                     "skip_null": specs.report.skip_null,
-                    "notify_task_ids": notify_task_ids,
+                    "notify_task_ids": branch_task_ids,
                 },
             )
 
             skip_notification_task = EmptyOperator(task_id="skip_notification")
+            notification_upstream_task = has_matches_task
 
+            if use_executive_summary:
+                generate_ai_executive_summary_task = PythonOperator(
+                    task_id="generate_ai_executive_summary",
+                    python_callable=self.generate_ai_executive_summary,
+                    op_kwargs={
+                        "num_searches": len(searches),
+                        "specs": specs,
+                    },
+                )
+                has_matches_task >> generate_ai_executive_summary_task
+                notification_upstream_task = generate_ai_executive_summary_task
             if specs.report.notification:
                 for index, url in enumerate(specs.report.notification, start=1):
                     channel = _channel_name_from_url(url)
@@ -642,7 +709,7 @@ class DouDigestDagGenerator:
                             "webhook_url": url,
                         },
                     )
-                    has_matches_task >> notify_task
+                    notification_upstream_task >> notify_task
 
             if specs.report.slack:
                 notify_task = PythonOperator(
@@ -654,7 +721,7 @@ class DouDigestDagGenerator:
                         "channel": "slack",
                     },
                 )
-                has_matches_task >> notify_task
+                notification_upstream_task >> notify_task
 
             if specs.report.discord:
                 notify_task = PythonOperator(
@@ -666,7 +733,7 @@ class DouDigestDagGenerator:
                         "channel": "discord",
                     },
                 )
-                has_matches_task >> notify_task
+                notification_upstream_task >> notify_task
 
             if specs.report.emails:
                 notify_task = PythonOperator(
@@ -678,7 +745,7 @@ class DouDigestDagGenerator:
                         "sender_class": EmailSender,
                     },
                 )
-                has_matches_task >> notify_task
+                notification_upstream_task >> notify_task
 
             # pylint: disable=pointless-statement
             tg_exec_searchs >> has_matches_task

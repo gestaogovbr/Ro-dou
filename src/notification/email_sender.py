@@ -31,11 +31,13 @@ class EmailSender(ISender):
     def __init__(self, report_config: ReportConfig) -> None:
         self.report_config = report_config
         self.search_report = ""
+        self.executive_summary = ""
         self.watermark = ""
 
-    def send(self, search_report: list, report_date: str):
+    def send(self, search_report: list, report_date: str, executive_summary: str = ""):
         """Builds the email content, the CSV if applies, and send it"""
         self.search_report = search_report
+        self.executive_summary = executive_summary
         full_subject = f"{self.report_config.subject} - DOs de {report_date}"
         skip_notification = True
         for search in self.search_report:
@@ -205,6 +207,7 @@ class EmailSender(ISender):
             header_text=getattr(self.report_config, "header_text", None),
             footer=getattr(self.report_config, "footer_text", None),
             no_results_message=no_result_message,
+            executive_summary=self.executive_summary,
         )
 
     def get_csv_tempfile(self) -> NamedTemporaryFile:

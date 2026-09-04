@@ -14,11 +14,14 @@ class DiscordSender(ISender):
         self.footer_text = report_config.footer_text
         self.no_results_found_text = report_config.no_results_found_text
 
-    def send(self, search_report: list, report_date: str = None):
+    def send(self, search_report: list, report_date: str = None, executive_summary: str = ""):
         """Parse the content, and send message to Discord"""
         if self.header_text:
             header_text = remove_html_tags(self.header_text)
             self.send_text(header_text)
+
+        if executive_summary:
+            self.send_text(f"**{executive_summary}**")
 
         for search in search_report:
             if search["header"]:

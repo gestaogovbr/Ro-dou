@@ -1,0 +1,28 @@
+dag:
+  id: ai_executive_summary_example
+  description: DAG de teste de geração de resumo com IA
+  tags:
+    - inlabs
+  dataset: inlabs
+  owner:
+    - cdata
+  ai_config:
+    provider: openai
+    api_key_var: OPENAI_API_KEY # Variavel do Airflow que contem a chave de API
+    model: gpt-4o-mini
+  search:
+    sources:
+      - INLABS
+    terms:
+      - dados abertos
+    use_summary: True
+  report:
+    ai_report_config:
+      use_ai_executive_summary: True
+      ai_executive_pub_limit: 10
+      executive_temperature: 0.2
+      executive_max_tokens: 600
+    emails:
+      - destination@economia.gov.br
+    attach_csv: True
+    subject: "Teste do Ro-dou com Resumo Executivo por IA"
