@@ -260,10 +260,15 @@ def load_inlabs():
 
     @task.branch(trigger_rule="none_failed_min_one_success")
     def check_if_first_run_of_day():
+        from ro_dou_src.utils.date import AIRFLOW_TIMEZONE
 
         context = get_current_context()
-        logical_date = context["logical_date"]
+        logical_date = context["logical_date"].in_timezone(AIRFLOW_TIMEZONE)
         prev_end_date_success = context.get("prev_end_date_success")
+        if prev_end_date_success:
+            prev_end_date_success = prev_end_date_success.in_timezone(
+                AIRFLOW_TIMEZONE
+            )
         print(
             f"Logical date: {logical_date}, Previous successful end date: {prev_end_date_success}"
         )
