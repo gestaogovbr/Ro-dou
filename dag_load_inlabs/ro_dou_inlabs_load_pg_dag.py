@@ -266,10 +266,8 @@ def load_inlabs():
         logical_date = context["logical_date"].in_timezone(AIRFLOW_TIMEZONE)
         prev_end_date_success = context.get("prev_end_date_success")
         if prev_end_date_success:
-            prev_end_date_success = prev_end_date_success.in_timezone(
-                AIRFLOW_TIMEZONE
-            )
-        print(
+            prev_end_date_success = prev_end_date_success.in_timezone(AIRFLOW_TIMEZONE)
+        logging.info(
             f"Logical date: {logical_date}, Previous successful end date: {prev_end_date_success}"
         )
 
