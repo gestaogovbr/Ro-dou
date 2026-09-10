@@ -264,19 +264,21 @@ def load_inlabs():
 
         context = get_current_context()
         logical_date = context["logical_date"].in_timezone(AIRFLOW_TIMEZONE)
-        prev_end_date_success = context.get("prev_end_date_success")
-        if prev_end_date_success:
-            prev_end_date_success = prev_end_date_success.in_timezone(AIRFLOW_TIMEZONE)
+        prev_start_date_success = context.get("prev_start_date_success")
+        if prev_start_date_success:
+            prev_start_date_success = prev_start_date_success.in_timezone(
+                AIRFLOW_TIMEZONE
+            )
         logging.info(
-            f"Logical date: {logical_date}, Previous successful end date: {prev_end_date_success}"
+            f"Logical date: {logical_date}, Previous successful start date: {prev_start_date_success}"
         )
 
-        if not prev_end_date_success:
+        if not prev_start_date_success:
             logging.info("Primeira execução da dag")
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
 
-        if prev_end_date_success.date() < logical_date.date():
+        if prev_start_date_success.date() < logical_date.date():
             logging.info("Primeira execução bem-sucedida do dia")
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
