@@ -1,6 +1,17 @@
 # Changelog
 
 ## What's Changed
+## [0.13.1] - 2026-09-10
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* fix: corrige conexão smtp_default quebrada no docker-compose e Helm by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/342
+* fix: Corrigir identificação da primeira execução do dia considerando o timezone by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/346
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.13.0...0.13.1
+
 ## [0.13.0] - 2026-09-03
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
