@@ -1,0 +1,139 @@
+# Default values for ro-dou chart
+
+# Airflow configuration
+airflow:
+  image:
+    repository: ghcr.io/gestaogovbr/ro-dou
+    tag: latest
+    pullPolicy: IfNotPresent
+  apiServer:
+    replicas: 1
+    port: 8080
+    service:
+      type: ClusterIP
+    ingress:
+      enabled: false
+      className: ""
+      annotations: {}
+      hosts:
+        - host: airflow.local
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
+  scheduler:
+    replicas: 1
+  dagProcessor:
+    replicas: 1
+  config:
+    AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo"
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "true"
+    AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: "false"
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: "false"
+    AIRFLOW__API__BASE_URL: "http://localhost:8080"
+    _AIRFLOW_DB_MIGRATE: "true"
+    RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
+    AIRFLOW_VAR_PATH_TMP: "/tmp"
+  secrets:
+    AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
+    AIRFLOW__API_AUTH__JWT_SECRET: "42"
+    AIRFLOW__API__SECRET_KEY: "42"
+    _AIRFLOW_WWW_USER_USERNAME: "admin"
+    _AIRFLOW_WWW_USER_PASSWORD: "admin"
+    # Leave empty to use the smtp4dev Service deployed by this chart.
+    AIRFLOW__SMTP__SMTP_HOST: ""
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: "airflow@email.gov.br"
+    AIRFLOW__SMTP__SMTP_PORT: "25"
+    AIRFLOW__SMTP__SMTP_STARTTLS: "false"
+    AIRFLOW__SMTP__SMTP_USER: ""
+    AIRFLOW__SMTP__SMTP_PASSWORD: ""
+    INLABS_PORTAL_LOGIN: ""
+    INLABS_PORTAL_PASSWORD: ""
+    OPENSEARCH_USER: "OPENSEARCH_USER"
+    OPENSEARCH_PASS: "OPENSEARCH_PASS"
+  pvc:
+    storage: 1Gi
+    storageClassName: ""
+
+# Synchronize DAG configuration files from Git (optional)
+gitRsync:
+  enabled: false
+  schedule: "*/5 * * * *"
+  env:
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+    NO_PROXY: ""
+  image:
+    repository: alpine
+    tag: "3.18"
+    pullPolicy: IfNotPresent
+  repository: ""
+  branch: main
+  # Relative folder inside the repository to synchronize. Leave empty to
+  # synchronize the repository root.
+  sourceDir: ""
+  targetDir: /opt/airflow/dags/ro_dou/dag_confs
+  targetOwner:
+    # The official Airflow image runs as UID 50000 in the root group.
+    uid: 50000
+    gid: 0
+  secret:
+    # Name of an existing Secret containing a Git HTTPS token. Leave empty for
+    # public repositories.
+    name: ""
+    key: token
+  persistence:
+    # Use an existing claim instead of creating one when this value is set.
+    existingClaim: ""
+    storage: 1Gi
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+
+# PostgreSQL configuration
+postgres:
+  image:
+    repository: postgres
+    tag: "15"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  secrets:
+    postgres-user: "postgres"
+    postgres-password: "postgres"
+    postgres-db: "airflow"
+  storage: 1Gi
+
+# SMTP4Dev configuration (optional)
+smtp4dev:
+  enabled: true
+  image:
+    repository: rnwood/smtp4dev
+    tag: v3
+    pullPolicy: IfNotPresent
+  service:
+    webPort: 5001
+    smtpPort: 25
+    imapPort: 143
+
+# OpenSearch configuration (optional)
+opensearch:
+  enabled: false
+  image:
+    repository: opensearchproject/opensearch
+    tag: "2"
+    pullPolicy: IfNotPresent
+  service:
+    port: 9200
+  connection:
+    enabled: false
+    # Leave empty to use the OpenSearch Service deployed by this chart.
+    host: ""
+  security:
+    disablePlugin: true
+  persistence:
+    storage: 1Gi
+    storageClassName: ""

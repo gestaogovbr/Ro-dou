@@ -1,0 +1,93 @@
+{{- if .Values.opensearch.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-opensearch
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: opensearch
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.opensearch.service.port }}
+      targetPort: http
+  selector:
+    app: opensearch
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-opensearch
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: opensearch
+spec:
+  serviceName: {{ include "ro-dou.fullname" . }}-opensearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: opensearch
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: opensearch
+          image: {{ printf "%s:%s" .Values.opensearch.image.repository .Values.opensearch.image.tag | quote }}
+          imagePullPolicy: {{ .Values.opensearch.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.opensearch.service.port }}
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: DISABLE_SECURITY_PLUGIN
+              value: {{ .Values.opensearch.security.disablePlugin | quote }}
+            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+                  key: OPENSEARCH_PASS
+          volumeMounts:
+            - name: opensearch-data
+              mountPath: /usr/share/opensearch/data
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - 'curl -fsS http://localhost:{{ .Values.opensearch.service.port }}/_cluster/health | grep -qv ''"status":"red"'''
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - 'curl -fsS http://localhost:{{ .Values.opensearch.service.port }}/_cluster/health | grep -qv ''"status":"red"'''
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: opensearch-data
+        labels:
+          app: opensearch
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.opensearch.persistence.storageClassName }}
+        storageClassName: {{ .Values.opensearch.persistence.storageClassName | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.opensearch.persistence.storage }}
+{{- end }}

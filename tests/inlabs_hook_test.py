@@ -6,9 +6,7 @@ import numpy as np
 from bs4 import BeautifulSoup
 from datetime import datetime
 import importlib.util
-from datetime import datetime
 from unittest.mock import MagicMock, patch
-from airflow.models import Variable
 from ai.provider import AIProvider
 from schemas import AIConfig, AISearchConfig
 
@@ -18,8 +16,6 @@ _INLABS_HOOK = (
     if importlib.util.find_spec("dags.ro_dou_src.hooks.inlabs_hook")
     else "hooks.inlabs_hook"
 )
-
-Variable.set("KEY", "fake-key-for-tests")
 
 _MIN_AI_CONFIG = AIConfig(
     provider=AIProvider.openai,
@@ -1203,7 +1199,9 @@ def test_transform_search_results_ai_respects_pub_limit(inlabs_hook):
         ai_pub_limit=3,
     )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
-        with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo.") as mock_run:
+        with patch(
+            f"{_INLABS_HOOK}.AIRunner.run", return_value=("Resumo.", "stop")
+        ) as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
                 ai_search_config=ai_search_config,
@@ -1225,7 +1223,9 @@ def test_transform_search_results_ai_system_prompt_uses_matches(inlabs_hook):
         ai_custom_prompt="Enfatize {} na análise",
     )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
-        with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo.") as mock_run:
+        with patch(
+            f"{_INLABS_HOOK}.AIRunner.run", return_value=("Resumo.", "stop")
+        ) as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
                 ai_search_config=ai_search_config,
@@ -1282,7 +1282,7 @@ def test_transform_search_results_highlights_term_in_ai_summary(inlabs_hook):
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(
             f"{_INLABS_HOOK}.AIRunner.run",
-            return_value="Resumo IA cita Lorem no clipping.",
+            return_value=("Resumo IA cita Lorem no clipping.", "stop"),
         ):
             out = inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
@@ -1325,7 +1325,7 @@ def test_transform_search_results_ai_only_where_ementa_missing_with_use_summary(
     )
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
         with patch(
-            f"{_INLABS_HOOK}.AIRunner.run", return_value="Resumo IA."
+            f"{_INLABS_HOOK}.AIRunner.run", return_value=("Resumo IA.", "stop")
         ) as mock_run:
             inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
@@ -1345,7 +1345,10 @@ def test_transform_search_results_ai_sets_ai_generated_flag(inlabs_hook):
     df = pd.DataFrame([_sample_row(has_ementa=False, full_text=False)])
     ai_search_config = AISearchConfig(use_ai_summary=True)
     with patch(f"{_INLABS_HOOK}.Variable.get", return_value="sk-fake"):
-        with patch(f"{_INLABS_HOOK}.AIRunner.run", return_value="Texto só da IA."):
+        with patch(
+            f"{_INLABS_HOOK}.AIRunner.run",
+            return_value=("Texto só da IA.", "stop"),
+        ):
             out = inlabs_hook.TextDictHandler().transform_search_results(
                 ai_config=_MIN_AI_CONFIG,
                 ai_search_config=ai_search_config,

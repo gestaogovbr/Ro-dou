@@ -1,5 +1,5 @@
 from enum import Enum
-from airflow.models import Variable
+from airflow.sdk import Variable
 
 class AIProvider(str, Enum):
     openai = "openai"

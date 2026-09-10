@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-config
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+data:
+{{- range $key, $value := .Values.airflow.config }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+  AIRFLOW__CORE__EXECUTION_API_SERVER_URL: {{ printf "http://%s-airflow-api-server:%v/execution/" (include "ro-dou.fullname" .) .Values.airflow.apiServer.port | quote }}

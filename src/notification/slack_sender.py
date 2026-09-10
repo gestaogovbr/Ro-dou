@@ -21,11 +21,15 @@ class SlackSender(ISender):
         self.footer_text = report_config.footer_text
         self.no_results_found_text = report_config.no_results_found_text
 
-    def send(self, search_report: list, report_date: str = None):
+    def send(self, search_report: list, report_date: str = None, executive_summary: str = ""):
         """Parse the content, and send message to Slack"""
         if self.header_text:
             header_text = remove_html_tags(self.header_text)
             self._add_header(header_text)
+
+        if executive_summary:
+            self._add_header("Resumo Executivo")
+            self._add_text(executive_summary)
 
         for search in search_report:
             if search["header"]:

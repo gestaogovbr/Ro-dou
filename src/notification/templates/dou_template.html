@@ -56,6 +56,33 @@
             line-height: 1.6;
         }
 
+        .executive-summary {
+            max-width: 1200px;
+            box-sizing: border-box;
+            margin: 0 auto 20px auto;
+            padding: 20px 24px;
+            background-color: #f8fbff;
+            border: 1px solid #8ccff0;
+            border-radius: 1px;
+            color: #263238;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+
+        .executive-summary h3 {
+            margin: 0 0 12px 0;
+            color: #0579b5;
+            font-size: 18px;
+        }
+
+        .executive-summary-content > :first-child {
+            margin-top: 0;
+        }
+
+        .executive-summary-content > :last-child {
+            margin-bottom: 0;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto 20px auto;
@@ -356,7 +383,7 @@
                 padding: 10px;
             }
 
-            .container, .ext_header, .ext_footer, .footer {
+            .container, .ext_header, .ext_footer, .executive-summary, .footer {
                 margin: 0 0 15px 0;
                 border-radius: 0;
             }
@@ -399,6 +426,15 @@
         </div>
 
     {% else %}
+
+        {% if executive_summary %}
+            <div class="executive-summary">
+                <h3>Resumo Executivo</h3>
+                <div class="executive-summary-content">
+                    {{ executive_summary | markdown }}
+                </div>
+            </div>
+        {% endif %}
 
         <!-- Loop para criar um card por seção -->
         {% for result_group in results %}

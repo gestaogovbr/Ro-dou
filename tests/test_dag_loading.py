@@ -27,7 +27,7 @@ class TestDAGLoading:
         self.dag_generator = DouDigestDagGenerator()
 
     @patch("dou_dag_generator.Variable")
-    @patch("airflow.hooks.base.BaseHook.get_connection")
+    @patch("airflow.sdk.bases.hook.BaseHook.get_connection")
     def test_all_dags_load_without_errors(self, mock_get_connection, mock_variable):
         """
         Test that all DAGs defined in YAML config files can be loaded without errors.
@@ -89,7 +89,7 @@ class TestDAGLoading:
         ), f"Nenhum arquivo de configuração YAML encontrado nos diretórios: {self.dag_generator.YAMLS_DIR_LIST}"
 
     @patch("dou_dag_generator.Variable")
-    @patch("airflow.hooks.base.BaseHook.get_connection")
+    @patch("airflow.sdk.bases.hook.BaseHook.get_connection")
     def test_individual_dag_creation(self, mock_get_connection, mock_variable):
         """
         Test that individual DAGs can be created from valid YAML configs.

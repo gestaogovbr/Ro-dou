@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 
-from typing import Optional
 from ai.provider import AIProvider
+
+
+AIResponse = tuple[str, str | None]
 
 
 class AIRunner:
@@ -18,7 +20,7 @@ class AIRunner:
         max_tokens: int | None = None,
         temperature: float = 0.2,
         timeout_seconds: int = 60,
-    ) -> str:
+    ) -> AIResponse:
         if not api_key:
             raise RuntimeError("API_KEY not set")
 
@@ -67,6 +69,24 @@ class AIRunner:
         raise ValueError(f"Unsupported provider: {provider}")
 
     @staticmethod
+    def _normalize_finish_reason(reason: object | None) -> str | None:
+        """
+        Normalize provider-specific token-limit reasons.
+        For OpenAI, the finish_reason can be "length" or "max_tokens".
+        For Gemini, the finish_reason can be "max_output_tokens".
+        For Claude, the finish_reason can be "max_tokens".
+
+        """
+        if reason is None:
+            return None
+
+        value = getattr(reason, "name", None) or getattr(reason, "value", reason)
+        normalized = str(value).lower()
+        if normalized in {"length", "max_tokens", "max_output_tokens"}:
+            return "length"
+        return normalized
+
+    @staticmethod
     def _run_openai(
         api_key: str,
         model: str,
@@ -75,7 +95,7 @@ class AIRunner:
         max_tokens: int | None,
         temperature: float,
         timeout_seconds: int,
-    ) -> str:
+    ) -> AIResponse:
         from openai import OpenAI
 
         client = OpenAI(api_key=api_key, timeout=timeout_seconds)
@@ -91,7 +111,12 @@ class AIRunner:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return response.choices[0].message.content
+
+        choice = response.choices[0]
+        return (
+            choice.message.content or "",
+            AIRunner._normalize_finish_reason(choice.finish_reason),
+        )
 
     @staticmethod
     def _run_gemini(
@@ -101,22 +126,26 @@ class AIRunner:
         system_prompt: str | None,
         max_tokens: int | None,
         temperature: float,
-    ) -> str:
-        from google import genai 
+    ) -> AIResponse:
+        from google import genai
         from google.genai import types
 
-        client=genai.Client(
-            api_key = api_key
-        )
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=model,
-            contents={'text': f"{system_prompt}\n\n{input_text}"},
+            contents={"text": f"{system_prompt}\n\n{input_text}"},
             config=types.GenerateContentConfig(
-                temperature = temperature,
-                max_output_tokens = max_tokens,
+                temperature=temperature,
+                max_output_tokens=max_tokens,
             ),
         )
-        return response.text
+        candidate = response.candidates[0] if response.candidates else None
+        return (
+            response.text or "",
+            AIRunner._normalize_finish_reason(
+                candidate.finish_reason if candidate else None
+            ),
+        )
 
     @staticmethod
     def _run_claude(
@@ -127,7 +156,7 @@ class AIRunner:
         max_tokens: int | None,
         temperature: float,
         timeout_seconds: int,
-    ) -> str:
+    ) -> AIResponse:
         from anthropic import Anthropic
 
         client = Anthropic(api_key=api_key, timeout=timeout_seconds)
@@ -138,7 +167,10 @@ class AIRunner:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return response.content[0].text
+        return (
+            response.content[0].text,
+            AIRunner._normalize_finish_reason(response.stop_reason),
+        )
 
     @staticmethod
     def _run_azure(
@@ -151,7 +183,7 @@ class AIRunner:
         max_tokens: int | None,
         temperature: float,
         timeout_seconds: int,
-    ) -> str:
+    ) -> AIResponse:
         from openai import AzureOpenAI
 
         client = AzureOpenAI(
@@ -172,4 +204,8 @@ class AIRunner:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return response.choices[0].message.content
+        choice = response.choices[0]
+        return (
+            choice.message.content or "",
+            AIRunner._normalize_finish_reason(choice.finish_reason),
+        )

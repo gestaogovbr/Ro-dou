@@ -9,7 +9,7 @@ dag:
     - cdata
   ai_config:
     provider: openai
-    api_key_var: OPENAI_API_KEY
+    api_key_var: OPENAI_API_KEY # Variavel do Airflow que contem a chave de API
     model: gpt-4o-mini
   search:
     sources:

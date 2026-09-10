@@ -1,0 +1,36 @@
+{{- if .Values.airflow.apiServer.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow-api-server
+  {{- with .Values.airflow.apiServer.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.airflow.apiServer.ingress.className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.airflow.apiServer.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.airflow.apiServer.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path | quote }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "ro-dou.fullname" $ }}-airflow-api-server
+                port:
+                  number: {{ $.Values.airflow.apiServer.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

@@ -3,8 +3,8 @@
 import ast
 import pandas as pd
 
-from airflow.models import Variable
-from airflow.hooks.base import BaseHook
+from airflow.sdk import Variable
+from airflow.sdk.bases.hook import BaseHook
 
 try:
     from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook

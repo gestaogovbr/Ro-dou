@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ro-dou.fullname" . }}-airflow-upgrade-db
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  template:
+    metadata:
+      labels:
+        app: airflow-upgrade-db
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: upgrade-db
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command:
+            - bash
+            - -c
+            - |
+              {{- include "ro-dou.waitForPostgres" . | nindent 14 }}
+              airflow users list | grep -qw -- "$_AIRFLOW_WWW_USER_USERNAME" || airflow users create \
+                --username "$_AIRFLOW_WWW_USER_USERNAME" \
+                --firstname Admin \
+                --lastname User \
+                --role Admin \
+                --email admin@example.com \
+                --password "$_AIRFLOW_WWW_USER_PASSWORD"
+          envFrom:
+            - secretRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-secrets
+            - configMapRef:
+                name: {{ include "ro-dou.fullname" . }}-airflow-config
+  backoffLimit: 0

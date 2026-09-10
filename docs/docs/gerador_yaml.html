@@ -555,6 +555,15 @@
               <label class="check-item"><input type="checkbox" id="f-usesummary"> Mostrar a ementa (resumo oficial), quando existir <span class="tec">use_summary</span></label>
               <label class="check-item"><input type="checkbox" id="f-relevancy"> Mostrar a relevância de cada resultado <span class="tec">show_relevancy</span></label>
               <div class="dica" style="margin:-4px 0 0 23px">Exibe no relatório uma pontuação de quão bem cada publicação corresponde ao termo buscado, calculada pelo indexador de buscas (requer OpenSearch configurado).</div>
+              <label class="check-item"><input type="checkbox" id="f-igattach"> Ignorar anexos <span class="tec">ignore_attachments</span></label>
+              <div class="dica" style="margin:-4px 0 0 23px">Suprime do relatório os conteúdos anexos à matéria (tabelas, quadros e anexos).</div>
+              <label class="check-item"><input type="checkbox" id="f-igtables"> Ignorar tabelas embutidas <span class="tec">ignore_inline_tables</span></label>
+              <div class="dica" style="margin:-4px 0 0 23px">Omite as tabelas embutidas no corpo da própria publicação.</div>
+            </div>
+            <div class="campo campo-opcional" id="campo-mintablerows" hidden>
+              <label for="f-mintablerows">Mínimo de linhas da tabela <span class="tec">min_table_rows</span></label>
+              <div class="dica">Número mínimo de linhas para que uma tabela seja omitida. Default 1 (todas as tabelas são omitidas).</div>
+              <input type="number" id="f-mintablerows" min="1" placeholder="1">
             </div>
             <div class="campo">
               <label for="f-textlength">Tamanho do trecho exibido <span class="tec">text_length</span></label>
@@ -800,6 +809,7 @@
     // ---- mostra/esconde campos que só valem para a fonte marcada ----
     $("campo-territory").hidden = !temQd;
     $("painel-inlabs").hidden = !temInlabs;
+    $("campo-mintablerows").hidden = !$("f-igtables").checked;
     $("painel-qd").hidden = !temQd;
     $("dica-inlabs-dataset").hidden = !temInlabs;
     $("aviso-operadores").hidden = temInlabs;
@@ -899,6 +909,12 @@
       if ($("f-fulltext").checked) push(out, 2, "full_text", "true", "bool");
       if ($("f-usesummary").checked) push(out, 2, "use_summary", "true", "bool");
       if ($("f-relevancy").checked) push(out, 2, "show_relevancy", "true", "bool");
+      if ($("f-igattach").checked) push(out, 2, "ignore_attachments", "true", "bool");
+      if ($("f-igtables").checked) {
+        push(out, 2, "ignore_inline_tables", "true", "bool");
+        const minRows = $("f-mintablerows").value.trim();
+        if (minRows) push(out, 2, "min_table_rows", minRows, "num");
+      }
       const tlen = $("f-textlength").value.trim();
       if (tlen) push(out, 2, "text_length", tlen, "num");
     }
@@ -1059,7 +1075,7 @@
   $("btn-limpar").addEventListener("click", () => {
     if (!confirm("Limpar todos os campos preenchidos?")) return;
     ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-docmd", "f-terms", "f-terms-ignore",
-      "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-territory",
+      "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-mintablerows", "f-territory",
       "f-excerptsize", "f-numexcerpts",
       "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom",
       "f-headertext", "f-footertext", "f-noresults"
@@ -1070,7 +1086,7 @@
     $("f-field").selectedIndex = 0;
     document.querySelectorAll("#f-sources input").forEach(cb => cb.checked = (cb.value === "DOU"));
     document.querySelectorAll("#f-sections input").forEach(cb => cb.checked = false);
-    ["f-aproximada", "f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-csv", "f-hidefilters", "f-noskip"]
+    ["f-aproximada", "f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-igattach", "f-igtables", "f-csv", "f-hidefilters", "f-noskip"]
       .forEach(id => { $(id).checked = false; });
     gerar();
   });

@@ -41,7 +41,7 @@ class Notifier:
             if getattr(specs.report, report_attr, None):
                 self.senders.append(sender_class(specs.report))
 
-    def send_notification(self, search_report: List[str], report_date: str):
+    def send_notification(self, search_report: List[str], report_date: str, executive_summary: str = ""):
         """Sends the notification to the specified email, Discord, Slack and nother notification services.
 
         Args:
@@ -50,4 +50,4 @@ class Notifier:
         """
 
         for sender in self.senders:
-            sender.send_report(search_report, report_date)
+            sender.send_report(search_report, report_date, executive_summary)

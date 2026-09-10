@@ -1,4 +1,20 @@
 ## Tipos de publicações (parâmetro pubtype)
+
+O parâmetro `pubtype` filtra a busca por tipo de publicação, usando os mesmos nomes aceitos pela API da Imprensa Nacional. Informe um ou mais valores da lista abaixo, exatamente como estão escritos:
+
+```yaml
+search:
+  terms:
+    - concurso público
+  pubtype:
+    - Portaria
+    - Edital
+```
+
+⚠️ Este parâmetro não é validado pelo schema do Ro-DOU — um valor com erro de digitação não gera erro na DAG, apenas não encontra nenhum resultado.
+
+### A
+
 - Ação Direta de Inconstitucionalidade e Ação Declaratória de Constitucionalidade
 - Acórdão
 - Acordo Coletivo de Trabalho
@@ -76,17 +92,26 @@
 - Aviso de Sorteio
 - Aviso de Suspensão
 - Aviso de Tomada de Subsídios
+
+### B
+
 - Balancete
 - Balancete Financeiro
 - Balancete Patrimonial e Financeiro
 - Balanço Patrimonial
 - Balanço Social
+
+### C
+
 - Certidão
 - Circular
 - Comunicado
 - Consulta Pública
 - Contrato de Gestão
 - Convênio
+
+### D
+
 - Decisão
 - Decreto de Pessoal
 - Decreto Legislativo
@@ -96,6 +121,9 @@
 - Demonstração Contábil
 - Despacho
 - Despacho Interministerial
+
+### E
+
 - Edital
 - Edital da Justiça Gratuita (Art. 32 Portaria 268/2009-IN)
 - Edital de Citação
@@ -176,20 +204,41 @@
 - Extrato de Termo de Parceria
 - Extrato de Transferência de Posse
 - Extrato Prévio
+
+### F
+
 - Fato Relevante
+
+### I
+
 - Instrução
 - Instrução Normativa
 - Instrução Normativa Conjunta
+
+### L
+
 - Lei
 - Lei Complementar
 - Lista de Antiguidade
+
+### M
+
 - Medida Provisória
 - Memorando de Entendimento
 - Mensagem
+
+### N
+
 - Norma Complementar
+
+### O
+
 - Ofício circular
 - Ordem de Serviço
 - Orientação Normativa
+
+### P
+
 - Pacto
 - Parecer Normativo
 - Pauta
@@ -202,6 +251,9 @@
 - Protocolo
 - Protocolo de Intenções
 - Provimento
+
+### R
+
 - Ratificação
 - Recomendação
 - Recurso Disciplinar
@@ -223,8 +275,14 @@
 - Resultado de Qualificação
 - Retificação
 - Retificação (de Edital)
+
+### S
+
 - Solução de Consulta
 - Súmula
 - Súmula Administrativa
+
+### T
+
 - Termo de Autorização
 - Termo de Liberação de Operação

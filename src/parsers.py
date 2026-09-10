@@ -7,8 +7,7 @@ import sys
 from typing import List, Tuple
 import yaml
 
-from airflow import Dataset
-from airflow.models import Variable
+from airflow.sdk import Variable
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from schemas import RoDouConfig, DAGConfig

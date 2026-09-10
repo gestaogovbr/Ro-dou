@@ -12,28 +12,30 @@ class ISender(ABC):
     """Interface that defines a notifier sender."""
 
     @abstractmethod
-    def send(self, search_report: dict, report_date: str = None):
+    def send(self, search_report: dict, report_date: str = None, executive_summary: str = ""):
         """Implement this method sending the report to destination
         according to its API!
 
         Args:
             search_report (dict): A dictionary containing the search results.
             report_date (str, optional): The date of the search report. Defaults to None.
+            executive_summary (str, optional): The executive summary for the report. Defaults to None.
         """
         pass
 
-    def send_report(self, search_report: list, report_date: str = None):
+    def send_report(self, search_report: list, report_date: str = None, executive_summary: str = ""):
         """Send a notification with the search report, after highlighting the abstracts.
 
         Args:
             search_report (list): A list containing the search results.
             report_date (str, optional): The date of the search report. Defaults to None.
+            executive_summary (str, optional): The executive summary for the report. Defaults to None.
         """
         highlighted_reports = []
         for report in search_report:
             highlighted_reports.append(self._highlighted_reports(report))
 
-        self.send(highlighted_reports, report_date)
+        self.send(highlighted_reports, report_date, executive_summary)
 
     def _highlighted_reports(self, search_report: dict) -> dict:
         """Replace placeholders with specific formatting depending on
