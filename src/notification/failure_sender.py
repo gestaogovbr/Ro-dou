@@ -74,7 +74,7 @@ class FailureSender:
 
         # Usa email admin padrão
         try:
-            email_admin = Variable.get("email_admin", default_var=None)
+            email_admin = Variable.get("email_admin", default=None)
             if email_admin:
                 return email_list + [email_admin]
             # Se email_admin não estiver configurado, verifica se há email no relatório do DAG
