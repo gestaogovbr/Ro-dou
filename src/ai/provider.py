@@ -21,9 +21,9 @@ class AIProvider(str, Enum):
         if self != AIProvider.azure:
             raise ValueError("Azure config only applies to Azure provider")
 
-        endpoint = Variable.get("AZURE_OPENAI_ENDPOINT", default_var=None)
-        api_version = Variable.get("AZURE_OPENAI_API_VERSION", default_var=None)
-        deployment = Variable.get("AZURE_OPENAI_DEPLOYMENT", default_var=None)
+        endpoint = Variable.get("AZURE_OPENAI_ENDPOINT", default=None)
+        api_version = Variable.get("AZURE_OPENAI_API_VERSION", default=None)
+        deployment = Variable.get("AZURE_OPENAI_DEPLOYMENT", default=None)
 
         if not all([api_key, endpoint, api_version, deployment]):
             raise RuntimeError(
