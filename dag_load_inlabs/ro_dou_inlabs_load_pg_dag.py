@@ -27,6 +27,20 @@ INLABS_CONN_ID = "inlabs_portal"
 STG_TABLE = "dou_inlabs.article_raw"
 
 
+def _upsert_on_conflict(table, conn, keys, data_iter):
+    """`method` callback for `DataFrame.to_sql`: faz upsert (INSERT ...
+    ON CONFLICT DO UPDATE) em vez de insert simples, evitando erro de
+    duplicate key quando um `id` já existe na tabela (ex.: reprocessamento
+    do mesmo artigo)."""
+    from sqlalchemy.dialects.postgresql import insert as pg_insert  # type: ignore
+
+    rows = [dict(zip(keys, row)) for row in data_iter]
+    stmt = pg_insert(table.table).values(rows)
+    update_cols = {col.name: col for col in stmt.excluded if col.name != "id"}
+    stmt = stmt.on_conflict_do_update(index_elements=["id"], set_=update_cols)
+    conn.execute(stmt)
+
+
 def _notify_on_failure(context):
     """Sends a failure notification reusing FailureSender."""
     from types import SimpleNamespace
@@ -192,6 +206,7 @@ def load_inlabs():
             df.drop(columns=["body"], inplace=True)
             df["pubdate"] = pd.to_datetime(df["pubdate"], format="%d/%m/%Y")
             df["assina"] = df["texto"].apply(_get_assina)
+            df.drop_duplicates(subset="id", keep="last", inplace=True)
 
             return df
 
@@ -200,28 +215,15 @@ def load_inlabs():
             p_tags = soup.find_all("p", class_="assina")
             return ", ".join([p.text for p in p_tags]) if p_tags else None
 
-        def _clean_db(hook: PostgresHook):
-            table_exists = hook.get_first(f"""
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.tables
-                    WHERE table_name = '{STG_TABLE.split(".")[1]}'
-                );
-            """)
-            if table_exists[0]:
-                hook.run(
-                    f"DELETE FROM {STG_TABLE} WHERE DATE(pubdate) = '{reference_date}'"
-                )
-
         df = _read_files()
         hook = PostgresHook(DEST_CONN_ID)
-        _clean_db(hook)
         df.to_sql(
             name=STG_TABLE.split(".")[1],
             schema=STG_TABLE.split(".", maxsplit=1)[0],
             con=hook.get_sqlalchemy_engine(),
             if_exists="append",
             index=False,
+            method=_upsert_on_conflict,
         )
         logging.info("Table `%s` updated with %s lines.", STG_TABLE, len(df))
 
