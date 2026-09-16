@@ -257,18 +257,24 @@ class ChatService:
             title = publication.title or "Publicação sem título"
             if publication.url:
                 title = f"[{title}]({publication.url})"
-            details = " — ".join(
+            details = [
                 value
                 for value in (
-                    publication.organization,
-                    publication.section,
-                    publication.publication_date.isoformat()
-                    if publication.publication_date
+                    f"Órgão: {publication.organization}"
+                    if publication.organization
                     else None,
+                    f"Seção: {publication.section}" if publication.section else None,
+                    (
+                        f"Data: {publication.publication_date.strftime('%d/%m/%Y')}"
+                        if publication.publication_date
+                        else None
+                    ),
                 )
                 if value
-            )
-            lines.append(f"{index}. {title}{f' — {details}' if details else ''}")
+            ]
+            lines.append(f"{index}. {title}")
+            if details:
+                lines.append(f"   {' • '.join(details)}")
             content_label = (
                 "Ementa" if publication.content_type == "ementa" else "Recorte"
             )

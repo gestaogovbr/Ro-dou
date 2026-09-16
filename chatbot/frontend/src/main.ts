@@ -58,35 +58,41 @@ function renderMarkdown(value: string): string {
   );
 
   const renderBlock = (block: string): string => {
-    const output: string[] = [];
-    const regularLines: string[] = [];
+    const lines = block.split("\n");
+    const contentIndex = lines.findIndex((line) =>
+      /^\s*(Ementa|Recorte):\s*(.*)$/.test(line),
+    );
 
-    const flushRegularLines = (): void => {
-      if (!regularLines.length) return;
-      output.push(`<p>${regularLines.join("<br>")}</p>`);
-      regularLines.length = 0;
-    };
+    if (contentIndex < 0) {
+      return `<p>${lines.join("<br>")}</p>`;
+    }
 
-    for (const line of block.split("\n")) {
-      const publicationContent = line.match(/^\s*(Ementa|Recorte):\s*(.*)$/);
-      if (!publicationContent) {
-        regularLines.push(line);
-        continue;
-      }
+    const publicationContent = lines[contentIndex].match(
+      /^\s*(Ementa|Recorte):\s*(.*)$/,
+    );
+    if (!publicationContent) return `<p>${lines.join("<br>")}</p>`;
 
-      flushRegularLines();
-      const [, label, content] = publicationContent;
-      const kind = label === "Ementa" ? "summary" : "excerpt";
-      output.push(`
+    const [, label, content] = publicationContent;
+    const kind = label === "Ementa" ? "summary" : "excerpt";
+    const headingLines = lines.slice(0, contentIndex);
+    const title = headingLines.shift() ?? "Publicação";
+    const metadata = headingLines.join(" ").trim();
+    const metadataItems = metadata
+      .split(" • ")
+      .filter(Boolean)
+      .map((item) => `<span>${item}</span>`)
+      .join("");
+
+    return `
+      <article class="publication-item">
+        <p class="publication-item__title">${title}</p>
+        ${metadataItems ? `<p class="publication-item__meta">${metadataItems}</p>` : ""}
         <div class="publication-content publication-content--${kind}" role="note" aria-label="${label} da publicação">
           <span class="publication-content__label">${label}</span>
           <p>${content}</p>
         </div>
-      `);
-    }
-
-    flushRegularLines();
-    return output.join("");
+      </article>
+    `;
   };
 
   return links
@@ -102,6 +108,9 @@ function addMessage(role: "user" | "assistant", text: string): void {
   item.innerHTML = `<div class="message-content">${
     role === "assistant" ? renderMarkdown(text) : `<p>${escapeHtml(text)}</p>`
   }</div>`;
+  if (item.querySelector(".publication-item")) {
+    item.classList.add("message--results");
+  }
   messages.appendChild(item);
   item.scrollIntoView({ block: "end", behavior: "smooth" });
 }

@@ -73,14 +73,56 @@ h1 { margin: 4px 0 0; font-size: clamp(1.8rem, 4vw, 2.7rem); }
   border-radius: 16px 16px 4px 16px;
 }
 
+.message--results {
+  width: 100%;
+  max-width: 100%;
+  padding: 18px;
+}
+
 .message-content p { margin: 0; line-height: 1.55; }
 .message-content p + p { margin-top: 10px; }
 .message-content a { color: #176b56; }
 .message.user a { color: #fff; }
 
+.publication-item {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #d4ddd8;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgb(34 69 58 / 5%);
+}
+
+.publication-item + .publication-item { margin-top: 14px; }
+
+.publication-item__title {
+  color: #172e27;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.publication-item__title a {
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.publication-item .publication-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 7px;
+  color: #64736e;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.publication-item__meta span { display: inline-block; }
+
 .publication-content {
-  margin-top: 10px;
-  padding: 12px 14px;
+  margin-top: 13px;
+  padding: 12px 14px 13px;
   border: 1px solid #cbd9d3;
   border-left: 4px solid #397b68;
   border-radius: 9px;
@@ -98,14 +140,17 @@ h1 { margin: 4px 0 0; font-size: clamp(1.8rem, 4vw, 2.7rem); }
   display: block;
   margin-bottom: 5px;
   color: #42645a;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .publication-content--summary .publication-content__label { color: #785917; }
-.publication-content p { line-height: 1.55; }
+.publication-content p {
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
 
 .composer {
   display: grid;
@@ -146,6 +191,13 @@ button:hover { background: #2b6654; }
   .chat-shell { padding: 17px; }
   .chat-header { align-items: flex-start; flex-direction: column; }
   .message { max-width: 100%; }
+  .message--results { padding: 12px; }
+  .publication-item { padding: 13px; }
+  .publication-item .publication-item__meta {
+    flex-direction: column;
+    gap: 3px;
+  }
+  .publication-content { padding: 11px 12px 12px; }
   .composer { grid-template-columns: 1fr; }
   button { width: 100%; }
 }
