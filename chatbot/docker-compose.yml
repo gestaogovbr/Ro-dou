@@ -1,0 +1,41 @@
+services:
+  chatbot-backend:
+    build:
+      context: ..
+      dockerfile: chatbot/Dockerfile.backend
+    container_name: ro-dou-chatbot-api
+    environment:
+      RO_DOU_CHAT_CONFIG: /app/chatbot/config.example.yaml
+      RO_DOU_CHAT_AI_PROVIDER: ${RO_DOU_CHAT_AI_PROVIDER:-openai}
+      RO_DOU_CHAT_AI_MODEL: ${RO_DOU_CHAT_AI_MODEL:-gpt-4.1-mini}
+      RO_DOU_CHAT_AI_API_KEY: ${RO_DOU_CHAT_AI_API_KEY:-}
+      RO_DOU_CHAT_API_TOKEN: ${RO_DOU_CHAT_API_TOKEN:-}
+      RO_DOU_CHAT_SEARCH_SOURCE: ${RO_DOU_CHAT_SEARCH_SOURCE:-postgres}
+      INLABS_POSTGRES_DSN: ${INLABS_POSTGRES_DSN:-postgresql://airflow:airflow@postgres:5432/inlabs}
+      INLABS_TABLE: ${INLABS_TABLE:-dou_inlabs.article_raw}
+      OPENSEARCH_HOST: ${OPENSEARCH_HOST:-http://opensearch:9200}
+      OPENSEARCH_INDEX: ${OPENSEARCH_INDEX:-dou}
+      OPENSEARCH_USER: ${OPENSEARCH_USER:-}
+      OPENSEARCH_PASS: ${OPENSEARCH_PASS:-}
+    ports:
+      - "${RO_DOU_CHAT_BIND_ADDRESS:-127.0.0.1}:8001:8001"
+    restart: unless-stopped
+
+  chatbot-frontend:
+    build:
+      context: ..
+      dockerfile: chatbot/Dockerfile.frontend
+    container_name: ro-dou-chatbot-web
+    environment:
+      RO_DOU_CHAT_BACKEND_URL: http://chatbot-backend:8001
+      RO_DOU_CHAT_API_TOKEN: ${RO_DOU_CHAT_API_TOKEN:-}
+    ports:
+      - "${RO_DOU_CHAT_BIND_ADDRESS:-127.0.0.1}:5174:5174"
+    depends_on:
+      - chatbot-backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: ${RO_DOU_DOCKER_NETWORK:-ro-dou_default}
+    external: true

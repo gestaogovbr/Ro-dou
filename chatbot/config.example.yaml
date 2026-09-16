@@ -1,0 +1,25 @@
+chat:
+  enabled: true
+  ai:
+    provider: openai
+    model: gpt-4.1-mini
+    temperature: 0
+    timeout: 30
+    max_prompt_chars: 12000
+  max_results: 20
+  max_concurrent_ai_calls: 8
+  conversation_ttl_seconds: 1800
+  max_conversations: 1000
+
+search:
+  source: postgres
+  postgres_dsn: postgresql://airflow:airflow@postgres:5432/inlabs
+  postgres_table: dou_inlabs.article_raw
+  opensearch_host: http://opensearch:9200
+  opensearch_index: dou
+  timeout: 15
+
+auth: {}
+timezone: America/Sao_Paulo
+cors_origins:
+  - http://localhost:5174
