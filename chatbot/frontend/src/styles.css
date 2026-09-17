@@ -84,6 +84,26 @@ h1 { margin: 4px 0 0; font-size: clamp(1.8rem, 4vw, 2.7rem); }
 .message-content a { color: #176b56; }
 .message.user a { color: #fff; }
 
+.result-notice {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1px solid #dfc982;
+  border-radius: 9px;
+  background: #fff9e8;
+  color: #5f4917;
+}
+
+.result-notice__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.result-notice p { font-size: 0.875rem; }
+
 .publication-item {
   margin-top: 16px;
   padding: 16px;
@@ -96,6 +116,7 @@ h1 { margin: 4px 0 0; font-size: clamp(1.8rem, 4vw, 2.7rem); }
 .publication-item + .publication-item { margin-top: 14px; }
 
 .publication-item__title {
+  margin: 0;
   color: #172e27;
   font-size: 1rem;
   font-weight: 700;

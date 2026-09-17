@@ -11,4 +11,4 @@ ENV PYTHONPATH=/app/chatbot
 ENV RO_DOU_CHAT_CONFIG=/app/chatbot/config.example.yaml
 EXPOSE 8001
 
-CMD ["uvicorn", "rodou_chatbot.app:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "rodou_chatbot.app:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 import rodou_chatbot.search as search_module
 from rodou_chatbot.config import SearchConfig
-from rodou_chatbot.models import SearchIntent
+from rodou_chatbot.models import PublicationResult, SearchIntent, SearchResult
 from rodou_chatbot.search import PublicationSearchService
 
 
@@ -135,6 +135,42 @@ def test_service_caps_result_limit() -> None:
     service.search(SearchIntent(terms=["dengue"], limit=20))
 
     assert captured["limit"] == 5
+
+
+def test_service_reports_when_configured_limit_is_exceeded() -> None:
+    service = PublicationSearchService(SearchConfig(), max_results=2)
+
+    def fake_search(intent: SearchIntent) -> SearchResult:
+        return SearchResult(
+            total=3,
+            results=[
+                PublicationResult(id="1"),
+                PublicationResult(id="2"),
+            ],
+        )
+
+    service._search_postgres = fake_search  # type: ignore[method-assign]
+
+    result = service.search(SearchIntent(terms=["dengue"], limit=20))
+
+    assert result.message == (
+        "Os resultados ultrapassam o limite de 2 publicações definido na "
+        "configuração. Exibindo as primeiras 2 publicações. Tente refinar sua "
+        "busca para reduzir o número de resultados."
+    )
+
+
+def test_service_does_not_report_configuration_limit_for_smaller_request() -> None:
+    service = PublicationSearchService(SearchConfig(), max_results=20)
+
+    def fake_search(intent: SearchIntent) -> SearchResult:
+        return SearchResult(total=30, results=[PublicationResult(id="1")])
+
+    service._search_postgres = fake_search  # type: ignore[method-assign]
+
+    result = service.search(SearchIntent(terms=["dengue"], limit=1))
+
+    assert result.message is None
 
 
 def test_service_forces_current_day_for_every_search(monkeypatch) -> None:

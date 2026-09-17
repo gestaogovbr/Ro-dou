@@ -7,6 +7,7 @@ import logging
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
+from .audit import AuditLog
 from .auth import build_auth_dependency
 from .chat import ChatService
 from .config import AppConfig, load_config
@@ -30,10 +31,12 @@ def create_app(
     search_service: PublicationSearchService | None = None,
 ) -> FastAPI:
     settings = config or load_config()
+    audit_log = AuditLog(settings.audit_log)
     publication_search = search_service or PublicationSearchService(
         settings.search,
         settings.chat.max_results,
         settings.timezone,
+        audit_log=audit_log,
     )
     llm_provider = provider or create_provider(settings.chat.ai)
     conversations = ConversationStore(
@@ -72,7 +75,24 @@ def create_app(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Chat is disabled",
             )
-        return chat_service.answer(request, user)
+        response = chat_service.answer(request, user)
+        audit_log.log_interaction(
+            {
+                "event": "chat_interaction",
+                "conversation_id": response.conversation_id,
+                "client_id": response.client_id,
+                "user_name": user.name,
+                "request": request.message,
+                "answer": response.answer,
+                "intent": (
+                    response.intent.model_dump(mode="json")
+                    if response.intent
+                    else None
+                ),
+                "needs_clarification": response.needs_clarification,
+            }
+        )
+        return response
 
     @application.post("/api/v1/publications/search", response_model=SearchResult)
     def search_publications(
@@ -85,6 +105,7 @@ def create_app(
     application.state.config = settings
     application.state.chat_service = chat_service
     application.state.search_service = publication_search
+    application.state.audit_log = audit_log
     return application
 
 

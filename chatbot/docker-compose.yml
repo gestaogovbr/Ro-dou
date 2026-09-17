@@ -17,6 +17,12 @@ services:
       OPENSEARCH_INDEX: ${OPENSEARCH_INDEX:-dou}
       OPENSEARCH_USER: ${OPENSEARCH_USER:-}
       OPENSEARCH_PASS: ${OPENSEARCH_PASS:-}
+      RO_DOU_CHAT_LOG_ENABLED: ${RO_DOU_CHAT_LOG_ENABLED:-true}
+      RO_DOU_CHAT_LOG_DIR: ${RO_DOU_CHAT_LOG_DIR:-/app/logs}
+      RO_DOU_CHAT_LOG_MAX_BYTES: ${RO_DOU_CHAT_LOG_MAX_BYTES:-10000000}
+      RO_DOU_CHAT_LOG_BACKUP_COUNT: ${RO_DOU_CHAT_LOG_BACKUP_COUNT:-5}
+    volumes:
+      - ./logs:/app/logs
     ports:
       - "${RO_DOU_CHAT_BIND_ADDRESS:-127.0.0.1}:8001:8001"
     restart: unless-stopped

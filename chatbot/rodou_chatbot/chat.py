@@ -253,6 +253,8 @@ class ChatService:
         if not result.results:
             return result.message or NO_PUBLICATIONS_TODAY_MESSAGE
         lines = [f"Encontrei {result.total} publicação(ões).", ""]
+        if result.message:
+            lines.extend([f"Aviso: {result.message}", ""])
         for index, publication in enumerate(result.results, start=1):
             title = publication.title or "Publicação sem título"
             if publication.url:

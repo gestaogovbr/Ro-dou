@@ -127,6 +127,39 @@ resposta informa explicitamente que não há publicações no dia de hoje. A rot
 estruturada também retorna `effective_date` com a data efetivamente consultada e
 `message` quando a lista estiver vazia.
 
+Quando o total encontrado ultrapassa `chat.max_results` (ou
+`RO_DOU_CHAT_MAX_RESULTS`) e o limite solicitado alcança ou excede esse teto, o
+backend retorna em `message` um aviso com o limite aplicado. O chat exibe esse
+aviso antes da lista e informa que apenas as primeiras publicações serão
+apresentadas. Uma requisição que solicite deliberadamente menos itens não é
+tratada como estouro do limite configurado.
+
+## Logs persistentes
+
+O backend grava arquivos texto em JSON Lines na pasta `chatbot/logs`, mapeada
+no contêiner como `/app/logs`:
+
+- `chat-history.txt`: mensagem, resposta, identidade autenticada quando houver,
+  IDs da conversa/cliente e intenção estruturada;
+- `sql-queries.txt`: comandos SQL parametrizados gerados pela camada de busca,
+  com instrução e parâmetros separados.
+
+Tokens, chaves, DSN e senhas não são registrados. Os arquivos usam rotação,
+configurável por `RO_DOU_CHAT_LOG_MAX_BYTES` (padrão `10000000`) e
+`RO_DOU_CHAT_LOG_BACKUP_COUNT` (padrão `5`). O diretório pode ser alterado por
+`RO_DOU_CHAT_LOG_DIR` e o recurso desativado com
+`RO_DOU_CHAT_LOG_ENABLED=false`.
+
+Ambos os arquivos podem conter nomes e outros dados pessoais: no histórico,
+eles podem estar nas consultas e respostas; no log SQL, podem aparecer nos
+parâmetros da pesquisa. O backend cria o diretório com modo `0700` e os arquivos
+com `0600`. Ainda assim, defina retenção compatível com a política da organização
+e não versione esses arquivos; a raiz do repositório os ignora explicitamente.
+
+A rotação em arquivo pressupõe um único processo gravador. A imagem fixa o
+Uvicorn em um worker. Não compartilhe o mesmo diretório de logs entre réplicas;
+para múltiplas réplicas, use volumes separados ou um coletor de logs externo.
+
 Cada item retornado inclui `content` e `content_type`. Quando a publicação
 possui ementa válida, `content_type` é `ementa` e o conteúdo integral da ementa
 é exibido. Caso contrário, `content_type` é `excerpt` e o backend produz um

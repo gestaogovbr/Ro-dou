@@ -44,3 +44,17 @@ chat:
     with pytest.raises(ValueError, match="environment"):
         load_config(config_file)
 
+
+def test_audit_log_environment_overrides(tmp_path, monkeypatch) -> None:
+    config_file = tmp_path / "chatbot.yaml"
+    config_file.write_text("{}", encoding="utf-8")
+    log_directory = tmp_path / "logs"
+    monkeypatch.setenv("RO_DOU_CHAT_LOG_DIR", str(log_directory))
+    monkeypatch.setenv("RO_DOU_CHAT_LOG_MAX_BYTES", "25000")
+    monkeypatch.setenv("RO_DOU_CHAT_LOG_BACKUP_COUNT", "3")
+
+    config = load_config(config_file)
+
+    assert config.audit_log.directory == str(log_directory)
+    assert config.audit_log.max_bytes == 25000
+    assert config.audit_log.backup_count == 3

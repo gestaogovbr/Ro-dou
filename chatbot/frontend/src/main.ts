@@ -59,6 +59,15 @@ function renderMarkdown(value: string): string {
 
   const renderBlock = (block: string): string => {
     const lines = block.split("\n");
+    const notice = block.match(/^Aviso:\s*(.*)$/);
+    if (notice) {
+      return `
+        <div class="result-notice" role="status">
+          <span class="result-notice__label">Limite de resultados</span>
+          <p>${notice[1]}</p>
+        </div>
+      `;
+    }
     const contentIndex = lines.findIndex((line) =>
       /^\s*(Ementa|Recorte):\s*(.*)$/.test(line),
     );
@@ -85,7 +94,7 @@ function renderMarkdown(value: string): string {
 
     return `
       <article class="publication-item">
-        <p class="publication-item__title">${title}</p>
+        <h3 class="publication-item__title">${title}</h3>
         ${metadataItems ? `<p class="publication-item__meta">${metadataItems}</p>` : ""}
         <div class="publication-content publication-content--${kind}" role="note" aria-label="${label} da publicação">
           <span class="publication-content__label">${label}</span>

@@ -59,12 +59,22 @@ class AuthConfig(BaseModel):
     api_token: SecretStr | None = None
 
 
+class AuditLogConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    directory: str | None = None
+    max_bytes: int = Field(default=10_000_000, ge=10_000)
+    backup_count: int = Field(default=5, ge=1, le=100)
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     chat: ChatConfig = Field(default_factory=ChatConfig)
     search: SearchConfig = Field(default_factory=SearchConfig)
     auth: AuthConfig = Field(default_factory=AuthConfig)
+    audit_log: AuditLogConfig = Field(default_factory=AuditLogConfig)
     timezone: str = "America/Sao_Paulo"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5174"])
 
@@ -84,6 +94,10 @@ ENV_OVERRIDES: dict[str, tuple[str, ...]] = {
     "OPENSEARCH_INDEX": ("search", "opensearch_index"),
     "OPENSEARCH_USER": ("search", "opensearch_user"),
     "RO_DOU_CHAT_SEARCH_TIMEOUT": ("search", "timeout"),
+    "RO_DOU_CHAT_LOG_ENABLED": ("audit_log", "enabled"),
+    "RO_DOU_CHAT_LOG_DIR": ("audit_log", "directory"),
+    "RO_DOU_CHAT_LOG_MAX_BYTES": ("audit_log", "max_bytes"),
+    "RO_DOU_CHAT_LOG_BACKUP_COUNT": ("audit_log", "backup_count"),
     "RO_DOU_TIMEZONE": ("timezone",),
 }
 

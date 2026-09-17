@@ -127,6 +127,9 @@ def test_absence_and_multiple_results_have_deterministic_answers() -> None:
                     PublicationResult(
                         id="1",
                         title="Portaria A",
+                        organization="Ministério da Saúde",
+                        section="DO1",
+                        publication_date=date(2026, 9, 16),
                         content="Resumo oficial.",
                         content_type="ementa",
                     ),
@@ -147,6 +150,10 @@ def test_absence_and_multiple_results_have_deterministic_answers() -> None:
     assert "Não há publicações no dia de hoje" in empty.answer
     assert "Encontrei 2" in multiple.answer
     assert "Portaria A" in multiple.answer
+    assert (
+        "1. Portaria A\n"
+        "   Órgão: Ministério da Saúde • Seção: DO1 • Data: 16/09/2026"
+    ) in multiple.answer
     assert "Ementa: Resumo oficial." in multiple.answer
     assert "Recorte: Trecho com dengue." in multiple.answer
 
@@ -159,6 +166,22 @@ def test_provider_error_returns_safe_clarification() -> None:
 
     assert response.needs_clarification is True
     assert "secret provider detail" not in response.answer
+
+
+def test_limit_notice_is_displayed_before_publications() -> None:
+    result = SearchResult(
+        total=25,
+        results=[PublicationResult(id="1", title="Portaria A")],
+        message=(
+            "Os resultados ultrapassam o limite de 20 publicações definido na "
+            "configuração. Exibindo as primeiras 20 publicações."
+        ),
+    )
+
+    answer = ChatService._format_answer(result)
+
+    assert "Aviso: Os resultados ultrapassam o limite" in answer
+    assert answer.index("Aviso:") < answer.index("1. Portaria A")
 
 
 def test_provider_timeout_returns_safe_clarification() -> None:

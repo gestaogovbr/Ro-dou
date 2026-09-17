@@ -20,6 +20,11 @@ search:
   timeout: 15
 
 auth: {}
+audit_log:
+  enabled: true
+  directory: /app/logs
+  max_bytes: 10000000
+  backup_count: 5
 timezone: America/Sao_Paulo
 cors_origins:
   - http://localhost:5174

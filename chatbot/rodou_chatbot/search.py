@@ -12,7 +12,8 @@ from zoneinfo import ZoneInfo
 
 from psycopg.rows import dict_row
 
-from .config import SearchConfig
+from .audit import AuditLog
+from .config import AuditLogConfig, SearchConfig
 from .models import PublicationResult, SearchIntent, SearchResult
 
 
@@ -38,6 +39,14 @@ NO_PUBLICATIONS_TODAY_MESSAGE = (
 )
 
 
+def result_limit_message(limit: int) -> str:
+    return (
+        f"Os resultados ultrapassam o limite de {limit} publicações definido "
+        f"na configuração. Exibindo as primeiras {limit} publicações. "
+        f"Tente refinar sua busca para reduzir o número de resultados."
+    )
+
+
 class PublicationSearchService:
     """Translate validated SearchIntent objects into internal source queries."""
 
@@ -46,10 +55,12 @@ class PublicationSearchService:
         config: SearchConfig,
         max_results: int,
         timezone: str = "America/Sao_Paulo",
+        audit_log: AuditLog | None = None,
     ) -> None:
         self._config = config
         self._max_results = max_results
         self._timezone = timezone
+        self._audit_log = audit_log or AuditLog(AuditLogConfig(enabled=False))
         self._opensearch_client = None
 
     def search(self, intent: SearchIntent) -> SearchResult:
@@ -74,12 +85,21 @@ class PublicationSearchService:
                 type(exc).__name__,
             )
             raise
+        configuration_limit_reached = (
+            bool(result.results)
+            and intent.limit >= self._max_results
+            and result.total > self._max_results
+        )
+        if not result.results:
+            response_message = NO_PUBLICATIONS_TODAY_MESSAGE
+        elif configuration_limit_reached:
+            response_message = result_limit_message(self._max_results)
+        else:
+            response_message = None
         result = result.model_copy(
             update={
                 "effective_date": today,
-                "message": (
-                    None if result.results else NO_PUBLICATIONS_TODAY_MESSAGE
-                ),
+                "message": response_message,
             }
         )
         logger.info(
@@ -128,9 +148,9 @@ class PublicationSearchService:
                     "SELECT set_config('statement_timeout', %(timeout)s, true)",
                     {"timeout": timeout_ms},
                 )
-                cursor.execute(count_sql, params)
+                self._execute_sql(cursor, "count_publications", count_sql, params)
                 total = int(cursor.fetchone()["total"])
-                cursor.execute(select_sql, params)
+                self._execute_sql(cursor, "search_publications", select_sql, params)
                 rows = cursor.fetchall()
         return SearchResult(
             total=total,
@@ -139,6 +159,16 @@ class PublicationSearchService:
                 for row in rows
             ],
         )
+
+    def _execute_sql(
+        self,
+        cursor: Any,
+        operation: str,
+        statement: str,
+        parameters: dict[str, Any],
+    ) -> None:
+        self._audit_log.log_sql(operation, statement, parameters)
+        cursor.execute(statement, parameters)
 
     @classmethod
     def build_postgres_where(
