@@ -13,6 +13,7 @@ create-inlabs-db-connection \
 create-inlabs-portal-connection \
 test-inlabs-db-connection \
 create-opensearch-variable \
+create-connections-ids-variable \
 activate-inlabs-load-dag \
 delete_token
 
@@ -74,6 +75,21 @@ create-example-variable: get_access_token
 		-d '{ \
 		\"key\": \"termos_exemplo_variavel\", \
 		\"value\": \"LGPD\nlei geral de proteção de dados\nacesso à informação\" \
+		}'"); \
+	echo "$$RESULT" | grep -q "already exists" && echo "Variable already exists, skipping." || echo "$$RESULT"
+
+create-connections-ids-variable: get_access_token
+	@echo "Creating 'ro_dou_allowed_terms_conn_ids' Airflow variable"
+	@TOKEN=$$(cat $(TOKEN_FILE)); \
+	RESULT=$$(docker exec airflow-api-server sh -c \
+		"curl -s -X 'POST' \
+		'http://localhost:8080/api/v2/variables' \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-H 'Authorization: Bearer $$TOKEN' \
+		-d '{ \
+		\"key\": \"ro_dou_allowed_terms_conn_ids\", \
+		\"value\": \"example_database_conn_name\" \
 		}'"); \
 	echo "$$RESULT" | grep -q "already exists" && echo "Variable already exists, skipping." || echo "$$RESULT"
 

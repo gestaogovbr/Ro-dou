@@ -109,6 +109,24 @@ Os principais valores configuráveis são:
 
 Consulte [`values.yaml`](./values.yaml) para ver todos os valores disponíveis.
 
+## Conexões autorizadas para `from_db_select`
+
+Os YAMLs que buscam termos com `from_db_select` só podem usar as conexões
+listadas na Variable `ro_dou_allowed_terms_conn_ids`. Sem ela, nenhuma
+conexão é aceita. Defina a lista no `my-values.yaml`:
+
+```yaml
+airflow:
+  config:
+    AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS: "conn_termos_unidade_a,conn_termos_unidade_b"
+```
+
+Quando definida assim, ela tem precedência sobre uma Variable de mesmo nome
+criada na interface do Airflow. Não declare a chave com valor vazio: isso
+anularia a Variable da interface. Use apenas conexões cujo usuário de banco
+tenha somente `SELECT` nas tabelas de termos, principalmente quando os YAMLs
+vierem de outro repositório via `gitRsync`.
+
 ## Exposição do Airflow por Ingress
 
 Por padrão, o servidor de API e a interface do Airflow são expostos apenas por

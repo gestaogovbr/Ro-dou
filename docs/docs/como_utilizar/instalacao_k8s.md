@@ -94,6 +94,14 @@ kubectl -n airflow-rodou create secret generic git-token --from-literal=token=YO
 kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
 ```
 
+!!! warning "Quem pode editar os YAMLs"
+    Os arquivos sincronizados viram DAGs sem outra revisão. Proteja a branch
+    sincronizada e exija revisão da equipe responsável pelo Ro-DOU (por
+    exemplo, com `CODEOWNERS`), principalmente para mudanças em
+    `from_db_select`. Liste em `AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS`
+    apenas as conexões que as unidades podem consultar. Elas devem usar
+    usuários de banco somente leitura, restritos às tabelas de termos.
+
 ## Configuração
 
 A pasta `helm/ro-dou` contém um
