@@ -176,6 +176,57 @@ class TestEmailSenderProcessing:
         assert summary.find("h3").text == "Resumo Executivo"
         assert summary.find("strong").text == "Resumo executivo gerado pela IA"
 
+    @patch('dags.ro_dou_src.notification.email_sender.send_email')
+    def test_external_content_is_sanitized(
+        self, mock_send_email, mock_report_config_send_email
+    ):
+        sender = EmailSender(mock_report_config_send_email)
+        report = [
+            {
+                "header": "Seção 3",
+                "department": [],
+                "department_ignore": [],
+                "pubtype": [],
+                "result": {
+                    "single_group": {
+                        "all_publications": {
+                            "single_department": [
+                                {
+                                    "section": "QD - Edição ordinária <img src='https://tracker.example/s.png'>",
+                                    "title": "Município <a href='https://evil.example'>X</a>",
+                                    "href": "javascript:alert(1)",
+                                    "abstract": (
+                                        "<p>O <%%>termo</%%> e o <span class='highlight'>outro</span> "
+                                        "<a href='https://evil.example'>clique aqui</a>"
+                                        "<img src='https://tracker.example/x.png'></p>"
+                                    ),
+                                    "date": "02/09/2021",
+                                }
+                            ]
+                        }
+                    }
+                },
+            }
+        ]
+
+        sender.send_report(search_report=report, report_date="2024-04-01")
+
+        email_content = mock_send_email.call_args.kwargs["html_content"]
+        soup = BeautifulSoup(email_content, "html.parser")
+        result_body = soup.find("div", class_="result-body")
+
+        assert "evil.example" not in email_content
+        assert "tracker.example" not in email_content
+        assert "javascript:" not in email_content
+        assert result_body.find("img") is None
+        assert result_body.find("a") is None
+        assert soup.find("span", class_="document-title").text == "Município X"
+
+        abstract = soup.find("div", class_="abstract")
+        highlights = [s.text for s in abstract.find_all("span", class_="highlight")]
+        assert highlights == ["termo", "outro"]
+        assert "clique aqui" in abstract.text
+
     def test_get_csv_tempfile(self, mock_report_config):
         sender = EmailSender(mock_report_config)
         sender.search_report = [
