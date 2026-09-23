@@ -107,6 +107,24 @@ dag:
     subject: "[String] com caracteres especiais deve estar entre aspas"
 ```
 
+!!! warning "Requisitos de segurança do `from_db_select`"
+    - **Conexões autorizadas:** o `conn_id` precisa constar na Variable do
+      Airflow `ro_dou_allowed_terms_conn_ids`, definida pela equipe que opera
+      o Ro-DOU (lista JSON, como `["airflow_conn_id"]`, ou separada por
+      vírgulas). Ela também pode ser definida pela variável de ambiente
+      `AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS`. Sem essa Variable, nenhuma
+      conexão é aceita e a task `select_terms_from_db` falha.
+    - **Somente leitura:** o `sql` deve ser uma única instrução `SELECT`
+      (ou `WITH ... SELECT`). Comandos de escrita, `SELECT ... INTO`,
+      `EXEC`, `COPY` e múltiplas instruções são rejeitados na validação do
+      YAML. No PostgreSQL, a consulta roda em transação `READ ONLY` com
+      *timeout* de 60 segundos. O resultado é limitado a 10.000 linhas.
+    - **Usuário do banco:** cadastre as conexões autorizadas com um usuário
+      que tenha apenas permissão de `SELECT` na tabela ou *view* de termos.
+      As validações acima reduzem o risco, mas é essa permissão que define o
+      que um YAML consegue ler. Nunca autorize conexões internas do Ro-DOU,
+      como `inlabs_db`.
+
 ### Exemplo 4
 
 A configuração a seguir utiliza o parâmetro `from_airflow_variable` em `terms`, que também carrega dinamicamente a lista de termos. Neste caso, há a recuperação a partir de uma **variável do Airflow**. Aqui, também é utilizado o campo `field` para limitar as pesquisas ao campo título das publicações no Diário Oficial da União.
@@ -431,7 +449,7 @@ dag:
           UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO
           UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO
           UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO
-        conn_id: example_database_conn
+        conn_id: example_database_conn_name
     date: MES
   report:
     emails:
