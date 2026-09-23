@@ -165,6 +165,7 @@ O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLM
 | `make build AI_PROVIDERS="..."` | Reconstrói a imagem incluindo suporte a provedor(es) de IA |
 | `make gerar-yml` | Gera um novo arquivo de configuração YAML por um assistente interativo no terminal (requer o ambiente já rodando) |
 | `make create-opensearch-variable` | Cria a variável do Airflow para usar o OpenSearch como backend de busca do INLABS |
+| `make create-connections-ids-variable` | Cria a variável do Airflow com as conexões autorizadas para `from_db_select` (já executado pelo `make run`) |
 | `make create-azure-openai-variables` | Cria as variáveis do Airflow necessárias para usar o provedor Azure OpenAI |
 
 ## Solução de problemas comuns
