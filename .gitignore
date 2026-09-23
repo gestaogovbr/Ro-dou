@@ -144,3 +144,5 @@ test_notrack/
 
 #helm local values
 values-local.yaml
+
+docs/CODEBASE_MAP.md

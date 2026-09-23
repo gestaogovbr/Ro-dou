@@ -411,6 +411,15 @@
 </head>
 
 <body>
+    {#
+        Política de escape deste template:
+        - "| safe" apenas em textos definidos pelo próprio órgão (YAML/código):
+          header_text, footer, no_results_message e títulos dos filtros.
+        - Conteúdo vindo das fontes externas (título, resumo, seção,
+          departamento, termos) usa "| sanitize_html" (nh3 com lista de tags
+          permitida) e links usam "| safe_url" (apenas http/https).
+        - Nunca use "| safe" em conteúdo externo.
+    #}
     <!-- Cabeçalho opcional estilizado -->
     {% if header_text %}
     <div class="ext_header">
@@ -497,7 +506,7 @@
                                 {% if loop.changed(document.header_title | trim) %}
                                     {% if document.header_title %}
                                         <div class="result-header" title="{{ document.header_title }}">
-                                            {{ document.header_title | safe }}
+                                            {{ document.header_title | sanitize_html }}
                                         </div>
                                     {% endif %}
                                 {% endif %}
@@ -515,12 +524,12 @@
                                     {% if loop.first %}
                                         <div class="group-marker">
                                             {% if result_group.search_terms.group %}
-                                                Grupo: {{ result_group.search_terms.group | safe }}
+                                                Grupo: {{ result_group.search_terms.group | sanitize_html }}
                                             {% endif %}
                                         </div>
 
                                         {% if title %}
-                                            <h3><strong>Resultados para: </strong> {{ title | safe }}</h3>
+                                            <h3><strong>Resultados para: </strong> {{ title | sanitize_html }}</h3>
                                         {% endif %}
 
                                     {% endif %}
@@ -533,16 +542,19 @@
                                         {% endif %}
                                     {% else %}
                                         <div class="group-link">
-                                            <span class="document-title">{{ document.title | safe }}</span>
-                                            <a href="{{ document.url }}" class="document-meta"
-                                                {% if document.url_new_tab %}target="_blank"{% endif %}>
+                                            <span class="document-title">{{ document.title | sanitize_html }}</span>
+                                            {% set document_url = document.url | safe_url %}
+                                            {% if document_url %}
+                                            <a href="{{ document_url }}" class="document-meta"
+                                                {% if document.url_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}>
                                                 <span style="color: #06acff; vertical-align: middle; margin-right: 4px;">&#8599;</span>
                                                 Ver Íntegra
                                             </a>
+                                            {% endif %}
                                         </div>
 
-                                        <div class="section-marker">{{ department | safe }}</div>
-                                        <div class="section-marker">{{ document.section | safe }}</div>
+                                        <div class="section-marker">{{ department | sanitize_html }}</div>
+                                        <div class="section-marker">{{ document.section | sanitize_html }}</div>
 
                                         {% if document.abstract %}
                                             {% if document.show_relevancy %}
@@ -561,23 +573,23 @@
                                             {% endif %}
                                             {% if document.has_ementa %}
                                                 <div class="abstract">
-                                                    <span class="tag ementa">Ementa:</span> {{ document.abstract | safe }}
+                                                    <span class="tag ementa">Ementa:</span> {{ document.abstract | sanitize_html }}
                                                 </div>
                                             {% elif document.ai_sufix %}
                                                 <div class="abstract">
-                                                    <span class="tag ia">IA:</span> {{ document.abstract | safe }}
+                                                    <span class="tag ia">IA:</span> {{ document.abstract | sanitize_html }}
                                                 </div>
                                             {% elif document.full_text %}
                                                 <div class="abstract">
-                                                    <span class="tag full-text">Texto Completo:</span> {{ document.abstract | safe }}
+                                                    <span class="tag full-text">Texto Completo:</span> {{ document.abstract | sanitize_html }}
                                                 </div>
                                             {% else %}
                                                 <div class="abstract">
-                                                    <span class="tag recort">Recorte:</span> {{ document.abstract | safe }}
+                                                    <span class="tag recort">Recorte:</span> {{ document.abstract | sanitize_html }}
                                                 </div>
                                             {% endif %}
                                         {% endif %}
-                                        <div class="date">{{ document.date | safe }}</div>
+                                        <div class="date">{{ document.date }}</div>
 
                                     {% endif %}
 
