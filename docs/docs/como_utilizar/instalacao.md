@@ -143,6 +143,13 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 
 > **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
 
+> **Atenção:** o OpenSearch do `docker-compose.yml` roda com o plugin de
+> segurança desabilitado (`DISABLE_SECURITY_PLUGIN=true`), ou seja, sem
+> autenticação e sem TLS, e publica a porta 9200 no host. Ele é destinado ao
+> ambiente local de desenvolvimento; não o utilize em produção nem o exponha em
+> uma rede. Para produção, use um OpenSearch externo com segurança e TLS
+> habilitados, conforme [OpenSearch em produção](instalacao_k8s.md#opensearch-em-producao).
+
 ### Resumos automáticos com IA generativa
 
 O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em [Habilitando IA nos resumos](habilitando_ia.md).

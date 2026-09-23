@@ -235,6 +235,56 @@ airflow:
     OPENSEARCH_PASS: senha-segura
 ```
 
+### OpenSearch em produção
+
+> **Atenção: por padrão, o OpenSearch roda sem autenticação e sem TLS.**
+> O valor padrão `opensearch.security.disablePlugin: true` desliga o plugin de
+> segurança da instância implantada por este chart. Qualquer cliente que
+> alcance o Service na porta 9200 consegue ler e alterar os índices. Use essa
+> instância somente em desenvolvimento e testes e não a exponha fora do cluster.
+
+Para produção, utilize um OpenSearch externo (por exemplo, um serviço gerenciado
+ou um cluster próprio) com o plugin de segurança e o TLS habilitados, com
+certificado válido:
+
+```yaml
+opensearch:
+  enabled: false
+  connection:
+    enabled: true
+    host: https://opensearch.exemplo.gov.br
+
+airflow:
+  secrets:
+    OPENSEARCH_USER: "<usuario-dedicado>"
+    OPENSEARCH_PASS: "<senha-forte>"
+```
+
+Com um `host` iniciado por `https://`, o Ro-DOU já usa TLS. Por padrão, porém,
+o certificado do servidor **não é validado**. Para validá-lo, defina no Airflow
+a variável abaixo (interface em *Admin → Variables* ou `airflow variables set`);
+o chart não a cria:
+
+| Variável | Valor | Descrição |
+|---|---|---|
+| `OPENSEARCH_VERIFY_CERTS` | `true` | Valida o certificado do servidor |
+
+Boas práticas:
+
+- Use um usuário dedicado, com permissões restritas ao índice `dou`, em vez do
+  administrador do OpenSearch.
+- Não defina `OPENSEARCH_VERIFY_CERTS` como `false`: a variável é lida como
+  texto e qualquer valor não vazio é tratado como verdadeiro. Para não validar o
+  certificado, não defina a variável.
+- Restrinja o acesso de rede à porta do OpenSearch (por exemplo, com
+  `NetworkPolicy` ou regras de firewall) aos componentes do Airflow.
+
+Ativar o plugin de segurança na instância implantada pelo chart (apenas
+alterando `opensearch.security.disablePlugin` para `false`) não é suficiente e
+não é um cenário documentado: as verificações de saúde do StatefulSet e a URL
+padrão do Airflow usam HTTP sem credenciais, e a validação do certificado
+(`OPENSEARCH_VERIFY_CERTS`) não é configurada pelo chart.
+
 ## Sincronização das configurações das DAGs via Git
 
 O git-rsync é desabilitado por padrão. Quando habilitado, o chart cria um

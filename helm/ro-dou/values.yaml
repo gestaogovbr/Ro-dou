@@ -145,6 +145,11 @@ opensearch:
     enabled: false
     # Leave empty to use the OpenSearch Service deployed by this chart.
     host: ""
+  # ATENÇÃO: o padrão (disablePlugin: true) desliga autenticação e TLS do
+  # OpenSearch. Use a instância deste chart apenas em desenvolvimento/testes e
+  # não a exponha fora do cluster. Em produção, use um OpenSearch externo com o
+  # plugin de segurança e TLS habilitados (veja "OpenSearch em produção" no
+  # README do chart). Mudar apenas este valor para false não é suficiente.
   security:
     disablePlugin: true
   persistence:
