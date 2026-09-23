@@ -5,9 +5,10 @@ Postgres db.
 import os
 
 import sys
-import subprocess
+import shutil
 import logging
 from datetime import datetime, timedelta
+
 
 from airflow.sdk.definitions.asset import Dataset
 from airflow.sdk import Metadata, dag, task
@@ -101,9 +102,9 @@ def load_inlabs():
         from urllib.parse import urljoin
         from airflow.sdk.bases.hook import BaseHook  # type: ignore
 
-        def _create_directories():
-            subprocess.run(f"mkdir -p {dest_path}", shell=True, check=True)
-            logging.info("Directory %s avaliable.", dest_path)
+        def _create_directories(path):
+            os.makedirs(path, exist_ok=True)
+            logging.info("Directory %s avaliable.", path)
 
         def _get_session():
             headers = {
@@ -176,7 +177,7 @@ def load_inlabs():
 
         inlabs_conn = BaseHook.get_connection(INLABS_CONN_ID)
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
-        _create_directories()
+        _create_directories(dest_path)
         files_exists = _download_files()
 
         if files_exists:
@@ -326,7 +327,10 @@ def load_inlabs():
     @task(trigger_rule="none_failed_min_one_success")
     def remove_directory():
         dest_path = os.path.join(Variable.get("path_tmp"), DEST_DIR)
-        subprocess.run(f"rm -rf {dest_path}", shell=True, check=True)
+        try:
+            shutil.rmtree(dest_path)
+        except FileNotFoundError:
+            pass
         logging.info(f"Directory {dest_path} removed.")
 
     ## Orchestration
