@@ -24,6 +24,24 @@ O vídeo abaixo demonstra a configuração do **resumo individual por publicaç�
 
 ⚠️ **Veracidade das informações:** o texto gerado por IA pode conter informações imprecisas ou incompletas. Use sempre como apoio à análise, validando com a fonte original.
 
+## Segurança, privacidade e uso de provedores de IA
+
+O uso de recursos de Inteligência Artificial no Ro-DOU é opcional e permanece desabilitado por padrão.
+
+Quando habilitado, o Ro-DOU envia ao provedor de IA configurado o conteúdo das publicações que serão processadas para geração de resumos.
+
+As publicações processadas pelo Ro-DOU são provenientes de diários oficiais e possuem caráter público. No entanto, seu conteúdo pode conter dados pessoais. Dessa forma, o órgão responsável pela instalação e operação do Ro-DOU deve avaliar as condições aplicáveis ao provedor de IA escolhido.
+
+Antes de habilitar esse recurso, recomenda-se verificar, conforme as políticas internas e requisitos aplicáveis ao órgão, principalmente em conformidade com a LGPD:
+
+- as condições contratuais do provedor de IA;
+- a política de retenção dos dados enviados;
+- a região em que ocorre o processamento dos dados;
+- eventual transferência internacional de dados;
+- os requisitos de segurança, privacidade e proteção de dados aplicáveis à organização.
+
+Essas condições não são determinadas pelo Ro-DOU e podem variar conforme a política de dados de cada órgão/entidade.
+
 ## Como configurar
 
 ### 1. Providers
