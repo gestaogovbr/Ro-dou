@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 import nh3
 import markdown
 
@@ -41,6 +43,57 @@ def markdown_to_html(value: str | None) -> Markup:
     )
 
     return Markup(sanitized)
+
+
+# Tags permitidas no conteúdo vindo das fontes externas (DOU, INLABS,
+# Querido Diário, DOESP). Sem <a> e <img> para impedir links forjados e
+# pixels de rastreamento no e-mail institucional.
+_ALLOWED_CONTENT_TAGS = {"p", "br", "strong", "em", "b", "i", "span"}
+
+_ALLOWED_URL_SCHEMES = {"http", "https"}
+
+
+def _keep_only_highlight_class(tag: str, attr: str, value: str) -> str | None:
+    """Mantém apenas ``class="highlight"`` em ``<span>`` (destaque do termo)."""
+    if tag == "span" and attr == "class" and value == "highlight":
+        return value
+    return None
+
+
+def sanitize_html(value: str | None) -> Markup:
+    """Sanitiza HTML de origem externa antes de renderizá-lo no template."""
+    if not value:
+        return Markup("")
+
+    sanitized = nh3.clean(
+        str(value),
+        tags=_ALLOWED_CONTENT_TAGS,
+        attributes={"span": {"class"}},
+        attribute_filter=_keep_only_highlight_class,
+        clean_content_tags={"script", "style"},
+        url_schemes=set(),
+    )
+
+    return Markup(sanitized)
+
+
+def safe_url(value: str | None) -> str:
+    """Retorna a URL se ela for http(s) com host; caso contrário, string vazia."""
+    if not value:
+        return ""
+
+    url = str(value).strip()
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return ""
+
+    if parts.scheme.lower() not in _ALLOWED_URL_SCHEMES or not parts.hostname:
+        return ""
+
+    return url
+
+
 class TemplateManager:
     def __init__(self, template_dir='templates'):
         self.env = Environment(
@@ -50,6 +103,9 @@ class TemplateManager:
             lstrip_blocks=True  # Remove espaços em branco à esquerda
         )
         self.env.filters["markdown"] = markdown_to_html
+        self.env.filters["sanitize_html"] = sanitize_html
+        self.env.filters["safe_url"] = safe_url
+
     def renderizar(self, template_name, filters=None, results=None, **context):
         """
         Renders DOU results using a Jinja2 template.
