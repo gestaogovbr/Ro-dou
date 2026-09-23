@@ -143,7 +143,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
                                     "UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO "
                                     "UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO\n"
                                 ),
-                                "conn_id": "example_database_conn",
+                                "conn_id": "example_database_conn_name",
                             },
                         },
                         "header": None,
