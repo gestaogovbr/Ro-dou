@@ -143,6 +143,18 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 
 > **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
 
+### Termos a partir de banco de dados (`from_db_select`)
+
+As buscas que leem os termos de uma consulta SQL (`from_db_select`) só podem usar as conexões listadas na variável do Airflow `ro_dou_allowed_terms_conn_ids`. Sem ela, nenhuma conexão é aceita e a task `select_terms_from_db` falha.
+
+O `make run` já cria essa variável com `example_database_conn_name`, a conexão usada pelo YAML de exemplo `terms_from_db_example`. Para criá-la de novo:
+
+```bash
+make create-connections-ids-variable
+```
+
+Para liberar outras conexões, edite a variável em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/). O valor aceita uma lista JSON (`["conn_a", "conn_b"]`) ou nomes separados por vírgula ou por linha. Libere apenas conexões cujo usuário de banco tenha somente permissão de leitura nas tabelas de termos. Os demais requisitos estão em [Exemplos](../como_funciona/exemplos.md#exemplo-3).
+
 ### Resumos automáticos com IA generativa
 
 O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em [Habilitando IA nos resumos](habilitando_ia.md).
@@ -158,6 +170,7 @@ O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLM
 | `make build AI_PROVIDERS="..."` | Reconstrói a imagem incluindo suporte a provedor(es) de IA |
 | `make gerar-yml` | Gera um novo arquivo de configuração YAML por um assistente interativo no terminal (requer o ambiente já rodando) |
 | `make create-opensearch-variable` | Cria a variável do Airflow para usar o OpenSearch como backend de busca do INLABS |
+| `make create-connections-ids-variable` | Cria a variável do Airflow com as conexões autorizadas para `from_db_select` (já executado pelo `make run`) |
 | `make create-azure-openai-variables` | Cria as variáveis do Airflow necessárias para usar o provedor Azure OpenAI |
 
 ## Solução de problemas comuns

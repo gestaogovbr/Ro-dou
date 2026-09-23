@@ -110,8 +110,8 @@ dag:
 !!! warning "Requisitos de segurança do `from_db_select`"
     - **Conexões autorizadas:** o `conn_id` precisa constar na Variable do
       Airflow `ro_dou_allowed_terms_conn_ids`, definida pela equipe que opera
-      o Ro-DOU (lista JSON, como `["airflow_conn_id"]`, ou separada por
-      vírgulas). Ela também pode ser definida pela variável de ambiente
+      o Ro-DOU (lista JSON, como `["airflow_conn_id"]`, ou nomes separados
+      por vírgula ou por linha). Ela também pode ser definida pela variável de ambiente
       `AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS`. Sem essa Variable, nenhuma
       conexão é aceita e a task `select_terms_from_db` falha.
     - **Somente leitura:** o `sql` deve ser uma única instrução `SELECT`
