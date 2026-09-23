@@ -3,6 +3,15 @@
 Este chart instala o Ro-DOU no Kubernetes com Airflow 3, PostgreSQL,
 SMTP4dev e OpenSearch opcional.
 
+> **Atenção: altere as credenciais antes de usar em produção.**
+> Os valores padrão de `values.yaml` (chaves Fernet, JWT e da API, usuário e
+> senha `admin`/`admin` do Airflow, senhas do PostgreSQL e do OpenSearch, entre
+> outros) são apenas para desenvolvimento e estão publicados neste repositório.
+> Quem instalar o chart sem sobrescrevê-los terá um ambiente com credenciais
+> conhecidas por qualquer pessoa. Sobrescreva todos os valores de
+> `airflow.secrets` e `postgres.secrets` em um arquivo próprio, que **não deve
+> ser versionado**, ou use `--set` e Secrets gerenciados fora do repositório.
+
 ## Pré-requisitos
 
 - Kubernetes 1.19 ou superior
@@ -24,6 +33,25 @@ Para personalizar a instalação, crie um arquivo de valores e informe-o com
 
 ```bash
 helm install rodou ./helm/ro-dou -f my-values.yaml
+```
+
+Exemplo de `my-values.yaml` com os valores que precisam ser trocados (os valores
+abaixo são placeholders; gere os seus):
+
+```yaml
+airflow:
+  secrets:
+    AIRFLOW__CORE__FERNET_KEY: "<gere-uma-chave-fernet>"
+    AIRFLOW__API_AUTH__JWT_SECRET: "<segredo-aleatorio>"
+    AIRFLOW__API__SECRET_KEY: "<segredo-aleatorio>"
+    _AIRFLOW_WWW_USER_USERNAME: "<usuario-admin>"
+    _AIRFLOW_WWW_USER_PASSWORD: "<senha-forte>"
+    INLABS_PORTAL_LOGIN: "<login-inlabs>"
+    INLABS_PORTAL_PASSWORD: "<senha-inlabs>"
+postgres:
+  secrets:
+    postgres-user: "<usuario-postgres>"
+    postgres-password: "<senha-forte>"
 ```
 
 ## Atualização
@@ -78,19 +106,19 @@ Os principais valores configuráveis são:
 | `gitRsync.persistence.storage` | Espaço solicitado para as configurações das DAGs | `1Gi` |
 | `gitRsync.persistence.storageClassName` | `StorageClass` usada pelas configurações das DAGs | `""` |
 | `gitRsync.persistence.accessMode` | Modo de acesso do PVC das configurações das DAGs | `ReadWriteOnce` |
-| `airflow.secrets.AIRFLOW__CORE__FERNET_KEY` | Chave Fernet usada pelo Airflow | valor de desenvolvimento |
-| `airflow.secrets.AIRFLOW__API_AUTH__JWT_SECRET` | Chave de assinatura dos tokens JWT | valor de desenvolvimento |
-| `airflow.secrets.AIRFLOW__API__SECRET_KEY` | Chave secreta do servidor de API | valor de desenvolvimento |
-| `airflow.secrets._AIRFLOW_WWW_USER_USERNAME` | Usuário administrador inicial | `admin` |
-| `airflow.secrets._AIRFLOW_WWW_USER_PASSWORD` | Senha do administrador inicial | `admin` |
+| `airflow.secrets.AIRFLOW__CORE__FERNET_KEY` | Chave Fernet usada pelo Airflow | valor de desenvolvimento (**altere em produção**) |
+| `airflow.secrets.AIRFLOW__API_AUTH__JWT_SECRET` | Chave de assinatura dos tokens JWT | valor de desenvolvimento (**altere em produção**) |
+| `airflow.secrets.AIRFLOW__API__SECRET_KEY` | Chave secreta do servidor de API | valor de desenvolvimento (**altere em produção**) |
+| `airflow.secrets._AIRFLOW_WWW_USER_USERNAME` | Usuário administrador inicial | `admin` (**altere em produção**) |
+| `airflow.secrets._AIRFLOW_WWW_USER_PASSWORD` | Senha do administrador inicial | `admin` (**altere em produção**) |
 | `airflow.secrets.AIRFLOW__SMTP__SMTP_HOST` | Host SMTP externo; vazio usa o SMTP4dev deste release | `""` |
-| `airflow.secrets.OPENSEARCH_USER` | Usuário utilizado para acessar o OpenSearch | `OPENSEARCH_USER` |
-| `airflow.secrets.OPENSEARCH_PASS` | Senha do OpenSearch e senha inicial do administrador | `OPENSEARCH_PASS` |
+| `airflow.secrets.OPENSEARCH_USER` | Usuário utilizado para acessar o OpenSearch | `OPENSEARCH_USER` (**altere em produção**) |
+| `airflow.secrets.OPENSEARCH_PASS` | Senha do OpenSearch e senha inicial do administrador | `OPENSEARCH_PASS` (**altere em produção**) |
 | `postgres.image.repository` | Repositório da imagem do PostgreSQL | `postgres` |
 | `postgres.image.tag` | Tag da imagem do PostgreSQL | `15` |
 | `postgres.service.port` | Porta do PostgreSQL | `5432` |
-| `postgres.secrets.postgres-user` | Usuário do PostgreSQL | `postgres` |
-| `postgres.secrets.postgres-password` | Senha do PostgreSQL | `postgres` |
+| `postgres.secrets.postgres-user` | Usuário do PostgreSQL | `postgres` (**altere em produção**) |
+| `postgres.secrets.postgres-password` | Senha do PostgreSQL | `postgres` (**altere em produção**) |
 | `postgres.secrets.postgres-db` | Banco de metadados do Airflow | `airflow` |
 | `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `1Gi` |
 | `smtp4dev.enabled` | Implanta o SMTP4dev no cluster | `true` |
