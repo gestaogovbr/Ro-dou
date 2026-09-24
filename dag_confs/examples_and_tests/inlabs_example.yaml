@@ -11,8 +11,7 @@ dag:
     sources:
     - INLABS
     terms:
-      - tecnologia
-      - informação
+      - Sant'Anna
     use_summary: True
   report:
     emails:
