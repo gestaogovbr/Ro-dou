@@ -77,6 +77,9 @@ class INLABSSQLModeHook(INLABSHook):
     @staticmethod
     def _generate_sql(payload: dict) -> dict:
         """Generate legacy SQL queries for INLABS search terms."""
+        def escape_sql_literal(value: str) -> str:
+            return value.replace("'", "''")
+
         allowed_keys = [
             "name",
             "pubname",
@@ -131,6 +134,7 @@ class INLABSSQLModeHook(INLABSHook):
                                     sub_conditions.append(operator)
                                 else:
                                     operator = "~*" if like_positive else "!~*"
+                                    sub_term = escape_sql_literal(sub_term)
                                     sub_conditions.append(
                                         rf"dou_inlabs.unaccent({key}) {operator} dou_inlabs.unaccent('\y{sub_term}\y')",
                                     )
@@ -138,6 +142,7 @@ class INLABSSQLModeHook(INLABSHook):
                             key_conditions.append("(" + "".join(sub_conditions) + ")")
 
                         else:
+                            term = escape_sql_literal(term)
                             key_conditions.append(
                                 rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{term}\y')"
                             )
@@ -149,7 +154,7 @@ class INLABSSQLModeHook(INLABSHook):
                     "("
                     + " AND ".join(
                         [
-                            rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{value}')"
+                            rf"dou_inlabs.unaccent(artcategory) !~* dou_inlabs.unaccent('^{escape_sql_literal(value)}')"
                             for value in values
                         ]
                     )
@@ -160,7 +165,7 @@ class INLABSSQLModeHook(INLABSHook):
                     "("
                     + " AND ".join(
                         [
-                            rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{value}\y')"
+                            rf"dou_inlabs.unaccent(texto) !~* dou_inlabs.unaccent('\y{escape_sql_literal(value)}\y')"
                             for value in values
                         ]
                     )
@@ -171,7 +176,7 @@ class INLABSSQLModeHook(INLABSHook):
                     "("
                     + " OR ".join(
                         [
-                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{value}\y')"
+                            rf"dou_inlabs.unaccent({key}) ~* dou_inlabs.unaccent('\y{escape_sql_literal(value)}\y')"
                             for value in values
                         ]
                     )
