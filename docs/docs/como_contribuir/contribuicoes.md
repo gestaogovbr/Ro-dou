@@ -66,5 +66,13 @@ A colaboração neste repositório deve sempre ocorrer em um ambiente de respeit
 **Não será tolerado nenhum tipo de discurso ou comportamento ofensivo**, discriminatório, agressivo ou de ódio. Isso inclui, mas não se limita a: racismo, sexismo, homofobia, xenofobia ou qualquer outra forma de preconceito. A manutenção de um ambiente saudável, inclusivo e profissional é responsabilidade de todos os colaboradores e condição essencial para a participação neste projeto.
 
 
+### 🔒 Segurança
+
+Encontrou uma vulnerabilidade? **Não abra issue pública nem publique no Discord.**
+Envie o reporte em privado para **ro-dou-suporte@gestao.gov.br**, informando a
+versão, os passos para reproduzir e o impacto. Consulte a
+[Política de Segurança](https://github.com/gestaogovbr/Ro-dou/blob/main/SECURITY.md)
+para ver as versões com suporte e as demais orientações.
+
 ### 📧 Contato
 Caso deseje expressar outros comentários, críticas, dúvidas ou sugestões, [contate-nos](contato.md).
