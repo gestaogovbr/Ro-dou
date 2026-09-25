@@ -44,6 +44,20 @@ Para atualizar uma instalação existente:
 helm upgrade rodou ./helm/ro-dou -f my-values.yaml
 ```
 
+!!! warning "Ao atualizar: DAGs com `from_db_select`"
+    A partir desta versão, `from_db_select` só aceita as conexões listadas na
+    Variable `ro_dou_allowed_terms_conn_ids`, e o chart não a define por
+    padrão. Antes do `helm upgrade`, inclua no `my-values.yaml` todas as
+    conexões usadas pelos YAMLs existentes, conforme
+    [Conexões autorizadas para `from_db_select`](https://github.com/gestaogovbr/Ro-dou/blob/main/helm/ro-dou/README.md#conexões-autorizadas-para-from_db_select).
+    Caso contrário, a task `select_terms_from_db` dessas DAGs passa a falhar.
+
+    Revise também o `sql` dos YAMLs: consultas que não sejam uma única
+    instrução `SELECT` (ou `WITH ... SELECT`) são rejeitadas na validação do
+    YAML e a DAG deixa de ser gerada. Consultas que retornem mais de 10.000
+    linhas fazem a task falhar. Os requisitos completos estão em
+    [Exemplos](../como_funciona/exemplos.md#exemplo-3).
+
 ## Desinstalação
 
 ```bash

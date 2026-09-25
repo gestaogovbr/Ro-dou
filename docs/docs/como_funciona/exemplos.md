@@ -117,8 +117,11 @@ dag:
     - **Somente leitura:** o `sql` deve ser uma única instrução `SELECT`
       (ou `WITH ... SELECT`). Comandos de escrita, `SELECT ... INTO`,
       `EXEC`, `COPY` e múltiplas instruções são rejeitados na validação do
-      YAML. No PostgreSQL, a consulta roda em transação `READ ONLY` com
-      *timeout* de 60 segundos. O resultado é limitado a 10.000 linhas.
+      YAML: nesse caso, a DAG não é gerada e deixa de aparecer no Airflow.
+      No PostgreSQL, a consulta roda em transação `READ ONLY` com
+      *timeout* de 60 segundos. Se a consulta retornar mais de 10.000
+      linhas, a task `select_terms_from_db` falha; o resultado não é
+      truncado.
     - **Usuário do banco:** cadastre as conexões autorizadas com um usuário
       que tenha apenas permissão de `SELECT` na tabela ou *view* de termos.
       As validações acima reduzem o risco, mas é essa permissão que define o
