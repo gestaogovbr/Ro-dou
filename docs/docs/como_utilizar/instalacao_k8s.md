@@ -16,6 +16,13 @@ sincronização das configurações das DAGs via Git (git-rsync).
 
 ## Instalação
 
+> **Atenção: altere as credenciais antes de usar em produção.**
+> Os valores padrão do chart (chaves Fernet, JWT e da API, `admin`/`admin`,
+> senhas do PostgreSQL e do OpenSearch) são de desenvolvimento e estão
+> publicados no repositório. Sobrescreva-os em um `my-values.yaml` que não
+> seja versionado, conforme a seção
+> [Antes de usar em produção](#antes-de-usar-em-producao).
+
 Para instalar o chart com o nome de release `rodou`:
 
 ```bash
@@ -118,6 +125,38 @@ para a lista completa de valores.
 
 O chart traz valores de desenvolvimento em `airflow.secrets`
 (`AIRFLOW__CORE__FERNET_KEY`, usuário/senha `admin`/`admin`,
-`AIRFLOW__API_AUTH__JWT_SECRET`, entre outros), além das senhas padrão de
-PostgreSQL e OpenSearch. Sobrescreva todos esses valores no seu
-`my-values.yaml` antes de instalar em um ambiente real.
+`AIRFLOW__API_AUTH__JWT_SECRET`, `AIRFLOW__API__SECRET_KEY`, credenciais de
+SMTP e do INLABS, entre outros), além das senhas padrão de PostgreSQL
+(`postgres.secrets`) e OpenSearch. Como esses valores são públicos, sobrescreva
+**todos** no seu `my-values.yaml` antes de instalar em um ambiente real, não
+versione esse arquivo e prefira Secrets gerenciados fora do repositório.
+
+### OpenSearch em produção
+
+> **Atenção: por padrão, o OpenSearch roda sem autenticação e sem TLS.**
+> O chart inicia a instância opcional com `opensearch.security.disablePlugin: true`,
+> o que desliga o plugin de segurança. Use-a apenas em desenvolvimento e testes.
+
+Em produção, utilize um OpenSearch externo com o plugin de segurança e TLS
+habilitados, com certificado válido:
+
+```yaml
+opensearch:
+  enabled: false
+  connection:
+    enabled: true
+    host: https://opensearch.exemplo.gov.br
+
+airflow:
+  secrets:
+    OPENSEARCH_USER: "<usuario-dedicado>"
+    OPENSEARCH_PASS: "<senha-forte>"
+```
+
+Com um `host` iniciado por `https://`, o Ro-DOU já usa TLS, mas por padrão não
+valida o certificado do servidor. Defina a variável do Airflow
+`OPENSEARCH_VERIFY_CERTS` com o valor `true`; o chart não a cria. Não use
+`false`: a variável é lida como texto e qualquer valor não vazio conta como
+verdadeiro. Prefira um usuário dedicado, com acesso restrito ao índice `dou`, e
+restrinja o acesso de rede à porta do OpenSearch. Mais detalhes no
+[README do chart](https://github.com/gestaogovbr/Ro-dou/blob/main/helm/ro-dou/README.md).

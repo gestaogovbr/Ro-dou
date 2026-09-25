@@ -1,4 +1,8 @@
 # Default values for ro-dou chart
+# ATENÇÃO: os valores de secrets deste arquivo (Airflow, PostgreSQL, OpenSearch,
+# SMTP, INLABS) são apenas para desenvolvimento e são públicos. Em produção,
+# sobrescreva TODOS em um arquivo de valores próprio (nunca versionado) ou use
+# --set/Secrets externos. Veja o README do chart.
 
 # Airflow configuration
 airflow:
@@ -43,10 +47,16 @@ airflow:
     # Quando definida aqui, tem precedência sobre a Variable criada na
     # interface. Use apenas conexões com usuário de banco somente leitura.
     # AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS: "conn_termos_unidade_a,conn_termos_unidade_b"
+
+  # ATENÇÃO: todos os valores abaixo são de desenvolvimento e públicos.
+  # Em produção, sobrescreva no mínimo: FERNET_KEY, JWT_SECRET, API__SECRET_KEY,
+  # usuário/senha do admin, SMTP_USER/SMTP_PASSWORD, INLABS_PORTAL_LOGIN/PASSWORD
+  # e OPENSEARCH_USER/OPENSEARCH_PASS. Não versione os valores reais.
   secrets:
     AIRFLOW__CORE__FERNET_KEY: "Uqv6pwYWJn7xifR3QAkifMTkupos8mkxaQL2Q7Ydsqw="
     AIRFLOW__API_AUTH__JWT_SECRET: "42"
     AIRFLOW__API__SECRET_KEY: "42"
+    # Credenciais padrão do administrador: troque antes de expor o Airflow.
     _AIRFLOW_WWW_USER_USERNAME: "admin"
     _AIRFLOW_WWW_USER_PASSWORD: "admin"
     # Leave empty to use the smtp4dev Service deployed by this chart.
@@ -58,6 +68,8 @@ airflow:
     AIRFLOW__SMTP__SMTP_PASSWORD: ""
     INLABS_PORTAL_LOGIN: ""
     INLABS_PORTAL_PASSWORD: ""
+    # Credenciais de exemplo. Se habilitar o OpenSearch, troque-as (veja a seção
+    # "Configuração do OpenSearch" do README do chart).
     OPENSEARCH_USER: "OPENSEARCH_USER"
     OPENSEARCH_PASS: "OPENSEARCH_PASS"
   pvc:
@@ -106,6 +118,8 @@ postgres:
     pullPolicy: IfNotPresent
   service:
     port: 5432
+  # ATENÇÃO: usuário e senha de desenvolvimento e públicos. Em produção, troque
+  # ambos: eles também compõem as connection strings do Airflow.
   secrets:
     postgres-user: "postgres"
     postgres-password: "postgres"
@@ -137,6 +151,11 @@ opensearch:
     enabled: false
     # Leave empty to use the OpenSearch Service deployed by this chart.
     host: ""
+  # ATENÇÃO: o padrão (disablePlugin: true) desliga autenticação e TLS do
+  # OpenSearch. Use a instância deste chart apenas em desenvolvimento/testes e
+  # não a exponha fora do cluster. Em produção, use um OpenSearch externo com o
+  # plugin de segurança e TLS habilitados (veja "OpenSearch em produção" no
+  # README do chart). Mudar apenas este valor para false não é suficiente.
   security:
     disablePlugin: true
   persistence:
