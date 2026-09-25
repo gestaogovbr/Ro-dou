@@ -12,3 +12,4 @@ Jinja2==3.1.4
 opensearch-py>=3.1.0
 lxml>=6.0.2
 nh3==0.3.7
+sqlparse>=0.5.0

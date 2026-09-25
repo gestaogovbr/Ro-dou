@@ -11,7 +11,7 @@ dag:
           UNION SELECT 'higienização das mãos' as TERMO, 'Ações efetivas' as GRUPO
           UNION SELECT 'uso de máscara' as TERMO, 'Ações efetivas' as GRUPO
           UNION SELECT 'distanciamento social' as TERMO, 'Ações efetivas' as GRUPO
-        conn_id: example_database_conn
+        conn_id: example_database_conn_name
     date: MES
   report:
     emails:

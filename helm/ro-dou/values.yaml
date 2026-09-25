@@ -41,6 +41,12 @@ airflow:
     _AIRFLOW_DB_MIGRATE: "true"
     RO_DOU__DAG_CONF_DIR: "/opt/airflow/dags/ro_dou/dag_confs"
     AIRFLOW_VAR_PATH_TMP: "/tmp"
+    # Conexões que os YAMLs podem usar em `from_db_select` (lista JSON ou
+    # separada por vírgulas). Sem esta variável nem a Variable
+    # `ro_dou_allowed_terms_conn_ids` no Airflow, nenhuma conexão é aceita.
+    # Quando definida aqui, tem precedência sobre a Variable criada na
+    # interface. Use apenas conexões com usuário de banco somente leitura.
+    # AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS: "conn_termos_unidade_a,conn_termos_unidade_b"
 
   # ATENÇÃO: todos os valores abaixo são de desenvolvimento e públicos.
   # Em produção, sobrescreva no mínimo: FERNET_KEY, JWT_SECRET, API__SECRET_KEY,

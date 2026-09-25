@@ -7,6 +7,13 @@ O Ro-DOU é uma ferramenta que efetua um clipping do Diário Oficial da União (
 
 Para acessar a página de documentação do Ro-DOU, que contém detalhes sobre o funcionamento da ferramenta e o modo de utilizá-la, além de outras informações importantes, acesse o link <https://gestaogovbr.github.io/Ro-dou/>.
 
+> **Atenção ao atualizar:** buscas com termos vindos de banco de dados
+> (`from_db_select`) agora só aceitam conexões autorizadas na Variable do
+> Airflow `ro_dou_allowed_terms_conn_ids` e consultas compostas por uma única
+> instrução `SELECT`. Configure essa Variable antes de atualizar para que as
+> DAGs existentes não falhem. Veja os
+> [requisitos do `from_db_select`](https://gestaogovbr.github.io/Ro-dou/como_funciona/exemplos/#exemplo-3).
+
 O Ro-DOU é uma solução desenvolvida pela Secretaria de Gestão e Inovação do [Ministério da Gestão e da Inovação em Serviços Públicos](https://www.gov.br/gestao/pt-br).
 
 <p>

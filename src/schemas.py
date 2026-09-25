@@ -34,13 +34,23 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from ai.config import prompt, executive_summary_prompt
 from ai.provider import AIProvider
+from utils.sql_guard import validate_select_only
 
 
 class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
     sql: str = Field(description="SQL query to fetch the search terms")
-    conn_id: str = Field(description="Airflow connection ID to use for the SQL query")
+    conn_id: str = Field(
+        description="Airflow connection ID to use for the SQL query. Must be "
+        "listed in the Airflow Variable 'ro_dou_allowed_terms_conn_ids'"
+    )
+
+    @field_validator("sql")
+    @staticmethod
+    def validate_sql(sql: str) -> str:
+        """Accepts only a single read-only SELECT statement."""
+        return validate_select_only(sql)
 
 
 class FetchTermsConfig(BaseModel):

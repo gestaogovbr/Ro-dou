@@ -62,6 +62,15 @@ Para atualizar uma instalação existente:
 helm upgrade rodou ./helm/ro-dou -f my-values.yaml
 ```
 
+> **Atenção:** `from_db_select` passou a aceitar apenas as conexões listadas
+> na Variable `ro_dou_allowed_terms_conn_ids`, que o chart não define por
+> padrão. Antes do `helm upgrade`, inclua no `my-values.yaml` as conexões
+> usadas pelos YAMLs existentes, conforme
+> [Conexões autorizadas para `from_db_select`](#conexões-autorizadas-para-from_db_select);
+> caso contrário, a task `select_terms_from_db` dessas DAGs falha. Revise
+> também o `sql` desses YAMLs: consultas que não sejam uma única instrução
+> `SELECT` impedem a geração da DAG.
+
 ## Desinstalação
 
 ```bash
@@ -136,6 +145,24 @@ Os principais valores configuráveis são:
 | `opensearch.persistence.storageClassName` | `StorageClass` dos dados do OpenSearch | `""` |
 
 Consulte [`values.yaml`](./values.yaml) para ver todos os valores disponíveis.
+
+## Conexões autorizadas para `from_db_select`
+
+Os YAMLs que buscam termos com `from_db_select` só podem usar as conexões
+listadas na Variable `ro_dou_allowed_terms_conn_ids`. Sem ela, nenhuma
+conexão é aceita. Defina a lista no `my-values.yaml`:
+
+```yaml
+airflow:
+  config:
+    AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS: "conn_termos_unidade_a,conn_termos_unidade_b"
+```
+
+Quando definida assim, ela tem precedência sobre uma Variable de mesmo nome
+criada na interface do Airflow. Não declare a chave com valor vazio: isso
+anularia a Variable da interface. Use apenas conexões cujo usuário de banco
+tenha somente `SELECT` nas tabelas de termos, principalmente quando os YAMLs
+vierem de outro repositório via `gitRsync`.
 
 ## Exposição do Airflow por Ingress
 
