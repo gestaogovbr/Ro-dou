@@ -143,17 +143,12 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 
 > **Observação:** Quando o valor é `False` (padrão), o OpenSearch **não precisa estar disponível** no ambiente. A task de indexação é automaticamente ignorada na DAG `ro-dou_inlabs_load_pg`.
 
-### Termos a partir de banco de dados (`from_db_select`)
-
-As buscas que leem os termos de uma consulta SQL (`from_db_select`) só podem usar as conexões listadas na variável do Airflow `ro_dou_allowed_terms_conn_ids`. Sem ela, nenhuma conexão é aceita e a task `select_terms_from_db` falha.
-
-O `make run` já cria essa variável com `example_database_conn_name`, a conexão usada pelo YAML de exemplo `terms_from_db_example`. Para criá-la de novo:
-
-```bash
-make create-connections-ids-variable
-```
-
-Para liberar outras conexões, edite a variável em [http://localhost:8080/variable/list/](http://localhost:8080/variable/list/). O valor aceita uma lista JSON (`["conn_a", "conn_b"]`) ou nomes separados por vírgula ou por linha. Libere apenas conexões cujo usuário de banco tenha somente permissão de leitura nas tabelas de termos. Os demais requisitos estão em [Exemplos](../como_funciona/exemplos.md#exemplo-3).
+> **Atenção:** o OpenSearch do `docker-compose.yml` roda com o plugin de
+> segurança desabilitado (`DISABLE_SECURITY_PLUGIN=true`), ou seja, sem
+> autenticação e sem TLS, e publica a porta 9200 no host. Ele é destinado ao
+> ambiente local de desenvolvimento; não o utilize em produção nem o exponha em
+> uma rede. Para produção, use um OpenSearch externo com segurança e TLS
+> habilitados, conforme [OpenSearch em produção](instalacao_k8s.md#opensearch-em-producao).
 
 ### Resumos automáticos com IA generativa
 
