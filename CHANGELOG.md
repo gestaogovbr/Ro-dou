@@ -1,6 +1,24 @@
 # Changelog
 
 ## What's Changed
+## [0.13.2] - 2026-09-28
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Adicionar instruções específicas para agentes de IA que atuem no repositório Ro-DOU. by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/350
+* fix: corrige UniqueViolation em article_raw ao carregar dados do INLABS by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/349
+* fix: replace shell commands with Python filesystem APIs by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/351
+* Removes `AIRFLOW__CORE__ENABLE_XCOM_PICKLING` by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/352
+* docs: add security and privacy guidance for AI features by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/354
+* fix: escape apostrophes in INLABS SQL search terms by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/357
+* docs: adiciona política de segurança e canal privado de reporte by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/355
+* docs: avisos de credenciais padrão e de segurança do OpenSearch no chart Helm by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/353
+* fix: sanitiza e-mails e restringe conexões/SQL em from_db_select by @Heitorh3 in https://github.com/gestaogovbr/Ro-dou/pull/358
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.13.1...0.13.2
+
 ## [0.13.1] - 2026-09-10
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
