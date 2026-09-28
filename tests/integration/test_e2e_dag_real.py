@@ -28,30 +28,42 @@ pytestmark = pytest.mark.e2e
 RECIPIENT = "destination@economia.gov.br"
 
 
-def _ensure_inlabs_load_dag_succeeded_today():
-    """Ensure the INLABS loading DAG has succeeded today before running the
-    real INLABS search test. If not, trigger it and wait until the load is
-    complete successfully."""
+def _ensure_inlabs_load_dag_succeeded_today(force_run: bool = True):
+    """Ensure the INLABS loading DAG has run successfully for today's
+    reference date. For a true end-to-end validation we optionally force a
+    new run of the loader even if a successful run exists already.
+
+    After the run succeeds, the helper verifies the `dou_inlabs.article_raw`
+    table contains at least one row for today's reference date to assert the
+    download/persistence steps executed as expected.
+    """
     dag_id = "ro-dou_inlabs_load_pg"
     success_state = DagRunState.SUCCESS
     today = datetime.utcnow().date()
 
-    with settings.SQL_ALCHEMY_ENGINE.connect() as conn:
-        rows = conn.execute(
-            text(
-                """
-                SELECT execution_date
-                FROM dag_run
-                WHERE dag_id = :dag_id AND state = :state
-                ORDER BY execution_date DESC
-                """
-            ),
-            {"dag_id": dag_id, "state": success_state},
-        ).fetchall()
+    def _has_success_today():
+        from sqlalchemy import create_engine
 
-    if rows and any(row[0].date() == today for row in rows):
+        engine = create_engine(settings.SQL_ALCHEMY_CONN)
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT start_date
+                    FROM dag_run
+                    WHERE dag_id = :dag_id AND state = :state
+                    ORDER BY start_date DESC
+                    """
+                ),
+                {"dag_id": dag_id, "state": success_state},
+            ).fetchall()
+        return bool(rows and any(r[0].date() == today for r in rows))
+
+    # If force_run is False and we already have a success today, nothing else to do
+    if not force_run and _has_success_today():
         return
 
+    # Trigger a fresh run to exercise authentication, download and load steps
     subprocess.run(
         ["airflow", "dags", "trigger", dag_id],
         check=True,
@@ -59,26 +71,27 @@ def _ensure_inlabs_load_dag_succeeded_today():
         text=True,
     )
 
-    deadline = time.time() + 600
+    deadline = time.time() + 1200
     while time.time() < deadline:
-        with settings.SQL_ALCHEMY_ENGINE.connect() as conn:
-            rows = conn.execute(
-                text(
-                    """
-                    SELECT execution_date
-                    FROM dag_run
-                    WHERE dag_id = :dag_id AND state = :state
-                    ORDER BY execution_date DESC
-                    """
-                ),
-                {"dag_id": dag_id, "state": success_state},
-            ).fetchall()
-        if rows and any(row[0].date() == today for row in rows):
-            return
+        if _has_success_today():
+            # verify data persisted in the target table for today's date
+            from sqlalchemy import create_engine
+
+            engine = create_engine(settings.SQL_ALCHEMY_CONN)
+            with engine.connect() as conn:
+                count = conn.execute(
+                    text(
+                        "SELECT count(*) FROM dou_inlabs.article_raw WHERE DATE(pubdate) = :today"
+                    ),
+                    {"today": today},
+                ).scalar()
+            if count and count > 0:
+                return
+            # If DAG succeeded but table empty, keep waiting briefly for eventual consistency
         time.sleep(15)
 
     raise AssertionError(
-        f"A DAG {dag_id} não teve sucesso para hoje antes do teste real do INLABS."
+        f"A DAG {dag_id} não carregou dados válidos para {today} antes do teste real do INLABS."
     )
 
 
@@ -130,7 +143,8 @@ def test_e2e_dag_run_real_dou_search(dag_gen: DouDigestDagGenerator, config_file
 @pytest.mark.parametrize("config_file", ["inlabs_example.yaml"], ids=["inlabs"])
 def test_e2e_dag_run_real_inlabs_search(dag_gen: DouDigestDagGenerator, config_file):
     """Validate the real INLABS source end-to-end without mocking the search layer."""
-    _ensure_inlabs_load_dag_succeeded_today()
+    # Force a fresh load run to exercise portal auth, download and persistence
+    _ensure_inlabs_load_dag_succeeded_today(force_run=True)
     dag = _build_real_dag(dag_gen, config_file)
 
     with patch("searchers.time.sleep"), patch(
@@ -139,6 +153,39 @@ def test_e2e_dag_run_real_inlabs_search(dag_gen: DouDigestDagGenerator, config_f
         dag_run = dag.test()
 
     _assert_email_outcome(dag_run, mock_send_email)
+
+    # Collect exec_search task XComs to ensure at least one publication was found
+    search_results = []
+    counter = 1
+    while True:
+        task_id = f"exec_searchs.exec_search_{counter}"
+        if task_id not in dag.task_dict:
+            break
+        ti = dag_run.get_task_instance(task_id)
+        try:
+            val = ti.xcom_pull(task_ids=task_id)
+        except Exception:
+            val = None
+        search_results.append(val)
+        counter += 1
+
+    # Flatten and check presence of at least one match
+    has_match = False
+    for res in search_results:
+        if res:
+            # Expect hook transforms to return iterable-like results
+            try:
+                if isinstance(res, (list, tuple)) and len(res) > 0:
+                    has_match = True
+                    break
+                if isinstance(res, dict) and any(v for v in res.values()):
+                    has_match = True
+                    break
+            except Exception:
+                has_match = True
+                break
+
+    assert has_match, "Nenhuma publicação encontrada pela DAG de busca do INLABS após a carga."
 
 
 @pytest.mark.parametrize("config_file", ["qd_example.yaml"], ids=["qd"])
