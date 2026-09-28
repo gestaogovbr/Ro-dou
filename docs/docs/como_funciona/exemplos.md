@@ -108,12 +108,6 @@ dag:
 ```
 
 !!! warning "Requisitos de segurança do `from_db_select`"
-    - **Conexões autorizadas:** o `conn_id` precisa constar na Variable do
-      Airflow `ro_dou_allowed_terms_conn_ids`, definida pela equipe que opera
-      o Ro-DOU (lista JSON, como `["airflow_conn_id"]`, ou nomes separados
-      por vírgula ou por linha). Ela também pode ser definida pela variável de ambiente
-      `AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS`. Sem essa Variable, nenhuma
-      conexão é aceita e a task `select_terms_from_db` falha.
     - **Somente leitura:** o `sql` deve ser uma única instrução `SELECT`
       (ou `WITH ... SELECT`). Comandos de escrita, `SELECT ... INTO`,
       `EXEC`, `COPY` e múltiplas instruções são rejeitados na validação do
@@ -122,11 +116,10 @@ dag:
       *timeout* de 60 segundos. Se a consulta retornar mais de 10.000
       linhas, a task `select_terms_from_db` falha; o resultado não é
       truncado.
-    - **Usuário do banco:** cadastre as conexões autorizadas com um usuário
-      que tenha apenas permissão de `SELECT` na tabela ou *view* de termos.
-      As validações acima reduzem o risco, mas é essa permissão que define o
-      que um YAML consegue ler. Nunca autorize conexões internas do Ro-DOU,
-      como `inlabs_db`.
+    - **Usuário do banco:** cadastre as conexões usadas em `from_db_select`
+      com um usuário que tenha apenas permissão de `SELECT` na tabela ou
+      *view* de termos. As validações acima reduzem o risco, mas é essa
+      permissão que define o que um YAML consegue ler.
 
 ### Exemplo 4
 

@@ -1,7 +1,6 @@
 """Module for selecting terms."""
 
 import ast
-import json
 from contextlib import closing
 
 import pandas as pd
@@ -17,10 +16,6 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 from utils.sql_guard import validate_select_only
 
-# Variable do Airflow (ou AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS) com os
-# conn_ids que os YAMLs podem usar em `from_db_select`. Sem ela, nenhuma
-# conexão é permitida.
-ALLOWED_CONN_IDS_VARIABLE = "ro_dou_allowed_terms_conn_ids"
 # Tempo máximo da consulta (PostgreSQL), em milissegundos.
 STATEMENT_TIMEOUT_MS = 60_000
 # Número máximo de linhas aceitas como termos.
@@ -107,16 +102,13 @@ class TermSelector:
             str: JSON string (``orient="columns"``) with the query results.
 
         Raises:
-            ValueError: If ``sql`` is not a single SELECT statement, if
-                ``conn_id`` is not listed in the Airflow Variable
-                ``ro_dou_allowed_terms_conn_ids`` or if the query returns more
-                than ``MAX_TERM_ROWS`` rows.
+            ValueError: If ``sql`` is not a single SELECT statement or if the
+                query returns more than ``MAX_TERM_ROWS`` rows.
             RuntimeError: If MSSQL is requested but the provider package is not
                 installed.
             Exception: If the connection type is not supported.
         """
         validate_select_only(sql)
-        _ensure_conn_id_allowed(conn_id)
 
         conn_type = BaseHook.get_connection(conn_id).conn_type
         if conn_type == "mssql":
@@ -142,36 +134,6 @@ class TermSelector:
         terms_df = terms_df.map(lambda x: str.strip(x) if pd.notnull(x) else "")
 
         return terms_df.to_json(orient="columns")
-
-
-def _allowed_conn_ids() -> set[str]:
-    """Lê a lista de conn_ids permitidos (JSON ou separada por vírgula/linha)."""
-    raw_value = Variable.get(ALLOWED_CONN_IDS_VARIABLE, default=None)
-    if not raw_value:
-        return set()
-
-    if isinstance(raw_value, list):
-        values = raw_value
-    else:
-        raw_value = str(raw_value).strip()
-        if raw_value.startswith("["):
-            values = json.loads(raw_value)
-        else:
-            values = raw_value.replace("\n", ",").split(",")
-
-    return {str(value).strip() for value in values if str(value).strip()}
-
-
-def _ensure_conn_id_allowed(conn_id: str) -> None:
-    """Impede que o YAML use conexões não autorizadas pela operação."""
-    allowed = _allowed_conn_ids()
-    if conn_id not in allowed:
-        raise ValueError(
-            f"A conexão '{conn_id}' não está autorizada para `from_db_select`. "
-            f"Inclua-a na Variable do Airflow '{ALLOWED_CONN_IDS_VARIABLE}' "
-            "(lista JSON ou separada por vírgulas) e garanta que o usuário "
-            "dessa conexão tenha apenas permissão de leitura nas tabelas de termos."
-        )
 
 
 def _fetch_dataframe(db_hook, sql: str, session_statements: list[str]) -> pd.DataFrame:

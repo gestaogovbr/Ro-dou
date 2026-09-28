@@ -41,10 +41,7 @@ class DBSelect(BaseModel):
     """Represents the structure of the 'from_db_select' field in the YAML file."""
 
     sql: str = Field(description="SQL query to fetch the search terms")
-    conn_id: str = Field(
-        description="Airflow connection ID to use for the SQL query. Must be "
-        "listed in the Airflow Variable 'ro_dou_allowed_terms_conn_ids'"
-    )
+    conn_id: str = Field(description="Airflow connection ID to use for the SQL query")
 
     @field_validator("sql")
     @staticmethod
