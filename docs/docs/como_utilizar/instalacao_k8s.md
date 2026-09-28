@@ -45,14 +45,7 @@ helm upgrade rodou ./helm/ro-dou -f my-values.yaml
 ```
 
 !!! warning "Ao atualizar: DAGs com `from_db_select`"
-    A partir desta versão, `from_db_select` só aceita as conexões listadas na
-    Variable `ro_dou_allowed_terms_conn_ids`, e o chart não a define por
-    padrão. Antes do `helm upgrade`, inclua no `my-values.yaml` todas as
-    conexões usadas pelos YAMLs existentes, conforme
-    [Conexões autorizadas para `from_db_select`](https://github.com/gestaogovbr/Ro-dou/blob/main/helm/ro-dou/README.md#conexões-autorizadas-para-from_db_select).
-    Caso contrário, a task `select_terms_from_db` dessas DAGs passa a falhar.
-
-    Revise também o `sql` dos YAMLs: consultas que não sejam uma única
+    Revise o `sql` dos YAMLs que usam `from_db_select`: consultas que não sejam uma única
     instrução `SELECT` (ou `WITH ... SELECT`) são rejeitadas na validação do
     YAML e a DAG deixa de ser gerada. Consultas que retornem mais de 10.000
     linhas fazem a task falhar. Os requisitos completos estão em
@@ -119,9 +112,8 @@ kubectl -n airflow-rodou apply -f k8s/git-rsync/git-rsync-cronjob.yml
     Os arquivos sincronizados viram DAGs sem outra revisão. Proteja a branch
     sincronizada e exija revisão da equipe responsável pelo Ro-DOU (por
     exemplo, com `CODEOWNERS`), principalmente para mudanças em
-    `from_db_select`. Liste em `AIRFLOW_VAR_RO_DOU_ALLOWED_TERMS_CONN_IDS`
-    apenas as conexões que as unidades podem consultar. Elas devem usar
-    usuários de banco somente leitura, restritos às tabelas de termos.
+    `from_db_select`. As conexões usadas nesses YAMLs devem ter usuários de
+    banco somente leitura, restritos às tabelas de termos.
 
 ## Configuração
 

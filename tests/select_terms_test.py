@@ -50,9 +50,6 @@ class TestSelectTermsFromAirflowVariable:
                 term_selector.select_terms_from_airflow_variable("my_var")
 
 
-ALLOWED_CONN_IDS = '["my_pg_conn", "my_mssql_conn", "my_sqlite_conn"]'
-
-
 def _make_connection(conn_type: str):
     conn = MagicMock()
     conn.conn_type = conn_type
@@ -71,13 +68,6 @@ def _make_hook(rows, columns):
     return hook, db_conn, cursor
 
 
-@pytest.fixture()
-def allowed_conn_ids():
-    with patch("utils.select_terms.Variable.get", return_value=ALLOWED_CONN_IDS):
-        yield
-
-
-@pytest.mark.usefixtures("allowed_conn_ids")
 class TestSelectTermsFromDb:
     def test_postgres_returns_json(self, term_selector):
         hook, _, _ = _make_hook([("SILVA", "EPPGG"), ("SOUZA", "ATI")], ["term", "group"])
@@ -202,48 +192,3 @@ class TestSelectTermsFromDb:
                 )
 
         get_connection.assert_not_called()
-
-
-class TestConnIdAllowlist:
-    @pytest.mark.parametrize("variable_value", [None, ""])
-    def test_denies_everything_when_variable_is_missing(
-        self, term_selector, variable_value
-    ):
-        with patch(
-            "utils.select_terms.Variable.get", return_value=variable_value
-        ), patch("utils.select_terms.BaseHook.get_connection") as get_connection:
-            with pytest.raises(ValueError, match="ro_dou_allowed_terms_conn_ids"):
-                term_selector.select_terms_from_db("SELECT 1", "my_pg_conn")
-
-        get_connection.assert_not_called()
-
-    def test_denies_conn_id_not_listed(self, term_selector):
-        with patch(
-            "utils.select_terms.Variable.get", return_value='["other_conn"]'
-        ), patch("utils.select_terms.BaseHook.get_connection") as get_connection:
-            with pytest.raises(ValueError, match="'inlabs_db' não está autorizada"):
-                term_selector.select_terms_from_db("SELECT 1", "inlabs_db")
-
-        get_connection.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "variable_value",
-        [
-            '["a_conn", "my_pg_conn"]',
-            ["a_conn", "my_pg_conn"],
-            "a_conn, my_pg_conn",
-            "a_conn\nmy_pg_conn\n",
-        ],
-    )
-    def test_accepts_supported_variable_formats(self, term_selector, variable_value):
-        hook, _, _ = _make_hook([("SILVA",)], ["term"])
-
-        with patch(
-            "utils.select_terms.Variable.get", return_value=variable_value
-        ), patch(
-            "utils.select_terms.BaseHook.get_connection",
-            return_value=_make_connection("postgres"),
-        ), patch("utils.select_terms.PostgresHook", return_value=hook):
-            result = term_selector.select_terms_from_db("SELECT term FROM t", "my_pg_conn")
-
-        assert "term" in json.loads(result)
