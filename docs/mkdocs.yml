@@ -13,6 +13,7 @@ nav:
     - Usuários internos e externos: como_utilizar/usuarios.md
     - Notificação de erros: como_utilizar/notificacao_de_erros.md
     - Habilitando IA nos resumos: como_utilizar/habilitando_ia.md
+    - Enriquecimento com GLiNER2: como_utilizar/enriquecimento_gliner.md
   - Como funciona:
     - Introdução: como_funciona/intro_funcionamento.md
     - Compreendendo a pesquisa no D.O.U.: como_funciona/pesquisa_dou.md

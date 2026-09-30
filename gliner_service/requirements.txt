@@ -1,0 +1,17 @@
+# torch (CPU) é instalado à parte no Dockerfile, a partir do índice do PyTorch.
+#
+# O gliner2 2.0.0 declara transformers<5 no extra [local], mas o tokenizer do
+# modelo fastino/gliner2.5-multi-v1 só carrega com transformers>=5 e protobuf.
+# Por isso o pacote base é instalado sem extras e as dependências de
+# inferência são fixadas aqui.
+gliner2==2.0.0
+transformers==5.17.0
+protobuf==7.36.2
+peft==0.21.1
+safetensors==0.8.0
+numpy>=1.24,<3
+
+fastapi==0.141.1
+uvicorn==0.54.0
+pydantic==2.13.5
+PyYAML==6.0.3

@@ -6,6 +6,7 @@ import re
 from opensearchpy.helpers import bulk  # type: ignore
 from .client_open_search import OpenSearchClient  # type: ignore
 from .config import INDEX_NAME, MAPPING, COLUMNS_NAME  # type: ignore
+from .hashing import TEXT_HASH_FIELD, TEXT_HASH_MAPPING, text_hash  # type: ignore
 
 
 class Indexer:
@@ -37,10 +38,16 @@ class Indexer:
         self.client = OpenSearchClient().get_client()
 
     def _ensure_index(self):
-        """Create the OpenSearch index if it does not already exist."""
+        """Create the OpenSearch index if it does not already exist.
+
+        Existing indexes get the ``texto_plain_hash`` keyword field added to
+        their mapping (idempotent), so it is not dynamically mapped as text.
+        """
         if not self.client.indices.exists(index=INDEX_NAME):
             self.client.indices.create(index=INDEX_NAME, body=MAPPING)
             logging.info(f"Índice '{INDEX_NAME}' criado.")
+        else:
+            self.client.indices.put_mapping(index=INDEX_NAME, body=TEXT_HASH_MAPPING)
 
     def _fetch_from_postgres(self, pubdate: str, batch_size: int = 500):
         """Yield article documents from the INLABS PostgreSQL database.
@@ -83,18 +90,29 @@ class Indexer:
     def _to_bulk_actions(docs):
         """Wrap documents in the OpenSearch bulk action format.
 
+        Uses partial updates with upsert instead of full reindexing so fields
+        written by other pipelines (e.g. GLiNER2 ``entities``) survive when a
+        publication date is loaded again.
+
         Args:
             docs (Iterable[dict]): Documents to wrap.
 
         Yields:
-            dict: Bulk action dict with ``_index``, ``_id``, and ``_source``.
+            dict: Bulk ``update`` action with ``doc_as_upsert`` enabled.
         """
         for doc in docs:
             texto = doc.get("texto") or ""
             doc["texto_plain"] = re.sub(
                 r"\s+", " ", re.sub("<[^>]+>", " ", texto)
             ).strip()
-            yield {"_index": INDEX_NAME, "_id": doc["id"], "_source": doc}
+            doc[TEXT_HASH_FIELD] = text_hash(doc["texto_plain"])
+            yield {
+                "_op_type": "update",
+                "_index": INDEX_NAME,
+                "_id": doc["id"],
+                "doc": doc,
+                "doc_as_upsert": True,
+            }
 
     def run(self, pubdate: str, batch_size: int = 500):
         """Run the full PostgreSQL → OpenSearch indexing pipeline.

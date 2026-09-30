@@ -1,0 +1,121 @@
+# Configuração padrão do serviço de extração de entidades com GLiNER2.
+#
+# Alterar o modelo, as entidades, os limiares ou o chunking muda a impressão
+# digital da configuração (exposta em /info) e faz com que a DAG de
+# enriquecimento reprocesse as publicações.
+#
+# Os nomes das entidades viram campos do índice (`entities.<nome>`) e por
+# isso aceitam apenas letras minúsculas, dígitos e `_`.
+
+# Nome do modelo no Hugging Face Hub ou caminho de um diretório local com o
+# checkpoint (útil em ambientes sem acesso à internet).
+model: fastino/gliner2.5-multi-v1
+
+# Revisão (commit) do modelo no Hub, fixada para que o artefato baixado não
+# mude sem revisão. Ignorado quando `model` é um diretório local.
+revision: 2ca71aafb3446d9014e1c55c7ff51c9bc7209c47
+
+# Confiança mínima usada pelo modelo para devolver uma entidade.
+threshold: 0.45
+# Filtro adicional aplicado antes de responder (0 não filtra além do threshold).
+min_confidence: 0.0
+
+# Chunking por palavras feito pela própria biblioteca (batch_extract_long).
+chunk_size: 384
+chunk_overlap: 64
+# Quantidade de chunks inferidos por vez pelo modelo.
+batch_size: 8
+
+# Publicações acima deste tamanho são truncadas antes da extração.
+max_text_chars: 100000
+# Limite de valores distintos devolvidos por tipo de entidade em cada texto.
+max_entities_per_type: 200
+# Quantidade máxima de textos aceitos em uma requisição a /extract.
+max_texts_per_request: 32
+# Soma máxima de caracteres dos textos de uma requisição a /extract. Deve ser
+# maior ou igual a max_text_chars. Limita o tempo de cada requisição.
+max_chars_per_request: 100000
+
+entities:
+  person: >-
+    Nome completo de pessoa física mencionada no ato, incluindo servidor,
+    autoridade, beneficiário, nomeado, exonerado, designado ou signatário.
+    Não inclui nomes de órgãos, cargos, funções ou unidades administrativas.
+
+  organization: >-
+    Nome completo de órgão público, entidade, instituição, universidade,
+    empresa ou unidade administrativa, incluindo ministério, secretaria,
+    departamento, coordenação, diretoria, divisão, agência e tribunal.
+    Extraia o nome completo da organização quando ele estiver explícito
+    no texto. Exemplos válidos: "Agência Nacional de Mineração",
+    "Agência Nacional de Aviação Civil", "Ministério da Saúde",
+    "Universidade Federal de Uberlândia". Não extraia cargos, funções ou
+    títulos de pessoas. Não extraia palavras ou fragmentos isolados de nomes
+    de organizações. Não considere automaticamente uma sigla como
+    organização quando ela fizer parte do nome de um cargo, função, setor,
+    atividade ou outro contexto administrativo.
+
+  position: >-
+    Nome completo de cargo, emprego público, função, função comissionada
+    ou função gratificada exercida ou atribuída a uma pessoa. Extraia toda a
+    expressão que identifica o cargo ou função, sem artigos, preposições ou
+    palavras introdutórias que não façam parte do nome. Exemplos válidos:
+    "Coordenadora de Autuação e Fiscalização da TAH",
+    "Ministro de Estado da Saúde", "Diretor", "Reitor",
+    "Agente de Contratação". Na expressão "a Coordenadora de Autuação e
+    Fiscalização da TAH", extraia "Coordenadora de Autuação e Fiscalização
+    da TAH". Não extraia nomes de órgãos, entidades ou unidades
+    administrativas quando não representarem cargo ou função.
+
+  position_code: >-
+    Código ou símbolo que identifica especificamente um cargo, função
+    comissionada ou função gratificada de uma pessoa na administração
+    pública. Exemplos válidos incluem CCE 1.10, CCE 2.13, FCE 1.07,
+    FCE 2.10, DAS 101.4, CD-02, FG-1, FG-2, FC-5 e FUC-01. O código deve
+    estar associado explicitamente a um cargo ou função. Não extraia nomes
+    ou identificações de leis, decretos, códigos, regulamentos, atos
+    normativos ou publicações oficiais. "Código de Mineração", por exemplo,
+    não é um position_code.
+
+  location: >-
+    Nome próprio de localização geográfica real mencionada no documento,
+    como município, cidade, estado, unidade federativa, país, região
+    geográfica, distrito ou território. Exemplos válidos: Uberlândia,
+    Minas Gerais, Rio de Janeiro, Mato Grosso do Sul, Porto Lucena/RS,
+    Brasil e Bacia de Campos. Extraia somente o nome da localização
+    geográfica. Não extraia nomes de pessoas, órgãos, empresas, plataformas,
+    embarcações, instalações, sistemas ou unidades administrativas. Não
+    extraia indicadores ou códigos de localidade, códigos de aeroporto,
+    códigos de instalações, números, classes ou categorias. Não extraia
+    expressões como "14ª Região" quando fizerem parte do nome ou da
+    jurisdição de um órgão ou entidade.
+
+  process: >-
+    Número ou identificação de processo administrativo ou judicial,
+    incluindo Processo SEI, processo administrativo, processo judicial
+    e PAe. Exemplos: Processo SEI nº 59411.000212/2026-45 e
+    PAe 0024234-29.2026.4.01.8000.
+
+  registration: >-
+    Número de matrícula ou identificação funcional de servidor público,
+    incluindo matrícula SIAPE. Exemplo: SIAPE nº 2948141.
+
+  official_publication: >-
+    Nome ou identificação de ato normativo, legislativo, administrativo,
+    judicial ou publicação oficial mencionada no documento. Inclui atos e
+    diplomas normativos como Portaria, Decreto, Lei, Lei Complementar,
+    Medida Provisória, Resolução, Emenda Constitucional, Instrução
+    Normativa, Código, Regulamento, Despacho, Edital, Acórdão, Decisão,
+    Deliberação, Ato Declaratório, Ordem de Serviço, Parecer Normativo,
+    Provimento, Súmula, Circular, Comunicado, Autorização, Alvará e outros
+    tipos de atos ou publicações oficiais. Extraia tanto atos identificados
+    por número quanto nomes de atos, diplomas ou publicações mencionados sem
+    número. Exemplos válidos: "Portaria nº 1.234/2026", "Decreto nº 11.219",
+    "Lei nº 12.340/2010", "Lei Complementar nº 101/2000",
+    "Resolução CONFEF nº 633/2026", "Instrução Normativa SECOM nº 5",
+    "Despacho nº 202/2026/PRESIDÊNCIA", "Edital nº 15/2026",
+    "Código de Mineração", "Código Civil", "Alvará de Pesquisa". Não extraia
+    artigos, incisos, parágrafos ou outras subdivisões isoladamente. Não
+    extraia número de processo, Processo SEI, PAe, matrícula, SIAPE, CPF,
+    CNPJ, contrato, código de cargo ou função, ou outro identificador que
+    não corresponda a um ato, diploma normativo ou publicação oficial.

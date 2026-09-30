@@ -65,6 +65,7 @@ def test_build_keeps_non_text_filters(query_builder):
                 ],
             }
         },
+        "_source": {"excludes": ["entities", "gliner"]},
         "highlight": {
             "pre_tags": ["<%%>"],
             "post_tags": ["</%%>"],

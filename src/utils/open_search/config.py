@@ -132,6 +132,7 @@ MAPPING = {
                 },
             },
             "assina": {"type": "text"},
+            "texto_plain_hash": {"type": "keyword"},
             "embedding": {"type": "knn_vector", "dimension": 384},
         },
     },

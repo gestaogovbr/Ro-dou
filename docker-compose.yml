@@ -81,6 +81,10 @@ x-airflow-common: &airflow-common
     OPENSEARCH_USER: OPENSEARCH_USER
     OPENSEARCH_PASS: OPENSEARCH_PASS
 
+    # Enriquecimento com GLiNER2 (serviço `gliner`, perfil `gliner`)
+    RO_DOU_GLINER_ENABLED: 'false'
+    RO_DOU_GLINER_SERVICE_URL: http://gliner:8000
+
   volumes:
     - ./src:/opt/airflow/dags/ro_dou_src # for development purpose
     - ./mnt/airflow-logs:/opt/airflow/logs
@@ -171,6 +175,24 @@ services:
       retries: 10
     restart: always
 
+  # Serviço opcional de extração de entidades com GLiNER2. Só sobe com
+  # `make gliner-up` (perfil `gliner`), pois a imagem inclui o PyTorch.
+  # A porta não é publicada no host: o acesso é apenas pela rede do Compose.
+  gliner:
+    build:
+      context: ./gliner_service
+    container_name: gliner
+    profiles: ["gliner"]
+    # Opcional e não versionado: GLINER_API_TOKEN (exige Bearer em /info e
+    # /extract). Use o mesmo valor na variável RO_DOU_GLINER_API_TOKEN do Airflow.
+    env_file:
+      - path: ./gliner_service/.env
+        required: false
+    volumes:
+      - gliner-models:/models # cache do Hugging Face (modelo baixado)
+    restart: always
+
 volumes:
   smtp4dev-data:
   opensearch-data:
+  gliner-models:
