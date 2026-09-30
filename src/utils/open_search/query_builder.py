@@ -369,6 +369,8 @@ class OpenSearchQueryBuilder:
 
         return {
             "query": {"bool": bool_query},
+            # Enrichment fields (GLiNER2) are not used by the reports.
+            "_source": {"excludes": ["entities", "gliner"]},
             "highlight": {
                 "pre_tags": ["<%%>"],
                 "post_tags": ["</%%>"],

@@ -150,6 +150,10 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 > uma rede. Para produção, use um OpenSearch externo com segurança e TLS
 > habilitados, conforme [OpenSearch em produção](instalacao_k8s.md#opensearch-em-producao).
 
+### Enriquecimento com entidades (GLiNER2)
+
+Com o OpenSearch habilitado, as publicações do INLABS podem ser enriquecidas com entidades nomeadas (pessoas, órgãos, cargos, processos, atos normativos etc.) extraídas por um serviço GLiNER2 opcional. Veja [Enriquecimento com GLiNER2](enriquecimento_gliner.md).
+
 ### Resumos automáticos com IA generativa
 
 O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em [Habilitando IA nos resumos](habilitando_ia.md).
@@ -166,6 +170,9 @@ O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLM
 | `make gerar-yml` | Gera um novo arquivo de configuração YAML por um assistente interativo no terminal (requer o ambiente já rodando) |
 | `make create-opensearch-variable` | Cria a variável do Airflow para usar o OpenSearch como backend de busca do INLABS |
 | `make create-azure-openai-variables` | Cria as variáveis do Airflow necessárias para usar o provedor Azure OpenAI |
+| `make gliner-up` / `make gliner-down` | Constrói e sobe / desliga o serviço opcional de extração de entidades com GLiNER2 |
+| `make gliner-tests` | Executa os testes do serviço GLiNER2 dentro da imagem dele |
+| `make create-gliner-variables` | Define as variáveis do Airflow que habilitam o enriquecimento com GLiNER2 (inclui `RO_DOU_INLABS_USE_OPENSEARCH = True`) |
 
 ## Solução de problemas comuns
 

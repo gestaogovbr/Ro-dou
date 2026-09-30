@@ -289,6 +289,38 @@ down:
 tests:
 	docker exec airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
+# Serviço opcional de extração de entidades com GLiNER2 (perfil `gliner`).
+.PHONY: gliner-up gliner-down gliner-tests create-gliner-variables
+
+# Habilita o enriquecimento: usa o CLI (`variables set`) para também atualizar
+# variáveis já existentes, como RO_DOU_INLABS_USE_OPENSEARCH criada com False
+# pelo `make run`. Idempotente.
+GLINER_VARIABLES := \
+	RO_DOU_INLABS_USE_OPENSEARCH=True \
+	RO_DOU_GLINER_ENABLED=True \
+	RO_DOU_GLINER_SERVICE_URL=http://gliner:8000
+
+create-gliner-variables:
+	@echo "Setting GLiNER2 enrichment Airflow variables"
+	@for pair in $(GLINER_VARIABLES); do \
+		key=$${pair%%=*}; value=$${pair#*=}; \
+		docker exec -e PYTHONWARNINGS=ignore airflow-api-server \
+			airflow variables set "$$key" "$$value" 2>&1 | grep -E '^Variable' \
+			|| { echo "Erro ao definir $$key"; exit 1; }; \
+	done
+
+gliner-up:
+	docker compose --profile gliner up -d --build gliner
+
+gliner-down:
+	docker compose --profile gliner stop gliner
+
+gliner-tests:
+	docker compose --profile gliner run --rm --no-deps \
+		-v ./gliner_service/tests:/app/tests:ro \
+		-v ./gliner_service/requirements-test.txt:/app/requirements-test.txt:ro \
+		gliner sh -c "pip install -q --user -r requirements-test.txt && python -m pytest -q -p no:cacheprovider tests"
+
 #PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
 .PHONY: gerar-yml
 gerar-yml:

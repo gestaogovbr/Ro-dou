@@ -83,18 +83,28 @@ class Indexer:
     def _to_bulk_actions(docs):
         """Wrap documents in the OpenSearch bulk action format.
 
+        Uses partial updates with upsert instead of full reindexing so fields
+        written by other pipelines (e.g. GLiNER2 ``entities``) survive when a
+        publication date is loaded again.
+
         Args:
             docs (Iterable[dict]): Documents to wrap.
 
         Yields:
-            dict: Bulk action dict with ``_index``, ``_id``, and ``_source``.
+            dict: Bulk ``update`` action with ``doc_as_upsert`` enabled.
         """
         for doc in docs:
             texto = doc.get("texto") or ""
             doc["texto_plain"] = re.sub(
                 r"\s+", " ", re.sub("<[^>]+>", " ", texto)
             ).strip()
-            yield {"_index": INDEX_NAME, "_id": doc["id"], "_source": doc}
+            yield {
+                "_op_type": "update",
+                "_index": INDEX_NAME,
+                "_id": doc["id"],
+                "doc": doc,
+                "doc_as_upsert": True,
+            }
 
     def run(self, pubdate: str, batch_size: int = 500):
         """Run the full PostgreSQL → OpenSearch indexing pipeline.
