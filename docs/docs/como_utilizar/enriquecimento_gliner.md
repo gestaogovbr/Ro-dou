@@ -26,6 +26,8 @@ Uma publicação só é reprocessada quando ainda não foi enriquecida, quando o
 
 A indexação do INLABS passou a usar `update` com `doc_as_upsert`. Recarregar uma data não apaga as entidades já extraídas.
 
+A indexação também grava `texto_plain_hash`, o hash do `texto_plain`. Para saber quais publicações estão pendentes, a DAG compara esse campo com `gliner.text_hash` sem baixar os textos. Publicações indexadas antes da criação desse campo e já enriquecidas têm o texto consultado para a comparação.
+
 ## Habilitando no ambiente local
 
 1. Suba o serviço. A primeira construção baixa o PyTorch (CPU), e a primeira inicialização baixa o modelo do Hugging Face para o volume `gliner-models`. Isso pode levar alguns minutos.

@@ -14,6 +14,7 @@ from dags.ro_dou_src.utils.gliner.gliner_enrichment import (
     build_entities_mapping,
     text_hash,
 )
+from dags.ro_dou_src.utils.open_search.hashing import TEXT_HASH_MAPPING
 from dags.ro_dou_src.utils.open_search.indexer import Indexer
 
 FINGERPRINT = "abc123"
@@ -54,8 +55,10 @@ def opensearch():
     return client
 
 
-def _hit(doc_id, text, fingerprint=None, stored_hash=None):
-    source = {"texto_plain": text}
+def _hit(doc_id, text, fingerprint=None, stored_hash=None, legacy=False):
+    """Scan hit with the fields requested by ``find_pending``. ``legacy``
+    documents were indexed before ``texto_plain_hash`` existed."""
+    source = {} if legacy else {"texto_plain_hash": text_hash(text)}
     if fingerprint is not None:
         source["gliner"] = {"fingerprint": fingerprint, "text_hash": stored_hash}
     return {"_id": doc_id, "_source": source}
@@ -122,6 +125,10 @@ def test_find_pending_selects_new_changed_and_outdated_documents(opensearch, mon
     pending = enricher.find_pending("2026-09-29", FINGERPRINT)
 
     assert pending == ["changed_text", "new", "old_config"]
+    # Only hashes are read; no text is downloaded when every document has one.
+    assert "texto_plain" not in captured["_source"]
+    assert "texto_plain_hash" in captured["_source"]
+    opensearch.mget.assert_not_called()
     # Only the publication date is filtered: every section is enriched.
     assert captured["query"] == {
         "query": {
@@ -132,6 +139,25 @@ def test_find_pending_selects_new_changed_and_outdated_documents(opensearch, mon
             }
         }
     }
+
+
+def test_find_pending_compares_text_of_legacy_documents(opensearch, monkeypatch):
+    hits = [
+        _hit("same", "igual", FINGERPRINT, text_hash("igual"), legacy=True),
+        _hit("changed", "novo", FINGERPRINT, text_hash("antigo"), legacy=True),
+        _hit("never", "x", legacy=True),
+    ]
+    monkeypatch.setattr(gliner_enrichment, "scan", lambda client, **kw: iter(hits))
+    opensearch.mget.side_effect = _mget_response({"same": "igual", "changed": "novo"})
+
+    pending = GlinerEnricher(opensearch, FakeService(), "dou").find_pending(
+        "2026-09-29", FINGERPRINT
+    )
+
+    assert pending == ["changed", "never"]
+    # Never-enriched documents are pending without fetching their text.
+    fetched = opensearch.mget.call_args.kwargs["body"]["ids"]
+    assert sorted(fetched) == ["changed", "same"]
 
 
 # Run -------------------------------------------------------------------------
@@ -335,7 +361,7 @@ def test_service_client_propagates_http_errors():
 # Indexer ---------------------------------------------------------------------
 
 
-def test_indexer_uses_upsert_to_preserve_enrichment_fields():
+def test_indexer_uses_upsert_and_stores_text_hash():
     actions = list(Indexer._to_bulk_actions([{"id": "10", "texto": "<p>Olá   mundo</p>"}]))
 
     assert actions == [
@@ -343,7 +369,39 @@ def test_indexer_uses_upsert_to_preserve_enrichment_fields():
             "_op_type": "update",
             "_index": "dou",
             "_id": "10",
-            "doc": {"id": "10", "texto": "<p>Olá   mundo</p>", "texto_plain": "Olá mundo"},
+            "doc": {
+                "id": "10",
+                "texto": "<p>Olá   mundo</p>",
+                "texto_plain": "Olá mundo",
+                "texto_plain_hash": text_hash("Olá mundo"),
+            },
             "doc_as_upsert": True,
         }
     ]
+
+
+def _indexer_with(client):
+    indexer = Indexer.__new__(Indexer)
+    indexer.client = client
+    return indexer
+
+
+def test_ensure_index_creates_index_with_text_hash_mapping():
+    client = MagicMock()
+    client.indices.exists.return_value = False
+
+    _indexer_with(client)._ensure_index()
+
+    body = client.indices.create.call_args.kwargs["body"]
+    assert body["mappings"]["properties"]["texto_plain_hash"] == {"type": "keyword"}
+    client.indices.put_mapping.assert_not_called()
+
+
+def test_ensure_index_adds_text_hash_mapping_to_existing_index():
+    client = MagicMock()
+    client.indices.exists.return_value = True
+
+    _indexer_with(client)._ensure_index()
+
+    client.indices.create.assert_not_called()
+    client.indices.put_mapping.assert_called_once_with(index="dou", body=TEXT_HASH_MAPPING)

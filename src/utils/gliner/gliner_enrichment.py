@@ -8,10 +8,11 @@ partial updates, so the fields written by the ``Indexer`` are left untouched.
 Each enriched document stores ``gliner.text_hash`` (hash of ``texto_plain``)
 and ``gliner.fingerprint`` (hash of the service configuration). A document is
 reprocessed only when one of them changes, which makes retries and repeated
-runs for the same date resume from where they stopped.
+runs for the same date resume from where they stopped. The current text hash
+is read from ``texto_plain_hash``, written by the ``Indexer``, so pending
+detection does not download the texts.
 """
 
-import hashlib
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -20,15 +21,12 @@ from urllib.parse import urljoin, urlparse
 import requests
 from opensearchpy.helpers import bulk, scan  # type: ignore
 
+from ..open_search.hashing import TEXT_HASH_FIELD, text_hash  # type: ignore
+
 ENTITIES_FIELD = "entities"
 METADATA_FIELD = "gliner"
 # Used when the service does not advertise its limits in /info.
 DEFAULT_MAX_CHARS = 100_000
-
-
-def text_hash(text: Optional[str]) -> str:
-    """Return the hash stored to detect changes in ``texto_plain``."""
-    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
 
 
 def build_entities_mapping(entity_names: Iterable[str]) -> dict:
@@ -142,28 +140,43 @@ class GlinerEnricher:
             }
         }
 
-    def find_pending(
-        self, pubdate: str, fingerprint: str
-    ) -> List[str]:
+    def find_pending(self, pubdate: str, fingerprint: str) -> List[str]:
         """Return ids whose text or service configuration changed since the
         last enrichment (or that were never enriched), sorted for stable
-        resumption."""
+        resumption.
+
+        Only hashes are read. Enriched documents indexed before
+        ``texto_plain_hash`` existed have their text fetched to compare.
+        """
         pending = []
+        legacy: Dict[str, Optional[str]] = {}
         hits = scan(
             self.client,
             index=self.index,
             query=self._date_query(pubdate),
-            _source=["texto_plain", f"{METADATA_FIELD}.text_hash", f"{METADATA_FIELD}.fingerprint"],
+            _source=[
+                TEXT_HASH_FIELD,
+                f"{METADATA_FIELD}.text_hash",
+                f"{METADATA_FIELD}.fingerprint",
+            ],
             size=500,
         )
         for hit in hits:
             source = hit.get("_source") or {}
             metadata = source.get(METADATA_FIELD) or {}
-            if (
-                metadata.get("fingerprint") != fingerprint
-                or metadata.get("text_hash") != text_hash(source.get("texto_plain"))
-            ):
+            if metadata.get("fingerprint") != fingerprint:
                 pending.append(hit["_id"])
+            elif source.get(TEXT_HASH_FIELD) is None:
+                legacy[hit["_id"]] = metadata.get("text_hash")
+            elif source[TEXT_HASH_FIELD] != metadata.get("text_hash"):
+                pending.append(hit["_id"])
+
+        legacy_ids = list(legacy)
+        for start in range(0, len(legacy_ids), 500):
+            texts = self._fetch_texts(legacy_ids[start : start + 500])
+            pending.extend(
+                doc_id for doc_id, text in texts.items() if legacy[doc_id] != text_hash(text)
+            )
         return sorted(pending)
 
     def _fetch_texts(self, ids: Sequence[str]) -> Dict[str, str]:
