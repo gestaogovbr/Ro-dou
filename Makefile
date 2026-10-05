@@ -289,6 +289,12 @@ down:
 tests:
 	docker exec airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes"
 
+.PHONY: tests-live
+tests-live:
+	@test -f .env || { echo "Erro: crie o arquivo .env com as credenciais do INLABS (veja .env.example)."; exit 1; }
+	docker exec --env-file .env -e RO_DOU_LIVE_TESTS=1 airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes -m live live"
+
+
 #PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
 .PHONY: gerar-yml
 gerar-yml:

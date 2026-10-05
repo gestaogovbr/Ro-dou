@@ -21,6 +21,11 @@ TEST_ENV_VARS = {
 APP_NAME = 'pytest-airflow-dou_dag_generator'
 
 
+# Testes "live" acessam INLABS/DOU reais e exigem credenciais. Ficam fora do
+# `make tests` e do CI: só são coletados com RO_DOU_LIVE_TESTS=1 (`make tests-live`).
+collect_ignore_glob = [] if os.getenv("RO_DOU_LIVE_TESTS") == "1" else ["live/*"]
+
+
 def pytest_configure(config):
     """Configure and init envvars for airflow."""
     config.old_env = {}
