@@ -27,11 +27,12 @@ class InlabsCredentials:
 
 @pytest.fixture(scope="session")
 def inlabs_credentials():
-    
     user = os.getenv("RO_DOU_LIVE_INLABS_USER")
     password = os.getenv("RO_DOU_LIVE_INLABS_PASSWORD")
     if not user or not password:
-        pytest.skip(
+        # fail, não skip: quem roda os testes live pediu por eles, então pular
+        # tudo e sair com código 0 esconderia um .env incompleto.
+        pytest.fail(
             "Defina RO_DOU_LIVE_INLABS_USER e RO_DOU_LIVE_INLABS_PASSWORD no .env"
         )
     return InlabsCredentials(user=user, password=password)
