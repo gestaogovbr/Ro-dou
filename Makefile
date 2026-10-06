@@ -292,7 +292,10 @@ tests:
 .PHONY: tests-live
 tests-live:
 	@test -f .env || { echo "Erro: crie o arquivo .env com as credenciais do INLABS (veja .env.example)."; exit 1; }
-	docker exec --env-file .env -e RO_DOU_LIVE_TESTS=1 airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv --color=yes -m live live"
+	@# AIRFLOW_VAR_...=false fixa o modo SQL do INLABS: sem isso a variável do banco do Airflow
+	@# (True no ambiente local) é lida de forma intermitente e a carga passa a indexar no OpenSearch.
+	@# -rs lista o motivo dos testes pulados (ex.: sem resultados na data).
+	docker exec --env-file .env -e RO_DOU_LIVE_TESTS=1 -e AIRFLOW_VAR_RO_DOU_INLABS_USE_OPENSEARCH=false airflow-api-server sh -c "cd /opt/airflow/tests/ && pytest -vvv -rs --color=yes -m live live"
 
 
 #PYTHONWARNINGS=ignore evita deprecation warnings do próprio Airflow poluindo o terminal interativo.
