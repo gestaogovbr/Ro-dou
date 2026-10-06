@@ -51,11 +51,21 @@ def test_inlabs_load_dag_downloads_and_loads_data(loaded_inlabs_run):
         assert ti.state == TaskInstanceState.SUCCESS, task_id
 
 
+@pytest.mark.parametrize(
+    "yaml_name",
+    [
+        "inlabs_example.yaml",
+        "hide_filters_example.yaml",
+    ])
 def test_inlabs_example_dag_returns_valid_results(
-    loaded_inlabs_run, build_example_dag, reference_date, reference_logical_date
+    loaded_inlabs_run,
+    build_example_dag,
+    reference_date,
+    reference_logical_date,
+    yaml_name,
 ):
     assert loaded_inlabs_run.state == DagRunState.SUCCESS, "a carga falhou"
-    dag, terms = build_example_dag("inlabs_example.yaml")
+    dag, terms = build_example_dag(yaml_name)
     with patch("notification.email_sender.send_email") as mock_send_email:
         dag_run = dag.test(logical_date=reference_logical_date)
 
