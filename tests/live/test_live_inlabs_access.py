@@ -1,11 +1,26 @@
 """Valida credenciais, conexão em memória e escolha da data (passo 2)."""
 
 from datetime import date, timedelta
+from unittest.mock import Mock
 
 import pytest
+import requests
 from airflow.sdk.bases.hook import BaseHook
 
+from conftest import _has_edition
+
 pytestmark = pytest.mark.live
+
+
+def test_has_edition_raises_on_http_error():
+    response = requests.Response()
+    response.status_code = 503
+    response._content = b"<html>Service unavailable</html>"
+    session = Mock()
+    session.get.return_value = response
+
+    with pytest.raises(requests.HTTPError):
+        _has_edition(session, date(2026, 10, 5))
 
 
 def test_connection_is_resolved_from_env(inlabs_connection, inlabs_credentials):
