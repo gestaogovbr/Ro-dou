@@ -79,6 +79,7 @@ def _has_edition(session: requests.Session, day: date) -> bool:
         headers=_LIST_HEADERS,
         timeout=TIMEOUT,
     )
+    response.raise_for_status()
     links = BeautifulSoup(response.text, "html.parser").find_all(
         "a", title="Baixar Arquivo"
     )
@@ -93,7 +94,8 @@ def reference_date(inlabs_session) -> date:
         day = today - timedelta(days=days_back)
         if day.weekday() < 5 and _has_edition(inlabs_session, day):
             return day
-    pytest.skip(f"Nenhuma edição no INLABS nos últimos {MAX_DAYS_BACK} dias")
+    return pytest.skip(f"Nenhuma edição no INLABS nos últimos {MAX_DAYS_BACK} dias")
+
 
 
 @pytest.fixture(scope="session")
