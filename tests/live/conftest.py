@@ -59,7 +59,7 @@ def inlabs_connection(inlabs_credentials):
 @pytest.fixture(scope="session")
 def inlabs_session(inlabs_credentials):
     session = requests.Session()
-    session.post(
+    response = session.post(
         urljoin(INLABS_HOST, "logar.php"),
         data={
             "email": inlabs_credentials.user,
@@ -67,6 +67,8 @@ def inlabs_session(inlabs_credentials):
         },
         timeout=TIMEOUT,
     )
+    # Senha errada também responde 200; erro HTTP aqui é o INLABS fora do ar.
+    response.raise_for_status()
     if not session.cookies.get("inlabs_session_cookie"):
         # Credencial inválida é o defeito que este teste existe para pegar.
         pytest.fail("Login no INLABS rejeitado: confira usuário/senha do .env")
@@ -90,7 +92,7 @@ def _has_edition(session: requests.Session, day: date) -> bool:
 def reference_date(inlabs_session) -> date:
     """Edição mais recente (dia útil) que existe no INLABS."""
     today = date.today()
-    for days_back in range(1, MAX_DAYS_BACK + 1):
+    for days_back in range(0, MAX_DAYS_BACK + 1):
         day = today - timedelta(days=days_back)
         if day.weekday() < 5 and _has_edition(inlabs_session, day):
             return day

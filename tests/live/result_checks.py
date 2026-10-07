@@ -10,7 +10,7 @@ SEARCH_TASK = "exec_searchs.exec_search_1"
 def assert_valid_search_result(result: dict, terms: list[str]) -> set[str]:
     """Valida grupo -> termo -> departamento -> itens e devolve os termos que
     tiveram resultado. Não exige contagem: os dados reais mudam todo dia."""
-    assert result, "a busca não retornou nenhum resultado"
+    assert has_results(result), "a busca não retornou nenhum resultado"
     matched = set()
     for by_term in result.values():
         for term, by_department in by_term.items():
@@ -29,6 +29,12 @@ def assert_valid_search_result(result: dict, terms: list[str]) -> set[str]:
     return matched
 
 
+def has_results(result: dict) -> bool:
+    """Busca sem achados devolve os grupos vazios (ex.: `{'single_group': {}}`),
+    não um dicionário vazio."""
+    return any(result.values())
+
+
 def get_search_result(dag_run) -> dict:
     """Resultado da busca (XCom da task de busca) de uma execução de DAG."""
     ti = dag_run.get_task_instance(SEARCH_TASK)
@@ -42,7 +48,7 @@ def check_search_run(dag_run, mock_send_email, terms: list[str], where: str) -> 
     teste é pulado com aviso, pois não há o que validar."""
     assert dag_run.state == DagRunState.SUCCESS
     result = get_search_result(dag_run)
-    if not result:
+    if not has_results(result):
         pytest.skip(f"Sem resultados em {where} para os termos {terms}; nada a validar")
     matched = assert_valid_search_result(result, terms)
 
