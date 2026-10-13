@@ -1,6 +1,17 @@
 # Changelog
 
 ## What's Changed
+## [0.13.3] - 2026-10-13
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* test: adiciona testes E2E live do INLABS e DOU (make tests-live) by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/361
+* fix: corrige check_first_run_of_day para triggers retroativas by @edulauer in https://github.com/gestaogovbr/Ro-dou/pull/366
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.13.2...0.13.3
+
 ## [0.13.2] - 2026-09-28
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
