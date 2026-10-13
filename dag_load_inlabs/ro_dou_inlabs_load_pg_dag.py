@@ -305,12 +305,14 @@ def load_inlabs():
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
 
-        if prev_start_date_success.date() < logical_date.date():
-            logging.info("Primeira execução bem-sucedida do dia")
+        # A trigger can target a date before the previous successful run.
+        # Only matching dates should select the extra-edition dataset.
+        if prev_start_date_success.date() != logical_date.date():
+            logging.info("Data lógica diferente da execução bem-sucedida anterior")
             logging.info("Triggering dataset e DAGs do INLABS")
             return "trigger_dataset_inlabs"
 
-        logging.info("Já existe uma execução bem-sucedida hoje")
+        logging.info("Execução anterior iniciou no mesmo dia da data lógica")
         logging.info("Triggering dataset edicao_extra")
         return "trigger_dataset_inlabs_edicao_extra"
 
