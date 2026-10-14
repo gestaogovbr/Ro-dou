@@ -9,7 +9,7 @@ airflow:
   image:
     repository: ghcr.io/gestaogovbr/ro-dou
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   apiServer:
     replicas: 1
     port: 8080
