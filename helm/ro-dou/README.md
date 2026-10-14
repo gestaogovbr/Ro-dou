@@ -66,6 +66,9 @@ helm upgrade rodou ./helm/ro-dou -f my-values.yaml
 > `from_db_select`: consultas que não sejam uma única instrução `SELECT`
 > impedem a geração da DAG.
 
+A imagem do Ro-DOU usa `pullPolicy: Always` por padrão, para que a versão
+mais recente da tag `latest` seja baixada sempre que um pod for criado.
+
 ## Desinstalação
 
 ```bash
@@ -83,7 +86,7 @@ Os principais valores configuráveis são:
 | --- | --- | --- |
 | `airflow.image.repository` | Repositório da imagem do Airflow/Ro-DOU | `ghcr.io/gestaogovbr/ro-dou` |
 | `airflow.image.tag` | Tag da imagem do Airflow/Ro-DOU | `latest` |
-| `airflow.image.pullPolicy` | Política de download da imagem | `IfNotPresent` |
+| `airflow.image.pullPolicy` | Política de download da imagem | `Always` |
 | `airflow.apiServer.replicas` | Réplicas do servidor de API | `1` |
 | `airflow.apiServer.port` | Porta do servidor de API | `8080` |
 | `airflow.apiServer.service.type` | Tipo do Service do servidor de API | `ClusterIP` |
