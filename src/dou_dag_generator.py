@@ -48,14 +48,24 @@ from searchers import (
 SearchResult = Dict[str, Dict[str, Dict[str, List[dict]]]]
 
 
+# Microsoft Teams webhooks (Workflows/Power Automate) are served from Azure
+# hosts, so their URLs would otherwise yield names like "azure".
+_TEAMS_SCHEMES = {"workflow", "workflows", "msteams"}
+_TEAMS_HOST_SUFFIXES = (".logic.azure.com", ".powerplatform.com")
+
+
 def _channel_name_from_url(url: str) -> str:
     """Extract the notification channel name from a URL."""
     parsed_url = urlparse(url)
+    scheme = parsed_url.scheme.lower()
+    hostname = (parsed_url.hostname or "").lower()
 
-    if parsed_url.scheme and parsed_url.scheme not in {"http", "https"}:
-        return parsed_url.scheme.lower()
+    if scheme in _TEAMS_SCHEMES or hostname.endswith(_TEAMS_HOST_SUFFIXES):
+        return "teams"
 
-    hostname = parsed_url.hostname or ""
+    if scheme and scheme not in {"http", "https"}:
+        return scheme
+
     parts = hostname.split(".")
 
     return parts[-2] if len(parts) >= 2 else "unknown_channel"

@@ -117,6 +117,19 @@ def test_merge_results(merge_results_samples):
         ("slack://TokenA/TokenB/TokenC", "slack"),
         ("discord://WebhookID/WebhookToken", "discord"),
         ("https://hooks.slack.com/services/TokenA/TokenB/TokenC", "slack"),
+        ("workflows://prod-00.westus.logic.azure.com:443/WorkflowID/Signature", "teams"),
+        ("msteams://TokenA/TokenB/TokenC", "teams"),
+        (
+            "https://prod-00.westus.logic.azure.com:443/workflows/WorkflowID"
+            "/triggers/manual/paths/invoke?api-version=2016-06-01&sig=Signature",
+            "teams",
+        ),
+        (
+            "https://default00.environment.api.powerplatform.com:443/powerautomate"
+            "/automations/direct/workflows/WorkflowID/triggers/manual/paths/invoke"
+            "?api-version=1&sig=Signature",
+            "teams",
+        ),
         ("invalid-url", "unknown_channel"),
     ],
 )

@@ -671,3 +671,24 @@ class TestNotificationSenderEdgeCases:
         dict_data = {"content": "dict content"}
         sender.send_data(dict_data)
         mock_apprise_instance.notify.assert_called_with(body=dict_data)
+
+
+@pytest.mark.parametrize(
+    "teams_url",
+    [
+        # URL copiada do Workflows do Teams (Power Automate)
+        "https://prod-00.westus.logic.azure.com:443/workflows/WorkflowID"
+        "/triggers/manual/paths/invoke?api-version=2016-06-01"
+        "&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Signature",
+        "https://default00.environment.api.powerplatform.com:443/powerautomate"
+        "/automations/direct/workflows/WorkflowID/triggers/manual/paths/invoke"
+        "?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Signature",
+        "workflows://prod-00.westus.logic.azure.com:443/WorkflowID/Signature",
+    ],
+)
+def test_apprise_accepts_teams_webhook(teams_url):
+    """Apprise must recognize Microsoft Teams webhooks without network access."""
+    apobj = apprise.Apprise()
+
+    assert apobj.add(teams_url) is True
+    assert "workflows" in apobj[0].secure_protocol
