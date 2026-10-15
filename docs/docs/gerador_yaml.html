@@ -651,11 +651,16 @@
                 Webhook do Slack
                 <span class="glossario">
                   <button type="button" aria-expanded="false" aria-label="O que é webhook">?</button>
-                  <span class="balao" role="tooltip">Um "webhook" é um endereço (URL) que o Slack ou o Discord fornecem para receber mensagens automáticas em um canal. A equipe que administra o canal consegue gerar esse endereço.</span>
+                  <span class="balao" role="tooltip">Um "webhook" é um endereço (URL) que o Slack, o Discord ou o Microsoft Teams fornecem para receber mensagens automáticas em um canal. A equipe que administra o canal consegue gerar esse endereço.</span>
                 </span>
               </label>
               <input type="text" id="f-slack" placeholder="https://hooks.slack.com/services/…">
             </div>
+          </div>
+          <div class="campo">
+            <label for="f-teams">Webhook do Microsoft Teams</label>
+            <div class="dica">Gerado no Teams pelo fluxo do Workflows "Postar em um canal quando uma solicitação de webhook for recebida".</div>
+            <input type="text" id="f-teams" placeholder="https://….logic.azure.com/workflows/… ou https://….powerplatform.com/…/workflows/…">
           </div>
         </div>
       </div>
@@ -701,6 +706,8 @@
   // Webhooks aceitos na UI; no YAML são emitidos como URLs Apprise (notification:)
   const DISCORD_WEBHOOK_RE = /^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/webhooks\/(\d+)\/([\w-]+)\/?$/;
   const SLACK_WEBHOOK_RE = /^https:\/\/hooks\.slack\.com\/services\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/?$/;
+  // Teams (Workflows/Power Automate): o Apprise aceita a URL https original sem conversão
+  const TEAMS_WEBHOOK_RE = /^https:\/\/[\w.-]+\.(?:logic\.azure\.com|powerplatform\.com)(?::443)?\/\S*workflows\/[\w-]+\/triggers\/\S*[?&]sig=[\w-]+\S*$/;
 
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -802,6 +809,7 @@
     const failcb = csv("f-failcb");
     const discord = $("f-discord").value.trim();
     const slack = $("f-slack").value.trim();
+    const teams = $("f-teams").value.trim();
     const territory = csv("f-territory");
     const temInlabs = sources.includes("INLABS");
     const temQd = sources.includes("QD");
@@ -847,8 +855,8 @@
     const emailsInvalidos = emails.filter(e => !EMAIL_RE.test(e));
     if (emailsInvalidos.length)
       erros.push(`Verifique o e-mail "${esc(emailsInvalidos[0])}" — use o formato nome@orgao.gov.br.`);
-    if (!emails.length && !discord && !slack)
-      erros.push("Informe pelo menos um e-mail para receber o relatório (ou configure Slack/Discord nas opções avançadas).");
+    if (!emails.length && !discord && !slack && !teams)
+      erros.push("Informe pelo menos um e-mail para receber o relatório (ou configure Slack/Discord/Teams nas opções avançadas).");
     const failcbInvalidos = failcb.filter(e => !EMAIL_RE.test(e));
     if (failcbInvalidos.length)
       erros.push(`Verifique o e-mail de aviso de falha "${esc(failcbInvalidos[0])}".`);
@@ -864,6 +872,10 @@
       const m = slack.match(SLACK_WEBHOOK_RE);
       if (m) notification.push(`slack://${m[1]}/${m[2]}/${m[3]}`);
       else erros.push("Essa não parece ser uma URL de webhook do Slack válida — ela deve começar com <strong>https://hooks.slack.com/services/…</strong>");
+    }
+    if (teams) {
+      if (TEAMS_WEBHOOK_RE.test(teams)) notification.push(teams);
+      else erros.push("Essa não parece ser uma URL de webhook do Microsoft Teams (Workflows) válida — copie a URL completa gerada pelo fluxo, que contém <strong>/workflows/…</strong> e <strong>sig=…</strong>");
     }
 
     // ---- dag ----
@@ -1077,7 +1089,7 @@
     ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-docmd", "f-terms", "f-terms-ignore",
       "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-mintablerows", "f-territory",
       "f-excerptsize", "f-numexcerpts",
-      "f-emails", "f-subject", "f-discord", "f-slack", "f-schedule-custom",
+      "f-emails", "f-subject", "f-discord", "f-slack", "f-teams", "f-schedule-custom",
       "f-headertext", "f-footertext", "f-noresults"
     ].forEach(id => { $(id).value = ""; });
     $("f-schedule").selectedIndex = 0;
