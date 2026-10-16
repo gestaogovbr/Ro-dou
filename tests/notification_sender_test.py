@@ -683,6 +683,10 @@ class TestNotificationSenderEdgeCases:
         "https://default00.environment.api.powerplatform.com:443/powerautomate"
         "/automations/direct/workflows/WorkflowID/triggers/manual/paths/invoke"
         "?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Signature",
+        # URLs novas do Power Automate trazem um routing ID (/cu/<n>/)
+        "https://default00.environment.api.powerplatform.com:443/powerautomate"
+        "/automations/direct/cu/31/workflows/WorkflowID/triggers/manual/paths"
+        "/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Signature",
         "workflows://prod-00.westus.logic.azure.com:443/WorkflowID/Signature",
     ],
 )
