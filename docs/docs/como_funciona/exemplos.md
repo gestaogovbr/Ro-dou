@@ -31,6 +31,7 @@ Neste segmento, você encontrará uma série de exemplos práticos de utilizaç�
 * [Exemplo 23](#exemplo-23) — busca no Diário Oficial do Estado de São Paulo (DOESP)
 * [Exemplo 24](#exemplo-24) — omitir anexos e tabelas do corpo do texto
 * [Exemplo 25](#exemplo-25) — resumo executivo geral com IA generativa
+* [Exemplo 26](#exemplo-26) — envio para o Microsoft Teams (`notification`)
 
 ### Exemplo 1
 
@@ -738,3 +739,40 @@ dag:
     attach_csv: True
     subject: "Teste do Ro-dou com Resumo Executivo por IA"
 ```
+
+### Exemplo 26
+Esta configuração envia as notificações para um canal do Microsoft Teams,
+utilizando o parâmetro `notification` (Apprise).
+
+O webhook do Teams é criado pelo aplicativo **Workflows** (Power Automate),
+pois os antigos conectores "Incoming Webhook" do Office 365 foram
+descontinuados pela Microsoft:
+
+1. No canal do Teams, abra o menu **⋯ > Workflows**.
+2. Escolha o modelo **Postar em um canal quando uma solicitação de webhook for recebida**
+   (*Post to a channel when a webhook request is received*).
+3. Conclua o assistente e copie a URL gerada.
+4. Cole a URL completa, sem alterações, na lista `notification`.
+
+```yaml
+dag:
+  id: teams_example
+  description: Envia notificações para canal do Microsoft Teams
+  search:
+    terms:
+    - manifestação cultural
+    - expressão cultural
+    - política cultural
+  report:
+    notification:
+      - https://prod-00.westus.logic.azure.com:443/workflows/WorkflowID/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Signature
+```
+
+Também é aceito o formato curto do Apprise
+`workflows://{host}:{porta}/{WorkflowID}/{Signature}`. No Airflow, a tarefa de
+envio aparece como `notify_teams_N`, em que `N` é a posição da URL na lista.
+
+!!! warning "A URL do webhook é uma credencial"
+    O parâmetro `sig` da URL autoriza qualquer pessoa a publicar no canal.
+    Não compartilhe a URL nem a versione em repositórios públicos; em caso de
+    vazamento, exclua o fluxo no Workflows e crie outro.

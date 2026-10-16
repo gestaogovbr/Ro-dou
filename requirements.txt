@@ -7,7 +7,7 @@ requests==2.32.2
 html2text==2024.2.26
 pydantic-ai-slim==1.54.0
 markdown==3.6.0
-apprise==1.9.7
+apprise==1.13.1
 Jinja2==3.1.4
 opensearch-py>=3.1.0
 lxml>=6.0.2

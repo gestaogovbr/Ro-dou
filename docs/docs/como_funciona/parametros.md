@@ -58,7 +58,7 @@ O bloco `report` contém as informações de notificação. Não há validação
 - **attach_csv** *(opcional)*: Anexar no email o resultado da pesquisa em CSV. Default: False.
 - **slack** *(opcional)*: Bloco com a URL de webhook para integração com o Slack
 - **discord** *(opcional)*: Bloco com a URL de webhook para integração com o Discord, no mesmo formato de `slack` acima.
-- **notification** *(opcional)*: Integração com aplicativos de mensagens via [Apprise](https://github.com/caronc/apprise).
+- **notification** *(opcional)*: Integração com aplicativos de mensagens via [Apprise](https://github.com/caronc/apprise). Para o Microsoft Teams, informe a URL do webhook gerada pelo Workflows do Teams ([veja o Exemplo 26](exemplos.md#exemplo-26)).
 - **emails** *(opcional)*: Lista de emails dos destinatários. Normalmente ao menos este campo ou um webhook deve ser preenchido.
 - **footer_text** *(opcional)*: Texto em HTML do rodapé do relatório.
 - **header_text** *(opcional)*: Texto em HTML de cabeçalho do relatório.

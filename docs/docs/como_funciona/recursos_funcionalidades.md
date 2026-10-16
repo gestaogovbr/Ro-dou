@@ -21,4 +21,5 @@ O **Ro-DOU** possui os seguintes recursos e funcionalidades voltados aos usuári
   - Telegram
   - Slack
   - Discord
+  - Microsoft Teams ([Exemplo 26](exemplos.md#exemplo-26))
   - Entre outros (via biblioteca [Apprise](https://github.com/caronc/apprise))
