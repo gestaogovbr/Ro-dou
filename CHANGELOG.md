@@ -1,6 +1,19 @@
 # Changelog
 
 ## What's Changed
+## [0.13.4] - 2026-10-20
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* fix: usa pullPolicy Always na imagem do Ro-DOU no chart Helm by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/369
+* feat: adiciona envio de notificações para o Microsoft Teams by @marcelogwolff in https://github.com/gestaogovbr/Ro-dou/pull/370
+
+## New Contributors
+* @marcelogwolff made their first contribution in https://github.com/gestaogovbr/Ro-dou/pull/370
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.13.3...0.13.4
+
 ## [0.13.3] - 2026-10-13
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
