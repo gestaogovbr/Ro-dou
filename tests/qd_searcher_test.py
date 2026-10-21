@@ -222,7 +222,13 @@ def test_get_with_retry_falha_persistente_esgota_tentativas(mock_get, mock_sleep
 
 
 @pytest.mark.parametrize(
-    "exc", [requests.Timeout(), requests.ConnectionError()]
+    "exc",
+    [
+        requests.Timeout(),
+        requests.ConnectionError(),
+        requests.exceptions.ChunkedEncodingError(),
+        requests.exceptions.ContentDecodingError(),
+    ],
 )
 @mock.patch(f"{SEARCHERS}.time.sleep")
 @mock.patch(f"{SEARCHERS}.requests.get")
@@ -261,8 +267,41 @@ def test_get_with_retry_usa_url_e_timeout(mock_get):
     QDSearcher()._get_with_retry(payload, "termo")
 
     mock_get.assert_called_once_with(
-        QDSearcher.API_BASE_URL, params=payload, timeout=QDSearcher.REQUEST_TIMEOUT
+        "https://api.queridodiario.org.br/gazettes",
+        params=payload,
+        timeout=QDSearcher.REQUEST_TIMEOUT,
     )
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        requests.exceptions.SSLError("certificado inválido"),
+        requests.TooManyRedirects("redirecionamentos demais"),
+    ],
+)
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_nao_repete_erro_permanente(mock_get, mock_sleep, exc, caplog):
+    mock_get.side_effect = exc
+
+    with caplog.at_level(logging.ERROR), pytest.raises(type(exc)):
+        QDSearcher()._get_with_retry([], "licitação")
+
+    assert mock_get.call_count == 1
+    mock_sleep.assert_not_called()
+    assert "licitação" in caplog.text
+    assert str(exc) in caplog.text
+
+
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_sem_tentativas_configuradas_falha(mock_get):
+    searcher = QDSearcher()
+    searcher.MAX_ATTEMPTS = 0
+
+    with pytest.raises(ValueError, match="MAX_ATTEMPTS"):
+        searcher._get_with_retry([], "termo")
+    mock_get.assert_not_called()
 
 
 @mock.patch(f"{SEARCHERS}.time.sleep")
