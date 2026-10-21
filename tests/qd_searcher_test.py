@@ -1,6 +1,11 @@
+import logging
 from datetime import datetime
+from unittest import mock
 import pytest
+import requests
 from dags.ro_dou_src.searchers import QDSearcher, _build_query_payload
+
+SEARCHERS = "dags.ro_dou_src.searchers"
 
 
 @pytest.mark.parametrize(
@@ -194,3 +199,140 @@ def test_search_with_is_exact_search(is_exact_search, expected_search_term):
     querystring = payload[-1][1]
     
     assert querystring == expected_search_term
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_recupera_apos_falha_temporaria(mock_get, mock_sleep):
+    mock_get.side_effect = [mock.Mock(status_code=520), mock.Mock(status_code=200)]
+
+    assert QDSearcher()._get_with_retry([], "termo").status_code == 200
+    assert mock_get.call_count == 2
+    mock_sleep.assert_called_once_with(2)
+
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_falha_persistente_esgota_tentativas(mock_get, mock_sleep):
+    mock_get.return_value = mock.Mock(status_code=520)
+
+    with pytest.raises(requests.HTTPError, match="HTTP 520"):
+        QDSearcher()._get_with_retry([], "termo")
+    assert mock_get.call_count == QDSearcher.MAX_ATTEMPTS
+    assert [c.args[0] for c in mock_sleep.call_args_list] == [2, 4]
+
+
+@pytest.mark.parametrize(
+    "exc", [requests.Timeout(), requests.ConnectionError()]
+)
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_repete_falha_de_rede(mock_get, mock_sleep, exc):
+    mock_get.side_effect = [exc, mock.Mock(status_code=200)]
+
+    assert QDSearcher()._get_with_retry([], "termo").status_code == 200
+    assert mock_get.call_count == 2
+
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_timeout_persistente_propaga_erro(mock_get, mock_sleep):
+    mock_get.side_effect = requests.Timeout()
+
+    with pytest.raises(requests.Timeout):
+        QDSearcher()._get_with_retry([], "termo")
+    assert mock_get.call_count == QDSearcher.MAX_ATTEMPTS
+
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_nao_repete_erro_do_cliente(mock_get, mock_sleep):
+    mock_get.return_value = mock.Mock(status_code=400)
+
+    assert QDSearcher()._get_with_retry([], "termo").status_code == 400
+    assert mock_get.call_count == 1
+    mock_sleep.assert_not_called()
+
+
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_usa_url_e_timeout(mock_get):
+    mock_get.return_value = mock.Mock(status_code=200)
+    payload = [("querystring", "termo")]
+
+    QDSearcher()._get_with_retry(payload, "termo")
+
+    mock_get.assert_called_once_with(
+        QDSearcher.API_BASE_URL, params=payload, timeout=QDSearcher.REQUEST_TIMEOUT
+    )
+
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_get_with_retry_registra_termo_e_causa(mock_get, mock_sleep, caplog):
+    mock_get.side_effect = requests.Timeout("lento demais")
+
+    with caplog.at_level(logging.WARNING), pytest.raises(requests.Timeout):
+        QDSearcher()._get_with_retry([], "licitação")
+
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    errors = [r for r in caplog.records if r.levelno == logging.ERROR]
+    assert len(warnings) == QDSearcher.MAX_ATTEMPTS - 1
+    assert len(errors) == 1
+    for record in warnings + errors:
+        assert "licitação" in record.getMessage()
+        assert "lento demais" in record.getMessage()
+
+
+def _response(status_code: int, content: bytes) -> requests.Response:
+    response = requests.Response()
+    response.status_code = status_code
+    response._content = content
+    response.url = QDSearcher.API_BASE_URL
+    return response
+
+
+def _search_term(searcher: QDSearcher, search_term: str = "licitação") -> list:
+    return searcher._search_term(
+        territory_id=None,
+        search_term=search_term,
+        is_exact_search=False,
+        reference_date=datetime(2026, 10, 20),
+        excerpt_size=250,
+        number_of_excerpts=3,
+    )
+
+
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_search_term_status_de_erro_nao_vira_busca_vazia(mock_get, caplog):
+    mock_get.return_value = _response(404, b"<html>Not Found</html>")
+
+    with caplog.at_level(logging.ERROR), pytest.raises(requests.HTTPError):
+        _search_term(QDSearcher())
+
+    assert mock_get.call_count == 1
+    assert "licitação" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        b"<html>manutencao</html>",
+        b"[]",
+        b'{"total_gazettes": 0}',
+        b'{"total_gazettes": 0, "gazettes": null}',
+    ],
+)
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_search_term_json_invalido_nao_vira_busca_vazia(mock_get, content, caplog):
+    mock_get.return_value = _response(200, content)
+
+    with caplog.at_level(logging.ERROR), pytest.raises(ValueError, match="licitação"):
+        _search_term(QDSearcher())
+
+    assert "licitação" in caplog.text
+
+
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_search_term_sem_publicacoes_retorna_lista_vazia(mock_get):
+    mock_get.return_value = _response(200, b'{"total_gazettes": 0, "gazettes": []}')
+
+    assert _search_term(QDSearcher()) == []
