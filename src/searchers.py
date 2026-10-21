@@ -429,8 +429,14 @@ class QDSearcher(BaseSearcher):
     API_BASE_URL = "https://api.queridodiario.org.br/gazettes"
     REQUEST_TIMEOUT = (10, 30)   # 10 s para conectar, 30 s para receber a resposta
     MAX_ATTEMPTS = 3             # tentativas limitadas
-    BACKOFF_BASE_SECONDS = 2     # espera progressiva: 2 s, 4 s, 8 s...
+    BACKOFF_BASE_SECONDS = 2     # espera progressiva entre tentativas: 2 s, 4 s
     RETRY_STATUS = {429, 500, 502, 503, 504, 520, 521, 522, 523, 524}
+    TRANSIENT_ERRORS = (
+        requests.Timeout,
+        requests.ConnectionError,
+        requests.exceptions.ChunkedEncodingError,  # resposta cortada no meio
+        requests.exceptions.ContentDecodingError,
+    )
 
     def exec_search(
         self,
@@ -494,7 +500,9 @@ class QDSearcher(BaseSearcher):
     def _get_with_retry(self, payload: list, search_term: str) -> requests.Response:
         """Repete a requisição em falhas temporárias (rede, 429 e 5xx),
         com espera progressiva. Demais status retornam sem nova tentativa.
-        Esgotadas as tentativas, o último erro é propagado.
+        Erros permanentes (SSL, redirecionamentos, URL inválida) são
+        propagados de imediato. Esgotadas as tentativas, o último erro é
+        propagado.
         """
         for attempt in range(1, self.MAX_ATTEMPTS + 1):
             try:
@@ -506,8 +514,16 @@ class QDSearcher(BaseSearcher):
                 error = requests.HTTPError(
                     f"HTTP {response.status_code}", response=response
                 )
-            except (requests.Timeout, requests.ConnectionError) as exc:
+            # SSLError herda de ConnectionError, mas certificado inválido
+            # não se resolve repetindo a requisição.
+            except requests.exceptions.SSLError as exc:
+                self._log_permanent_error(search_term, exc)
+                raise
+            except self.TRANSIENT_ERRORS as exc:
                 error = exc
+            except requests.RequestException as exc:
+                self._log_permanent_error(search_term, exc)
+                raise
 
             if attempt == self.MAX_ATTEMPTS:
                 logging.error(
@@ -526,6 +542,16 @@ class QDSearcher(BaseSearcher):
                 error,
             )
             time.sleep(self.BACKOFF_BASE_SECONDS * 2 ** (attempt - 1))
+
+        raise ValueError("QDSearcher.MAX_ATTEMPTS deve ser maior ou igual a 1")
+
+    @staticmethod
+    def _log_permanent_error(search_term: str, error: Exception) -> None:
+        logging.error(
+            "Querido Diário: erro sem nova tentativa para o termo '%s': %r",
+            search_term,
+            error,
+        )
 
     @staticmethod
     def _extract_gazettes(response: requests.Response, search_term: str) -> list:
