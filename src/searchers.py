@@ -426,7 +426,11 @@ class DOUSearcher(BaseSearcher):
 
 class QDSearcher(BaseSearcher):
 
-    API_BASE_URL = "https://api.queridodiario.ok.org.br/gazettes"
+    API_BASE_URL = "https://api.queridodiario.org.br/gazettes"
+    REQUEST_TIMEOUT = (10, 30)   # 10 s para conectar, 30 s para receber a resposta
+    MAX_ATTEMPTS = 3             # tentativas limitadas
+    BACKOFF_BASE_SECONDS = 2     # espera progressiva: 2 s, 4 s, 8 s...
+    RETRY_STATUS = {429, 500, 502, 503, 504, 520, 521, 522, 523, 524}
 
     def exec_search(
         self,
@@ -478,14 +482,90 @@ class QDSearcher(BaseSearcher):
             number_of_excerpts,
         )
 
-        req_result = requests.get(self.API_BASE_URL, params=payload)
+        req_result = self._get_with_retry(payload, search_term)
 
         parsed_results = [
             self.parse_result(result, result_as_email)
-            for result in json.loads(req_result.content)["gazettes"]
+            for result in self._extract_gazettes(req_result, search_term)
         ]
 
         return parsed_results
+
+    def _get_with_retry(self, payload: list, search_term: str) -> requests.Response:
+        """Repete a requisição em falhas temporárias (rede, 429 e 5xx),
+        com espera progressiva. Demais status retornam sem nova tentativa.
+        Esgotadas as tentativas, o último erro é propagado.
+        """
+        for attempt in range(1, self.MAX_ATTEMPTS + 1):
+            try:
+                response = requests.get(
+                    self.API_BASE_URL, params=payload, timeout=self.REQUEST_TIMEOUT
+                )
+                if response.status_code not in self.RETRY_STATUS:
+                    return response
+                error = requests.HTTPError(
+                    f"HTTP {response.status_code}", response=response
+                )
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                error = exc
+
+            if attempt == self.MAX_ATTEMPTS:
+                logging.error(
+                    "Querido Diário: tentativas esgotadas para o termo '%s'. "
+                    "Último erro: %r",
+                    search_term,
+                    error,
+                )
+                raise error
+
+            logging.warning(
+                "Querido Diário: tentativa %s de %s falhou para o termo '%s': %r",
+                attempt,
+                self.MAX_ATTEMPTS,
+                search_term,
+                error,
+            )
+            time.sleep(self.BACKOFF_BASE_SECONDS * 2 ** (attempt - 1))
+
+    @staticmethod
+    def _extract_gazettes(response: requests.Response, search_term: str) -> list:
+        """Valida status HTTP e estrutura JSON antes de devolver as gazettes,
+        para que uma resposta inválida não vire uma busca vazia.
+        """
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            logging.error(
+                "Querido Diário: status HTTP inválido para o termo '%s': %r",
+                search_term,
+                exc,
+            )
+            raise
+
+        try:
+            data = response.json()
+        except ValueError as exc:
+            logging.error(
+                "Querido Diário: resposta não é JSON para o termo '%s': %r",
+                search_term,
+                exc,
+            )
+            raise ValueError(
+                f"Querido Diário: resposta não é JSON para o termo '{search_term}'"
+            ) from exc
+
+        gazettes = data.get("gazettes") if isinstance(data, dict) else None
+        if not isinstance(gazettes, list):
+            logging.error(
+                "Querido Diário: JSON sem a lista 'gazettes' para o termo '%s'",
+                search_term,
+            )
+            raise ValueError(
+                "Querido Diário: JSON sem a lista 'gazettes' "
+                f"para o termo '{search_term}'"
+            )
+
+        return gazettes
 
     def parse_result(self, result: dict, result_as_email: bool = True) -> dict:
         section = (
