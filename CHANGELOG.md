@@ -1,6 +1,17 @@
 # Changelog
 
 ## What's Changed
+## [0.13.5] - 2026-10-23
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### 🚀 Outros
+* Fix/371 querido diario endpoint retry by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/373
+* chore: instala dependências da imagem com uv em vez de pip by @HenriqueLopes741 in https://github.com/gestaogovbr/Ro-dou/pull/374
+
+
+**Full Changelog**: https://github.com/gestaogovbr/Ro-dou/compare/0.13.4...0.13.5
+
 ## [0.13.4] - 2026-10-20
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
