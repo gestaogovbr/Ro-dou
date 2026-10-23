@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from unittest import mock
@@ -375,3 +376,51 @@ def test_search_term_sem_publicacoes_retorna_lista_vazia(mock_get):
     mock_get.return_value = _response(200, b'{"total_gazettes": 0, "gazettes": []}')
 
     assert _search_term(QDSearcher()) == []
+
+
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_search_term_com_publicacoes_retorna_resultados(mock_get):
+    content = json.dumps(
+        {
+            "total_gazettes": 1,
+            "gazettes": [
+                {
+                    "date": "2026-10-20",
+                    "excerpts": ["Aviso de <%%>licitação</%%> nº 1"],
+                    "is_extra_edition": True,
+                    "state_code": "BA",
+                    "territory_name": "Município Fictício",
+                    "url": "https://exemplo.invalid/diario.pdf",
+                }
+            ],
+        }
+    ).encode()
+    mock_get.return_value = _response(200, content)
+
+    assert _search_term(QDSearcher()) == [
+        {
+            "section": "QD - Edição extraordinária ",
+            "title": "Município de Município Fictício - BA",
+            "href": "https://exemplo.invalid/diario.pdf",
+            "abstract": "<p>Aviso de <%%>licitação</%%> nº 1</p>",
+            "date": "20/10/2026",
+        }
+    ]
+
+
+@mock.patch(f"{SEARCHERS}.time.sleep")
+@mock.patch(f"{SEARCHERS}.requests.get")
+def test_exec_search_propaga_erro_quando_api_fora(mock_get, mock_sleep):
+    mock_get.return_value = _response(503, b"no available server")
+
+    with pytest.raises(requests.HTTPError, match="HTTP 503"):
+        QDSearcher().exec_search(
+            territory_id=2910800,
+            term_list=["licitação"],
+            is_exact_search=False,
+            reference_date=datetime(2026, 10, 21),
+            excerpt_size=250,
+            number_of_excerpts=3,
+        )
+
+    assert mock_get.call_count == QDSearcher.MAX_ATTEMPTS
