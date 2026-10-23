@@ -16,18 +16,17 @@ ENV PYTHONPATH="/opt/airflow/dags:/opt/airflow:$PYTHONPATH"
 USER airflow
 
 COPY requirements-uninstall.txt .
-RUN pip install --upgrade pip && \
-  pip uninstall -y -r requirements-uninstall.txt && \
-  pip install --no-cache-dir \
+RUN uv pip uninstall -r requirements-uninstall.txt && \
+  uv pip install --no-cache \
   apache-airflow-providers-microsoft-mssql==4.7.0 \
   apache-airflow-providers-common-sql==2.0.3
 
 # Copy and install requirements.txt
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache -r requirements.txt
 
 ARG AI_PROVIDERS=""
 
 COPY requirements-ai.txt .
 
-RUN pip install --no-cache-dir -r requirements-ai.txt
+RUN uv pip install --no-cache -r requirements-ai.txt
