@@ -1,0 +1,3 @@
+# Módulos internos do plugin: o Airflow importa só o ponto de entrada
+# (ro_dou_dag_manager_plugin.py); o pacote é importado por ele.
+ro_dou_dag_manager/

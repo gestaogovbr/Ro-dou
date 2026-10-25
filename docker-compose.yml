@@ -74,7 +74,9 @@ x-airflow-common: &airflow-common
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
 
-    RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
+    # dag_confs_ui: diretório gravado pela tela de gestão de DAGs (plugin)
+    RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs:/opt/airflow/dags/ro_dou/dag_confs_ui
+    RO_DOU__DAG_MANAGER_DIR: /opt/airflow/dags/ro_dou/dag_confs_ui
 
     RO_DOU_INLABS_USE_OPENSEARCH: 'false'
     OPENSEARCH_HOST: http://opensearch:9200
@@ -89,6 +91,9 @@ x-airflow-common: &airflow-common
     - ./tests:/opt/airflow/tests # for test purpose
     - ./schemas:/opt/airflow/schemas # for test purpose
     - ./tools:/opt/airflow/tools # for development purpose
+    - ./plugins:/opt/airflow/plugins # for development purpose
+    - ./docs/docs/gerador_yaml.html:/opt/airflow/ro_dou_docs/gerador_yaml.html:ro # for development purpose
+    - ./mnt/dag_confs_ui:/opt/airflow/dags/ro_dou/dag_confs_ui
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
