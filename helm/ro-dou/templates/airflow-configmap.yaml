@@ -7,6 +7,13 @@ metadata:
     app: airflow
 data:
 {{- range $key, $value := .Values.airflow.config }}
+{{- if and $.Values.dagManager.enabled (eq $key "RO_DOU__DAG_CONF_DIR") }}
+  {{ $key }}: {{ printf "%s:%s" $value $.Values.dagManager.dir | quote }}
+{{- else }}
   {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- if .Values.dagManager.enabled }}
+  RO_DOU__DAG_MANAGER_DIR: {{ .Values.dagManager.dir | quote }}
 {{- end }}
   AIRFLOW__CORE__EXECUTION_API_SERVER_URL: {{ printf "http://%s-airflow-api-server:%v/execution/" (include "ro-dou.fullname" .) .Values.airflow.apiServer.port | quote }}

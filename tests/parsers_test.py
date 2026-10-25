@@ -800,7 +800,7 @@ from dou_dag_generator import DouDigestDagGenerator, YAMLParser, DAGConfig
 )
 def test_parse(filepath, result_tuple):
     filepath = os.path.join(
-        DouDigestDagGenerator().YAMLS_DIR, "examples_and_tests", filepath
+        DouDigestDagGenerator().YAMLS_DIR_LIST[0], "examples_and_tests", filepath
     )
     parsed = YAMLParser(filepath=filepath).parse()
 

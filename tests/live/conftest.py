@@ -119,7 +119,7 @@ def build_example_dag(dag_gen):
     processador de DAGs, então o `dag.test()` funciona sem registro extra."""
 
     def _build(yaml_name):
-        filepath = os.path.join(dag_gen.YAMLS_DIR, "examples_and_tests", yaml_name)
+        filepath = os.path.join(dag_gen.YAMLS_DIR_LIST[0], "examples_and_tests", yaml_name)
         specs = dag_gen.parser(filepath).parse()
         searches = specs.search if isinstance(specs.search, list) else [specs.search]
         terms = [term for search in searches for term in search.terms]

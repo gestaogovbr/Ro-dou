@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAGs do Ro-DOU</title>
+<style>
+  :root {
+    --azul-gov: #1351B4;
+    --azul-escuro: #071D41;
+    --azul-claro: #C5D4EB;
+    --amarelo-gov: #FFCD07;
+    --verde-ok: #168821;
+    --vermelho-erro: #E52207;
+    --fundo: #F3F5F9;
+    --painel: #FFFFFF;
+    --tinta: #1B1B1B;
+    --tinta-suave: #555C66;
+    --borda: #D8DEE8;
+    --code-bg: #0B1626;
+    --radius: 8px;
+    --fonte-ui: "IBM Plex Sans", system-ui, sans-serif;
+    --fonte-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: var(--fonte-ui); background: var(--fundo); color: var(--tinta); font-size: 14px; line-height: 1.5; }
+  [hidden] { display: none !important; }
+
+  header.topo {
+    background: var(--azul-escuro); color: #fff; padding: 16px 24px;
+    border-bottom: 4px solid var(--amarelo-gov);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  header.topo h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  header.topo h1 a { color: inherit; text-decoration: none; }
+  header.topo .usuario { font-size: 12.5px; color: #C9D6EA; }
+  main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 40px; }
+
+  .btn {
+    font-family: var(--fonte-ui); font-size: 13px; font-weight: 600; padding: 7px 14px;
+    border-radius: 6px; border: 1px solid transparent; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--amarelo-gov); outline-offset: 1px; }
+  .btn-primario { background: var(--azul-gov); color: #fff; }
+  .btn-primario:hover:not(:disabled) { background: #0F419A; }
+  .btn-secundario { background: #fff; color: var(--azul-gov); border-color: var(--azul-claro); }
+  .btn-secundario:hover:not(:disabled) { background: #E7EEFA; }
+  .btn-perigo { background: #fff; color: var(--vermelho-erro); border-color: #F5B5AC; }
+  .btn-perigo:hover:not(:disabled) { background: #FDEDEB; }
+  .btn-pequeno { padding: 4px 10px; font-size: 12.5px; }
+
+  .aviso { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; padding: 10px 13px; border-radius: 6px; border: 1px solid; margin-bottom: 14px; }
+  .aviso ul { margin: 4px 0 0; padding-left: 18px; }
+  .aviso-erro { background: #FDEDEB; border-color: #F5B5AC; color: #8B1A08; }
+  .aviso-ok { background: #EAF6EC; border-color: #B7DFC0; color: #0F5C1A; }
+  .aviso-info { background: #EEF3FB; border-color: var(--azul-claro); color: var(--azul-escuro); }
+
+  .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .barra h2 { margin: 0; font-size: 18px; }
+  .barra .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  input.filtro, select.filtro {
+    font-family: var(--fonte-ui); font-size: 14px; padding: 8px 11px; border: 1px solid var(--borda);
+    border-radius: 6px; background: #fff;
+  }
+  input.filtro { min-width: 280px; }
+
+  .tabela-wrap { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--radius); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tinta-suave); background: #F7F9FC; }
+  tr:last-child td { border-bottom: none; }
+  td .dag-id { font-family: var(--fonte-mono); font-weight: 600; color: var(--azul-gov); background: none; border: none; padding: 0; cursor: pointer; font-size: 13.5px; text-align: left; }
+  td .dag-id:hover { text-decoration: underline; }
+  td .descricao { color: var(--tinta-suave); font-size: 13px; }
+  td .arquivo { font-family: var(--fonte-mono); font-size: 11.5px; color: var(--tinta-suave); }
+  td.acoes { white-space: nowrap; text-align: right; }
+  td.acoes .btn + .btn { margin-left: 6px; }
+  .vazio { padding: 28px; text-align: center; color: var(--tinta-suave); }
+
+  .selo { font-family: var(--fonte-mono); font-size: 11px; border-radius: 4px; padding: 2px 7px; border: 1px solid; display: inline-block; margin: 0 4px 2px 0; }
+  .selo-tela { color: var(--verde-ok); background: #EAF6EC; border-color: #B7DFC0; }
+  .selo-git { color: var(--tinta-suave); background: #EEF1F6; border-color: var(--borda); }
+  .selo-fonte { color: var(--azul-gov); background: #E7EEFA; border-color: var(--azul-claro); }
+  .selo-erro { color: var(--vermelho-erro); background: #FDEDEB; border-color: #F5B5AC; }
+
+  .cartao { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 13px; margin: 0; }
+  .meta dt { color: var(--tinta-suave); }
+  .meta dd { margin: 0; }
+  pre.yaml {
+    margin: 0; padding: 16px 18px; background: var(--code-bg); color: #DDE7F5; border-radius: var(--radius);
+    font-family: var(--fonte-mono); font-size: 12.8px; line-height: 1.6; overflow: auto; max-height: 70vh; white-space: pre;
+  }
+
+  .abas { display: flex; gap: 4px; border-bottom: 1px solid var(--borda); margin-bottom: 0; }
+  .aba {
+    font-family: var(--fonte-ui); font-size: 13.5px; font-weight: 600; padding: 9px 16px; cursor: pointer;
+    background: transparent; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; color: var(--tinta-suave);
+  }
+  .aba[aria-selected="true"] { background: var(--painel); border-color: var(--borda); color: var(--azul-gov); margin-bottom: -1px; }
+  .aba:disabled { opacity: 0.5; cursor: not-allowed; }
+  .painel-aba { background: var(--painel); border: 1px solid var(--borda); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 0 16px; }
+  iframe.gerador { width: 100%; border: 0; height: 75vh; min-height: 520px; display: block; }
+  textarea.yaml-editor {
+    width: 100%; min-height: 60vh; margin: 16px 0; font-family: var(--fonte-mono); font-size: 13px; line-height: 1.55;
+    padding: 12px 14px; border: 1px solid var(--borda); border-radius: 6px; resize: vertical; tab-size: 2;
+  }
+  textarea.yaml-editor:focus { outline: 2px solid var(--azul-gov); outline-offset: 1px; }
+  .rodape-editor { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .dica { font-size: 12.5px; color: var(--tinta-suave); }
+
+  .toast {
+    position: fixed; right: 20px; bottom: 20px; max-width: 420px; z-index: 50;
+    box-shadow: 0 8px 24px rgba(7, 29, 65, 0.18);
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <h1><a href="#/">DAGs do Ro-DOU</a></h1>
+  <span class="usuario" id="usuario"></span>
+</header>
+
+<main>
+  <div id="aviso-config" class="aviso aviso-erro" hidden></div>
+
+  <!-- ============ Lista ============ -->
+  <section id="tela-lista" hidden>
+    <div class="barra">
+      <div class="acoes">
+        <input type="search" class="filtro" id="filtro" placeholder="Filtrar por id, descrição ou arquivo…" aria-label="Filtrar DAGs">
+        <select class="filtro" id="filtro-origem" aria-label="Filtrar por origem">
+          <option value="">Todas as origens</option>
+          <option value="tela">Criadas pela tela</option>
+          <option value="git">Sincronizadas via git</option>
+        </select>
+      </div>
+      <div class="acoes">
+        <button type="button" class="btn btn-secundario" id="btn-recarregar">Recarregar</button>
+        <button type="button" class="btn btn-primario" id="btn-nova" hidden>+ Nova DAG</button>
+      </div>
+    </div>
+    <div class="tabela-wrap">
+      <table>
+        <thead><tr><th>DAG</th><th>Fontes</th><th>Agenda</th><th>Origem</th><th></th></tr></thead>
+        <tbody id="linhas"></tbody>
+      </table>
+      <div class="vazio" id="lista-vazia" hidden>Nenhuma DAG encontrada.</div>
+    </div>
+  </section>
+
+  <!-- ============ Visualização ============ -->
+  <section id="tela-ver" hidden>
+    <div class="barra">
+      <h2 id="ver-titulo"></h2>
+      <div class="acoes">
+        <a class="btn btn-secundario" id="ver-airflow" target="_top">Abrir no Airflow</a>
+        <button type="button" class="btn btn-secundario" id="ver-duplicar">Duplicar</button>
+        <button type="button" class="btn btn-primario" id="ver-editar">Editar</button>
+        <button type="button" class="btn btn-perigo" id="ver-excluir">Excluir</button>
+      </div>
+    </div>
+    <div id="ver-erros"></div>
+    <div class="cartao"><dl class="meta" id="ver-meta"></dl></div>
+    <pre class="yaml" id="ver-yaml" tabindex="0"></pre>
+  </section>
+
+  <!-- ============ Editor ============ -->
+  <section id="tela-editor" hidden>
+    <div class="barra">
+      <h2 id="editor-titulo"></h2>
+      <div class="acoes"><button type="button" class="btn btn-secundario" id="editor-cancelar">Voltar</button></div>
+    </div>
+    <div id="editor-aviso"></div>
+    <div class="abas" role="tablist">
+      <button type="button" class="aba" role="tab" id="aba-form" aria-selected="true" aria-controls="painel-form">Formulário</button>
+      <button type="button" class="aba" role="tab" id="aba-yaml" aria-selected="false" aria-controls="painel-yaml">YAML</button>
+    </div>
+    <div class="painel-aba" id="painel-form" role="tabpanel">
+      <iframe class="gerador" id="gerador" title="Formulário de configuração da DAG"></iframe>
+    </div>
+    <div class="painel-aba" id="painel-yaml" role="tabpanel" hidden>
+      <textarea class="yaml-editor" id="yaml-editor" spellcheck="false" aria-label="Conteúdo YAML da DAG"></textarea>
+    </div>
+    <div class="rodape-editor">
+      <span class="dica" id="editor-dica"></span>
+      <div class="acoes" style="display:flex;gap:8px">
+        <button type="button" class="btn btn-secundario" id="btn-validar">Validar</button>
+        <button type="button" class="btn btn-primario" id="btn-salvar">Salvar</button>
+      </div>
+    </div>
+    <div id="editor-resultado" style="margin-top:14px"></div>
+  </section>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  // Funciona com e sem a barra final em /ro-dou-dags
+  const BASE = location.pathname.replace(/\/?$/, "/").replace(/index\.html\/$/, "");
+  // Raiz do Airflow (pode estar num subcaminho): BASE sem o prefixo do plugin
+  const AIRFLOW = BASE.replace(/ro-dou-dags\/$/, "");
+  const CSRF = { "X-Ro-Dou-Request": "1" };
+  const NOMES_FONTE = { DOU: "DOU", INLABS: "INLABS", QD: "Querido Diário", DOESP: "DOE-SP" };
+
+  let status = { can_write: false };
+  let itens = [];
+
+  // ---------- utilidades ----------
+  function h(tag, attrs, ...filhos) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "class") el.className = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const f of filhos.flat()) {
+      if (f == null || f === false) continue;
+      el.append(f instanceof Node ? f : document.createTextNode(String(f)));
+    }
+    return el;
+  }
+
+  class ErroApi extends Error {
+    constructor(status, mensagem, erros) { super(mensagem); this.status = status; this.erros = erros || []; }
+  }
+
+  async function api(metodo, caminho, corpo) {
+    const opcoes = { method: metodo, credentials: "same-origin", headers: { Accept: "application/json" } };
+    if (metodo !== "GET") Object.assign(opcoes.headers, CSRF);
+    if (corpo !== undefined) {
+      opcoes.headers["Content-Type"] = "application/json";
+      opcoes.body = JSON.stringify(corpo);
+    }
+    const resp = await fetch(BASE + "api/" + caminho, opcoes);
+    if (resp.status === 204) return null;
+    let dados = null;
+    try { dados = await resp.json(); } catch { /* corpo vazio ou não-JSON */ }
+    if (!resp.ok) {
+      const detalhe = dados && dados.detail;
+      if (resp.status === 401) throw new ErroApi(401, "Sua sessão no Airflow expirou. Recarregue a página e faça login novamente.");
+      if (detalhe && typeof detalhe === "object" && !Array.isArray(detalhe))
+        throw new ErroApi(resp.status, detalhe.message || "Erro", detalhe.errors);
+      if (Array.isArray(detalhe))
+        throw new ErroApi(resp.status, "Requisição inválida", detalhe.map(d => `${(d.loc || []).join(".")}: ${d.msg}`));
+      throw new ErroApi(resp.status, detalhe || `Erro ${resp.status}`);
+    }
+    return dados;
+  }
+
+  const caminhoDag = (item) => `dags/${item.source}/${item.path.split("/").map(encodeURIComponent).join("/")}`;
+  const rotaDag = (prefixo, item) => `#/${prefixo}/${item.source}/${item.path.split("/").map(encodeURIComponent).join("/")}`;
+
+  function aviso(tipo, titulo, lista) {
+    return h("div", { class: `aviso aviso-${tipo}`, role: tipo === "erro" ? "alert" : "status" },
+      h("div", null, titulo ? h("strong", null, titulo) : null,
+        lista && lista.length ? h("ul", null, lista.map(e => h("li", null, e))) : null));
+  }
+
+  function mostrarErro(container, err) {
+    container.replaceChildren(aviso("erro", err.message, err.erros));
+  }
+
+  let toastTimer;
+  function toast(tipo, texto) {
+    const t = $("toast");
+    t.replaceChildren(aviso(tipo, texto));
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 6000);
+  }
+
+  function mostrarTela(id) {
+    ["tela-lista", "tela-ver", "tela-editor"].forEach(t => { $(t).hidden = t !== id; });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- lista ----------
+  async function carregarLista() {
+    mostrarTela("tela-lista");
+    try {
+      itens = (await api("GET", "dags")).items;
+    } catch (err) {
+      $("linhas").replaceChildren(h("tr", null, h("td", { colspan: 5 }, aviso("erro", err.message, err.erros))));
+      return;
+    }
+    renderLista();
+  }
+
+  function renderLista() {
+    const termo = $("filtro").value.trim().toLowerCase();
+    const origem = $("filtro-origem").value;
+    const visiveis = itens.filter(i =>
+      (!origem || (origem === "tela") === i.editable) &&
+      (!termo || [i.dag_id, i.description, i.path].some(v => v && String(v).toLowerCase().includes(termo))));
+    $("lista-vazia").hidden = visiveis.length > 0;
+    $("linhas").replaceChildren(...visiveis.map(i => h("tr", null,
+      h("td", null,
+        h("button", { type: "button", class: "dag-id", onclick: () => { location.hash = rotaDag("ver", i); } }, i.dag_id || i.path),
+        i.description ? h("div", { class: "descricao" }, i.description) : null,
+        i.error ? h("span", { class: "selo selo-erro", title: i.error }, "arquivo inválido") : null,
+        h("div", { class: "arquivo" }, i.path)),
+      h("td", null, (i.sources || []).map(s => h("span", { class: "selo selo-fonte" }, NOMES_FONTE[s] || s))),
+      h("td", null, i.schedule ? h("code", null, i.schedule) : h("span", { class: "descricao" }, "padrão")),
+      h("td", null, i.editable
+        ? h("span", { class: "selo selo-tela" }, "tela")
+        : h("span", { class: "selo selo-git", title: "Sincronizada via git: somente leitura" }, "git")),
+      h("td", { class: "acoes" },
+        h("a", { class: "btn btn-secundario btn-pequeno", href: rotaDag("ver", i) }, "Ver"),
+        i.can_edit ? h("a", { class: "btn btn-secundario btn-pequeno", href: rotaDag("editar", i) }, "Editar") : null,
+        i.can_edit ? h("button", { type: "button", class: "btn btn-perigo btn-pequeno", onclick: () => excluir(i) }, "Excluir") : null)
+    )));
+  }
+
+  // ---------- visualização ----------
+  async function abrirVer(source, path) {
+    mostrarTela("tela-ver");
+    $("ver-titulo").textContent = "Carregando…";
+    $("ver-erros").replaceChildren();
+    $("ver-meta").replaceChildren();
+    $("ver-yaml").textContent = "";
+    let dag;
+    try {
+      dag = await api("GET", caminhoDag({ source, path }));
+    } catch (err) {
+      $("ver-titulo").textContent = path;
+      mostrarErro($("ver-erros"), err);
+      return;
+    }
+    const d = (dag.data && dag.data.dag) || {};
+    $("ver-titulo").textContent = dag.dag_id || path;
+    $("ver-yaml").textContent = dag.content;
+    if (dag.errors.length) $("ver-erros").replaceChildren(aviso("erro", "Esta configuração tem erros e pode não estar carregada no Airflow:", dag.errors));
+    const meta = [
+      ["Descrição", d.description],
+      ["Arquivo", dag.path],
+      ["Origem", dag.editable ? "Criada pela tela" : "Sincronizada via git (somente leitura)"],
+      ["Agenda", d.schedule || "padrão do Ro-DOU"],
+    ];
+    $("ver-meta").replaceChildren(...meta.flatMap(([k, v]) => [h("dt", null, k), h("dd", null, v || "—")]));
+    const editavel = dag.can_edit;
+    $("ver-airflow").hidden = !dag.dag_id;
+    if (dag.dag_id) $("ver-airflow").href = AIRFLOW + "dags/" + encodeURIComponent(dag.dag_id);
+    $("ver-editar").hidden = !editavel;
+    $("ver-excluir").hidden = !editavel;
+    $("ver-duplicar").hidden = !status.can_write;
+    $("ver-editar").onclick = () => { location.hash = rotaDag("editar", dag); };
+    $("ver-excluir").onclick = () => excluir(dag);
+    $("ver-duplicar").onclick = () => { rascunhoDuplicar = dag; location.hash = "#/nova"; };
+  }
+
+  async function excluir(item) {
+    const nome = item.dag_id || item.path;
+    if (!confirm(`Excluir a DAG "${nome}"?\n\nO arquivo ${item.path} será apagado e a DAG deixará de ser agendada. O histórico de execuções continua no Airflow.`)) return;
+    try {
+      const atual = item.etag ? item : await api("GET", caminhoDag(item));
+      await api("DELETE", `${caminhoDag(item)}?etag=${encodeURIComponent(atual.etag)}`);
+      toast("ok", `DAG "${nome}" excluída.`);
+      if (location.hash === "#/" || location.hash === "") carregarLista(); else location.hash = "#/";
+    } catch (err) {
+      toast("erro", err.message);
+    }
+  }
+
+  // ---------- editor ----------
+  const editor = {
+    modo: null,          // "nova" | "editar"
+    alvo: null,          // { source, path, etag, dag_id } ao editar
+    aba: "form",
+    yamlForm: "",        // último YAML gerado pelo formulário
+    formOk: false,
+    formPronto: false,
+    pendenteCarregar: null,
+    formBloqueado: false,
+  };
+  let rascunhoDuplicar = null;
+
+  function selecionarAba(aba) {
+    editor.aba = aba;
+    $("aba-form").setAttribute("aria-selected", String(aba === "form"));
+    $("aba-yaml").setAttribute("aria-selected", String(aba === "yaml"));
+    $("painel-form").hidden = aba !== "form";
+    $("painel-yaml").hidden = aba !== "yaml";
+    $("editor-dica").textContent = aba === "form"
+      ? "O YAML é montado a partir do formulário. Use a aba YAML para recursos avançados (várias buscas, IA, termos do banco…)."
+      : "Edite o YAML diretamente. Use \"Validar\" para conferir antes de salvar.";
+  }
+
+  function yamlAtual() {
+    return editor.aba === "form" ? editor.yamlForm : $("yaml-editor").value;
+  }
+
+  function enviarAoForm(msg) {
+    $("gerador").contentWindow.postMessage(msg, location.origin);
+  }
+
+  function carregarNoForm(config) {
+    if (editor.formPronto) enviarAoForm({ type: "rodou:carregar", config });
+    else editor.pendenteCarregar = config;
+  }
+
+  window.addEventListener("message", (e) => {
+    if (e.origin !== location.origin || e.source !== $("gerador").contentWindow || !e.data) return;
+    const msg = e.data;
+    if (msg.type === "rodou:pronto") {
+      editor.formPronto = true;
+      if (editor.pendenteCarregar) { enviarAoForm({ type: "rodou:carregar", config: editor.pendenteCarregar }); editor.pendenteCarregar = null; }
+    } else if (msg.type === "rodou:yaml") {
+      editor.yamlForm = msg.yaml;
+      editor.formOk = msg.ok;
+      atualizarBotoes();
+    } else if (msg.type === "rodou:carregado") {
+      if (msg.naoSuportados && msg.naoSuportados.length) {
+        editor.formBloqueado = true;
+        $("aba-form").disabled = true;
+        selecionarAba("yaml");
+        $("editor-aviso").replaceChildren(aviso("info",
+          "Esta configuração usa recursos que o formulário não cobre; edite pela aba YAML para não perdê-los:",
+          msg.naoSuportados));
+      } else {
+        $("editor-aviso").replaceChildren(editor.modo === "editar" && /#/.test(editor.alvo.content)
+          ? aviso("info", "Ao salvar pelo formulário, os comentários (#) do YAML original não são mantidos. Para preservá-los, edite pela aba YAML.")
+          : "");
+        selecionarAba("form");
+      }
+    }
+  });
+
+  function atualizarBotoes() {
+    $("btn-salvar").disabled = editor.aba === "form" && !editor.formOk;
+  }
+
+  function prepararEditor(titulo) {
+    mostrarTela("tela-editor");
+    $("editor-titulo").textContent = titulo;
+    $("editor-aviso").replaceChildren();
+    $("editor-resultado").replaceChildren();
+    $("yaml-editor").value = "";
+    Object.assign(editor, { yamlForm: "", formOk: false, formPronto: false, pendenteCarregar: null, formBloqueado: false });
+    $("aba-form").disabled = false;
+    $("gerador").src = BASE + "gerador?incorporado=1";
+    selecionarAba("form");
+    atualizarBotoes();
+  }
+
+  async function abrirNova() {
+    if (!status.can_write) { location.hash = "#/"; return; }
+    editor.modo = "nova";
+    editor.alvo = null;
+    const origem = rascunhoDuplicar;
+    rascunhoDuplicar = null;
+    prepararEditor(origem ? `Nova DAG (cópia de ${origem.dag_id || origem.path})` : "Nova DAG");
+    if (origem) {
+      $("yaml-editor").value = origem.content;
+      if (origem.data && origem.data.dag) {
+        const copia = JSON.parse(JSON.stringify(origem.data));
+        copia.dag.id = `${copia.dag.id}_copia`;
+        carregarNoForm(copia);
+      }
+      $("editor-aviso").replaceChildren(aviso("info", "Altere o id (dag.id) antes de salvar: ele deve ser único."));
+      if (!origem.data) selecionarAba("yaml");
+    }
+  }
+
+  async function abrirEditar(source, path) {
+    editor.modo = "editar";
+    prepararEditor("Carregando…");
+    let dag;
+    try {
+      dag = await api("GET", caminhoDag({ source, path }));
+    } catch (err) {
+      mostrarErro($("editor-aviso"), err);
+      return;
+    }
+    if (!dag.can_edit) { location.hash = rotaDag("ver", dag); return; }
+    editor.alvo = dag;
+    $("editor-titulo").textContent = `Editar ${dag.dag_id || path}`;
+    $("yaml-editor").value = dag.content;
+    if (dag.data) carregarNoForm(dag.data);
+    else {
+      editor.formBloqueado = true;
+      $("aba-form").disabled = true;
+      selecionarAba("yaml");
+    }
+  }
+
+  async function validar() {
+    const res = $("editor-resultado");
+    try {
+      const r = await api("POST", "validate", { content: yamlAtual() });
+      res.replaceChildren(r.valid ? aviso("ok", "Configuração válida.") : aviso("erro", "A configuração tem erros:", r.errors));
+      return r;
+    } catch (err) {
+      mostrarErro(res, err);
+      return null;
+    }
+  }
+
+  async function salvar() {
+    const conteudo = yamlAtual();
+    const res = $("editor-resultado");
+    const btn = $("btn-salvar");
+    btn.disabled = true;
+    try {
+      let salvo;
+      if (editor.modo === "nova") {
+        salvo = await api("POST", "dags", { content: conteudo });
+      } else {
+        const r = await api("POST", "validate", { content: conteudo });
+        if (r.dag_id && editor.alvo.dag_id && r.dag_id !== editor.alvo.dag_id &&
+          !confirm(`O id da DAG mudou de "${editor.alvo.dag_id}" para "${r.dag_id}".\n\nO Airflow vai tratar como uma DAG nova; o histórico continua na antiga. Continuar?`)) {
+          return;
+        }
+        salvo = await api("PUT", caminhoDag(editor.alvo), { content: conteudo, etag: editor.alvo.etag });
+        salvo.path = editor.alvo.path;
+        salvo.source = editor.alvo.source;
+      }
+      toast("ok", "DAG salva. O Airflow pode levar alguns minutos para processar a alteração.");
+      location.hash = rotaDag("ver", salvo);
+    } catch (err) {
+      mostrarErro(res, err);
+      res.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } finally {
+      btn.disabled = false;
+      atualizarBotoes();
+    }
+  }
+
+  $("aba-form").addEventListener("click", async () => {
+    if (editor.aba === "form" || editor.formBloqueado) return;
+    // o YAML pode ter sido editado: recarrega o formulário a partir dele
+    try {
+      const r = await api("POST", "validate", { content: $("yaml-editor").value });
+      if (!r.data) {
+        $("editor-aviso").replaceChildren(aviso("erro", "Corrija o YAML antes de voltar ao formulário:", r.errors));
+        return;
+      }
+      carregarNoForm(r.data);
+    } catch (err) {
+      mostrarErro($("editor-aviso"), err);
+    }
+  });
+  $("aba-yaml").addEventListener("click", () => {
+    if (editor.aba === "yaml") return;
+    $("yaml-editor").value = editor.yamlForm;
+    selecionarAba("yaml");
+    atualizarBotoes();
+  });
+  $("yaml-editor").addEventListener("input", () => {
+    // um YAML editado à mão pode voltar a caber no formulário
+    if (editor.formBloqueado) { editor.formBloqueado = false; $("aba-form").disabled = false; }
+  });
+  $("yaml-editor").addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    e.preventDefault();
+    const ta = e.target, ini = ta.selectionStart;
+    ta.setRangeText("  ", ini, ta.selectionEnd, "end");
+  });
+  $("btn-validar").addEventListener("click", validar);
+  $("btn-salvar").addEventListener("click", salvar);
+  $("editor-cancelar").addEventListener("click", () => {
+    if (editor.alvo) location.hash = rotaDag("ver", editor.alvo); else location.hash = "#/";
+  });
+  $("btn-nova").addEventListener("click", () => { location.hash = "#/nova"; });
+  $("btn-recarregar").addEventListener("click", carregarLista);
+  $("filtro").addEventListener("input", renderLista);
+  $("filtro-origem").addEventListener("change", renderLista);
+
+  // ---------- rotas ----------
+  function rota() {
+    const partes = location.hash.replace(/^#\/?/, "").split("/");
+    const [tipo, source, ...resto] = partes;
+    const path = resto.map(decodeURIComponent).join("/");
+    if (tipo === "ver" && path) abrirVer(Number(source), path);
+    else if (tipo === "editar" && path) abrirEditar(Number(source), path);
+    else if (tipo === "nova") abrirNova();
+    else carregarLista();
+  }
+
+  async function iniciar() {
+    try {
+      status = await api("GET", "status");
+    } catch (err) {
+      $("aviso-config").replaceChildren(document.createTextNode(err.message));
+      $("aviso-config").hidden = false;
+      return;
+    }
+    $("usuario").textContent = status.user ? `Conectado como ${status.user}` : "";
+    $("btn-nova").hidden = !status.can_write;
+    if (status.misconfigured) {
+      $("aviso-config").textContent = "O diretório da tela (RO_DOU__DAG_MANAGER_DIR) não está em RO_DOU__DAG_CONF_DIR: a criação e a edição estão desabilitadas até a configuração ser corrigida.";
+      $("aviso-config").hidden = false;
+    }
+    window.addEventListener("hashchange", rota);
+    rota();
+  }
+
+  iniciar();
+})();
+</script>
+</body>
+</html>

@@ -54,6 +54,7 @@ get_access_token:
 
 create-logs-dir:
 	mkdir -p ./mnt/airflow-logs -m a=rwx
+	mkdir -p ./mnt/dag_confs_ui -m a=rwx
 
 
 build:
