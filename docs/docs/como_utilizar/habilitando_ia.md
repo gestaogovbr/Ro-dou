@@ -9,9 +9,13 @@ As funcionalidades podem ser habilitadas separadamente ou utilizadas em conjunto
 
 ⚠️ **Disponível apenas para a fonte INLABS.**
 
-O vídeo abaixo demonstra a configuração do **resumo individual por publicação**. A configuração do resumo executivo é apresentada nas seções seguintes.
+O vídeo abaixo demonstra a configuração do **resumo individual por publicação**:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/tP18HtsI-0g?si=MTjvx_0GOMVYF_Hb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Já este vídeo demonstra a configuração do **resumo executivo do relatório**:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/cc8qQbDwg7w" title="Resumo executivo por IA no Ro-DOU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Provedores suportados
 
