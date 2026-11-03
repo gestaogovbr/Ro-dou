@@ -6,6 +6,9 @@ USER root
 COPY src /opt/airflow/dags/ro_dou_src
 COPY dag_confs/examples_and_tests /opt/airflow/dags/ro_dou/dag_confs
 COPY dag_load_inlabs /opt/airflow/dags/ro_dou/dag_load_inlabs
+# Tela de gestão de DAGs (plugin) e o formulário compartilhado com a documentação
+COPY plugins /opt/airflow/plugins
+COPY docs/docs/gerador_yaml.html /opt/airflow/ro_dou_docs/gerador_yaml.html
 
 RUN chown -R airflow /opt/airflow
 

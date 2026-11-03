@@ -1,0 +1,21 @@
+{{- if and .Values.dagManager.enabled (not .Values.dagManager.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ro-dou.dagManager.claimName" . }}
+  labels:
+    {{- include "ro-dou.labels" . | nindent 4 }}
+    app: airflow
+  annotations:
+    # As DAGs criadas pela tela só existem neste volume: não o apague no uninstall.
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.dagManager.persistence.accessMode }}
+  {{- if .Values.dagManager.persistence.storageClassName }}
+  storageClassName: {{ .Values.dagManager.persistence.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.dagManager.persistence.storage }}
+{{- end }}

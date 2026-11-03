@@ -44,7 +44,7 @@ FAKE_MATCH = {
 def basic_example_dag(dag_gen: DouDigestDagGenerator):
     """Builds the real DAG for `basic_example.yaml` (DOU source, 3 terms,
     single e-mail report, `skip_null` defaulting to True)."""
-    filepath = os.path.join(dag_gen.YAMLS_DIR, "examples_and_tests", CONFIG_FILE)
+    filepath = os.path.join(dag_gen.YAMLS_DIR_LIST[0], "examples_and_tests", CONFIG_FILE)
     specs = dag_gen.parser(filepath).parse()
     return dag_gen.create_dag(specs, filepath)
 

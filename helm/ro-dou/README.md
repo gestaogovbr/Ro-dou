@@ -113,6 +113,13 @@ Os principais valores configuráveis são:
 | `gitRsync.persistence.storage` | Espaço solicitado para as configurações das DAGs | `1Gi` |
 | `gitRsync.persistence.storageClassName` | `StorageClass` usada pelas configurações das DAGs | `""` |
 | `gitRsync.persistence.accessMode` | Modo de acesso do PVC das configurações das DAGs | `ReadWriteOnce` |
+| `dagManager.enabled` | Habilita a tela de gestão de DAGs no Airflow (plugin) | `false` |
+| `dagManager.dir` | Diretório gravado pela tela; é acrescentado a `RO_DOU__DAG_CONF_DIR` | `/opt/airflow/dags/ro_dou/dag_confs_ui` |
+| `dagManager.fsGroup` | `fsGroup` do pod do api-server, para gravar no volume; vazio não define | `""` |
+| `dagManager.persistence.existingClaim` | PVC existente para as DAGs da tela; vazio cria um PVC | `""` |
+| `dagManager.persistence.storage` | Espaço solicitado para as DAGs da tela | `1Gi` |
+| `dagManager.persistence.storageClassName` | `StorageClass` usada pelas DAGs da tela | `""` |
+| `dagManager.persistence.accessMode` | Modo de acesso do PVC das DAGs da tela | `ReadWriteOnce` |
 | `airflow.secrets.AIRFLOW__CORE__FERNET_KEY` | Chave Fernet usada pelo Airflow | valor de desenvolvimento (**altere em produção**) |
 | `airflow.secrets.AIRFLOW__API_AUTH__JWT_SECRET` | Chave de assinatura dos tokens JWT | valor de desenvolvimento (**altere em produção**) |
 | `airflow.secrets.AIRFLOW__API__SECRET_KEY` | Chave secreta do servidor de API | valor de desenvolvimento (**altere em produção**) |
@@ -325,6 +332,26 @@ gitRsync:
     key: token
 ```
 
+## Gestão de DAGs pela interface do Airflow
+
+Com `dagManager.enabled: true`, o Airflow ganha o botão **Ro-DOU DAGs** no
+menu lateral, que lista, cria, altera e exclui DAGs sem passar pelo git.
+O chart cria um PVC dedicado (preservado no `helm uninstall`), montado com
+escrita no servidor de API e somente leitura no scheduler e no processador de
+DAGs, e acrescenta o diretório a `RO_DOU__DAG_CONF_DIR`. Pode ser usado junto
+com o git-rsync: as DAGs do repositório aparecem na tela como somente leitura e
+o `rsync --delete` não alcança o volume da tela.
+
+```yaml
+dagManager:
+  enabled: true
+  fsGroup: 0          # Kubernetes puro; deixe vazio no OpenShift
+  persistence:
+    accessMode: ReadWriteMany   # se os pods puderem rodar em nós diferentes
+```
+
+Permissões, regras de segurança e limitações estão em
+[Gestão de DAGs pela interface](https://gestaogovbr.github.io/Ro-dou/como_utilizar/gestao_dags/).
 
 ## Serviços
 
@@ -352,5 +379,5 @@ kubectl port-forward service/rodou-ro-dou-smtp4dev 5001:5001
 
 O chart cria um PVC para os logs do Airflow, um volume persistente para os
 dados do PostgreSQL e, quando habilitados, volumes para o OpenSearch e o
-git-rsync. Ajuste a `StorageClass`, o modo de acesso e o tamanho dos volumes de
+git-rsync e a tela de gestão de DAGs. Ajuste a `StorageClass`, o modo de acesso e o tamanho dos volumes de
 acordo com o cluster antes da instalação.

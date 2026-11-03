@@ -24,9 +24,11 @@ SRC_PATH = os.environ.get("RO_DOU_SRC_PATH", "/opt/airflow/dags/ro_dou_src")
 sys.path.insert(0, SRC_PATH)
 from schemas import RoDouConfig  
 
+# RO_DOU__DAG_CONF_DIR pode listar vários diretórios separados por ":"; o
+# primeiro é o das configurações versionadas.
 DAG_CONFS_DIR = os.environ.get(
     "RO_DOU__DAG_CONF_DIR", "/opt/airflow/dags/ro_dou/dag_confs"
-)
+).split(":")[0]
 
 VERDE, AZUL, VERM, CINZA, RESET = (
     "\033[32m", "\033[36m", "\033[31m", "\033[90m", "\033[0m"

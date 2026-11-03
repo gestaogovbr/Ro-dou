@@ -104,6 +104,25 @@ gitRsync:
     storageClassName: ""
     accessMode: ReadWriteOnce
 
+# Tela de gestão de DAGs no Airflow (plugin "Ro-DOU: gerenciar DAGs")
+# Permite criar, editar e excluir DAGs pelo navegador. Os YAMLs ficam em um
+# volume próprio, separado do sincronizado via git (que continua somente leitura
+# na tela), e o diretório é acrescentado a RO_DOU__DAG_CONF_DIR automaticamente.
+dagManager:
+  enabled: false
+  dir: /opt/airflow/dags/ro_dou/dag_confs_ui
+  # fsGroup do pod do api-server, para que ele consiga gravar no volume. Deixe
+  # vazio em OpenShift (o SCC já define o grupo); em Kubernetes puro, use 0.
+  fsGroup: ""
+  persistence:
+    # Use an existing claim instead of creating one when this value is set.
+    existingClaim: ""
+    storage: 1Gi
+    storageClassName: ""
+    # O volume é montado no api-server, no dag-processor e no scheduler: em
+    # clusters com mais de um nó, use ReadWriteMany.
+    accessMode: ReadWriteOnce
+
 # PostgreSQL configuration
 postgres:
   image:
