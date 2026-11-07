@@ -119,6 +119,11 @@ postgres:
     postgres-password: "postgres"
     postgres-db: "airflow"
   storage: 1Gi
+  # Diretório dos dados dentro do volume. Um subdiretório evita que o initdb
+  # falhe quando a raiz do volume recém-formatado já contém entradas como
+  # lost+found. Instalações que já têm dados na raiz do volume devem definir
+  # "" (padrão da imagem, /var/lib/postgresql/data) para continuar usando-os.
+  pgdata: /var/lib/postgresql/data/pgdata
 
 # SMTP4Dev configuration (optional)
 smtp4dev:
