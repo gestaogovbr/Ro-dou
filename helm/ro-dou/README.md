@@ -99,6 +99,7 @@ Os principais valores configuráveis são:
 | `airflow.dagProcessor.replicas` | Réplicas do processador de DAGs | `1` |
 | `airflow.pvc.storage` | Espaço solicitado para os logs do Airflow | `1Gi` |
 | `airflow.pvc.storageClassName` | `StorageClass` usada pelos logs do Airflow | `""` |
+| `airflow.podSecurityContext` | `securityContext` dos pods do api-server, scheduler e dag-processor; `null` não define nenhum | `runAsUser: 50000`, `runAsGroup: 0`, `fsGroup: 0`, `fsGroupChangePolicy: OnRootMismatch` |
 | `gitRsync.enabled` | Sincroniza as configurações das DAGs de um repositório Git | `false` |
 | `gitRsync.schedule` | Agendamento do CronJob de sincronização | `*/5 * * * *` |
 | `gitRsync.repository` | URL HTTPS do repositório Git | `""` |
@@ -354,3 +355,10 @@ O chart cria um PVC para os logs do Airflow, um volume persistente para os
 dados do PostgreSQL e, quando habilitados, volumes para o OpenSearch e o
 git-rsync. Ajuste a `StorageClass`, o modo de acesso e o tamanho dos volumes de
 acordo com o cluster antes da instalação.
+
+Os pods do Airflow usam por padrão `runAsUser: 50000`, `runAsGroup: 0` e
+`fsGroup: 0`, que correspondem ao usuário da imagem oficial. Com isso o
+kubelet ajusta o grupo do PVC de logs e o processador de DAGs consegue criar
+`/opt/airflow/logs/dag_processor` mesmo quando o volume nasce pertencendo ao
+`root`. Se o cluster exigir outro usuário ou grupo (por exemplo, OpenShift com
+UIDs aleatórios), ajuste `airflow.podSecurityContext`.

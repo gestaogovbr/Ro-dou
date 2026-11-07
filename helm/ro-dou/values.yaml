@@ -69,6 +69,15 @@ airflow:
   pvc:
     storage: 1Gi
     storageClassName: ""
+  # securityContext dos pods do api-server, scheduler e dag-processor. A
+  # imagem oficial do Airflow roda com UID 50000 no grupo root (GID 0); o
+  # fsGroup 0 faz o kubelet liberar escrita do grupo no PVC de logs, que em
+  # muitos provisionadores nasce pertencendo ao root. Use null para não definir nenhum.
+  podSecurityContext:
+    runAsUser: 50000
+    runAsGroup: 0
+    fsGroup: 0
+    fsGroupChangePolicy: OnRootMismatch
 
 # Synchronize DAG configuration files from Git (optional)
 gitRsync:
