@@ -80,7 +80,7 @@ gitRsync:
     NO_PROXY: ""
   image:
     repository: alpine
-    tag: "3.18"
+    tag: "3.24"
     pullPolicy: IfNotPresent
   repository: ""
   branch: main
