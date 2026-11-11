@@ -129,6 +129,7 @@ Os principais valores configuráveis são:
 | `postgres.secrets.postgres-password` | Senha do PostgreSQL | `postgres` (**altere em produção**) |
 | `postgres.secrets.postgres-db` | Banco de metadados do Airflow | `airflow` |
 | `postgres.storage` | Espaço solicitado para os dados do PostgreSQL | `1Gi` |
+| `postgres.pgdata` | Diretório dos dados (`PGDATA`) dentro do volume; vazio usa o padrão da imagem | `/var/lib/postgresql/data/pgdata` |
 | `smtp4dev.enabled` | Implanta o SMTP4dev no cluster | `true` |
 | `smtp4dev.image.repository` | Repositório da imagem do SMTP4dev | `rnwood/smtp4dev` |
 | `smtp4dev.image.tag` | Tag da imagem do SMTP4dev | `v3` |
@@ -362,3 +363,12 @@ kubelet ajusta o grupo do PVC de logs e o processador de DAGs consegue criar
 `/opt/airflow/logs/dag_processor` mesmo quando o volume nasce pertencendo ao
 `root`. Se o cluster exigir outro usuário ou grupo (por exemplo, OpenShift com
 UIDs aleatórios), ajuste `airflow.podSecurityContext`.
+O PostgreSQL grava os dados em `/var/lib/postgresql/data/pgdata`, um
+subdiretório do volume. Assim o `initdb` não falha quando o volume recém-criado
+já traz entradas na raiz, como o `lost+found` de discos formatados em ext4.
+
+> **Atenção ao atualizar:** em instalações criadas antes dessa opção, os dados
+> do PostgreSQL estão na raiz do volume. Para continuar usando-os, defina
+> `postgres.pgdata: ""` no seu arquivo de valores antes do `helm upgrade`.
+> Sem isso, o PostgreSQL inicializa um banco vazio no subdiretório e os dados
+> antigos ficam intocados na raiz do volume.
