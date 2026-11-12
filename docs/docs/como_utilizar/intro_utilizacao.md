@@ -7,6 +7,7 @@ Nesta seção você encontra tudo o que precisa para instalar, configurar e oper
 * [Instalação do WSL no Windows](instalacao_wsl_windows.md) — pré-requisito para quem usa Windows
 * [Habilitação do Docker no WSL](habilitacao_docker_no_wsl.md) — pré-requisito para quem usa Windows
 * [Gerador de configuração (YAML)](../gerador_yaml.html) — cria arquivos de clipping sem precisar editar YAML manualmente
+* [Gestão de DAGs pela interface](gestao_dags.md) — cria, altera e exclui DAGs pelo Airflow, sem usar o git
 * [Usuários internos e externos](usuarios.md) — quem pode solicitar clippings e como funciona o suporte
 * [Notificação de erros](notificacao_de_erros.md) — alertas de falha das DAGs via Slack
 * [Habilitando IA nos resumos](habilitando_ia.md) — resumos automáticos das publicações com modelos de IA

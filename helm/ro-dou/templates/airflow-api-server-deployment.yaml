@@ -17,6 +17,10 @@ spec:
         app: airflow-api-server
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      {{- if and .Values.dagManager.enabled (ne (toString .Values.dagManager.fsGroup) "") }}
+      securityContext:
+        fsGroup: {{ .Values.dagManager.fsGroup }}
+      {{- end }}
       containers:
         - name: airflow-api-server
           image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
@@ -49,6 +53,10 @@ spec:
               mountPath: {{ .Values.gitRsync.targetDir | quote }}
               readOnly: true
             {{- end }}
+            {{- if .Values.dagManager.enabled }}
+            - name: dag-confs-ui
+              mountPath: {{ .Values.dagManager.dir | quote }}
+            {{- end }}
       volumes:
         - name: airflow-logs
           persistentVolumeClaim:
@@ -57,6 +65,11 @@ spec:
         - name: dag-confs
           persistentVolumeClaim:
             claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+        {{- end }}
+        {{- if .Values.dagManager.enabled }}
+        - name: dag-confs-ui
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.dagManager.claimName" . }}
         {{- end }}
 ---
 apiVersion: v1
