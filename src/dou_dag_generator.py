@@ -15,6 +15,8 @@ from typing import Dict, List, Optional, Union
 from functools import reduce
 from urllib.parse import urlparse
 
+import yaml
+
 from airflow import DAG
 from airflow.sdk import TaskGroup, Variable
 from airflow.sdk.definitions.asset import Dataset
@@ -285,7 +287,13 @@ class DouDigestDagGenerator:
                         files_list.extend([os.path.join(dirpath, filename)])
 
         for filepath in files_list:
-            dag_specs = self.parser(filepath).parse()
+            try:
+                dag_specs = self.parser(filepath).parse()
+            except (ValueError, TypeError, yaml.YAMLError) as error:
+                logging.error(
+                    "Arquivo de configuração %s ignorado: %s", filepath, error
+                )
+                continue
             dag_id = dag_specs.id
             globals()[dag_id] = self.create_dag(dag_specs, filepath)
 
