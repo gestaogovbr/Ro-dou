@@ -35,6 +35,11 @@ spec:
               mountPath: {{ .Values.gitRsync.targetDir | quote }}
               readOnly: true
             {{- end }}
+            {{- if .Values.dagManager.enabled }}
+            - name: dag-confs-ui
+              mountPath: {{ .Values.dagManager.dir | quote }}
+              readOnly: true
+            {{- end }}
       volumes:
         - name: airflow-logs
           persistentVolumeClaim:
@@ -43,4 +48,9 @@ spec:
         - name: dag-confs
           persistentVolumeClaim:
             claimName: {{ include "ro-dou.gitRsync.claimName" . }}
+        {{- end }}
+        {{- if .Values.dagManager.enabled }}
+        - name: dag-confs-ui
+          persistentVolumeClaim:
+            claimName: {{ include "ro-dou.dagManager.claimName" . }}
         {{- end }}

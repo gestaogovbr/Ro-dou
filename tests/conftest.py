@@ -47,7 +47,7 @@ def dag_gen() -> DouDigestDagGenerator:
 
 @pytest.fixture()
 def yaml_parser()-> YAMLParser:
-    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
+    filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR_LIST[0],
                             "examples_and_tests",
                             'basic_example.yaml')
     return YAMLParser(filepath=filepath)

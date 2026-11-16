@@ -137,6 +137,7 @@ test_notrack/
 **/.DS_Store
 **/mnt/pgdata/
 **/mnt/airflow-logs
+**/mnt/dag_confs_ui
 **/dag_confs/
 
 # Airflow token 

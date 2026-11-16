@@ -348,6 +348,13 @@
 
   .campo-opcional[hidden] { display: none; }
 
+  /* ---------- Modo incorporado (tela de gestão de DAGs do Airflow) ---------- */
+  body.incorporado header.gerador-topo,
+  body.incorporado footer.gerador-rodape,
+  body.incorporado .proximo-passo,
+  body.incorporado .preview-acoes { display: none; }
+  body.incorporado main.gerador-corpo { padding: 16px 0; }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
@@ -711,6 +718,11 @@
 
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  // Incorporado em iframe pela tela de gestão de DAGs (plugin do Airflow, mesma
+  // origem): o YAML vai para a página pai, que salva no servidor.
+  const INCORPORADO = new URLSearchParams(location.search).has("incorporado") && window.parent !== window;
+  function avisarPai(msg) { window.parent.postMessage(msg, location.origin); }
+
   // Aspas quando o valor pode confundir o parser YAML
   // (@ não entra aqui: só é um indicador reservado no YAML quando é o primeiro
   // caractere do valor, e nunca é nessa posição em e-mails)
@@ -722,7 +734,8 @@
   function push(out, indent, key, value, tipo) {
     const pad = "  ".repeat(indent);
     if (tipo === "bool" || tipo === "num") {
-      out.push(`${pad}<span class="yk">${key}</span>: <span class="yb">${value}</span>`);
+      // escapa também aqui: números vêm de campos de texto (ex.: territory_id)
+      out.push(`${pad}<span class="yk">${key}</span>: <span class="yb">${esc(String(value))}</span>`);
     } else {
       out.push(`${pad}<span class="yk">${key}</span>: <span class="ys">${esc(yamlVal(value))}</span>`);
     }
@@ -975,8 +988,9 @@
       painel.innerHTML = `<div class="aviso aviso-erro"><span class="icone">✕</span><div><strong>Antes de baixar, ajuste:</strong><ul style="margin:4px 0 0;padding-left:18px">`
         + erros.map(e => `<li>${e}</li>`).join("") + `</ul></div></div>`;
     } else {
-      painel.innerHTML = `<div class="aviso aviso-ok"><span class="icone">✓</span><span>Tudo certo — pronto para baixar.</span></div>`;
+      painel.innerHTML = `<div class="aviso aviso-ok"><span class="icone">✓</span><span>Tudo certo — pronto para ${INCORPORADO ? "salvar" : "baixar"}.</span></div>`;
     }
+    if (INCORPORADO) avisarPai({ type: "rodou:yaml", yaml: textoYaml(), ok: !temErros });
     return erros.length === 0;
   }
 
@@ -1084,8 +1098,7 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  $("btn-limpar").addEventListener("click", () => {
-    if (!confirm("Limpar todos os campos preenchidos?")) return;
+  function limparCampos() {
     ["f-id", "f-description", "f-owner", "f-tags", "f-failcb", "f-docmd", "f-terms", "f-terms-ignore",
       "f-department", "f-department-ignore", "f-pubtype", "f-textlength", "f-mintablerows", "f-territory",
       "f-excerptsize", "f-numexcerpts",
@@ -1100,6 +1113,11 @@
     document.querySelectorAll("#f-sections input").forEach(cb => cb.checked = false);
     ["f-aproximada", "f-igsig", "f-rematch", "f-fulltext", "f-usesummary", "f-relevancy", "f-igattach", "f-igtables", "f-csv", "f-hidefilters", "f-noskip"]
       .forEach(id => { $(id).checked = false; });
+  }
+
+  $("btn-limpar").addEventListener("click", () => {
+    if (!confirm("Limpar todos os campos preenchidos?")) return;
+    limparCampos();
     gerar();
   });
 
@@ -1114,7 +1132,129 @@
     el.addEventListener("change", gerar);
   });
 
+  // ---- carrega uma DAG existente no formulário (modo incorporado) ----
+  // Devolve a lista do que o formulário não consegue representar; nesse caso
+  // a edição deve ser feita direto no YAML, para não perder configuração.
+  const CHAVES_DAG = ["id", "description", "schedule", "owner", "tags", "dataset", "doc_md", "search", "callback", "report"];
+  const CHAVES_BUSCA = ["sources", "terms", "terms_ignore", "department", "department_ignore", "pubtype", "date", "field",
+    "dou_sections", "is_exact_search", "ignore_signature_match", "force_rematch", "full_text", "use_summary",
+    "show_relevancy", "ignore_attachments", "ignore_inline_tables", "min_table_rows", "text_length",
+    "territory_id", "excerpt_size", "number_of_excerpts"];
+  const CHAVES_INLABS = ["full_text", "use_summary", "show_relevancy", "ignore_attachments", "ignore_inline_tables", "min_table_rows", "text_length"];
+  const CHAVES_QD = ["territory_id", "excerpt_size", "number_of_excerpts"];
+  const CHAVES_RELATORIO = ["emails", "subject", "skip_null", "attach_csv", "hide_filters", "header_text", "footer_text",
+    "no_results_found_text", "notification"];
+  const BOOLS_BUSCA = { ignore_signature_match: "f-igsig", force_rematch: "f-rematch", full_text: "f-fulltext",
+    use_summary: "f-usesummary", show_relevancy: "f-relevancy", ignore_attachments: "f-igattach", ignore_inline_tables: "f-igtables" };
+  const NUMS_BUSCA = { min_table_rows: "f-mintablerows", text_length: "f-textlength", excerpt_size: "f-excerptsize", number_of_excerpts: "f-numexcerpts" };
+  const TEXTOS_LISTA = { terms_ignore: "f-terms-ignore", department: "f-department", department_ignore: "f-department-ignore", pubtype: "f-pubtype" };
+
+  function carregar(cfg) {
+    const nao = [];
+    const dag = (cfg && cfg.dag) || {};
+    const lista = (v) => Array.isArray(v) ? v.map(String) : (v == null ? [] : [String(v)]);
+    const soStrings = (v) => Array.isArray(v) && v.every(x => typeof x === "string");
+    limparCampos();
+
+    Object.keys(cfg || {}).filter(k => k !== "dag").forEach(k => nao.push(k));
+    Object.keys(dag).filter(k => !CHAVES_DAG.includes(k)).forEach(k => nao.push(`dag.${k}`));
+
+    $("f-id").value = dag.id || "";
+    $("f-description").value = dag.description || "";
+    if (dag.schedule) {
+      const opcao = Array.from($("f-schedule").options).find(o => o.value === dag.schedule);
+      $("f-schedule").value = opcao ? dag.schedule : "__custom";
+      if (!opcao) { $("f-schedule-custom").value = dag.schedule; $("f-schedule-custom").hidden = false; }
+    }
+    $("f-owner").value = lista(dag.owner).join(", ");
+    $("f-tags").value = lista(dag.tags).filter(t => t !== "dou" && t !== "generated_dag").join(", ");
+    $("f-docmd").value = dag.doc_md || "";
+
+    if (dag.callback) {
+      Object.keys(dag.callback).filter(k => k !== "on_failure_callback").forEach(k => nao.push(`dag.callback.${k}`));
+      $("f-failcb").value = lista(dag.callback.on_failure_callback).join(", ");
+    }
+
+    const buscas = Array.isArray(dag.search) ? dag.search : [dag.search || {}];
+    if (buscas.length !== 1) nao.push("dag.search (mais de uma busca)");
+    const b = buscas[0] || {};
+    Object.keys(b).filter(k => !CHAVES_BUSCA.includes(k)).forEach(k => nao.push(`dag.search.${k}`));
+    const sources = b.sources ? lista(b.sources) : ["DOU"];
+    sources.filter(f => !["DOU", "INLABS", "QD"].includes(f)).forEach(f => nao.push(`dag.search.sources: ${f}`));
+    if (sources.includes("DOU") && sources.includes("INLABS")) nao.push("dag.search.sources: DOU e INLABS juntos");
+    document.querySelectorAll("#f-sources input").forEach(cb => cb.checked = sources.includes(cb.value));
+    const temInlabs = sources.includes("INLABS"), temQd = sources.includes("QD");
+    // o formulário inclui dataset: inlabs sozinho quando o INLABS está marcado
+    if (temInlabs ? dag.dataset !== "inlabs" : dag.dataset != null) nao.push("dag.dataset");
+    Object.keys(b).filter(k => (CHAVES_INLABS.includes(k) && !temInlabs) || (CHAVES_QD.includes(k) && !temQd))
+      .forEach(k => nao.push(`dag.search.${k} (fonte não marcada)`));
+    if (b.min_table_rows != null && !b.ignore_inline_tables) nao.push("dag.search.min_table_rows");
+
+    if (b.terms != null && !soStrings(b.terms)) nao.push("dag.search.terms (variável ou consulta ao banco)");
+    else $("f-terms").value = lista(b.terms).join("\n");
+    Object.entries(TEXTOS_LISTA).forEach(([k, id]) => { $(id).value = lista(b[k]).join("\n"); });
+    if (b.date != null && b.date !== "DIA") {
+      if (["SEMANA", "MES", "ANO"].includes(b.date)) $("f-date").value = b.date; else nao.push("dag.search.date");
+    }
+    if (b.field != null && b.field !== "TUDO") {
+      if (["TITULO", "CONTEUDO"].includes(b.field)) $("f-field").value = b.field; else nao.push("dag.search.field");
+    }
+    const secoes = lista(b.dou_sections).filter(s => s !== "TODOS");
+    const secoesValidas = Array.from(document.querySelectorAll("#f-sections input")).map(cb => cb.value);
+    secoes.filter(s => !secoesValidas.includes(s)).forEach(s => nao.push(`dag.search.dou_sections: ${s}`));
+    document.querySelectorAll("#f-sections input").forEach(cb => cb.checked = secoes.includes(cb.value));
+    $("f-aproximada").checked = b.is_exact_search === false;
+    Object.entries(BOOLS_BUSCA).forEach(([k, id]) => { $(id).checked = b[k] === true; });
+    Object.entries(NUMS_BUSCA).forEach(([k, id]) => { if (b[k] != null) $(id).value = b[k]; });
+    $("f-territory").value = lista(b.territory_id).join(", ");
+
+    const r = dag.report || {};
+    Object.keys(r).filter(k => !CHAVES_RELATORIO.includes(k)).forEach(k => nao.push(`dag.report.${k}`));
+    $("f-emails").value = lista(r.emails).join("\n");
+    $("f-subject").value = r.subject || "";
+    $("f-noskip").checked = r.skip_null === false;
+    $("f-csv").checked = r.attach_csv === true;
+    $("f-hidefilters").checked = r.hide_filters === true;
+    $("f-headertext").value = r.header_text || "";
+    $("f-footertext").value = r.footer_text || "";
+    $("f-noresults").value = r.no_results_found_text || "";
+    // URLs Apprise de volta para o formato de webhook mostrado no formulário
+    for (const url of lista(r.notification)) {
+      let m;
+      if ((m = url.match(/^discord:\/\/(\d+)\/([\w-]+)\/?$/)) && !$("f-discord").value)
+        $("f-discord").value = `https://discord.com/api/webhooks/${m[1]}/${m[2]}`;
+      else if ((m = url.match(/^slack:\/\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/?$/)) && !$("f-slack").value)
+        $("f-slack").value = `https://hooks.slack.com/services/${m[1]}/${m[2]}/${m[3]}`;
+      else if (TEAMS_WEBHOOK_RE.test(url) && !$("f-teams").value) $("f-teams").value = url;
+      else nao.push("dag.report.notification (canal não suportado pelo formulário)");
+    }
+
+    ["painel-avancado-dag", "painel-avancado", "painel-avancado-report"].forEach(id => {
+      const painel = $(id);
+      if (painel.hidden && Array.from(painel.querySelectorAll("input, textarea, select"))
+        .some(el => el.type === "checkbox" ? el.checked : el.value)) {
+        $(id.replace("painel-", "btn-")).click();
+      }
+    });
+    gerar();
+    return nao;
+  }
+
+  if (INCORPORADO) {
+    document.body.classList.add("incorporado");
+    window.addEventListener("message", (e) => {
+      if (e.origin !== location.origin || e.source !== window.parent || !e.data) return;
+      if (e.data.type === "rodou:carregar") {
+        avisarPai({ type: "rodou:carregado", naoSuportados: carregar(e.data.config) });
+      } else if (e.data.type === "rodou:limpar") {
+        limparCampos();
+        gerar();
+      }
+    });
+  }
+
   gerar();
+  if (INCORPORADO) avisarPai({ type: "rodou:pronto" });
 })();
 </script>
 </body>
