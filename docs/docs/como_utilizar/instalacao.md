@@ -154,6 +154,54 @@ Ou crie manualmente na interface do Airflow em [http://localhost:8080/variable/l
 
 O Ro-DOU também suporta gerar resumos automáticos das publicações usando LLMs (OpenAI, Gemini, Claude ou Azure). Veja o guia completo — build com o provedor desejado, variáveis de API e configuração do YAML — em [Habilitando IA nos resumos](habilitando_ia.md).
 
+### Verificando os requisitos da VPS
+
+Antes de instalar o Ro-DOU em uma VPS, o script `tools/diagnostico_vps.py`
+coleta CPU, memória, disco, Docker, portas, conectividade e parâmetros de
+kernel, e gera um veredito de viabilidade. Ele é somente leitura e não altera
+a configuração do servidor.
+
+```bash
+python3 tools/diagnostico_vps.py
+python3 tools/diagnostico_vps.py --com-opensearch
+python3 tools/diagnostico_vps.py --json --saida diagnostico.json
+```
+
+Use `--sem-rede` para pular os testes de conectividade e `--help` para ver
+todas as opções. O relatório em texto mostra bloqueadores, alertas e
+recomendações; o JSON contém os dados brutos para análise posterior.
+
+### Implantação em produção com Docker Compose
+
+O `docker-compose.yml` da raiz é destinado a desenvolvimento. Para produção,
+use o override em `deploy/prod/`, que remove a publicação pública de
+PostgreSQL, OpenSearch e smtp4dev, exige segredos fortes e limita a exposição
+do Airflow ao loopback.
+
+```bash
+cp deploy/prod/.env.production.example deploy/prod/.env.production
+chmod 600 deploy/prod/.env.production
+
+docker compose \
+  --env-file deploy/prod/.env.production \
+  -f docker-compose.yml \
+  -f deploy/prod/docker-compose.override.yml \
+  config
+
+docker compose \
+  --env-file deploy/prod/.env.production \
+  -f docker-compose.yml \
+  -f deploy/prod/docker-compose.override.yml \
+  up -d --build
+```
+
+Para publicar com Traefik, acrescente
+`-f deploy/prod/docker-compose.traefik.yml` e configure `TRAEFIK_NETWORK` e
+`RO_DOU_HOST`. Se o Traefik estiver em `network_mode: host`, use
+`-f deploy/prod/docker-compose.traefik-host.yml` e `TRAEFIK_DOCKER_NETWORK`.
+As instruções completas, incluindo geração de segredos, backup e atualização,
+estão em `deploy/prod/README.md`.
+
 ---
 
 ## Referência rápida de comandos

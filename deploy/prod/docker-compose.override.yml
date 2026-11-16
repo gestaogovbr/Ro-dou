@@ -1,0 +1,135 @@
+# Produção — use junto com o docker-compose.yml da raiz:
+#
+#   docker compose --env-file deploy/prod/.env.production \
+#     -f docker-compose.yml \
+#     -f deploy/prod/docker-compose.override.yml up -d
+#
+# Para publicar via Traefik, acrescente também:
+#   -f deploy/prod/docker-compose.traefik.yml
+#
+# Requer Docker Compose 2.24+ por causa das tags !override.
+# Este arquivo fica em subdiretório de propósito: o Compose só carrega
+# automaticamente o override da raiz, então `make run` continua usando o
+# ambiente local de desenvolvimento.
+#
+# Não copie este arquivo para a raiz como docker-compose.override.yml sem
+# revisar: ele remove portas públicas, exige segredos e desativa o smtp4dev.
+
+x-airflow-prod-env: &airflow-prod-env
+  AIRFLOW__CORE__FERNET_KEY: "${AIRFLOW_FERNET_KEY:?Defina AIRFLOW_FERNET_KEY no .env.production}"
+  AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_WEBSERVER_SECRET_KEY:?Defina AIRFLOW_WEBSERVER_SECRET_KEY no .env.production}"
+  AIRFLOW__API_AUTH__JWT_SECRET: "${AIRFLOW_API_JWT_SECRET:?Defina AIRFLOW_API_JWT_SECRET no .env.production}"
+  AIRFLOW__API__SECRET_KEY: "${AIRFLOW_API_SECRET_KEY:?Defina AIRFLOW_API_SECRET_KEY no .env.production}"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:?Defina AIRFLOW_DB_PASSWORD no .env.production}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}"
+  AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: "postgresql://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:?Defina AIRFLOW_DB_PASSWORD no .env.production}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}"
+  AIRFLOW__CORE__DEFAULT_TIMEZONE: "${AIRFLOW_TIMEZONE:-America/Sao_Paulo}"
+  AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "${AIRFLOW_TIMEZONE:-America/Sao_Paulo}"
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "${AIRFLOW_DAGS_PAUSED:-true}"
+  AIRFLOW__API__BASE_URL: "${RO_DOU_PUBLIC_URL:-http://localhost:8080}"
+  AIRFLOW__SMTP__SMTP_HOST: "${SMTP_HOST:?Defina SMTP_HOST no .env.production}"
+  AIRFLOW__SMTP__SMTP_PORT: "${SMTP_PORT:-587}"
+  AIRFLOW__SMTP__SMTP_STARTTLS: "${SMTP_STARTTLS:-true}"
+  AIRFLOW__SMTP__SMTP_SSL: "${SMTP_SSL:-false}"
+  AIRFLOW__SMTP__SMTP_USER: "${SMTP_USER:-}"
+  AIRFLOW__SMTP__SMTP_PASSWORD: "${SMTP_PASSWORD:-}"
+  AIRFLOW__SMTP__SMTP_MAIL_FROM: "${SMTP_MAIL_FROM:?Defina SMTP_MAIL_FROM no .env.production}"
+  AIRFLOW_CONN_SMTP_DEFAULT: "${AIRFLOW_CONN_SMTP_DEFAULT:?Defina AIRFLOW_CONN_SMTP_DEFAULT no .env.production}"
+  RO_DOU_INLABS_USE_OPENSEARCH: "${RO_DOU_INLABS_USE_OPENSEARCH:-false}"
+  OPENSEARCH_HOST: "http://opensearch:9200"
+  OPENSEARCH_USER: "${OPENSEARCH_USER:-admin}"
+  OPENSEARCH_PASS: "${OPENSEARCH_PASS:?Defina OPENSEARCH_PASS no .env.production}"
+  _AIRFLOW_WWW_USER_USERNAME: "${AIRFLOW_ADMIN_USER:-admin}"
+  _AIRFLOW_WWW_USER_PASSWORD: "${AIRFLOW_ADMIN_PASSWORD:?Defina AIRFLOW_ADMIN_PASSWORD no .env.production}"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: "${AIRFLOW_DB_USER:-airflow}"
+      POSTGRES_PASSWORD: "${AIRFLOW_DB_PASSWORD:?Defina AIRFLOW_DB_PASSWORD no .env.production}"
+      POSTGRES_DB: "${AIRFLOW_DB_NAME:-airflow}"
+    ports: !override []
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: ${POSTGRES_MEM_LIMIT:-1g}
+    logging: *default-logging
+
+  airflow-api-server:
+    environment:
+      <<: *airflow-prod-env
+    ports: !override
+      - "127.0.0.1:${AIRFLOW_HTTP_PORT:-8080}:8080"
+    volumes: !override
+      - ./mnt/airflow-logs:/opt/airflow/logs
+      - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs:ro
+    networks:
+      - default
+      - backend
+    mem_limit: ${AIRFLOW_API_MEM_LIMIT:-2g}
+    logging: *default-logging
+
+  airflow-scheduler:
+    environment:
+      <<: *airflow-prod-env
+    volumes: !override
+      - ./mnt/airflow-logs:/opt/airflow/logs
+      - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs:ro
+    networks:
+      - default
+      - backend
+    mem_limit: ${AIRFLOW_SCHEDULER_MEM_LIMIT:-2g}
+    logging: *default-logging
+
+  airflow-dag-processor:
+    environment:
+      <<: *airflow-prod-env
+    volumes: !override
+      - ./mnt/airflow-logs:/opt/airflow/logs
+      - ./dag_confs:/opt/airflow/dags/ro_dou/dag_confs:ro
+    networks:
+      - default
+      - backend
+    mem_limit: ${AIRFLOW_DAG_PROCESSOR_MEM_LIMIT:-1g}
+    logging: *default-logging
+
+  opensearch:
+    image: "opensearchproject/opensearch:${OPENSEARCH_VERSION:-2}"
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASS:?Defina OPENSEARCH_PASS no .env.production}
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS:--Xms1g -Xmx1g}
+    ports: !override []
+    networks:
+      - backend
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: ${OPENSEARCH_MEM_LIMIT:-3g}
+    logging: *default-logging
+
+  # Mantido apenas para testes locais. No perfil de produção ele não sobe,
+  # não publica portas e o Airflow usa o SMTP real definido no .env.production.
+  smtp4dev:
+    profiles:
+      - dev
+    ports: !override []
+    networks:
+      - backend
+    mem_limit: 256m
+    logging: *default-logging
+
+networks:
+  backend:
+    internal: true

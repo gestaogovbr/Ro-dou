@@ -1,0 +1,32 @@
+# Publicação via Traefik em network_mode: host.
+#
+# Use quando o Traefik roda com network_mode: host (como no template
+# traefik-pk7y). Nesse modo não existe uma rede externa "traefik"; o Traefik
+# alcança o container pelo IP da rede bridge do projeto.
+#
+#   docker compose --env-file deploy/prod/.env.production \
+#     -f docker-compose.yml \
+#     -f deploy/prod/docker-compose.override.yml \
+#     -f deploy/prod/docker-compose.traefik-host.yml up -d
+#
+# Defina RO_DOU_HOST no .env.production. Se o projeto não se chamar ro-dou,
+# ajuste TRAEFIK_DOCKER_NETWORK (padrão: ro-dou_default).
+
+services:
+  airflow-api-server:
+    ports: !override []
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "${TRAEFIK_DOCKER_NETWORK:-ro-dou_default}"
+      traefik.http.routers.ro-dou.rule: "Host(`${RO_DOU_HOST:?Defina RO_DOU_HOST no .env.production}`)"
+      traefik.http.routers.ro-dou.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
+      traefik.http.routers.ro-dou.tls: "true"
+      traefik.http.routers.ro-dou.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.routers.ro-dou.service: "ro-dou"
+      traefik.http.services.ro-dou.loadbalancer.server.port: "8080"
+      traefik.http.services.ro-dou.loadbalancer.server.scheme: "http"
+      traefik.http.services.ro-dou.loadbalancer.healthcheck.path: "/api/v2/monitor/health"
+      traefik.http.services.ro-dou.loadbalancer.healthcheck.interval: "30s"
+      # Para uma camada extra de autenticação, crie o middleware no Traefik e
+      # descomente a linha abaixo:
+      # traefik.http.routers.ro-dou.middlewares: "ro-dou-auth@file"
