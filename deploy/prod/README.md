@@ -139,6 +139,25 @@ O arquivo do Traefik remove a publicação em `127.0.0.1:8080` e adiciona o
 serviço à rede externa. Ajuste as labels se o seu Traefik usar outro
 entrypoint, certificado manual ou middleware de autenticação.
 
+### Traefik em `network_mode: host`
+
+Se o Traefik roda em `network_mode: host` (como o template `traefik-pk7y`),
+não existe uma rede externa `traefik`. Use o override específico:
+
+```bash
+docker compose \
+  --env-file deploy/prod/.env.production \
+  -f docker-compose.yml \
+  -f deploy/prod/docker-compose.override.yml \
+  -f deploy/prod/docker-compose.traefik-host.yml \
+  up -d
+```
+
+O arquivo usa `ro-dou_default` como rede do projeto. Se você mudou
+`COMPOSE_PROJECT_NAME`, ajuste `TRAEFIK_DOCKER_NETWORK` no `.env.production`.
+Defina também `RO_DOU_HOST` e mantenha `TRAEFIK_ENTRYPOINT=websecure` e
+`TRAEFIK_CERT_RESOLVER=letsencrypt` se forem os valores do seu Traefik.
+
 ## 6. Configuração pós-subida
 
 - Crie as conexões `inlabs_db` e `inlabs_portal` no Airflow, se for usar o

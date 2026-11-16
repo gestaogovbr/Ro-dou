@@ -197,8 +197,10 @@ docker compose \
 
 Para publicar com Traefik, acrescente
 `-f deploy/prod/docker-compose.traefik.yml` e configure `TRAEFIK_NETWORK` e
-`RO_DOU_HOST`. As instruções completas, incluindo geração de segredos,
-backup e atualização, estão em `deploy/prod/README.md`.
+`RO_DOU_HOST`. Se o Traefik estiver em `network_mode: host`, use
+`-f deploy/prod/docker-compose.traefik-host.yml` e `TRAEFIK_DOCKER_NETWORK`.
+As instruções completas, incluindo geração de segredos, backup e atualização,
+estão em `deploy/prod/README.md`.
 
 ---
 
