@@ -1,0 +1,32 @@
+# Contexto de build do Ro-DOU: a imagem só precisa de src, dag_confs,
+# dag_load_inlabs e dos arquivos de requirements.
+.git
+.github
+.gitignore
+.nova
+NOVA-STATE.md
+mnt/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.env
+.env.*
+tests/
+tools/
+schemas/
+docs/
+helm/
+deploy/
+docker-compose*.yml
+Makefile
+Makefile.backup
+generate-Makefile.sh
+README.md
+CHANGELOG.md
+SECURITY.md

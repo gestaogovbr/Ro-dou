@@ -1,0 +1,46 @@
+# Publicação opcional via Traefik.
+#
+# Use depois do override de produção:
+#
+#   docker compose --env-file deploy/prod/.env.production \
+#     -f docker-compose.yml \
+#     -f deploy/prod/docker-compose.override.yml \
+#     -f deploy/prod/docker-compose.traefik.yml up -d
+#
+# Defina no .env.production:
+#   TRAEFIK_NETWORK   nome exato da rede externa do Traefik
+#                     (veja com: docker network ls)
+#   RO_DOU_HOST       host público, sem https://
+#   TRAEFIK_ENTRYPOINT (padrão: websecure)
+#   TRAEFIK_CERT_RESOLVER (padrão: letsencrypt)
+#
+# Se o seu Traefik usa outro entrypoint, certificado manual ou middlewares,
+# ajuste as labels abaixo.
+
+services:
+  airflow-api-server:
+    ports: !override []
+    networks:
+      - default
+      - backend
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "${TRAEFIK_NETWORK:?Defina TRAEFIK_NETWORK no .env.production}"
+      traefik.http.routers.ro-dou.rule: "Host(`${RO_DOU_HOST:?Defina RO_DOU_HOST no .env.production}`)"
+      traefik.http.routers.ro-dou.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
+      traefik.http.routers.ro-dou.tls: "true"
+      traefik.http.routers.ro-dou.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.routers.ro-dou.service: "ro-dou"
+      traefik.http.services.ro-dou.loadbalancer.server.port: "8080"
+      traefik.http.services.ro-dou.loadbalancer.server.scheme: "http"
+      traefik.http.services.ro-dou.loadbalancer.healthcheck.path: "/api/v2/monitor/health"
+      traefik.http.services.ro-dou.loadbalancer.healthcheck.interval: "30s"
+      # Para uma camada extra de autenticação, crie o middleware no Traefik e
+      # descomente a linha abaixo:
+      # traefik.http.routers.ro-dou.middlewares: "ro-dou-auth@file"
+
+networks:
+  traefik:
+    external: true
+    name: "${TRAEFIK_NETWORK:?Defina TRAEFIK_NETWORK no .env.production}"
