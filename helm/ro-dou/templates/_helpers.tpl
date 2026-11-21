@@ -68,3 +68,14 @@ until (exec 3<>/dev/tcp/{{ include "ro-dou.fullname" . }}-postgres/{{ .Values.po
   sleep 3
 done
 {{- end }}
+
+{{/*
+PostgreSQL user and password for the userinfo part of a connection URI.
+urlquery encodes a space as "+", which a URI parser reads as a literal "+",
+so a space is written as %20 instead (a literal "+" is already %2B).
+*/}}
+{{- define "ro-dou.postgres.userinfo" -}}
+{{- $user := index .Values.postgres.secrets "postgres-user" | urlquery | replace "+" "%20" -}}
+{{- $password := index .Values.postgres.secrets "postgres-password" | urlquery | replace "+" "%20" -}}
+{{- printf "%s:%s" $user $password -}}
+{{- end }}
